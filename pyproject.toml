@@ -1,0 +1,56 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
+[project]
+name = "dendra"
+version = "0.1.0"
+description = "Graduated-autonomy classification primitive — start as a rule, graduate to ML when evidence justifies it."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "B-Tree Ventures, LLC" },
+]
+maintainers = [
+    { name = "Benjamin Booth", email = "ben@b-treeventures.com" },
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+train = [
+    "scikit-learn>=1.3",
+]
+onnx = [
+    "onnxruntime>=1.16",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/bwbooth/dendra"
+Documentation = "https://github.com/bwbooth/dendra#readme"
+Issues = "https://github.com/bwbooth/dendra/issues"
+
+[project.scripts]
+dendra = "dendra.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dendra"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
