@@ -1,0 +1,24 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+#
+# Replaces .github/workflows/test.yml once axiom-labs-os/.github is pushed
+# and tagged at v1.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: axiom-labs-os/.github/.github/workflows/python-ci.yml@v1
+    with:
+      package-name: dendra
+      python-versions: '["3.10","3.11","3.12","3.13"]'
+      extras: 'dev,train,viz'
+      run-pre-commit: true
+      provenance-forbidden-patterns: 'utexas|UT Austin|bbooth@'
+      provenance-paths: 'src/ tests/ docs/ README.md CHANGELOG.md SECURITY.md CONTRIBUTING.md pyproject.toml'
+    secrets: inherit

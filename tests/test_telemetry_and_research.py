@@ -17,7 +17,7 @@ from dendra import (
     SwitchConfig,
 )
 from dendra.research import BenchmarkExample, Checkpoint, run_transition_curve
-from dendra.telemetry import ListEmitter, NullEmitter, StdoutEmitter
+from dendra.telemetry import ListEmitter, NullEmitter
 
 
 def _rule(ticket: dict) -> str:
@@ -52,7 +52,9 @@ class TestTelemetry:
         s = LearnedSwitch(name="t", rule=_rule, author="alice", telemetry=em)
         s.classify({"title": "crash"})
         s.record_outcome(
-            input={"title": "crash"}, output="bug", outcome=Outcome.CORRECT.value,
+            input={"title": "crash"},
+            output="bug",
+            outcome=Outcome.CORRECT.value,
         )
         names = [n for n, _ in em.events]
         assert "classify" in names
@@ -64,7 +66,10 @@ class TestTelemetry:
                 raise RuntimeError("emitter down")
 
         s = LearnedSwitch(
-            name="t", rule=_rule, author="alice", telemetry=BrokenEmitter(),
+            name="t",
+            rule=_rule,
+            author="alice",
+            telemetry=BrokenEmitter(),
         )
         r = s.classify({"title": "crash"})
         assert r.output == "bug"
@@ -87,10 +92,7 @@ class AgreesWithRuleLLM:
 class TestTransitionCurve:
     def test_runs_checkpoints(self):
         s = LearnedSwitch(name="t", rule=_rule, author="alice")
-        examples = [
-            BenchmarkExample(input={"title": f"crash {i}"}, label="bug")
-            for i in range(10)
-        ]
+        examples = [BenchmarkExample(input={"title": f"crash {i}"}, label="bug") for i in range(10)]
         checkpoints = run_transition_curve(s, examples, checkpoint_every=5)
         assert len(checkpoints) == 2
         assert all(isinstance(c, Checkpoint) for c in checkpoints)
@@ -118,10 +120,7 @@ class TestTransitionCurve:
 
     def test_tail_checkpoint_appended(self):
         s = LearnedSwitch(name="t", rule=_rule, author="alice")
-        examples = [
-            BenchmarkExample(input={"title": "crash"}, label="bug")
-            for _ in range(7)
-        ]
+        examples = [BenchmarkExample(input={"title": "crash"}, label="bug") for _ in range(7)]
         # 5-step checkpoint gives one at t=5; tail fires at t=7.
         checkpoints = run_transition_curve(s, examples, checkpoint_every=5)
         assert [c.outcomes for c in checkpoints] == [5, 7]

@@ -15,6 +15,30 @@ maintainers = [
 ]
 requires-python = ">=3.10"
 dependencies = []
+keywords = [
+    "classification",
+    "machine-learning",
+    "llm",
+    "rule-based",
+    "safety-critical",
+    "observability",
+    "graduated-autonomy",
+    "transition-curves",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
 
 [project.optional-dependencies]
 train = [
@@ -26,9 +50,22 @@ onnx = [
 bench = [
     "datasets>=2.14",
 ]
+viz = [
+    "matplotlib>=3.7",
+]
+openai = [
+    "openai>=1.0",
+]
+anthropic = [
+    "anthropic>=0.18",
+]
+ollama = [
+    "httpx>=0.24",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "ruff>=0.4",
 ]
 
 [project.urls]
@@ -46,10 +83,40 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/dendra"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/dendra/py.typed" = "dendra/py.typed"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-q --strict-markers"
+markers = [
+    "benchmark: opt-in latency / throughput benchmarks (run with -m benchmark)",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["src/dendra"]
+branch = true
+parallel = true
+omit = [
+    "*/tests/*",
+    "*/benchmarks/loaders.py",  # network-bound; covered by integration runs
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
 
 [tool.ruff]
 line-length = 100
@@ -57,3 +124,13 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    # SIM105 (use contextlib.suppress instead of try/except/pass): the
+    # telemetry-swallow idiom reads more clearly as try/except/pass and
+    # communicates swallow-intent to reviewers.
+    "SIM105",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests may use assertions with long context, unused imports for fixtures.
+"tests/*" = ["E501"]

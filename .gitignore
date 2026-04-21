@@ -1,11 +1,66 @@
+# Python bytecode / compiled
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Packaging / distribution
 *.egg-info/
-.pytest_cache/
-.coverage
-htmlcov/
 dist/
 build/
+wheels/
+*.whl
+
+# Test + coverage artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# Environments
 .venv/
+venv/
+env/
+.python-version
+
+# Type-checking / linting caches
+.mypy_cache/
+.ruff_cache/
+.pyright/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Secrets
+.env
+.envrc
+.secrets
+
+# Dendra runtime artifacts (default FileStorage base; outcome logs)
+runtime/
+
+# Patent / provenance snapshots (never committed — distributed separately)
+provenance-*.tar.gz
+provenance-*/
+
+# Model artifacts (large binaries; keep out of git)
 *.onnx
+*.joblib
+*.pkl
+
+# Docs site build (if landing page is ever colocated)
+node_modules/
+.cache/
+_site/
+site/
+
+# macOS / Windows metadata
+Thumbs.db
+ehthumbs.db

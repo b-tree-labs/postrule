@@ -5,8 +5,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 import pytest
 
@@ -105,7 +104,9 @@ class TestMLShadowRouting:
             def fit(self, records): ...
             def predict(self, input, labels):
                 raise RuntimeError("model load failed")
-            def model_version(self): return "broken"
+
+            def model_version(self):
+                return "broken"
 
         s = LearnedSwitch(
             name="triage",

@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import time
-from pathlib import Path
 
 import pytest
 
@@ -14,14 +13,14 @@ from dendra import FileStorage, InMemoryStorage, OutcomeRecord
 
 
 def _record(**overrides) -> OutcomeRecord:
-    defaults = dict(
-        timestamp=time.time(),
-        input={"x": 1},
-        output="bug",
-        outcome="correct",
-        source="rule",
-        confidence=1.0,
-    )
+    defaults = {
+        "timestamp": time.time(),
+        "input": {"x": 1},
+        "output": "bug",
+        "outcome": "correct",
+        "source": "rule",
+        "confidence": 1.0,
+    }
     defaults.update(overrides)
     return OutcomeRecord(**defaults)
 

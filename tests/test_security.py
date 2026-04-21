@@ -27,11 +27,9 @@ from dendra import (
     LLMPrediction,
     MLPrediction,
     Outcome,
-    OutcomeRecord,
     Phase,
     SwitchConfig,
 )
-
 
 # ---------------------------------------------------------------------------
 # Ingredients
@@ -74,12 +72,7 @@ def _export_control_rule(query: str) -> str:
     LLM but cannot change what the rule returns — it's code.
     """
     t = (query or "").lower()
-    if (
-        "export_controlled" in t
-        or "itar" in t
-        or "samsung_internal" in t
-        or "classified" in t
-    ):
+    if "export_controlled" in t or "itar" in t or "samsung_internal" in t or "classified" in t:
         return "EXPORT_CONTROLLED"
     return "PUBLIC"
 
@@ -129,9 +122,7 @@ class TestRuleFloorUnjailbreakability:
             rule=_export_control_rule,
             author="@security:platform",
             llm=LowConfJailbreak(),
-            config=SwitchConfig(
-                phase=Phase.LLM_PRIMARY, confidence_threshold=0.85
-            ),
+            config=SwitchConfig(phase=Phase.LLM_PRIMARY, confidence_threshold=0.85),
         )
         r = s.classify("itar technology export")
         # Rule wins because LLM came in below threshold.
@@ -155,9 +146,7 @@ class TestSafetyCriticalCap:
                 rule=_export_control_rule,
                 author="@security:platform",
                 ml_head=PoisonedMLHead(),
-                config=SwitchConfig(
-                    phase=Phase.ML_PRIMARY, safety_critical=True
-                ),
+                config=SwitchConfig(phase=Phase.ML_PRIMARY, safety_critical=True),
             )
 
     def test_safety_critical_allowed_at_ml_with_fallback(self):
@@ -194,8 +183,10 @@ class TestCircuitBreakerBoundsMLFailure:
         class BrokenML:
             def fit(self, records):
                 pass
+
             def predict(self, input, labels):
                 raise RuntimeError("model corruption detected")
+
             def model_version(self):
                 return "broken"
 

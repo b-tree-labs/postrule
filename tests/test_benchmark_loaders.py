@@ -11,7 +11,6 @@ network is unavailable.
 from __future__ import annotations
 
 import sys
-from unittest import mock
 
 import pytest
 
@@ -23,7 +22,6 @@ from dendra.benchmarks import (
     load_hwu64,
 )
 from dendra.benchmarks import loaders as _loaders
-
 
 # ---------------------------------------------------------------------------
 # Unconditional shape tests
