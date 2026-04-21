@@ -306,7 +306,7 @@ Brief description of Dendra:
 - Approval backends pluggable.
 - Cross-language portability via ONNX + native-code export.
 
-Repo: `https://github.com/bwbooth/dendra`
+Repo: `https://github.com/axiom-labs-os/dendra`
 
 ---
 

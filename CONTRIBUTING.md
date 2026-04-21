@@ -6,7 +6,7 @@ and welcomes community pull requests, issues, and discussion.
 ## Quick start for contributors
 
 ```bash
-git clone https://github.com/bwbooth/dendra.git
+git clone https://github.com/axiom-labs-os/dendra.git
 cd dendra
 python -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev,train,bench,viz]'

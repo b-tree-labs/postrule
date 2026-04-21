@@ -217,7 +217,7 @@ tests green. Paper submission in progress.
 ## Dev setup
 
 ```bash
-git clone https://github.com/bwbooth/dendra.git
+git clone https://github.com/axiom-labs-os/dendra.git
 cd dendra
 python -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev,train,bench,viz]'
@@ -226,7 +226,7 @@ pytest tests/
 
 ## Contact
 
-- GitHub: https://github.com/bwbooth/dendra
+- GitHub: https://github.com/axiom-labs-os/dendra
 - Maintainer: Benjamin Booth — `ben@b-treeventures.com`
 - Axiom Labs: the commercial vehicle behind Dendra
   (a B-Tree Ventures, LLC DBA).
