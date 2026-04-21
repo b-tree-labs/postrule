@@ -14,7 +14,6 @@ import pytest
 
 from dendra import InMemoryStorage, LearnedSwitch, Outcome, Phase, ml_switch
 
-
 # ---------------------------------------------------------------------------
 # Basic behavior
 # ---------------------------------------------------------------------------

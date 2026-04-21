@@ -100,7 +100,8 @@ class TestRecordOutcome:
     def test_records_carry_timestamp_and_source(self):
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
         s.record_outcome(
-            input={"title": "x"}, output="feature_request",
+            input={"title": "x"},
+            output="feature_request",
             outcome=Outcome.INCORRECT.value,
         )
         r = s.storage.load_outcomes("triage")[0]
@@ -113,7 +114,9 @@ class TestRecordOutcome:
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
         with pytest.raises(ValueError, match="outcome"):
             s.record_outcome(
-                input={}, output="x", outcome="not-a-valid-outcome",
+                input={},
+                output="x",
+                outcome="not-a-valid-outcome",
             )
 
 
@@ -157,7 +160,9 @@ class TestSwitchConfig:
 
     def test_config_attached_to_switch(self):
         s = LearnedSwitch(
-            name="x", rule=_rule, author="alice",
+            name="x",
+            rule=_rule,
+            author="alice",
             config=SwitchConfig(safety_critical=True),
         )
         assert s.config.safety_critical is True

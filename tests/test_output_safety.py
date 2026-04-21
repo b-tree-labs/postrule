@@ -32,14 +32,13 @@ from dataclasses import dataclass
 import pytest
 
 from dendra import (
-    LLMPrediction,
     LearnedSwitch,
+    LLMPrediction,
     Outcome,
     Phase,
     SwitchConfig,
     ml_switch,
 )
-
 
 # ---------------------------------------------------------------------------
 # Minimal output-safety rule — Phase 0 worked example
@@ -51,11 +50,16 @@ _PHONE_PATTERN = re.compile(r"\b\d{3}[- ]?\d{3}[- ]?\d{4}\b")
 _EMAIL_PATTERN = re.compile(r"\b[\w.+-]+@[\w.-]+\.\w{2,}\b")
 
 _BLOCKED_TERMS = (
-    "kill yourself", "i hate", "offensive slur stub",
+    "kill yourself",
+    "i hate",
+    "offensive slur stub",
 )
 
 _CONFIDENTIAL_MARKERS = (
-    "INTERNAL USE ONLY", "EXPORT_CONTROLLED", "SECRET//", "CONFIDENTIAL//",
+    "INTERNAL USE ONLY",
+    "EXPORT_CONTROLLED",
+    "SECRET//",
+    "CONFIDENTIAL//",
 )
 
 OUTPUT_LABELS = ["safe", "pii", "toxic", "confidential", "refusal"]
@@ -76,9 +80,7 @@ def _output_rule(response: str) -> str:
         return "toxic"
     if any(marker in response for marker in _CONFIDENTIAL_MARKERS):
         return "confidential"
-    if response.strip().lower().startswith(
-        ("i cannot", "i can't", "i'm unable")
-    ):
+    if response.strip().lower().startswith(("i cannot", "i can't", "i'm unable")):
         return "refusal"
     return "safe"
 
@@ -172,9 +174,7 @@ class TestPhase1ShadowOverOutputs:
             rule=_output_rule,
             author="@safety:output-gate",
             llm=FakeModeratorLLM(always="toxic", conf=0.98),
-            config=SwitchConfig(
-                phase=Phase.LLM_SHADOW, safety_critical=True
-            ),
+            config=SwitchConfig(phase=Phase.LLM_SHADOW, safety_critical=True),
         )
         # Rule says "safe" for this text; the LLM moderator says "toxic".
         # In shadow mode the rule wins; the disagreement lands in the
@@ -189,7 +189,7 @@ class TestPhase1ShadowOverOutputs:
         )
         [row] = sw.storage.load_outcomes("output_gate")
         assert row.rule_output == "safe"
-        assert row.llm_output == "toxic"   # moderator observed
+        assert row.llm_output == "toxic"  # moderator observed
         assert row.llm_confidence == pytest.approx(0.98)
 
     def test_broken_moderator_cannot_block_output(self):
@@ -202,9 +202,7 @@ class TestPhase1ShadowOverOutputs:
             rule=_output_rule,
             author="@safety:output-gate",
             llm=BrokenModerator(),
-            config=SwitchConfig(
-                phase=Phase.LLM_SHADOW, safety_critical=True
-            ),
+            config=SwitchConfig(phase=Phase.LLM_SHADOW, safety_critical=True),
         )
         # The moderator blows up; rule must still decide.
         r = sw.classify("your SSN is 123-45-6789")
@@ -226,9 +224,7 @@ class TestSafetyCriticalCap:
                 name="output_gate",
                 rule=_output_rule,
                 author="@safety:output-gate",
-                config=SwitchConfig(
-                    phase=Phase.ML_PRIMARY, safety_critical=True
-                ),
+                config=SwitchConfig(phase=Phase.ML_PRIMARY, safety_critical=True),
             )
 
     def test_ml_with_fallback_is_the_cap(self):
@@ -239,7 +235,9 @@ class TestSafetyCriticalCap:
             def fit(self, records): ...
             def predict(self, input, labels):
                 return MLPrediction(label="safe", confidence=0.99)
-            def model_version(self): return "fake"
+
+            def model_version(self):
+                return "fake"
 
         sw = LearnedSwitch(
             name="output_gate",

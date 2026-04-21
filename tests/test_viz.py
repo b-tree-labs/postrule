@@ -80,12 +80,27 @@ class TestCrossover:
                 "seed_size": 100,
             },
             [
-                {"training_outcomes": 100, "rule_test_accuracy": 0.7,
-                 "ml_test_accuracy": 0.5, "ml_trained": True, "ml_version": "v"},
-                {"training_outcomes": 250, "rule_test_accuracy": 0.7,
-                 "ml_test_accuracy": 0.71, "ml_trained": True, "ml_version": "v"},
-                {"training_outcomes": 500, "rule_test_accuracy": 0.7,
-                 "ml_test_accuracy": 0.85, "ml_trained": True, "ml_version": "v"},
+                {
+                    "training_outcomes": 100,
+                    "rule_test_accuracy": 0.7,
+                    "ml_test_accuracy": 0.5,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
+                {
+                    "training_outcomes": 250,
+                    "rule_test_accuracy": 0.7,
+                    "ml_test_accuracy": 0.71,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
+                {
+                    "training_outcomes": 500,
+                    "rule_test_accuracy": 0.7,
+                    "ml_test_accuracy": 0.85,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
             ],
         )
         run = load_run(path)
@@ -95,13 +110,28 @@ class TestCrossover:
         path = tmp_path / "run.jsonl"
         _write_jsonl(
             path,
-            {"benchmark": "x", "labels": 10, "train_rows": 1000,
-             "test_rows": 100, "seed_size": 100},
+            {
+                "benchmark": "x",
+                "labels": 10,
+                "train_rows": 1000,
+                "test_rows": 100,
+                "seed_size": 100,
+            },
             [
-                {"training_outcomes": 100, "rule_test_accuracy": 0.9,
-                 "ml_test_accuracy": 0.5, "ml_trained": True, "ml_version": "v"},
-                {"training_outcomes": 200, "rule_test_accuracy": 0.9,
-                 "ml_test_accuracy": 0.6, "ml_trained": True, "ml_version": "v"},
+                {
+                    "training_outcomes": 100,
+                    "rule_test_accuracy": 0.9,
+                    "ml_test_accuracy": 0.5,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
+                {
+                    "training_outcomes": 200,
+                    "rule_test_accuracy": 0.9,
+                    "ml_test_accuracy": 0.6,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
             ],
         )
         run = load_run(path)
@@ -113,15 +143,30 @@ class TestTransitionDepth:
         path = tmp_path / "run.jsonl"
         _write_jsonl(
             path,
-            {"benchmark": "x", "labels": 10, "train_rows": 5000,
-             "test_rows": 1000, "seed_size": 100},
+            {
+                "benchmark": "x",
+                "labels": 10,
+                "train_rows": 5000,
+                "test_rows": 1000,
+                "seed_size": 100,
+            },
             [
                 # rule=0.70, ml=0.72 → ~z=1.0, p≈0.16; not significant
-                {"training_outcomes": 500, "rule_test_accuracy": 0.70,
-                 "ml_test_accuracy": 0.72, "ml_trained": True, "ml_version": "v"},
+                {
+                    "training_outcomes": 500,
+                    "rule_test_accuracy": 0.70,
+                    "ml_test_accuracy": 0.72,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
                 # rule=0.70, ml=0.80 → ~z=5.0, p≈3e-7; significant
-                {"training_outcomes": 1000, "rule_test_accuracy": 0.70,
-                 "ml_test_accuracy": 0.80, "ml_trained": True, "ml_version": "v"},
+                {
+                    "training_outcomes": 1000,
+                    "rule_test_accuracy": 0.70,
+                    "ml_test_accuracy": 0.80,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
             ],
         )
         run = load_run(path)
@@ -132,13 +177,28 @@ class TestTransitionDepth:
         path = tmp_path / "run.jsonl"
         _write_jsonl(
             path,
-            {"benchmark": "x", "labels": 10, "train_rows": 5000,
-             "test_rows": 1000, "seed_size": 100},
+            {
+                "benchmark": "x",
+                "labels": 10,
+                "train_rows": 5000,
+                "test_rows": 1000,
+                "seed_size": 100,
+            },
             [
-                {"training_outcomes": 50, "rule_test_accuracy": 0.5,
-                 "ml_test_accuracy": 0.9, "ml_trained": False, "ml_version": "untrained"},
-                {"training_outcomes": 500, "rule_test_accuracy": 0.5,
-                 "ml_test_accuracy": 0.9, "ml_trained": True, "ml_version": "v"},
+                {
+                    "training_outcomes": 50,
+                    "rule_test_accuracy": 0.5,
+                    "ml_test_accuracy": 0.9,
+                    "ml_trained": False,
+                    "ml_version": "untrained",
+                },
+                {
+                    "training_outcomes": 500,
+                    "rule_test_accuracy": 0.5,
+                    "ml_test_accuracy": 0.9,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
             ],
         )
         run = load_run(path)
@@ -148,10 +208,22 @@ class TestTransitionDepth:
         path = tmp_path / "run.jsonl"
         _write_jsonl(
             path,
-            {"benchmark": "x", "labels": 10, "train_rows": 1000,
-             "test_rows": 100, "seed_size": 100},
-            [{"training_outcomes": 500, "rule_test_accuracy": 0.9,
-              "ml_test_accuracy": 0.5, "ml_trained": True, "ml_version": "v"}],
+            {
+                "benchmark": "x",
+                "labels": 10,
+                "train_rows": 1000,
+                "test_rows": 100,
+                "seed_size": 100,
+            },
+            [
+                {
+                    "training_outcomes": 500,
+                    "rule_test_accuracy": 0.9,
+                    "ml_test_accuracy": 0.5,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                }
+            ],
         )
         run = load_run(path)
         assert run.transition_depth() is None
@@ -186,14 +258,14 @@ class TestMcNemar:
 
     def test_mismatched_lengths_returns_none(self):
         from dendra.viz import mcnemar_p
+
         assert mcnemar_p([True], [True, False]) is None
 
     def test_paired_preferred_when_available(self, tmp_path):
         path = tmp_path / "run.jsonl"
         _write_jsonl(
             path,
-            {"benchmark": "x", "labels": 10, "train_rows": 1000,
-             "test_rows": 30, "seed_size": 100},
+            {"benchmark": "x", "labels": 10, "train_rows": 1000, "test_rows": 30, "seed_size": 100},
             [
                 {
                     "training_outcomes": 500,
@@ -203,7 +275,7 @@ class TestMcNemar:
                     "ml_version": "v",
                     # 10 examples where ML gained, 0 where rule gained.
                     "rule_correct": [True] * 15 + [False] * 15,
-                    "ml_correct":   [True] * 25 + [False] * 5,
+                    "ml_correct": [True] * 25 + [False] * 5,
                 }
             ],
         )
@@ -217,13 +289,28 @@ class TestFinalGap:
         path = tmp_path / "run.jsonl"
         _write_jsonl(
             path,
-            {"benchmark": "x", "labels": 10, "train_rows": 1000,
-             "test_rows": 100, "seed_size": 100},
+            {
+                "benchmark": "x",
+                "labels": 10,
+                "train_rows": 1000,
+                "test_rows": 100,
+                "seed_size": 100,
+            },
             [
-                {"training_outcomes": 500, "rule_test_accuracy": 0.70,
-                 "ml_test_accuracy": 0.80, "ml_trained": True, "ml_version": "v"},
-                {"training_outcomes": 1000, "rule_test_accuracy": 0.70,
-                 "ml_test_accuracy": 0.88, "ml_trained": True, "ml_version": "v"},
+                {
+                    "training_outcomes": 500,
+                    "rule_test_accuracy": 0.70,
+                    "ml_test_accuracy": 0.80,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
+                {
+                    "training_outcomes": 1000,
+                    "rule_test_accuracy": 0.70,
+                    "ml_test_accuracy": 0.88,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
             ],
         )
         run = load_run(path)
@@ -236,13 +323,28 @@ class TestPlotSmoke:
         path = tmp_path / "run.jsonl"
         _write_jsonl(
             path,
-            {"benchmark": "atis", "labels": 26, "train_rows": 4978,
-             "test_rows": 893, "seed_size": 100},
+            {
+                "benchmark": "atis",
+                "labels": 26,
+                "train_rows": 4978,
+                "test_rows": 893,
+                "seed_size": 100,
+            },
             [
-                {"training_outcomes": 500, "rule_test_accuracy": 0.7,
-                 "ml_test_accuracy": 0.79, "ml_trained": True, "ml_version": "v"},
-                {"training_outcomes": 1000, "rule_test_accuracy": 0.7,
-                 "ml_test_accuracy": 0.82, "ml_trained": True, "ml_version": "v"},
+                {
+                    "training_outcomes": 500,
+                    "rule_test_accuracy": 0.7,
+                    "ml_test_accuracy": 0.79,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
+                {
+                    "training_outcomes": 1000,
+                    "rule_test_accuracy": 0.7,
+                    "ml_test_accuracy": 0.82,
+                    "ml_trained": True,
+                    "ml_version": "v",
+                },
             ],
         )
         out = tmp_path / "figure.png"

@@ -12,16 +12,11 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
 from dendra import (
     InMemoryStorage,
     LearnedSwitch,
     LLMPrediction,
-    Outcome,
     OutcomeRecord,
-    Phase,
-    SwitchConfig,
 )
 from dendra.research import train_ml_from_llm_outcomes
 
@@ -80,9 +75,7 @@ class TestLLMAsTeacherHelper:
         _write_outcomes(sw, 250, source="llm", outcome="correct")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(
-            switch=sw, ml_head=head, min_llm_outcomes=200
-        )
+        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=200)
         assert used == 250
         assert head.trained_count == 250
 
@@ -91,9 +84,7 @@ class TestLLMAsTeacherHelper:
         _write_outcomes(sw, 50, source="llm", outcome="correct")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(
-            switch=sw, ml_head=head, min_llm_outcomes=200
-        )
+        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=200)
         assert used == 0
         assert head.trained_count == 0
 
@@ -103,9 +94,7 @@ class TestLLMAsTeacherHelper:
         _write_outcomes(sw, 500, source="rule", outcome="correct")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(
-            switch=sw, ml_head=head, min_llm_outcomes=50
-        )
+        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=50)
         # Only the 100 LLM records qualify; the 500 rule records are
         # ignored (this is the LLM-as-teacher intent — train only on
         # LLM-labeled data).
@@ -118,9 +107,7 @@ class TestLLMAsTeacherHelper:
         _write_outcomes(sw, 100, source="llm", outcome="unknown")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(
-            switch=sw, ml_head=head, min_llm_outcomes=100
-        )
+        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=100)
         # Default filter keeps only "correct" outcomes.
         assert used == 300
 
@@ -141,8 +128,6 @@ class TestLLMAsTeacherHelper:
     def test_empty_log_returns_zero(self):
         sw = _make_switch()
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(
-            switch=sw, ml_head=head, min_llm_outcomes=100
-        )
+        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=100)
         assert used == 0
         assert head.trained_count == 0

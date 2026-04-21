@@ -22,9 +22,8 @@ doesn't pay the runtime unless explicitly invoked.
 
 from __future__ import annotations
 
-import statistics
 import time
-from typing import Callable
+from collections.abc import Callable
 
 import pytest
 
@@ -34,7 +33,6 @@ from dendra import (
     Phase,
     SwitchConfig,
 )
-
 
 pytestmark = pytest.mark.benchmark  # opt-in; tests run with -m benchmark
 
@@ -117,9 +115,11 @@ class TestRawComponentLatency:
             i += 1
 
         stats = _time_many(call, n=5000)
-        print(f"\n[latency] rule: p50={stats['p50_us']:.2f}µs "
-              f"p95={stats['p95_us']:.2f}µs "
-              f"ops/s={stats['throughput_ops_s']:,.0f}")
+        print(
+            f"\n[latency] rule: p50={stats['p50_us']:.2f}µs "
+            f"p95={stats['p95_us']:.2f}µs "
+            f"ops/s={stats['throughput_ops_s']:,.0f}"
+        )
         # Keyword rule: ≤2 µs on any reasonable hardware.
         assert stats["p50_us"] < 3.0
 
@@ -130,9 +130,11 @@ class TestRawComponentLatency:
             head.predict("i want to fly", ["flight", "airfare", "airline"])
 
         stats = _time_many(call, n=2000)
-        print(f"\n[latency] ml_head: p50={stats['p50_us']:.2f}µs "
-              f"p95={stats['p95_us']:.2f}µs "
-              f"ops/s={stats['throughput_ops_s']:,.0f}")
+        print(
+            f"\n[latency] ml_head: p50={stats['p50_us']:.2f}µs "
+            f"p95={stats['p95_us']:.2f}µs "
+            f"ops/s={stats['throughput_ops_s']:,.0f}"
+        )
         # ML classifier (TF-IDF + LR): ≤2 ms at p50 under realistic load.
         assert stats["p50_us"] < 2_000
 
@@ -152,9 +154,11 @@ class TestDendraSwitchOverhead:
             sw.classify("i want to fly from boston to denver")
 
         stats = _time_many(call, n=5000)
-        print(f"\n[latency] switch(RULE): p50={stats['p50_us']:.2f}µs "
-              f"p95={stats['p95_us']:.2f}µs "
-              f"ops/s={stats['throughput_ops_s']:,.0f}")
+        print(
+            f"\n[latency] switch(RULE): p50={stats['p50_us']:.2f}µs "
+            f"p95={stats['p95_us']:.2f}µs "
+            f"ops/s={stats['throughput_ops_s']:,.0f}"
+        )
         # Switch adds a function call, a SwitchResult dataclass, a phase
         # check. Cap overhead at ≤20µs.
         assert stats["p50_us"] < 20.0
@@ -165,17 +169,18 @@ class TestDendraSwitchOverhead:
             rule=_rule_atis,
             author="bench",
             ml_head=_FakeFastMLHead(),
-            config=SwitchConfig(phase=Phase.ML_WITH_FALLBACK,
-                                confidence_threshold=0.85),
+            config=SwitchConfig(phase=Phase.ML_WITH_FALLBACK, confidence_threshold=0.85),
         )
 
         def call():
             sw.classify("i want to fly from boston to denver")
 
         stats = _time_many(call, n=2000)
-        print(f"\n[latency] switch(ML_WITH_FALLBACK): "
-              f"p50={stats['p50_us']:.2f}µs p95={stats['p95_us']:.2f}µs "
-              f"ops/s={stats['throughput_ops_s']:,.0f}")
+        print(
+            f"\n[latency] switch(ML_WITH_FALLBACK): "
+            f"p50={stats['p50_us']:.2f}µs p95={stats['p95_us']:.2f}µs "
+            f"ops/s={stats['throughput_ops_s']:,.0f}"
+        )
         # Even with ML path, should stay sub-millisecond for this fake head.
         assert stats["p50_us"] < 2_500
 
@@ -204,15 +209,19 @@ class TestThroughputProjection:
         ml_only_sec_per_day = ml_stats["p50_us"] * daily_traffic / 1e6
         llm_only_sec_per_day = llm_p50_us * daily_traffic / 1e6
 
-        print(f"\n[throughput] at 1M classifications/day:")
+        print("\n[throughput] at 1M classifications/day:")
         print(f"  rule-only:   {rule_only_sec_per_day:>10,.1f} CPU-sec/day")
         print(f"  ml-only:     {ml_only_sec_per_day:>10,.1f} CPU-sec/day")
-        print(f"  llm-only:    {llm_only_sec_per_day:>10,.1f} CPU-sec/day "
-              f"(= {llm_only_sec_per_day / 3600:.2f} CPU-hours)")
-        print(f"  dendra Phase 0: same as rule")
-        print(f"  dendra Phase 2 (20% LLM fallback): "
-              f"~{0.8 * rule_only_sec_per_day + 0.2 * llm_only_sec_per_day:,.0f} "
-              f"CPU-sec/day")
+        print(
+            f"  llm-only:    {llm_only_sec_per_day:>10,.1f} CPU-sec/day "
+            f"(= {llm_only_sec_per_day / 3600:.2f} CPU-hours)"
+        )
+        print("  dendra Phase 0: same as rule")
+        print(
+            f"  dendra Phase 2 (20% LLM fallback): "
+            f"~{0.8 * rule_only_sec_per_day + 0.2 * llm_only_sec_per_day:,.0f} "
+            f"CPU-sec/day"
+        )
 
         # Sanity: LLM is ≥3 orders of magnitude slower than rule.
         assert llm_p50_us / rule_stats["p50_us"] > 1000

@@ -11,7 +11,6 @@ import pytest
 
 from dendra.wrap import WrapError, wrap_function
 
-
 # ---------------------------------------------------------------------------
 # Label inference
 # ---------------------------------------------------------------------------
@@ -27,19 +26,15 @@ class TestLabelInference:
             "        return 'question'\n"
             "    return 'feature_request'\n"
         )
-        result = wrap_function(
-            source, "triage", author="@triage:support"
-        )
+        result = wrap_function(source, "triage", author="@triage:support")
         assert result.inferred_labels is True
         assert set(result.labels) == {"bug", "question", "feature_request"}
 
     def test_supplied_labels_override_inference(self):
-        source = (
-            "def triage(x):\n"
-            "    return 'bug'\n"
-        )
+        source = "def triage(x):\n    return 'bug'\n"
         result = wrap_function(
-            source, "triage",
+            source,
+            "triage",
             author="@triage:support",
             labels=["bug", "feature", "question"],
         )
@@ -68,9 +63,7 @@ class TestDecoratorInsertion:
             "        return 'bug'\n"
             "    return 'feature'\n"
         )
-        result = wrap_function(
-            source, "triage", author="@triage:support"
-        )
+        result = wrap_function(source, "triage", author="@triage:support")
         # Output must still be valid Python.
         ast.parse(result.modified_source)
 
@@ -82,12 +75,10 @@ class TestDecoratorInsertion:
         assert "SwitchConfig(phase=Phase.RULE)" in text
 
     def test_import_inserted_at_top(self):
-        source = (
-            "def triage(x):\n"
-            "    return 'bug'\n"
-        )
+        source = "def triage(x):\n    return 'bug'\n"
         result = wrap_function(
-            source, "triage",
+            source,
+            "triage",
             author="@triage:support",
             labels=["bug", "feature"],
         )
@@ -102,7 +93,8 @@ class TestDecoratorInsertion:
             "    return 'bug'\n"
         )
         result = wrap_function(
-            source, "triage",
+            source,
+            "triage",
             author="@triage:support",
             labels=["bug"],
         )
@@ -110,57 +102,40 @@ class TestDecoratorInsertion:
         # Docstring on lines 1-4, then blank, then import.
         assert lines[0].startswith('"""Module docstring')
         assert "from dendra import" in result.modified_source
-        docstring_line_idx = next(
-            i for i, ln in enumerate(lines) if ln.startswith('"""') and i > 0
-        )
-        import_line_idx = next(
-            i for i, ln in enumerate(lines) if "from dendra import" in ln
-        )
+        docstring_line_idx = next(i for i, ln in enumerate(lines) if ln.startswith('"""') and i > 0)
+        import_line_idx = next(i for i, ln in enumerate(lines) if "from dendra import" in ln)
         assert import_line_idx > docstring_line_idx
 
     def test_import_after_future_imports(self):
-        source = (
-            "from __future__ import annotations\n"
-            "\n"
-            "def triage(x):\n"
-            "    return 'bug'\n"
-        )
+        source = "from __future__ import annotations\n\ndef triage(x):\n    return 'bug'\n"
         result = wrap_function(
-            source, "triage",
+            source,
+            "triage",
             author="@triage:support",
             labels=["bug"],
         )
         lines = result.modified_source.splitlines()
         assert lines[0] == "from __future__ import annotations"
         future_idx = 0
-        dendra_idx = next(
-            i for i, ln in enumerate(lines) if "from dendra import" in ln
-        )
+        dendra_idx = next(i for i, ln in enumerate(lines) if "from dendra import" in ln)
         assert dendra_idx > future_idx
 
     def test_safety_critical_flag_propagates(self):
-        source = (
-            "def gate(x):\n"
-            "    return 'safe'\n"
-        )
+        source = "def gate(x):\n    return 'safe'\n"
         result = wrap_function(
-            source, "gate",
+            source,
+            "gate",
             author="@safety:gate",
             labels=["safe", "pii"],
             safety_critical=True,
         )
-        assert (
-            "SwitchConfig(phase=Phase.RULE, safety_critical=True)"
-            in result.modified_source
-        )
+        assert "SwitchConfig(phase=Phase.RULE, safety_critical=True)" in result.modified_source
 
     def test_non_rule_phase_propagates(self):
-        source = (
-            "def gate(x):\n"
-            "    return 'safe'\n"
-        )
+        source = "def gate(x):\n    return 'safe'\n"
         result = wrap_function(
-            source, "gate",
+            source,
+            "gate",
             author="@safety:gate",
             labels=["safe"],
             phase="ML_WITH_FALLBACK",
@@ -179,7 +154,8 @@ class TestDecoratorInsertion:
             "    return X\n"
         )
         result = wrap_function(
-            source, "triage",
+            source,
+            "triage",
             author="@triage:support",
             labels=["bug"],
         )
@@ -197,13 +173,11 @@ class TestDecoratorInsertion:
 
 class TestErrorCases:
     def test_function_not_found_raises(self):
-        source = (
-            "def triage(x):\n"
-            "    return 'bug'\n"
-        )
+        source = "def triage(x):\n    return 'bug'\n"
         with pytest.raises(WrapError, match="not found"):
             wrap_function(
-                source, "nonexistent",
+                source,
+                "nonexistent",
                 author="@triage:support",
                 labels=["bug"],
             )
@@ -218,7 +192,8 @@ class TestErrorCases:
         )
         with pytest.raises(WrapError, match="already decorated"):
             wrap_function(
-                source, "triage",
+                source,
+                "triage",
                 author="@triage:support",
                 labels=["bug"],
             )
@@ -231,12 +206,10 @@ class TestErrorCases:
 
 class TestDiff:
     def test_diff_shows_insertions(self):
-        source = (
-            "def triage(x):\n"
-            "    return 'bug'\n"
-        )
+        source = "def triage(x):\n    return 'bug'\n"
         result = wrap_function(
-            source, "triage",
+            source,
+            "triage",
             author="@triage:support",
             labels=["bug"],
         )
