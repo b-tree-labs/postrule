@@ -50,6 +50,11 @@ runtime/
 provenance-*.tar.gz
 provenance-*/
 
+# Patent filing packet (regenerated from .md sources; never committed)
+docs/working/patent/packet/
+docs/working/patent/dendra-ppa.pdf
+docs/working/patent/drawings/*.pdf
+
 # Model artifacts (large binaries; keep out of git)
 *.onnx
 *.joblib
