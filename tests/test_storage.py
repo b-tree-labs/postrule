@@ -123,3 +123,65 @@ class TestFileStorage:
         s = FileStorage(str(tmp_path))
         s.append_outcome("x", _record())
         assert len(s.load_outcomes("x")) == 1
+
+
+class TestFileStorageRotation:
+    """Zero-maintenance log rotation — segments cap, retention prunes."""
+
+    def test_rotates_when_active_exceeds_cap(self, tmp_path):
+        # 200-byte cap means every ~2 records triggers rotation.
+        s = FileStorage(tmp_path, max_bytes_per_segment=200, max_rotated_segments=4)
+        for i in range(10):
+            s.append_outcome("s", _record(output=f"label-{i}"))
+        files = sorted((tmp_path / "s").iterdir())
+        # Active + at least one rotated segment present.
+        assert (tmp_path / "s" / "outcomes.jsonl").exists()
+        assert any("outcomes.jsonl." in p.name for p in files)
+
+    def test_retention_cap_drops_oldest(self, tmp_path):
+        # 100 bytes per segment; 2 rotated kept.
+        s = FileStorage(tmp_path, max_bytes_per_segment=100, max_rotated_segments=2)
+        for i in range(40):
+            s.append_outcome("s", _record(output=f"label-{i}"))
+        files = [p.name for p in (tmp_path / "s").iterdir()]
+        # Never more than active + 2 rotated on disk.
+        rotated = [f for f in files if f.startswith("outcomes.jsonl.")]
+        assert len(rotated) <= 2
+
+    def test_load_returns_segments_in_chronological_order(self, tmp_path):
+        s = FileStorage(tmp_path, max_bytes_per_segment=150, max_rotated_segments=3)
+        for i in range(12):
+            s.append_outcome("s", _record(output=f"label-{i:02d}"))
+        outputs = [r.output for r in s.load_outcomes("s")]
+        # Sorted chronologically; older labels appear before newer ones.
+        # (Retention may drop the very-oldest rows; surviving rows must be
+        # strictly increasing.)
+        assert outputs == sorted(outputs)
+
+    def test_no_rotation_when_below_cap(self, tmp_path):
+        s = FileStorage(tmp_path, max_bytes_per_segment=10**9)
+        for i in range(20):
+            s.append_outcome("s", _record(output=f"label-{i}"))
+        files = [p.name for p in (tmp_path / "s").iterdir()]
+        assert files == ["outcomes.jsonl"]
+
+    def test_bytes_on_disk_and_switch_names(self, tmp_path):
+        s = FileStorage(tmp_path)
+        s.append_outcome("alpha", _record(output="a"))
+        s.append_outcome("beta", _record(output="b"))
+        assert set(s.switch_names()) == {"alpha", "beta"}
+        assert s.bytes_on_disk("alpha") > 0
+        assert s.bytes_on_disk("nonexistent") == 0
+
+    def test_compact_forces_rotation(self, tmp_path):
+        s = FileStorage(tmp_path, max_bytes_per_segment=10**6)
+        s.append_outcome("s", _record(output="one"))
+        assert not (tmp_path / "s" / "outcomes.jsonl.1").exists()
+        s.compact("s")
+        assert (tmp_path / "s" / "outcomes.jsonl.1").exists()
+
+    def test_rejects_invalid_rotation_params(self, tmp_path):
+        with pytest.raises(ValueError):
+            FileStorage(tmp_path, max_bytes_per_segment=0)
+        with pytest.raises(ValueError):
+            FileStorage(tmp_path, max_rotated_segments=-1)

@@ -1,0 +1,21 @@
+{"kind": "summary", "benchmark": "atis", "labels": 26, "train_rows": 4978, "test_rows": 893, "seed_size": 500, "kw_per_label": 5, "checkpoint_every": 250, "citation": "Hemphill et al. 1990, 'The ATIS Spoken Language Systems Pilot Corpus'"}
+{"kind": "checkpoint", "training_outcomes": 250, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.7558790593505039, "ml_trained": true, "ml_version": "sklearn-250"}
+{"kind": "checkpoint", "training_outcomes": 500, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.7928331466965286, "ml_trained": true, "ml_version": "sklearn-500"}
+{"kind": "checkpoint", "training_outcomes": 750, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.7973124300111982, "ml_trained": true, "ml_version": "sklearn-750"}
+{"kind": "checkpoint", "training_outcomes": 1000, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8185890257558791, "ml_trained": true, "ml_version": "sklearn-1000"}
+{"kind": "checkpoint", "training_outcomes": 1250, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8286674132138858, "ml_trained": true, "ml_version": "sklearn-1250"}
+{"kind": "checkpoint", "training_outcomes": 1500, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8365061590145577, "ml_trained": true, "ml_version": "sklearn-1500"}
+{"kind": "checkpoint", "training_outcomes": 1750, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8443449048152296, "ml_trained": true, "ml_version": "sklearn-1750"}
+{"kind": "checkpoint", "training_outcomes": 2000, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8521836506159015, "ml_trained": true, "ml_version": "sklearn-2000"}
+{"kind": "checkpoint", "training_outcomes": 2250, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8488241881298992, "ml_trained": true, "ml_version": "sklearn-2250"}
+{"kind": "checkpoint", "training_outcomes": 2500, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.851063829787234, "ml_trained": true, "ml_version": "sklearn-2500"}
+{"kind": "checkpoint", "training_outcomes": 2750, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8533034714445689, "ml_trained": true, "ml_version": "sklearn-2750"}
+{"kind": "checkpoint", "training_outcomes": 3000, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8555431131019037, "ml_trained": true, "ml_version": "sklearn-3000"}
+{"kind": "checkpoint", "training_outcomes": 3250, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8667413213885778, "ml_trained": true, "ml_version": "sklearn-3250"}
+{"kind": "checkpoint", "training_outcomes": 3500, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.864501679731243, "ml_trained": true, "ml_version": "sklearn-3500"}
+{"kind": "checkpoint", "training_outcomes": 3750, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8689809630459127, "ml_trained": true, "ml_version": "sklearn-3750"}
+{"kind": "checkpoint", "training_outcomes": 4000, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8678611422172452, "ml_trained": true, "ml_version": "sklearn-4000"}
+{"kind": "checkpoint", "training_outcomes": 4250, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8756998880179171, "ml_trained": true, "ml_version": "sklearn-4250"}
+{"kind": "checkpoint", "training_outcomes": 4500, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8846584546472565, "ml_trained": true, "ml_version": "sklearn-4500"}
+{"kind": "checkpoint", "training_outcomes": 4750, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8846584546472565, "ml_trained": true, "ml_version": "sklearn-4750"}
+{"kind": "checkpoint", "training_outcomes": 4978, "rule_test_accuracy": 0.6954087346024636, "ml_test_accuracy": 0.8868980963045913, "ml_trained": true, "ml_version": "sklearn-4978"}
