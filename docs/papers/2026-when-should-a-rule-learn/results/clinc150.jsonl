@@ -1,0 +1,12 @@
+{"kind": "summary", "benchmark": "clinc150", "labels": 151, "train_rows": 15250, "test_rows": 5500, "seed_size": 100, "kw_per_label": 5, "checkpoint_every": 1500, "citation": "Larson et al. 2019, 'An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction'"}
+{"kind": "checkpoint", "training_outcomes": 1500, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.07854545454545454, "ml_trained": true, "ml_version": "sklearn-1500"}
+{"kind": "checkpoint", "training_outcomes": 3000, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.1570909090909091, "ml_trained": true, "ml_version": "sklearn-3000"}
+{"kind": "checkpoint", "training_outcomes": 4500, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.2289090909090909, "ml_trained": true, "ml_version": "sklearn-4500"}
+{"kind": "checkpoint", "training_outcomes": 6000, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.30163636363636365, "ml_trained": true, "ml_version": "sklearn-6000"}
+{"kind": "checkpoint", "training_outcomes": 7500, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.37418181818181817, "ml_trained": true, "ml_version": "sklearn-7500"}
+{"kind": "checkpoint", "training_outcomes": 9000, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.448, "ml_trained": true, "ml_version": "sklearn-9000"}
+{"kind": "checkpoint", "training_outcomes": 10500, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.518, "ml_trained": true, "ml_version": "sklearn-10500"}
+{"kind": "checkpoint", "training_outcomes": 12000, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.5929090909090909, "ml_trained": true, "ml_version": "sklearn-12000"}
+{"kind": "checkpoint", "training_outcomes": 13500, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.6603636363636364, "ml_trained": true, "ml_version": "sklearn-13500"}
+{"kind": "checkpoint", "training_outcomes": 15000, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.7312727272727273, "ml_trained": true, "ml_version": "sklearn-15000"}
+{"kind": "checkpoint", "training_outcomes": 15250, "rule_test_accuracy": 0.005454545454545455, "ml_test_accuracy": 0.8185454545454546, "ml_trained": true, "ml_version": "sklearn-15250"}

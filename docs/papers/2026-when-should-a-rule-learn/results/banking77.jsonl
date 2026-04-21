@@ -1,0 +1,12 @@
+{"kind": "summary", "benchmark": "banking77", "labels": 77, "train_rows": 10003, "test_rows": 3080, "seed_size": 100, "kw_per_label": 5, "checkpoint_every": 1000, "citation": "Casanueva et al. 2020, 'Efficient Intent Detection with Dual Sentence Encoders'"}
+{"kind": "checkpoint", "training_outcomes": 1000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.08831168831168831, "ml_trained": true, "ml_version": "sklearn-1000"}
+{"kind": "checkpoint", "training_outcomes": 2000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.2064935064935065, "ml_trained": true, "ml_version": "sklearn-2000"}
+{"kind": "checkpoint", "training_outcomes": 3000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.2785714285714286, "ml_trained": true, "ml_version": "sklearn-3000"}
+{"kind": "checkpoint", "training_outcomes": 4000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.37142857142857144, "ml_trained": true, "ml_version": "sklearn-4000"}
+{"kind": "checkpoint", "training_outcomes": 5000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.4707792207792208, "ml_trained": true, "ml_version": "sklearn-5000"}
+{"kind": "checkpoint", "training_outcomes": 6000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.5438311688311688, "ml_trained": true, "ml_version": "sklearn-6000"}
+{"kind": "checkpoint", "training_outcomes": 7000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.6347402597402597, "ml_trained": true, "ml_version": "sklearn-7000"}
+{"kind": "checkpoint", "training_outcomes": 8000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.7233766233766233, "ml_trained": true, "ml_version": "sklearn-8000"}
+{"kind": "checkpoint", "training_outcomes": 9000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.7957792207792208, "ml_trained": true, "ml_version": "sklearn-9000"}
+{"kind": "checkpoint", "training_outcomes": 10000, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.8775974025974026, "ml_trained": true, "ml_version": "sklearn-10000"}
+{"kind": "checkpoint", "training_outcomes": 10003, "rule_test_accuracy": 0.012987012987012988, "ml_test_accuracy": 0.875974025974026, "ml_trained": true, "ml_version": "sklearn-10003"}
