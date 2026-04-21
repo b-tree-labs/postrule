@@ -1,105 +1,238 @@
 # Dendra
 
-**Graduated-autonomy classification primitive.** Starts as a rule on
-day one. Accumulates labeled outcome data. Graduates to an ML
-classifier when evidence justifies it. Falls back to the rule on
-low confidence. Retrains continuously. One primitive, one lifecycle,
-deployed everywhere classification decisions are made.
+**The classification primitive every production codebase is missing.**
 
-## Why
+Every production system has classification decisions — routing a
+ticket, classifying an intent, selecting a retrieval strategy,
+screening an output for PII. They start as hand-written rules because
+no training data exists on day one. Over time, outcome data
+accumulates, but the rules stay frozen because migrating each site
+to ML is bespoke engineering at every decision point.
 
-Every production system has classification decisions: triage a
-support ticket, route a query, classify an interaction, assess
-content quality, select a retrieval strategy. These decisions start
-as handcrafted rules because there's no training data on day one.
-Over time, outcome data accumulates — but the rules stay frozen
-because replacing them with ML requires a custom migration for each
-decision point.
+Dendra is one decorator, six lifecycle phases, statistical gates at
+every transition, and a safety floor that survives jailbreaks, silent
+ML failures, and unbounded token bills.
 
-Dendra formalizes the rule → ML upgrade path so every classification
-site in your system gets it for free.
+```python
+from dendra import ml_switch, Phase, SwitchConfig
 
-## Design principles
+@ml_switch(
+    labels=["bug", "feature_request", "question"],
+    author="@triage:support",
+    config=SwitchConfig(phase=Phase.RULE),
+)
+def triage(ticket: dict) -> str:
+    title = ticket.get("title", "").lower()
+    if "crash" in title:
+        return "bug"
+    if title.endswith("?"):
+        return "question"
+    return "feature_request"
+```
 
-1. **Rule stays code.** User-authored rule function remains as the
-   circuit-breaker floor and is never modified by the library.
-2. **ML head is data.** Proposals carry a new ONNX head + evidence;
-   adoption updates a pointer in `active.json`. No code redeploy at
-   adoption or rollback.
-3. **Excellent zero-config defaults.** Level-0 default is safe and
-   useful with no configuration. Automation and custom backends are
-   progressively disclosed opt-ins.
-4. **Library-first.** Full governance ships standalone (zero runtime
-   deps beyond ONNX Runtime). Consumer systems plug in via one
-   protocol; the library never knows consumers exist.
-5. **Safety invariant.** `safety_critical=True` caps the lifecycle at
-   ML-with-Fallback — authorization decisions never graduate to
-   ML-primary mode.
+Zero behavior change on day one. Dendra logs every outcome. When
+statistical evidence accumulates, advance the phase and the LLM or
+ML head takes over — with the rule always available as the safety
+floor.
+
+## Install
+
+```bash
+pip install dendra
+```
+
+Zero required runtime dependencies. Optional extras: `train`
+(scikit-learn), `bench` (HuggingFace datasets), `viz` (matplotlib),
+`openai` / `anthropic` / `ollama` adapters.
+
+## The six phases
+
+| Phase | Decision-maker | Learning component | Safety floor |
+|---|---|---|---|
+| `RULE` | Your rule | — | Rule (self) |
+| `LLM_SHADOW` | Your rule | LLM predicts, no effect on decision | Rule |
+| `LLM_PRIMARY` | LLM if confident | Rule fallback on low conf / LLM failure | Rule |
+| `ML_SHADOW` | LLM (or rule) | ML head trains, no effect | Rule |
+| `ML_WITH_FALLBACK` | ML if confident | Rule fallback | Rule |
+| `ML_PRIMARY` | ML | — | Rule (circuit breaker only) |
+
+Advance between phases when a paired-proportion statistical test
+(McNemar's exact or equivalent) rejects the null hypothesis that the
+higher-tier classifier is no better than the current phase's
+decision-maker. The probability that any transition produces
+worse-than-rule behavior is bounded above by the test's Type-I error
+rate.
+
+## CLIs
+
+```bash
+# Find classification sites in any codebase (static AST scan).
+dendra analyze ./my-repo --format markdown --project-savings
+
+# Wrap a target function with @ml_switch (AST injection, no typos).
+dendra init src/triage.py:triage_ticket --author "@triage:support"
+
+# Reproduce the four-benchmark transition-curve measurements.
+dendra bench banking77
+
+# Render a Figure 1-style plot from benchmark output.
+dendra plot results/atis.jsonl -o figure-1.png
+
+# Self-measured ROI report from production outcome logs.
+dendra roi runtime/dendra/
+```
+
+## What's measured
+
+Four public benchmarks evaluated end-to-end with paired McNemar's
+tests at `p < 0.01`:
+
+| Benchmark | Labels | Rule acc | ML @ transition | ML final | Transition depth |
+|---|---:|---:|---:|---:|---:|
+| ATIS | 26 | 70.0% | 75.6% | 88.7% | ≤ 250 outcomes |
+| HWU64 | 64 | 1.8% | 10.5% | 83.6% | ≤ 1,000 outcomes |
+| Banking77 | 77 | 1.3% | 8.8% | 87.8% | ≤ 1,000 outcomes |
+| CLINC150 | 151 | 0.5% | 7.9% | 81.9% | ≤ 1,500 outcomes |
+
+Measured latency:
+
+- Rule call: 0.12 µs p50
+- **Dendra switch at Phase 0: 0.62 µs p50** (5× overhead over bare rule)
+- Real ML head (TF-IDF + LR on ATIS): 105 µs p50
+- Local LLM (llama3.2:1b via Ollama): ~250 ms p50
+
+At 100M classifications/month, an LLM-only design with a Sonnet-
+class model runs **$11.5M/yr** in inference tokens. Dendra at Phase
+4 drops this to essentially zero while preserving LLM-quality
+decisions on the 20% of traffic the rule/ML can't handle confidently.
+
+## Security properties
+
+- **20-pattern jailbreak corpus:** 100% rule-floor preserved when
+  the shadow LLM is configured to return the attacker-desired label
+  at 0.99 confidence.
+- **PII corpus:** 100% recall, 100% precision on a 25-item mixed
+  corpus (SSN, phone, email, CC, passport, AWS key, JWT, Bearer
+  token, MRN, ICD-10, IBAN, DOB).
+- **Circuit-breaker stress:** 100 consecutive ML failures → breaker
+  trips once, stays tripped, only explicit operator reset restores
+  ML routing.
+- **Adversarial-shadow latency:** shadow LLM hangs 5 ms then throws
+  → decision p95 under 50 ms, rule decision unblocked.
+
+See `tests/test_security.py`, `tests/test_security_benchmarks.py`,
+and `tests/test_output_safety.py`.
+
+## Output safety
+
+The same primitive wraps classifications of LLM-*generated output*
+before delivery to users. Tag with `safety_critical=True` and the
+switch refuses to construct at `Phase.ML_PRIMARY` — the rule floor
+can never be removed.
+
+```python
+@ml_switch(
+    labels=["safe", "pii", "toxic", "confidential"],
+    author="@safety:output-gate",
+    config=SwitchConfig(phase=Phase.RULE, safety_critical=True),
+)
+def classify_output(response: str) -> str:
+    if _SSN.search(response) or _PHONE.search(response):
+        return "pii"
+    if any(m in response for m in _CONFIDENTIAL_MARKERS):
+        return "confidential"
+    ...
+```
+
+## LLM-as-teacher bootstrap
+
+Zero historical labels? Deploy at `Phase.LLM_PRIMARY`. The LLM
+makes the decisions. Every classification writes an outcome record.
+After 500-5,000 records, train a local ML head on those LLM-labeled
+records, graduate to `Phase.ML_WITH_FALLBACK`, and the hot path
+runs at ~1 µs per call with zero token cost on the 80%+ of traffic
+the ML handles confidently.
+
+```python
+from dendra.research import train_ml_from_llm_outcomes
+
+used = train_ml_from_llm_outcomes(
+    switch=triage.switch,
+    ml_head=head,
+    min_llm_outcomes=500,
+)
+```
+
+See `docs/working/llm-as-teacher.md` for the full pattern.
+
+## Project structure
+
+```
+src/dendra/
+├── core.py           # LearnedSwitch, Phase, SwitchConfig, OutcomeRecord
+├── decorator.py      # @ml_switch
+├── storage.py        # Self-rotating file storage + in-memory
+├── llm.py            # OpenAI / Anthropic / Ollama / llamafile adapters
+├── ml.py             # MLHead protocol + sklearn default head
+├── wrap.py           # AST-based @ml_switch injector (`dendra init`)
+├── analyzer.py       # Static classification-site finder (`dendra analyze`)
+├── research.py       # Transition-curve runner, paired-test helpers
+├── roi.py            # Self-measured ROI report (`dendra roi`)
+├── viz.py            # Figure rendering + McNemar p-values
+├── telemetry.py      # Emitter protocol + shipped emitters
+├── benchmarks/       # Public-benchmark loaders + reference rules
+└── cli.py            # `dendra` CLI entry point
+
+tests/                # 195 tests
+docs/
+├── papers/2026-when-should-a-rule-learn/   # Paper outline + results
+├── marketing/        # Pricing, applicability, VC deck, positioning
+├── integrations/     # SKILL.md for Claude Code + GitHub Action
+└── working/          # Design docs, strategy, patent package
+```
+
+## Paper
+
+"**When Should a Rule Learn? Transition Curves for Safe Rule-to-ML
+Graduation**" — target venue NeurIPS 2026. Outline + results at
+`docs/papers/2026-when-should-a-rule-learn/`. arXiv preprint landing
+post-patent-filing.
+
+## IP
+
+Apache-2.0 license on this reference implementation. The underlying
+classification primitive is covered by a filed US provisional patent
+(application pending). The Apache 2.0 grant includes a patent
+license to recipients, so Dendra users are free to practice the
+claimed methods. See `docs/working/patent-strategy.md` §9 for the
+OSS + patent interaction.
 
 ## Status
 
-**v0.1.0 — Phase 0 only.** Wraps a rule function, records outcomes
-to a file-based store, gives you a platform to accumulate training
-data. ML training + graduation (Phase 1+) ship in later releases.
+**v0.2.0** — all six phases implemented; four-benchmark measurements
+published; static analyzer and `dendra init` CLI shipping; output-
+safety patterns documented; patent provisional filing-ready. 195
+tests green. Paper submission in progress.
 
-## Quick start
+## Dev setup
 
-```python
-from dendra import ml_switch
-
-@ml_switch(labels=["bug", "feature_request"], author="alice")
-def triage(ticket: dict) -> str:
-    if "crash" in ticket.get("title", "").lower():
-        return "bug"
-    return "feature_request"
-
-# The decorated function works like the original rule, plus records
-# the decision for later ML graduation.
-label = triage({"title": "App keeps crashing"})   # → "bug"
-
-# When you learn whether the decision was correct, record it:
-triage.record_outcome(
-    input={"title": "App keeps crashing"},
-    output="bug",
-    outcome="correct",
-)
-
-# Inspect:
-triage.status()
-# SwitchStatus(name='triage', phase=Phase.RULE, outcomes_total=1, ...)
+```bash
+git clone https://github.com/bwbooth/dendra.git
+cd dendra
+python -m venv .venv && source .venv/bin/activate
+pip install -e '.[dev,train,bench,viz]'
+pytest tests/
 ```
 
-You can also use the class directly when the decorator's convenience
-isn't what you want:
+## Contact
 
-```python
-from dendra import LearnedSwitch
+- GitHub: https://github.com/bwbooth/dendra
+- Maintainer: Benjamin Booth — `ben@b-treeventures.com`
+- Axiom Labs: the commercial vehicle behind Dendra
+  (a B-Tree Ventures, LLC DBA).
 
-switch = LearnedSwitch(name="triage", rule=triage_rule_fn, author="alice")
-result = switch.classify(ticket)     # SwitchResult
-switch.record_outcome(input=..., output=..., outcome="correct")
-```
+---
 
-## Lifecycle (six phases)
-
-```
-RULE  →  LLM_SHADOW  →  LLM_PRIMARY  →  ML_SHADOW  →  ML_WITH_FALLBACK  →  ML_PRIMARY
-```
-
-v0.1.0 ships RULE only. Subsequent phases land as follow-up releases;
-each phase is a data-driven transition gated by evidence (see spec).
-
-## Roadmap
-
-- v0.1.0 — Phase 0 (RULE) + outcome logging + file storage
-  *(this release)*
-- v0.2.0 — Phase 1/2 (LLM shadow / LLM primary)
-- v0.3.0 — Phase 3/4 (ML shadow / ML with fallback)
-- v0.4.0 — Phase 5 (ML primary) + ApprovalBackend governance
-- v1.0.0 — Production-stable API; cross-language scaffolding
-
-## License
-
-Apache 2.0.
-
-_Copyright (c) 2026 B-Tree Ventures, LLC. Apache-2.0 licensed._
+_Copyright (c) 2026 B-Tree Ventures, LLC (dba Axiom Labs). Apache-2.0
+licensed. "Dendra", "Transition Curves", and "Axiom Labs" are
+trademarks of B-Tree Ventures, LLC._
