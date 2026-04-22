@@ -198,14 +198,32 @@ Graduation**" — target venue NeurIPS 2026. Outline + results at
 `docs/papers/2026-when-should-a-rule-learn/`. arXiv preprint landing
 post-patent-filing.
 
-## IP
+## Licensing
 
-Apache-2.0 license on this reference implementation. The underlying
-classification primitive is covered by a filed US provisional patent
-(application pending). The Apache 2.0 grant includes a patent
-license to recipients, so Dendra users are free to practice the
-claimed methods. See `docs/working/patent-strategy.md` §9 for the
-OSS + patent interaction.
+Dendra is split-licensed:
+
+- **Client SDK** (what you `import` — decorator, config, storage,
+  adapters, telemetry, viz, benchmarks): **Apache License 2.0**.
+  Free for any commercial use.
+- **Dendra-operated components** (analyzer, ROI reporter,
+  research/graduation tooling, CLI, hosted surfaces): **Business
+  Source License 1.1** with Change Date **2030-05-01** (auto-
+  conversion to Apache 2.0) and Additional Use Grant permitting
+  customer production use against their own code; only prohibits
+  offering a competing hosted Dendra service.
+
+See [`LICENSE.md`](./LICENSE.md) for the split map and
+[`LICENSING.md`](./LICENSING.md) for developer-facing Q&A.
+Per-file headers declare the specific license for each source
+file. Commercial licensing that removes the BSL restrictions is
+available — contact `licensing@b-treeventures.com`.
+
+The underlying classification primitive is covered by a filed
+US provisional patent (application pending). See
+[`docs/working/license-strategy.md`](./docs/working/license-strategy.md)
+for the decision rationale and
+[`docs/working/patent-strategy.md`](./docs/working/patent-strategy.md)
+for the patent strategy.
 
 ## Status
 
@@ -233,6 +251,8 @@ pytest tests/
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC (dba Axiom Labs). Apache-2.0
-licensed. "Dendra", "Transition Curves", and "Axiom Labs" are
-trademarks of B-Tree Ventures, LLC._
+_Copyright (c) 2026 B-Tree Ventures, LLC (dba Axiom Labs).
+Split-licensed — Apache 2.0 on the client SDK, BSL 1.1 on
+Dendra-operated components; see `LICENSE.md`. "Dendra",
+"Transition Curves", and "Axiom Labs" are trademarks of
+B-Tree Ventures, LLC._
