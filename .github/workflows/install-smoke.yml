@@ -1,0 +1,67 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+#
+# Cross-OS install smoke test. Complements the shared python-ci.yml
+# workflow (which runs unit tests on ubuntu) by confirming that
+# `pip install .` works on a fresh macOS and Linux environment and
+# that the installed `dendra` CLI is importable and runnable.
+#
+# Runs on pushes and PRs to main, plus a weekly cron so a dependency
+# change or wheel-build regression shows up within a week even in
+# the absence of repo activity.
+name: install-smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 8 * * 1'  # Mondays 08:00 UTC
+
+jobs:
+  smoke:
+    name: install + import on ${{ matrix.os }} / py${{ matrix.python-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.10', '3.12', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build and install from source
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+          python -m pip install dist/*.whl
+
+      - name: Smoke-test the installed package
+        run: |
+          python -c "import dendra; print('version:', dendra.__version__ if hasattr(dendra, '__version__') else 'unknown')"
+          python -c "from dendra import ml_switch, Phase, SwitchConfig, LearnedSwitch; print('client SDK imports ok')"
+          dendra --help
+
+      - name: Smoke-test a minimal switch
+        run: |
+          python - <<'PY'
+          from dendra import ml_switch, Phase, SwitchConfig
+
+          @ml_switch(
+              labels=["a", "b"],
+              author="@test:smoke",
+              config=SwitchConfig(phase=Phase.RULE),
+          )
+          def classify(x):
+              return "a" if x.get("flag") else "b"
+
+          assert classify({"flag": True}) == "a"
+          assert classify({"flag": False}) == "b"
+          print("minimal switch decision: ok")
+          PY
