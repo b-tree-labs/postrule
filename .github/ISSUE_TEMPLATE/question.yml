@@ -1,0 +1,38 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+name: Question
+description: A question about how to use Dendra.
+title: "[question] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For longer-form discussions, consider
+        [GitHub Discussions](https://github.com/axiom-labs-os/dendra/discussions)
+        instead — it's a better fit for open-ended questions.
+
+        For support-contract / commercial inquiries, see
+        [SUPPORT.md](../../SUPPORT.md).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What would you like to know?
+      description: >-
+        Be specific. If you've tried something that didn't work, share
+        the code. Well-framed questions often become FAQ entries.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to accomplish? What have you tried?
+
+  - type: input
+    id: dendra-version
+    attributes:
+      label: Dendra version (if relevant)
+      placeholder: "0.2.0"
