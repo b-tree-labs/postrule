@@ -6,6 +6,59 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Changed
+
+- **License: now split Apache 2.0 + BSL 1.1.** The client SDK
+  (decorator, config, storage, adapters, telemetry, viz,
+  benchmarks) stays Apache 2.0 and is free for any use.
+  Dendra-operated components (analyzer, ROI reporter, research /
+  graduation tooling, CLI, future hosted surfaces) are now
+  Business Source License 1.1 with Change Date **2030-05-01**
+  (auto-converts to Apache 2.0) and an Additional Use Grant
+  that permits customer production use but prohibits offering a
+  competing hosted Dendra service. Rationale:
+  `docs/working/license-strategy.md`.
+- **`pyproject.toml` license metadata** moved to the PEP 639
+  SPDX form: `license = "Apache-2.0 AND LicenseRef-BSL-1.1"`
+  with an explicit `license-files` glob covering both license
+  files plus the `LICENSE.md` split map.
+- **`tests/test_telemetry_and_research.py`** split into
+  `tests/test_telemetry.py` (Apache) and `tests/test_research.py`
+  (BSL) so each test file matches the license of the module it
+  exercises.
+
+### Added
+
+- **`LICENSE-APACHE`, `LICENSE-BSL`, `LICENSE.md`,
+  `LICENSING.md`.** Split license text + the developer-facing
+  "can I use this?" guide.
+- **`TRADEMARKS.md`.** Repo-level trademark policy for DENDRA,
+  TRANSITION CURVES, and AXIOM LABS. Describes descriptive /
+  nominative fair use vs commercial uses that need a license.
+- **`CODEOWNERS`.** Single-owner policy; IP, CI, and
+  product-surface paths call out explicit ownership for future
+  branch-protection enforcement.
+- **DCO sign-off requirement** on contributions
+  (`CONTRIBUTING.md`). Use `git commit -s`.
+- **`.github/workflows/install-smoke.yml`.** Cross-OS install
+  smoke test — builds a wheel, installs it into a fresh venv on
+  ubuntu + macOS across Python 3.10 / 3.12 / 3.13, and
+  verifies CLI + minimal switch decision round-trip.
+
+### Documentation
+
+- **`docs/working/license-strategy.md`.** Full decision record
+  for the split-license posture — rationale, BSL vs SSPL/ELv2
+  tradeoff, per-file mapping, risks, mitigations.
+- **`docs/working/trademark-strategy.md`.** Trademark filing
+  strategy — DENDRA (P0), TRANSITION CURVES (P1 post-launch),
+  AXIOM LABS (P2); why generic synonyms stay SEO fuel, not
+  trademarks.
+- Updates to `docs/marketing/entry-with-end-in-mind.md` §4,
+  `docs/working/patent-strategy.md` §9, and
+  `docs/marketing/business-model-and-moat.md` §3.1 to reflect
+  the split.
+
 ## [0.2.0] — 2026-04-21
 
 Initial public release. Six-phase graduated-autonomy classification
