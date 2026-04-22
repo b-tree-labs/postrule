@@ -48,20 +48,17 @@ jobs:
           python -c "from dendra import ml_switch, Phase, SwitchConfig, LearnedSwitch; print('client SDK imports ok')"
           dendra --help
 
-      - name: Smoke-test a minimal switch
+      - name: Run example gallery against the installed wheel
         run: |
-          python - <<'PY'
-          from dendra import ml_switch, Phase, SwitchConfig
-
-          @ml_switch(
-              labels=["a", "b"],
-              author="@test:smoke",
-              config=SwitchConfig(phase=Phase.RULE),
-          )
-          def classify(x):
-              return "a" if x.get("flag") else "b"
-
-          assert classify({"flag": True}) == "a"
-          assert classify({"flag": False}) == "b"
-          print("minimal switch decision: ok")
-          PY
+          # Examples live in the repo but import from the installed
+          # package, so running them here verifies the public API
+          # surface that consumers actually see. Each script exits 0
+          # on success.
+          for example in examples/01_hello_world.py \
+                         examples/02_outcome_log.py \
+                         examples/03_safety_critical.py \
+                         examples/04_llm_shadow.py \
+                         examples/05_output_safety.py; do
+            echo "--- $example ---"
+            python "$example"
+          done
