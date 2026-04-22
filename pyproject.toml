@@ -6,7 +6,24 @@ name = "dendra"
 version = "0.2.0"
 description = "Graduated-autonomy classification primitive — start as a rule, graduate to ML when evidence justifies it."
 readme = "README.md"
-license = { text = "Apache-2.0" }
+# Split license (PEP 639 SPDX expression). See LICENSE.md in the
+# repo root for the full explanation; LICENSING.md is the
+# developer-friendly version.
+#
+# - Client SDK (decorator, config, storage, adapters, telemetry,
+#   viz, benchmarks) ships under Apache-2.0.
+# - Dendra-operated components (analyzer, roi, research/graduation
+#   tooling, cli) ship under Business Source License 1.1 with
+#   Change Date 2030-05-01 and Change License Apache 2.0.
+# Each source file declares its own license in its header.
+license = "Apache-2.0 AND LicenseRef-BSL-1.1"
+license-files = [
+    "LICENSE-APACHE",
+    "LICENSE-BSL",
+    "LICENSE.md",
+    "LICENSING.md",
+    "NOTICE",
+]
 authors = [
     { name = "B-Tree Ventures, LLC" },
 ]
@@ -28,7 +45,10 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
+    # License declared via PEP 639 SPDX expression in `license` above.
+    # Classifier-based license declarations are omitted because the
+    # project ships under a split Apache-2.0 / BSL-1.1 license and
+    # no single classifier captures that accurately.
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
