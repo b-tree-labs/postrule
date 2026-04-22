@@ -1,0 +1,87 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+name: Bug report
+description: Something in Dendra doesn't work as documented.
+title: "[bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. A minimal reproducer is the
+        single most useful thing you can provide. If the bug is
+        security-sensitive, close this and file a private advisory
+        via the link on the New Issue picker — see SECURITY.md.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What went wrong?
+      description: One-paragraph summary of the bug. What did you expect vs what did you see?
+      placeholder: |
+        Expected `classify()` to return "bug" for a title containing "crash", but it
+        returned "feature_request" when safety_critical=True.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: Shortest code that reproduces the bug. Copy-paste-runnable if possible.
+      render: python
+      placeholder: |
+        from dendra import ml_switch, Phase, SwitchConfig
+
+        @ml_switch(
+            labels=["a", "b"],
+            author="@triage:bug",
+            config=SwitchConfig(phase=Phase.RULE),
+        )
+        def classify(x):
+            ...
+    validations:
+      required: true
+
+  - type: input
+    id: dendra-version
+    attributes:
+      label: Dendra version
+      description: Output of `pip show dendra | grep Version`.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Output of `python --version`.
+      placeholder: "Python 3.12.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other (describe in reproducer section)
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Traceback or error output
+      description: Full Python traceback or error output, if any.
+      render: shell
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Any other information that might help us triage.

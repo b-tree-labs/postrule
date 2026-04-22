@@ -1,0 +1,71 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+name: Feature request
+description: Propose a new capability for Dendra.
+title: "[feat] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a feature. Dendra is a **primitive** —
+        we aim for a small, coherent API surface. Read
+        `CONTRIBUTING.md` §Philosophy first if you haven't.
+
+        For **patent-adjacent** architectural proposals (anything
+        that changes the six-phase lifecycle, the statistical
+        transition gate, the safety-floor guarantee, or the
+        circuit breaker), please open this issue before opening
+        a PR — there's usually a smaller change that accomplishes
+        the goal while staying inside the patent's claim structure.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the underlying use case, not a specific implementation.
+      placeholder: |
+        I'm running Dendra in a regulated environment and need a way to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: >-
+        What API or behavior change would address the problem?
+        Include a concrete example if possible.
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you evaluate? Why aren't they sufficient?
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Where does this belong?
+      description: See `CONTRIBUTING.md` §Philosophy for what belongs in core vs companion.
+      options:
+        - Dendra core (public API)
+        - Dendra analyzer / CLI
+        - A companion library
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: willing-to-contribute
+    attributes:
+      label: Are you willing to contribute a PR?
+      options:
+        - "Yes, I can write it"
+        - "Yes, with guidance"
+        - "No, proposal only"
+    validations:
+      required: true
