@@ -8,6 +8,15 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ### Added
 
+- **Landing page scaffold** in `landing/`. Static single-page
+  site built from the existing `landing-page-copy.md` deck,
+  applying the Axiom Labs brand system (palette, type, usage)
+  from `axiom-labs-os/.github/brand/`. No build step — drop
+  the directory on Cloudflare Pages / Vercel / Netlify. Design
+  patterns explicitly borrowed from Modal, Temporal, Clerk,
+  Stripe, Honeycomb, Resend, Linear, Tailscale; anti-patterns
+  (animations, dark-mode-only, "schedule a demo") explicitly
+  avoided per `entry-with-end-in-mind.md` §4.
 - **Example gallery** — 5 runnable, self-contained demos in
   `examples/` covering hello-world, outcome-log, safety-critical,
   LLM-shadow, and output-safety patterns. Each <100 lines, no
