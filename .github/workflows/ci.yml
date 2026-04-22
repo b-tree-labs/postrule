@@ -20,5 +20,5 @@ jobs:
       extras: 'dev,train,viz'
       run-pre-commit: true
       provenance-forbidden-patterns: 'utexas|UT Austin|bbooth@'
-      provenance-paths: 'src/ tests/ docs/ README.md CHANGELOG.md SECURITY.md CONTRIBUTING.md pyproject.toml'
+      provenance-paths: 'src/ tests/ docs/ README.md CHANGELOG.md SECURITY.md CONTRIBUTING.md CODEOWNERS LICENSE.md LICENSING.md LICENSE-APACHE LICENSE-BSL NOTICE TRADEMARKS.md pyproject.toml'
     secrets: inherit
