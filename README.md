@@ -45,6 +45,11 @@ Zero required runtime dependencies. Optional extras: `train`
 (scikit-learn), `bench` (HuggingFace datasets), `viz` (matplotlib),
 `openai` / `anthropic` / `ollama` adapters.
 
+Runnable examples in [`examples/`](./examples/) — each file is
+self-contained (no API keys, no external services) and targets
+one concept: hello-world wrap, outcome logging, safety-critical
+cap, LLM shadow mode, output-safety gate.
+
 ## The six phases
 
 | Phase | Decision-maker | Learning component | Safety floor |
