@@ -1,4 +1,7 @@
-# Dendra
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/logo/dendra-wordmark-horizontal-dark.svg">
+  <img src="brand/logo/dendra-wordmark-horizontal.svg" alt="Dendra" width="420">
+</picture>
 
 **The classification primitive every production codebase is missing.**
 

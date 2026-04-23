@@ -8,6 +8,36 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ### Added
 
+- **Dendra brand kit** in `brand/`. The D2' · Node mark (rule
+  floor parted by a rising accent, phase gate, hollow 28-r ring
+  at the threshold-crossing point) is now the canonical Dendra
+  identity. Selected through a three-round design process (21
+  concept marks + 3 AI design-critic assessments; full record
+  in `landing/assets/concepts/` and `notes/critic-assessments.md`).
+  Inherits the Axiom Labs palette + typography; adds Dendra-
+  specific usage rules. Structure mirrors
+  `axiom-labs-os/.github/brand/` at the parent org.
+  - `brand/logo/` — 12 SVG masters (mark / mark-color /
+    mark-dark / mark-mono-light / mark-mono-dark /
+    wordmark-horizontal{-dark} / wordmark-stacked{-dark} /
+    favicon / social-card{-dark}) plus 14 PNG exports
+    (favicon 16 / 32 / 180 / 512, mark 1024 × 4 variants,
+    wordmark and social card at native size).
+  - `brand/logo/_export.py` — regenerates PNGs from SVGs via
+    cairosvg; idempotent.
+  - `brand/logo/_preview.html` — renders every asset at typical
+    use sizes for design review.
+  - `brand/palette.md` / `brand/typography.md` / `brand/usage.md`
+    — Dendra-specific brand docs.
+- **Landing page integration of the Dendra mark.** Site header
+  carries the mark alongside the DENDRA wordmark; favicon and
+  apple-touch-icon are the real Dendra rounded-tile favicon;
+  Open Graph / Twitter social card (1200×630 PNG) wired into the
+  page's meta tags.
+- **README.md branding.** Repository root README renders the
+  Dendra horizontal wordmark at the top via GitHub's
+  `<picture>` element, auto-switching between light and dark
+  variants based on viewer color scheme.
 - **Landing page scaffold** in `landing/`. Static single-page
   site built from the existing `landing-page-copy.md` deck,
   applying the Axiom Labs brand system (palette, type, usage)
