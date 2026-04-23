@@ -8,6 +8,43 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ### Added
 
+- **Extended brand identity system** in `brand/`. Completes the
+  identity kit beyond the mark + basic docs:
+  - **Paper + figure templates.** `brand/templates/dendra.mplstyle`
+    for matplotlib Figure-1-consistent output (palette, type scale,
+    color cycle with graphite primary + accent-orange secondary,
+    muted tertiaries). `brand/templates/dendra-preamble.tex` for
+    the paper — TeX Gyre Pagella body, Space Grotesk display,
+    JetBrains Mono code, color definitions matching the palette.
+  - **Voice + messaging + motion docs.** `brand/voice.md` (technical/
+    measured/quiet tone; word-use lists; person/voice rules;
+    primitive framing; error-message style). `brand/messaging.md`
+    (canonical tagline, 15s/30s/120s pitches, audience-specific
+    framings, positioning statement, core-claims table with
+    citations). `brand/motion.md` (one canonical animation:
+    rising-accent at 700 ms; reduced-motion handling; canonical
+    easing curves; where not to animate).
+  - **Animated mark.** `brand/logo/dendra-mark-animated.svg`
+    (one-shot rising-accent for hero / phase-transition
+    confirmation) and `dendra-mark-animated-loop.svg` (1500 ms
+    loading cycle). Pure SVG+SMIL, no JS dependency.
+  - **Sub-brand lockup system.** `brand/sub-brands.md` documents
+    the typographic pattern (DENDRA parent + product-name child).
+    Lockups shipped for DENDRA CLOUD, DENDRA ANALYZE, DENDRA
+    INSIGHT, DENDRA RESEARCH.
+  - **Applied assets.** GitHub repo social preview (1280×640),
+    Twitter/X profile banner (1500×500), LinkedIn company banner
+    (1128×191) — SVG masters + PNG exports.
+  - **PWA / web-app manifest.** `brand/logo/site.webmanifest`
+    referencing every favicon size with correct theme/background
+    colors.
+  - **Accessibility + governance docs.** `brand/accessibility.md`
+    (contrast ratios per pairing, color-blindness behavior,
+    alt-text conventions, small-size rules). `brand/governance.md`
+    (who-can-change process, asset-addition workflow, trademark
+    boundary, version history convention).
+  - Preview page (`brand/logo/_preview.html`) extended to render
+    every new asset alongside the existing kit.
 - **Dendra brand kit** in `brand/`. The D2' · Node mark (rule
   floor parted by a rising accent, phase gate, hollow 28-r ring
   at the threshold-crossing point) is now the canonical Dendra
