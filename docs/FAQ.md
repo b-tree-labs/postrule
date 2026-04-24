@@ -52,6 +52,40 @@ data. Dendra is a primitive for production systems that already
 have a rule; AutoML is a tool for kicking off a greenfield ML
 project with labeled data.
 
+## How does this relate to Karpathy's "autoresearch" loop pattern?
+
+The autoresearch pattern is a *discovery* primitive: an LLM
+proposes experiments, runs them, reads results, iterates.
+Dendra is a *deployment* primitive: it wraps a decision with an
+evidence-gated migration path from hand-written rule to learned
+policy, with a statistical bar for every phase transition.
+
+They compose cleanly — they solve different layers of the same
+problem:
+
+- An autoresearch loop is great at **generating candidates** —
+  "here's a new routing rule the LLM synthesized from the last
+  100 outcomes," or "here's a refined prompt that might do
+  better." What it doesn't give you is a non-negotiable gate
+  for when those candidates earn production traffic.
+- Dendra gives you that gate. Point an autoresearch loop at a
+  Dendra switch: candidates land in `MODEL_SHADOW`, the
+  McNemar gate compares them to the rule on paired outcomes,
+  `advance()` promotes them when the evidence says so. The
+  rule floor holds throughout. Autoresearch failures produce
+  un-promoted candidates rather than silent regressions.
+- Dendra's outcome log is exactly the substrate an autoresearch
+  loop needs to reason about. Each record carries the rule's
+  output, the model's output, the ML head's output, and the
+  verdict. An LLM running the loop can query "show me the last
+  1,000 records where the rule and LLM disagreed and the LLM
+  won" and produce a targeted proposal. Then Dendra tests the
+  proposal.
+
+One-line mental model: **autoresearch picks what to try;
+Dendra proves when it worked.** They're orthogonal. The
+interesting teams will ship both.
+
 ## What's the latency overhead?
 
 At Phase.RULE with `auto_record=False`, **0.50 µs p50** over the
