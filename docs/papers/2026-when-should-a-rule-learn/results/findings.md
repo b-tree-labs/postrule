@@ -96,8 +96,11 @@ two very different sales conversations:
   probability the difference is random. Unpaired = we don't use
   per-example correlations (more conservative).
 - **McNemar's paired test.** A stronger version of the above that
-  uses per-example agreement. Tighter but requires saving per-row
-  predictions; deferred.
+  uses per-example agreement. Requires per-row predictions on the
+  test set. **Now the primary result** — per-example correctness
+  persists in each checkpoint's ``rule_correct`` / ``ml_correct``
+  arrays, and the "Statistical transition depth" section reports
+  paired p-values.
 - **Seed size.** How many training examples the author looked at
   when writing the rule. Paper default: 100.
 
@@ -241,7 +244,38 @@ wired and ready — only the model choice changes.
 
 ## Statistical transition depth (§4.4)
 
-Using an unpaired two-proportion z-test (p < 0.01):
+### Paired McNemar (primary result, 2026-04-24 re-run)
+
+Each benchmark re-executed with per-example correctness recorded.
+McNemar's paired-proportion test compares rule vs ML on the same
+held-out rows, counting discordant pairs (``b`` = ML right while
+rule wrong; ``c`` = rule right while ML wrong) and taking the
+exact two-sided binomial p-value on the minority side.
+
+| Benchmark | Labels | Rule acc | ML @ 250 ckpt | ML final | b    | c   | McNemar p (final) | Transition depth (paired p < 0.01) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **ATIS**       |  26 | 70.0% | 75.6% | **88.7%** |  191 |  24 | 1.8e-33   | **≤ 250** (p = 1.6e-3) |
+| **HWU64**      |  64 |  1.8% |  2.7% | **83.6%** |  881 |   1 | < 1e-260  | **≤ 250** (p = 2.0e-3) |
+| **Banking77**  |  77 |  1.3% |  2.6% | **87.7%** | 2,666 |   4 | ≈ 0       | **≤ 250** (p = 3.8e-11) |
+| **CLINC150**   | 151 |  0.5% |  1.6% | **59.1%** | 3,250 |  30 | ≈ 0       | **≤ 250** (p = 6.9e-18) |
+
+Every benchmark crosses paired significance at the **first**
+checkpoint (250 training outcomes). Under the unpaired z-test
+previously reported (see below), the transition depths were
+looser — 500 / 1000 / 1000 / 1500 — because the unpaired test
+ignores per-example correlation and is conservative when the
+same test rows are scored by two classifiers. The paired result
+is both tighter and methodologically correct.
+
+Raw per-example correctness lists are persisted in
+``*_paired.jsonl`` alongside this document; a consolidated summary
+(final accuracy, b/c counts, p-values, transition depths) is at
+``paired_mcnemar_summary.json``. The McNemar computation used
+is defined in ``src/dendra/gates.py::McNemarGate``.
+
+### Unpaired z-test (historical, for comparison)
+
+Using an unpaired two-proportion z-test on the original runs (p < 0.01):
 
 | Benchmark | Stat depth | Crossover | Final gap |
 |---|---:|---:|---:|
@@ -250,9 +284,22 @@ Using an unpaired two-proportion z-test (p < 0.01):
 | Banking77  | 1000  | 1000  | **+86.3%** |
 | CLINC150   | 1500  | 1500  | **+81.3%** |
 
-In every benchmark, the first visible crossover is already
-statistically significant at p < 0.01 given the held-out test-set size.
-Run with `BenchmarkRun.transition_depth(alpha=0.01)`.
+### CLINC150 divergence (re-run vs original)
+
+The CLINC150 re-run yielded a lower final ML accuracy (59.1 % vs
+the earlier 81.9 %). Checkpoint accuracies are bit-identical
+between runs through 9,000 training outcomes, then diverge —
+earlier runs climbed to 82 % at 15,250 outcomes; the re-run
+plateaus around 50-59 %. The training data stream is identical
+and ``SklearnTextHead`` has no explicit ``random_state``, so
+the most likely cause is a sklearn / scipy version delta between
+the original capture and the current environment. The
+*two-regime* finding and the paired-McNemar transition-depth
+claim are insensitive to this shift — both regimes still emerge,
+the paired test crosses significance at the same 250-outcome
+mark, and the final ML gap remains ~120× the rule. Flagged for
+replication on the paper-submission machine before the final
+figures are frozen.
 
 ## Caveats
 
@@ -269,9 +316,11 @@ Run with `BenchmarkRun.transition_depth(alpha=0.01)`.
 - The out-of-scope label in CLINC150 hurts rule-only keyword matching
   disproportionately; a rule-class for "unknown/OOS" would raise the
   baseline modestly. Deferred.
-- The unpaired z-test above is conservative. A paired McNemar test on
-  per-example predictions would be tighter; implementation requires
-  saving per-example outputs (not currently persisted).
+- The **paired McNemar** analysis landed in the 2026-04-24 re-run
+  (see the "Statistical transition depth" section above for the
+  tighter numbers). Per-example correctness is now persisted in
+  the ``*_paired.jsonl`` files. The older unpaired-z-test numbers
+  remain for comparison only.
 
 ---
 
