@@ -18,6 +18,8 @@ python examples/01_hello_world.py
 | 3 | [`03_safety_critical.py`](./03_safety_critical.py) | `safety_critical=True` refuses construction in `Phase.ML_PRIMARY`. The rule floor is architecturally guaranteed for authorization-class decisions. |
 | 4 | [`04_llm_shadow.py`](./04_llm_shadow.py) | Phase 1 (LLM_SHADOW). Rule still decides; LLM runs in parallel, predictions captured for later statistical analysis. Uses a stub LLM — swap to `OpenAIAdapter` / `AnthropicAdapter` / `OllamaAdapter` for production. |
 | 5 | [`05_output_safety.py`](./05_output_safety.py) | Wrapping *LLM output* classification with `safety_critical=True`. PII / confidential markers detected before delivery to users. |
+| 6 | [`06_ml_primary.py`](./06_ml_primary.py) | The end-state: `Phase.ML_PRIMARY` with a healthy ML head deciding, the rule sitting silently as the circuit-breaker target. Part 2 simulates an ML failure to show breaker trip + operator reset. |
+| 7 | [`07_llm_as_teacher.py`](./07_llm_as_teacher.py) | Cold-start pattern: start at `Phase.LLM_PRIMARY` with zero labeled data, let the LLM decide + label production traffic, then train a local ML head on the accumulated labels and graduate to `Phase.ML_WITH_FALLBACK`. |
 
 ## What's not here yet
 
