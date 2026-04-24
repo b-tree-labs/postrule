@@ -150,7 +150,7 @@ class TestLLMJudgeSource:
         assert s.judge("x", "y") is Verdict.CORRECT
 
     def test_non_modelclassifier_rejected(self):
-        with pytest.raises(TypeError, match="ModelClassifier protocol"):
+        with pytest.raises(TypeError, match="classify"):
             LLMJudgeSource("not a model")  # type: ignore[arg-type]
 
 
@@ -224,7 +224,7 @@ class TestLLMCommitteeSource:
             )
 
     def test_non_modelclassifier_in_committee_rejected(self):
-        with pytest.raises(TypeError, match="ModelClassifier"):
+        with pytest.raises(TypeError, match="classify"):
             LLMCommitteeSource([_StubLLM(), "not-a-model"])  # type: ignore[list-item]
 
     def test_committee_clone_of_classifier_refused(self):
