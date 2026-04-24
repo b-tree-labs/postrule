@@ -345,3 +345,72 @@ class TestPathTraversal:
         storage = FileStorage(tmp_path)
         storage.append_record("team-a/switch-1", _record("x"))
         assert (tmp_path / "team-a" / "switch-1" / "outcomes.jsonl").exists()
+
+
+# ---------------------------------------------------------------------------
+# Batched-async FileStorage (v1 finding #29)
+# ---------------------------------------------------------------------------
+
+
+class TestBatchedFileStorage:
+    def test_load_records_flushes_pending_writes(self, tmp_path):
+        storage = FileStorage(tmp_path, batching=True, flush_interval_ms=5000)
+        try:
+            storage.append_record("s", _record("a"))
+            storage.append_record("s", _record("b"))
+            # flush_interval_ms=5000 — the background thread hasn't
+            # drained yet. load_records must flush synchronously.
+            records = storage.load_records("s")
+            assert [r.label for r in records] == ["a", "b"]
+        finally:
+            storage.close()
+
+    def test_close_drains_pending(self, tmp_path):
+        storage = FileStorage(tmp_path, batching=True, flush_interval_ms=5000)
+        storage.append_record("s", _record("a"))
+        storage.append_record("s", _record("b"))
+        storage.close()
+
+        # Re-open and confirm the writes survived.
+        storage2 = FileStorage(tmp_path, batching=False)
+        assert [r.label for r in storage2.load_records("s")] == ["a", "b"]
+        storage2.close()
+
+    def test_background_flusher_drains_on_interval(self, tmp_path):
+        storage = FileStorage(tmp_path, batching=True, flush_interval_ms=20)
+        try:
+            storage.append_record("s", _record("a"))
+            # Poll the disk until the flusher drains the write.
+            deadline = time.monotonic() + 2.0
+            while time.monotonic() < deadline:
+                if (tmp_path / "s" / "outcomes.jsonl").exists():
+                    break
+                time.sleep(0.01)
+            assert (tmp_path / "s" / "outcomes.jsonl").exists()
+        finally:
+            storage.close()
+
+    def test_batch_size_triggers_early_flush(self, tmp_path):
+        """Hitting batch_size sets the flush_event even before the timer."""
+        storage = FileStorage(
+            tmp_path, batching=True, batch_size=3, flush_interval_ms=5000,
+        )
+        try:
+            for label in ("a", "b", "c"):
+                storage.append_record("s", _record(label))
+            # Batch-size hit — flusher woken via the event. Poll briefly.
+            deadline = time.monotonic() + 1.0
+            while time.monotonic() < deadline:
+                if (tmp_path / "s" / "outcomes.jsonl").exists():
+                    break
+                time.sleep(0.01)
+            recs = storage.load_records("s")
+            assert [r.label for r in recs] == ["a", "b", "c"]
+        finally:
+            storage.close()
+
+    def test_append_after_close_raises(self, tmp_path):
+        storage = FileStorage(tmp_path, batching=True)
+        storage.close()
+        with pytest.raises(RuntimeError, match="after close"):
+            storage.append_record("s", _record("x"))

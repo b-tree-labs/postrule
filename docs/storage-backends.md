@@ -106,8 +106,46 @@ storage = FileStorage(
     max_rotated_segments=8,                    # 8 × 64 MB retained
     lock=True,                                 # POSIX flock on append + rotate
     fsync=False,                               # True for host-crash durability
+    batching=False,                            # see "Sync vs batched" below
+    batch_size=64,                             # records per flush when batching=True
+    flush_interval_ms=50,                      # max wait before a flush
 )
 ```
+
+### Sync vs batched
+
+`FileStorage` has two write modes that trade durability for
+throughput:
+
+- **Sync (default, `batching=False`).** Every `append_record`
+  call acquires the lock, writes, and returns. An fd is cached
+  per switch so repeated calls amortize the open/close cost.
+  Typical p50 latency on SSD: ~200 µs per append. Durability
+  contract: kernel-buffer-durable on return; host-crash-durable
+  if `fsync=True`.
+- **Batched (`batching=True`).** Appends land in an in-memory
+  queue; a background thread drains every `flush_interval_ms`
+  (default 50 ms) or when the queue reaches `batch_size`
+  (default 64). Typical p50 latency: ~35 µs per append.
+  Durability contract: at-risk crash window of up to
+  `flush_interval_ms` of tail writes on process death. Call
+  `storage.flush()` to drain on demand; `storage.close()` on
+  shutdown (registered as an atexit hook automatically).
+
+**`LearnedSwitch(persist=True)`** uses `batching=True` by
+default — it's the recommended production path when paired with
+`ResilientStorage`. For regulated workloads that need per-call
+fsync-strict durability, construct storage explicitly:
+
+```python
+from dendra import FileStorage, LearnedSwitch
+
+storage = FileStorage("runtime/dendra", batching=False, fsync=True)
+sw = LearnedSwitch(rule=..., storage=storage)
+```
+
+`load_records` drains any pending batch before reading, so
+reads always see a consistent view regardless of mode.
 
 ### Customizing
 Subclass `FileStorage` and override:
