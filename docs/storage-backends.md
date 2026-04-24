@@ -112,6 +112,43 @@ storage = FileStorage(
 )
 ```
 
+### Redaction hook
+
+For HIPAA, PII, and export-control workloads where raw inputs
+must never reach the durable outcome log, both `FileStorage` and
+`SqliteStorage` accept a `redact` kwarg:
+
+```python
+from dataclasses import replace
+from dendra import ClassificationRecord, FileStorage
+
+def scrub_pii(record: ClassificationRecord) -> ClassificationRecord:
+    return replace(record, input="<redacted>")
+
+storage = FileStorage("./runtime/dendra", redact=scrub_pii)
+```
+
+The redactor runs once per `append_record`, before the record
+is queued (when `batching=True`) or written to disk — so raw
+PII never lands in the in-memory batch either. Return a new
+`ClassificationRecord` (use `dataclasses.replace` or construct a
+new instance) with the sensitive fields sanitized; other fields
+flow through unchanged. Shadow observations (`rule_output`,
+`model_output`, `ml_output`) are separate fields; redact each as
+your policy requires.
+
+The hook is an intentional seam — keep the redactor fast
+(< 100 µs) since it runs on the hot path. For heavyweight
+redaction (regex, external de-identification services), wrap
+with a `ResilientStorage` so a slow redactor can't take down
+classification:
+
+```python
+from dendra import FileStorage, ResilientStorage
+
+storage = ResilientStorage(FileStorage("./runtime/dendra", redact=scrub_pii))
+```
+
 ### Sync vs batched
 
 `FileStorage` has two write modes that trade durability for

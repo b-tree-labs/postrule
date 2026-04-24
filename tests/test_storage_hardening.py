@@ -414,3 +414,54 @@ class TestBatchedFileStorage:
         storage.close()
         with pytest.raises(RuntimeError, match="after close"):
             storage.append_record("s", _record("x"))
+
+
+# ---------------------------------------------------------------------------
+# Redaction hook (v1 finding #10 — D3 compliance)
+# ---------------------------------------------------------------------------
+
+
+class TestRedactionHook:
+    def test_redactor_runs_before_persist_sync(self, tmp_path):
+        from dataclasses import replace
+
+        def scrub(r):
+            return replace(r, input="<redacted>")
+
+        storage = FileStorage(tmp_path, redact=scrub)
+        storage.append_record("s", _record("x"))
+        rec = storage.load_records("s")[0]
+        assert rec.input == "<redacted>"
+        storage.close()
+
+    def test_redactor_runs_before_persist_batched(self, tmp_path):
+        from dataclasses import replace
+
+        def scrub(r):
+            return replace(r, input="<redacted>")
+
+        storage = FileStorage(tmp_path, batching=True, redact=scrub)
+        try:
+            storage.append_record("s", _record("x"))
+            storage.flush()
+            # Read from disk directly — bypasses any in-memory cache.
+            raw = (tmp_path / "s" / "outcomes.jsonl").read_text()
+            assert "<redacted>" in raw
+            # And the PII that was in _record's input should not be there.
+            # _record uses {"title": "x", "pid": ...} — "title" key gone.
+            assert '"title"' not in raw
+        finally:
+            storage.close()
+
+    def test_redactor_on_sqlite(self, tmp_path):
+        from dataclasses import replace
+
+        from dendra import SqliteStorage
+
+        def scrub(r):
+            return replace(r, input="<redacted>")
+
+        storage = SqliteStorage(tmp_path / "db.sqlite", redact=scrub)
+        storage.append_record("s", _record("x"))
+        rec = storage.load_records("s")[0]
+        assert rec.input == "<redacted>"

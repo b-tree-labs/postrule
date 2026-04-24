@@ -103,12 +103,22 @@ tests at `p < 0.01`:
 | Banking77 | 77 | 1.3% | 8.8% | 87.8% | ≤ 1,000 outcomes |
 | CLINC150 | 151 | 0.5% | 7.9% | 81.9% | ≤ 1,500 outcomes |
 
-Measured latency:
+Measured latency (Apple M5 / Python 3.13 / macOS 26, 2026-04-24):
 
-- Rule call: 0.12 µs p50
-- **Dendra switch at Phase 0: 0.62 µs p50** (5× overhead over bare rule)
-- Real ML head (TF-IDF + LR on ATIS): 105 µs p50
-- Local LLM (llama3.2:1b via Ollama): ~250 ms p50
+- **Phase 0 classify, default config: 1.67 µs p50 / 2.42 µs p99**
+  (573k ops/sec). Includes the auto-logged UNKNOWN record.
+- Phase 0 classify, `auto_record=False`: 0.50 µs p50 / 0.67 µs p99
+  (1.9M ops/sec). Pure routing, no log write.
+- `persist=True` classify (batched FileStorage, the production
+  recommendation): 33.8 µs p50 / 390 µs p99 (~30k ops/sec).
+  Durable outcome log with a 50 ms crash window.
+- `persist=True` classify (per-call fsync, explicit opt-in for
+  regulated workloads): 195 µs p50 / 260 µs p99.
+- Real ML head (TF-IDF + LR on ATIS): 105 µs p50.
+- Local LLM (llama3.2:1b via Ollama): ~250 ms p50.
+
+Raw numbers: [`docs/working/v1-audit-benchmarks.md`](docs/working/v1-audit-benchmarks.md).
+Regression-guard tests: [`tests/test_latency_pinned.py`](tests/test_latency_pinned.py).
 
 At 100M classifications/month, an LLM-only design with a Sonnet-
 class model runs **$11.5M/yr** in inference tokens. Dendra at Phase
@@ -119,7 +129,12 @@ decisions on the 20% of traffic the rule/ML can't handle confidently.
 
 - **20-pattern jailbreak corpus:** 100% rule-floor preserved when
   the shadow LLM is configured to return the attacker-desired label
-  at 0.99 confidence.
+  at 0.99 confidence. Each payload is authentic sensitive content
+  (ITAR, EXPORT_CONTROLLED, `classified:secret`, `samsung_internal`
+  markers) concatenated with an injection attempt drawn from
+  publicly-documented families (AgentDojo, InjecAgent, OWASP LLM
+  Top-10). An env-gated live-provider sweep is available via
+  `DENDRA_JAILBREAK_LIVE=1` for in-situ validation.
 - **PII corpus:** 100% recall, 100% precision on a 25-item mixed
   corpus (SSN, phone, email, CC, passport, AWS key, JWT, Bearer
   token, MRN, ICD-10, IBAN, DOB).
@@ -182,7 +197,7 @@ src/dendra/
 ├── core.py           # LearnedSwitch, Phase, SwitchConfig, ClassificationRecord
 ├── decorator.py      # @ml_switch
 ├── storage.py        # Self-rotating file storage + in-memory
-├── llm.py            # OpenAI / Anthropic / Ollama / llamafile adapters
+├── models.py         # OpenAI / Anthropic / Ollama / llamafile adapters
 ├── ml.py             # MLHead protocol + sklearn default head
 ├── wrap.py           # AST-based @ml_switch injector (`dendra init`)
 ├── analyzer.py       # Static classification-site finder (`dendra analyze`)
@@ -193,7 +208,7 @@ src/dendra/
 ├── benchmarks/       # Public-benchmark loaders + reference rules
 └── cli.py            # `dendra` CLI entry point
 
-tests/                # 195 tests
+tests/                # 385 tests (13 benchmark-marked, 4 concurrency-marked)
 docs/
 ├── papers/2026-when-should-a-rule-learn/   # Paper outline + results
 ├── marketing/        # Pricing, applicability, VC deck, positioning
@@ -235,8 +250,8 @@ US provisional patent (application pending).
 
 **v0.2.0** — all six phases implemented; four-benchmark measurements
 published; static analyzer and `dendra init` CLI shipping; output-
-safety patterns documented; patent provisional filing-ready. 195
-tests green. Paper submission in progress.
+safety patterns documented; patent provisional filed 2026-04-21.
+385 tests green. Paper submission in progress.
 
 ## Dev setup
 
