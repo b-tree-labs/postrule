@@ -180,6 +180,74 @@ class TestBreakerPersistence:
         )
         assert not sw2._circuit_tripped
 
+    def test_keyboard_interrupt_propagates_through_classify(self):
+        """#11: KeyboardInterrupt must NOT be absorbed by the rule floor.
+
+        The rule-floor promise catches ordinary Exception subclasses
+        (e.g. provider timeouts, network errors) and falls back to
+        the rule. KeyboardInterrupt and SystemExit are operator-
+        initiated control-flow signals — swallowing them leaves the
+        user unable to interrupt their own process.
+        """
+        class _KBInterruptingMLHead:
+            def fit(self, records):
+                pass
+
+            def predict(self, input, labels):
+                raise KeyboardInterrupt
+
+            def model_version(self):
+                return "kb"
+
+        sw = LearnedSwitch(
+            rule=_rule,
+            name="kb_test",
+            author="test",
+            ml_head=_KBInterruptingMLHead(),
+            config=SwitchConfig(
+                starting_phase=Phase.ML_WITH_FALLBACK,
+                auto_record=False,
+                auto_advance=False,
+            ),
+        )
+        with pytest.raises(KeyboardInterrupt):
+            sw.classify("x")
+
+    def test_cancelled_error_falls_back_to_rule(self):
+        """#11: asyncio.CancelledError (BaseException in py3.8+) should
+        be absorbed by the rule floor.
+
+        Treating CancelledError like KeyboardInterrupt would propagate
+        task-level cancellation through the classifier — breaks
+        FastAPI / LangGraph / LlamaIndex integrations where callers
+        expect a successful rule-fallback on timeout.
+        """
+        import asyncio
+
+        class _CancellingMLHead:
+            def fit(self, records):
+                pass
+
+            def predict(self, input, labels):
+                raise asyncio.CancelledError
+
+            def model_version(self):
+                return "cancel"
+
+        sw = LearnedSwitch(
+            rule=_rule,
+            name="cancel_test",
+            author="test",
+            ml_head=_CancellingMLHead(),
+            config=SwitchConfig(
+                starting_phase=Phase.ML_WITH_FALLBACK,
+                auto_record=False,
+                auto_advance=False,
+            ),
+        )
+        r = sw.classify("x")
+        assert r.source == "rule_fallback"
+
     def test_persist_false_breaker_is_process_local(self, tmp_path, monkeypatch):
         """Without persist=True, breaker state is ephemeral by design."""
         monkeypatch.chdir(tmp_path)
