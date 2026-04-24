@@ -103,13 +103,7 @@ class TestLLMPrimaryOutcomeCapture:
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_PRIMARY),
         )
         r = s.classify({"title": "App keeps crashing"})
-        s.record_verdict(
-            input={"title": "App keeps crashing"},
-            label=r.label,
-            outcome=Verdict.CORRECT.value,
-            source=r.source,
-            confidence=r.confidence,
-        )
+        r.mark_correct()
         recs = s.storage.load_records("triage")
         assert len(recs) == 1
         assert recs[0].source == "model"

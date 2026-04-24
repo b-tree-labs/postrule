@@ -182,11 +182,7 @@ class TestPhase1ShadowOverOutputs:
         r = sw.classify("the weather is nice today")
         assert r.label == "safe"
         assert r.source == "rule"
-        sw.record_verdict(
-            input="the weather is nice today",
-            label="safe",
-            outcome=Verdict.CORRECT.value,
-        )
+        r.mark_correct()
         [row] = sw.storage.load_records("output_gate")
         assert row.rule_output == "safe"
         assert row.model_output == "toxic"  # moderator observed

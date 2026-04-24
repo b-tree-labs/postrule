@@ -312,3 +312,36 @@ class TestCompact:
         storage.append_record("s", _record("b"))
         out = [r.label for r in storage.load_records("s")]
         assert out == ["a", "b"]
+
+
+# ---------------------------------------------------------------------------
+# Path-traversal guard (v1 finding #1)
+# ---------------------------------------------------------------------------
+
+
+class TestPathTraversal:
+    def test_parent_component_in_switch_name_rejected(self, tmp_path):
+        storage = FileStorage(tmp_path)
+        with pytest.raises(ValueError, match="must not contain '..'"):
+            storage.append_record("../pwned", _record("x"))
+
+    def test_nested_parent_component_rejected(self, tmp_path):
+        storage = FileStorage(tmp_path)
+        with pytest.raises(ValueError, match="must not contain '..'"):
+            storage.append_record("legit/../../../etc", _record("x"))
+
+    def test_absolute_switch_name_rejected(self, tmp_path):
+        storage = FileStorage(tmp_path)
+        with pytest.raises(ValueError, match="must be relative"):
+            storage.append_record("/etc/passwd", _record("x"))
+
+    def test_empty_switch_name_rejected(self, tmp_path):
+        storage = FileStorage(tmp_path)
+        with pytest.raises(ValueError, match="cannot be empty"):
+            storage.append_record("", _record("x"))
+
+    def test_legit_nested_name_allowed(self, tmp_path):
+        """Nested paths without '..' are fine — still inside base_path."""
+        storage = FileStorage(tmp_path)
+        storage.append_record("team-a/switch-1", _record("x"))
+        assert (tmp_path / "team-a" / "switch-1" / "outcomes.jsonl").exists()
