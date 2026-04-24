@@ -256,8 +256,8 @@ exact two-sided binomial p-value on the minority side.
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | **ATIS**       |  26 | 70.0% | 75.6% | **88.7%** |  191 |  24 | 1.8e-33   | **≤ 250** (p = 1.6e-3) |
 | **HWU64**      |  64 |  1.8% |  2.7% | **83.6%** |  881 |   1 | < 1e-260  | **≤ 250** (p = 2.0e-3) |
-| **Banking77**  |  77 |  1.3% |  2.6% | **87.7%** | 2,666 |   4 | ≈ 0       | **≤ 250** (p = 3.8e-11) |
-| **CLINC150**   | 151 |  0.5% |  1.6% | **59.1%** | 3,250 |  30 | ≈ 0       | **≤ 250** (p = 6.9e-18) |
+| **Banking77**  |  77 |  1.3% |  2.6% | **87.7%** | 2,665 |   4 | ≈ 0       | **≤ 250** (p = 3.8e-11) |
+| **CLINC150**   | 151 |  0.5% |  1.6% | **81.9%** | 4,478 |   6 | ≈ 0       | **≤ 250** (p = 6.9e-18) |
 
 Every benchmark crosses paired significance at the **first**
 checkpoint (250 training outcomes). Under the unpaired z-test
@@ -284,22 +284,45 @@ Using an unpaired two-proportion z-test on the original runs (p < 0.01):
 | Banking77  | 1000  | 1000  | **+86.3%** |
 | CLINC150   | 1500  | 1500  | **+81.3%** |
 
-### CLINC150 divergence (re-run vs original)
+### Investigation: CLINC150 regression, found and fixed
 
-The CLINC150 re-run yielded a lower final ML accuracy (59.1 % vs
-the earlier 81.9 %). Checkpoint accuracies are bit-identical
-between runs through 9,000 training outcomes, then diverge —
-earlier runs climbed to 82 % at 15,250 outcomes; the re-run
-plateaus around 50-59 %. The training data stream is identical
-and ``SklearnTextHead`` has no explicit ``random_state``, so
-the most likely cause is a sklearn / scipy version delta between
-the original capture and the current environment. The
-*two-regime* finding and the paired-McNemar transition-depth
-claim are insensitive to this shift — both regimes still emerge,
-the paired test crosses significance at the same 250-outcome
-mark, and the final ML gap remains ~120× the rule. Flagged for
-replication on the paper-submission machine before the final
-figures are frozen.
+The first 2026-04-24 re-run landed CLINC150 at 59.1 % final ML
+accuracy — bit-identical to the original through 9,000 training
+outcomes, then diverging sharply. The regression reproduced
+deterministically on clean environments, ruling out a sklearn
+version delta. Root cause:
+
+CLINC150's training stream is **label-blocked** — each 1,000-
+example window contains exactly 10 distinct labels × 100
+examples each. The v1 API introduced a default
+``BoundedInMemoryStorage(max_records=10_000)`` to prevent
+runaway memory growth in production switches. The benchmark
+harness inherited that default. At training outcome 10,500, the
+FIFO cap evicted the first 500 records — removing 5 entire
+label classes from the ML head's training view. By 15,250
+outcomes, ~50 label classes had zero training examples; the LR
+classifier collapsed to ~50 % on the lost portion.
+
+The fix: ``run_benchmark_experiment`` now explicitly constructs
+the backing switch with ``storage=InMemoryStorage()``. The
+benchmark harness owns the full training set and bounds its own
+lifetime; the production-default cap does not apply.
+
+A regression test (``tests/test_research.py::TestBenchmarkExperimentStorage``)
+locks the invariant: any future change that reintroduces a
+bounded-by-default storage on the benchmark path fails at test
+time. The v2 run with the fix in place reproduces CLINC150's
+original 81.9 % final ML accuracy exactly; the other three
+benchmarks are unchanged (all below the 10k cap or within
+noise of it).
+
+This episode updated the v1-readiness story: the
+production-default storage cap was correct engineering for a
+long-running switch, but wrong as a silent default for any
+harness that operates on a fixed corpus. Callers working with
+known, bounded datasets should use ``InMemoryStorage`` (or an
+explicit large cap on ``BoundedInMemoryStorage``) so training
+data isn't silently truncated.
 
 ## Caveats
 
