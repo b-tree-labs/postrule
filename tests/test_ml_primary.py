@@ -166,12 +166,8 @@ class TestMLPrimary:
 
     def test_safety_critical_caps_at_phase_4(self):
         # Paper §7.1: safety_critical=True must refuse to graduate to ML_PRIMARY.
-        cfg = SwitchConfig(phase=Phase.ML_PRIMARY, safety_critical=True)
+        # Check now fires at SwitchConfig.__post_init__ (tighter — the
+        # misconfiguration is caught at the config-construction source rather
+        # than at LearnedSwitch construction).
         with pytest.raises(ValueError, match="safety_critical"):
-            LearnedSwitch(
-                name="triage",
-                rule=_rule,
-                author="alice",
-                ml_head=FakeMLHead(),
-                config=cfg,
-            )
+            SwitchConfig(starting_phase=Phase.ML_PRIMARY, safety_critical=True)
