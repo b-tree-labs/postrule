@@ -26,6 +26,11 @@ the minimum required vs optional surface.
 | 7 | [`07_llm_as_teacher.py`](./07_llm_as_teacher.py) | Cold-start: start at `Phase.MODEL_PRIMARY` with zero labeled data, let the LLM label production traffic, then train a local ML head and graduate (operator-triggered). |
 | 8 | [`08_classify_vs_dispatch.py`](./08_classify_vs_dispatch.py) | The two verbs: `classify()` pure (tests / dashboards); `dispatch()` classify + fire the handler. Includes the graceful-failure contract — a handler that raises is captured on `action_raised`, not propagated. |
 | 9 | [`09_verdict_webhook.py`](./09_verdict_webhook.py) | Verdicts arriving async from outside the process (simulated reviewer thread feeding a queue). Shows the three ergonomic shapes — direct `record_verdict`, fluent `.mark_correct()`, and `verdict_for()` context manager — plus the `on_verdict=` mirror-to-audit hook. |
+| 10 | [`10_bulk_verdict_ingestion.py`](./10_bulk_verdict_ingestion.py) | Two bulk workflows: cold-start preload from labeled history, and the reviewer-queue round-trip (`export_for_review` → label in your tool → `apply_reviews` back). Deferred auto-advance fires at most once at end-of-batch. |
+| 11 | [`11_llm_judge.py`](./11_llm_judge.py) | `LLMJudgeSource` — single-LLM critic verdict source with the self-judgment bias guardrail. `require_distinct_from=` refuses construction when classifier and judge resolve to the same model (G-Eval / MT-Bench / Arena literature). |
+| 12 | [`12_llm_committee.py`](./12_llm_committee.py) | `LLMCommitteeSource` — majority / unanimous / confidence-weighted aggregation across a committee of distinct LLM judges. Unanimous mode biases toward caution (any dissent → UNKNOWN) for expensive-false-positive workflows. |
+| 13 | [`13_webhook_verdicts.py`](./13_webhook_verdicts.py) | `WebhookVerdictSource` — pull verdicts from an external HTTP endpoint (CRM, fraud system, ticketing tool). All failure modes absorb as UNKNOWN so a downstream outage never breaks the audit loop. |
+| 14 | [`14_human_reviewer_queue.py`](./14_human_reviewer_queue.py) | `HumanReviewerSource` — queue-backed human-in-the-loop. `pending` queue drains to your reviewer tool; `verdicts` queue fills from it. Timeout → UNKNOWN so no reviewer on shift doesn't stall the classifier. |
 
 ## On the roadmap
 
@@ -36,6 +41,8 @@ Not yet written — contributions welcome via
 - `dendra roi` report from an accumulated outcome log.
 - Integration with LangSmith / Weights & Biases telemetry.
 - Vision / audio / multimodal adapters.
+- FastAPI / LangGraph integration showcase (pairs with the
+  native async API landing in v1).
 
 ## License
 
