@@ -335,30 +335,64 @@ def test_dispatch_overhead():
 # Cross-ref: docs/working/v1-readiness.md § 2, findings 28-31.
 
 
-def test_classify_auto_record_plus_persist_file_storage():
-    """Finding #29 — auto_record=True + FileStorage = 1,537× slowdown.
+def test_classify_auto_record_plus_persist_file_storage_sync():
+    """Finding #29 (post-fix, sync mode) — fd-cached FileStorage.
 
-    Every classify() on the "production" recommendation (persist=True)
-    opens a new fd + flocks + appends + closes. p99 observed: 4.48 ms.
-    This pins that ceiling so further regressions are caught; Session 3
-    drops it by two orders of magnitude via fd-pool + batched append.
+    Sync FileStorage with fd caching: open once, reuse the fd
+    across appends. Still per-call flock. p99 observed: ~260 µs
+    (down from 4.48 ms pre-fix, a 17× improvement). Ceiling set
+    at 2 ms to absorb CI noise without tolerating the old
+    regression.
     """
     with tempfile.TemporaryDirectory(prefix="dendra_pin_arps_") as td:
-        sw = LearnedSwitch(
-            rule=_rule_atis,
-            name=_unique_name("pin_ar_file"),
-            author="bench",
-            config=SwitchConfig(
-                starting_phase=Phase.RULE,
-                auto_record=True,
-                auto_advance=False,
-            ),
-            storage=FileStorage(Path(td) / "fs"),
-        )
-        stats = _measure(lambda: sw.classify(INPUT), n=300, warmup=50)
-    # Observed p99: 4.48ms; ceiling 15ms (regression-guard; see #29).
+        storage = FileStorage(Path(td) / "fs", batching=False)
+        try:
+            sw = LearnedSwitch(
+                rule=_rule_atis,
+                name=_unique_name("pin_ar_file_sync"),
+                author="bench",
+                config=SwitchConfig(
+                    starting_phase=Phase.RULE,
+                    auto_record=True,
+                    auto_advance=False,
+                ),
+                storage=storage,
+            )
+            stats = _measure(lambda: sw.classify(INPUT), n=500, warmup=50)
+        finally:
+            storage.close()
     _assert_p99_below(
-        stats, 15_000_000, cell="classify.RULE.auto_record+persist"
+        stats, 2_000_000, cell="classify.RULE.auto_record+FileStorage.sync",
+    )
+
+
+def test_classify_auto_record_plus_persist_file_storage_batched():
+    """Finding #29 (post-fix, batched mode) — the persist=True default.
+
+    Batched FileStorage: append pushes to an in-memory queue;
+    a background thread drains every 50 ms. p99 observed: ~390 µs
+    (down from 4.48 ms — 11× p99, 77× p50). The default for
+    ``persist=True`` — shippable on the production recommendation.
+    """
+    with tempfile.TemporaryDirectory(prefix="dendra_pin_arpb_") as td:
+        storage = FileStorage(Path(td) / "fs", batching=True)
+        try:
+            sw = LearnedSwitch(
+                rule=_rule_atis,
+                name=_unique_name("pin_ar_file_batch"),
+                author="bench",
+                config=SwitchConfig(
+                    starting_phase=Phase.RULE,
+                    auto_record=True,
+                    auto_advance=False,
+                ),
+                storage=storage,
+            )
+            stats = _measure(lambda: sw.classify(INPUT), n=2000, warmup=200)
+        finally:
+            storage.close()
+    _assert_p99_below(
+        stats, 1_500_000, cell="classify.RULE.auto_record+FileStorage.batched",
     )
 
 
