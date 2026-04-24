@@ -1,15 +1,8 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
-# SPDX-License-Identifier: Apache-2.0
-#
-# Cross-OS install smoke test. Complements the shared python-ci.yml
-# workflow (which runs unit tests on ubuntu) by confirming that
-# `pip install .` works on a fresh macOS and Linux environment and
-# that the installed `dendra` CLI is importable and runnable.
-#
-# Runs on pushes and PRs to main, plus a weekly cron so a dependency
-# change or wheel-build regression shows up within a week even in
-# the absence of repo activity.
 name: install-smoke
+# Cross-OS install smoke test — complements python-ci.yml. Also runs
+# weekly so wheel-build / dependency regressions surface within the
+# week even in the absence of repo activity.
+# Copyright (c) 2026 B-Tree Ventures, LLC. SPDX-License-Identifier: Apache-2.0
 
 on:
   push:

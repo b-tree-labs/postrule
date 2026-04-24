@@ -4,18 +4,16 @@
 
 Run: `python examples/04_llm_shadow.py`
 
-Phase 1 is where Dendra starts learning *without* yet risking
-production behavior. The rule remains the sole decision-maker;
-the LLM runs in shadow, predicting what it *would* decide, and
-Dendra records both predictions side-by-side. Later, a
-statistical transition gate (McNemar's paired-proportion test)
-can decide when the LLM is reliably better than the rule — and
-only then do you advance to Phase 2 (LLM_PRIMARY).
+In MODEL_SHADOW the rule is the sole decision-maker. The LLM runs
+on every call in shadow, its prediction captured on the outcome
+record next to the rule's. That paired log is what a transition
+gate (McNemar's paired-proportion test) later consumes to decide
+whether advancing to MODEL_PRIMARY is statistically justified —
+so graduation is evidence-gated, not gut-feel-gated.
 
-This example uses a stub LLM so the script runs with zero
-external API calls. In production you'd swap for one of the
-bundled adapters — `OpenAIAdapter`, `AnthropicAdapter`,
-`OllamaAdapter`, `LlamafileAdapter`.
+Uses a stub LLM so the script runs with zero external API calls;
+in production swap for ``OpenAIAdapter`` / ``AnthropicAdapter`` /
+``OllamaAdapter`` / ``LlamafileAdapter``.
 """
 
 from __future__ import annotations
@@ -23,54 +21,46 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from dendra import (
-    InMemoryStorage,
-    LearnedSwitch,
-    LLMPrediction,
-    Outcome,
-    Phase,
-    SwitchConfig,
-)
+from dendra import LearnedSwitch, ModelPrediction, Phase, Verdict
 
 
 class StubLLM:
-    """A deterministic stand-in for a real LLM adapter.
+    """Deterministic stand-in for a real LLM adapter.
 
-    Implements the same `classify(input, labels)` interface that
-    `OpenAIAdapter` / `AnthropicAdapter` / `OllamaAdapter` expose,
-    so swapping to a real provider is a one-line change.
+    Implements the ``classify(input, labels)`` interface shared by
+    the bundled adapters, so swapping is a one-line change.
     """
 
-    def classify(self, input: Any, labels: Iterable[str]) -> LLMPrediction:
-        title = (input.get("title") or "").lower()
-        # Toy: the LLM is slightly more discerning than the rule —
-        # it recognizes "question about X" as a question even when
-        # the title doesn't end in '?'.
-        if "question about" in title or title.endswith("?"):
-            return LLMPrediction(label="question", confidence=0.88)
-        if "crash" in title or "error" in title:
-            return LLMPrediction(label="bug", confidence=0.95)
-        return LLMPrediction(label="feature_request", confidence=0.72)
+    def classify(self, ticket: Any, _labels: Iterable[str]) -> ModelPrediction:
+        """Return a deterministic prediction for the given ticket."""
+        heading = (ticket.get("title") or "").lower()
+        # Toy: LLM catches "question about X" that the rule's
+        # ends-with-'?' test would miss.
+        if "question about" in heading or heading.endswith("?"):
+            return ModelPrediction(label="question", confidence=0.88)
+        if "crash" in heading or "error" in heading:
+            return ModelPrediction(label="bug", confidence=0.95)
+        return ModelPrediction(label="feature_request", confidence=0.72)
 
 
-def rule(ticket: dict) -> str:
-    title = (ticket.get("title") or "").lower()
-    if "crash" in title:
+def triage_rule(ticket: dict) -> str:
+    """Classify one ticket into bug / feature_request / question."""
+    heading = (ticket.get("title") or "").lower()
+    if "crash" in heading:
         return "bug"
-    if title.endswith("?"):
+    if heading.endswith("?"):
         return "question"
     return "feature_request"
 
 
 if __name__ == "__main__":
-    storage = InMemoryStorage()
+    # For a real shadow deployment pass ``persist=True`` so the
+    # paired (rule, llm) predictions survive restart. Demo keeps
+    # the default bounded in-memory storage.
     switch = LearnedSwitch(
-        name="triage",
-        rule=rule,
-        author="@triage:llm-shadow",
-        llm=StubLLM(),
-        storage=storage,
-        config=SwitchConfig(phase=Phase.LLM_SHADOW),
+        rule=triage_rule,
+        model=StubLLM(),
+        starting_phase=Phase.MODEL_SHADOW,
     )
 
     tickets = [
@@ -80,32 +70,29 @@ if __name__ == "__main__":
         {"title": "error in checkout flow"},
     ]
 
-    print(f"Phase: {switch.config.phase.name} — rule decides, LLM shadows")
-    print()
-    for ticket in tickets:
-        # classify() runs both the rule (decision) and the LLM (shadow).
-        result = switch.classify(ticket)
-        # record_outcome() persists the paired prediction to storage —
-        # the SwitchResult alone only surfaces the decision; the
-        # shadow lives in the OutcomeRecord fields llm_output /
-        # llm_confidence so it can feed the transition gate later.
-        switch.record_outcome(
-            input=ticket,
-            output=result.output,
-            outcome=Outcome.CORRECT.value,
+    print(f"Phase: {switch.phase().name} — rule decides, LLM shadows\n")
+    for sample in tickets:
+        # Minimum required: one `classify()` or `dispatch()` call per
+        # input. record_verdict() below is OPTIONAL — call it only
+        # when you want the paired (rule, llm) predictions in the
+        # outcome log for later transition-gate analysis. See
+        # docs/api-reference.md for the full required-vs-optional
+        # surface.
+        result = switch.classify(sample)
+        switch.record_verdict(
+            input=sample,
+            label=result.label,
+            outcome=Verdict.CORRECT.value,
         )
 
-    records = storage.load_outcomes(switch.name)
+    records = switch.storage.load_records(switch.name)
     print(f"{'Input':40s}  {'Rule (decision)':18s}  {'LLM (shadow)':18s}")
     print("-" * 82)
     for rec in records:
         title = rec.input.get("title", "")
-        rule_out = rec.rule_output or rec.output
-        llm_out = rec.llm_output or "-"
+        rule_out = rec.rule_output or rec.label
+        llm_out = rec.model_output or "-"
         print(f"{title:40s}  {rule_out:18s}  {llm_out:18s}")
 
-    # Apply a paired-proportion test over these records (McNemar's
-    # exact for small samples; normal-approx for large) to decide
-    # when the LLM is ready to advance to Phase.LLM_PRIMARY.
     print()
     print(f"Stored {len(records)} outcome records with paired (rule, llm) predictions.")

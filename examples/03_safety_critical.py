@@ -4,47 +4,55 @@
 
 Run: `python examples/03_safety_critical.py`
 
-Some classifications are too consequential to ever be made by a
-pure ML head — authorization decisions, content-safety gates,
-fraud blocks. Setting `safety_critical=True` refuses construction
-of the switch in the final phase (ML_PRIMARY). The rule floor is
-architecturally guaranteed.
+``safety_critical=True`` refuses CONSTRUCTION of the switch in
+ML_PRIMARY — the only phase without a rule fallback on the hot
+path. Construction-time (not call-time) because authorization,
+HIPAA-bound triage, export-control gates have zero tolerance for
+"we'll catch it in staging" — the bad config can't survive past
+``python -c "import mymodule"``.
 """
 
 from __future__ import annotations
 
-from dendra import LearnedSwitch, Phase, SwitchConfig
+from dendra import LearnedSwitch, Phase
 
 
-def rule(request: dict) -> str:
-    # Oversimplified toy rule — in a real system this would be the
-    # carefully-audited human-written policy for "who can access what".
+def access_rule(request: dict) -> str:
+    """Toy admin-only policy.
+
+    In a real system, the carefully-audited "who can access what."
+    Under ``safety_critical=True`` this is the only thing the switch
+    can fall back to, so rules here tend to be smaller and more
+    deny-by-default than their non-critical peers.
+    """
     return "allow" if request.get("role") == "admin" else "deny"
 
 
 if __name__ == "__main__":
-    # Phases 0-4 construct fine for a safety-critical switch — the
-    # rule floor remains reachable at every one of them.
-    for phase in [Phase.RULE, Phase.LLM_SHADOW, Phase.ML_WITH_FALLBACK]:
+    # Phases 0-4 all construct fine — the rule floor is reachable
+    # at every one (RULE, MODEL_SHADOW, MODEL_PRIMARY, ML_SHADOW,
+    # ML_WITH_FALLBACK). Only ML_PRIMARY is refused.
+    for phase in [Phase.RULE, Phase.MODEL_SHADOW, Phase.ML_WITH_FALLBACK]:
+        # Explicit name= because "access-check" is the domain-facing
+        # audit identity; the rule is named access_rule.
         switch = LearnedSwitch(
             name="access-check",
-            rule=rule,
-            author="@security:access-check",
-            config=SwitchConfig(phase=phase, safety_critical=True),
+            rule=access_rule,
+            starting_phase=phase,
+            safety_critical=True,
         )
         print(f"Constructed switch at {phase.name:20s} — ok")
 
-    # Phase 5 (ML_PRIMARY) removes the rule floor. For a
-    # safety_critical switch this must fail at *construction time*
-    # — not at first call, not as a warning — so the misconfiguration
-    # can never ship to production.
     print()
     try:
         LearnedSwitch(
             name="access-check",
-            rule=rule,
-            author="@security:access-check",
-            config=SwitchConfig(phase=Phase.ML_PRIMARY, safety_critical=True),
+            rule=access_rule,
+            starting_phase=Phase.ML_PRIMARY,
+            safety_critical=True,
         )
-    except Exception as exc:
+    except ValueError as exc:
+        # ValueError is the specific class Dendra raises for
+        # safety_critical + ML_PRIMARY; narrowing keeps this block from
+        # masking unrelated bugs during demo runs.
         print(f"{Phase.ML_PRIMARY.name:20s} refused: {type(exc).__name__}: {exc}")

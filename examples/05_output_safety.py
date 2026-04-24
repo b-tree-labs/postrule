@@ -4,22 +4,19 @@
 
 Run: `python examples/05_output_safety.py`
 
-The same six-phase primitive that gates *input* routing can also
-gate *output* delivery. Wrap a content-safety rule with
-`safety_critical=True`, put it on the LLM's output path, and the
-rule floor becomes the architectural guarantee that PII and
-confidential markers are caught even if the ML head is compromised
-or silently fails.
-
-`safety_critical=True` prevents the switch from ever reaching
-Phase.ML_PRIMARY — there is always a rule to catch the output.
+The same primitive that gates input routing gates output delivery.
+``safety_critical=True`` guarantees the rule floor remains reachable
+even after the switch graduates — PII and confidential markers are
+caught even if an ML head is compromised or silently fails. Paired
+with shadow-logging, the rule/LLM boundary converges on what
+actually ships rather than what an analyst guessed.
 """
 
 from __future__ import annotations
 
 import re
 
-from dendra import Phase, SwitchConfig, ml_switch
+from dendra import ml_switch
 
 _SSN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _PHONE = re.compile(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b")
@@ -28,16 +25,16 @@ _CONFIDENTIAL = ("CONFIDENTIAL", "INTERNAL ONLY", "DO NOT DISTRIBUTE")
 
 
 @ml_switch(
+    # list[str] labels: the caller wants the verdict back and decides
+    # what to do in its own layer. Use dict-labels (example 01) when
+    # you want Dendra to dispatch a handler on match.
     labels=["safe", "pii", "confidential"],
-    author="@safety:output-gate",
-    config=SwitchConfig(phase=Phase.RULE, safety_critical=True),
+    safety_critical=True,
 )
-def classify_output(response: str) -> str:
-    """Rule-based safety-floor for LLM output.
-
-    Returns the first class that matches. Order matters — PII is
+def output_safety_rule(response: str) -> str:
+    """Return the first matching class. Order matters — PII is
     checked before confidentiality markers because leaking an SSN
-    via the "CONFIDENTIAL" cover message is worse than either alone.
+    via a "CONFIDENTIAL" cover message is worse than either alone.
     """
     if _SSN.search(response) or _PHONE.search(response) or _EMAIL.search(response):
         return "pii"
@@ -57,13 +54,12 @@ if __name__ == "__main__":
 
     print("LLM output -> safety classification")
     print("-" * 72)
-    for response in generated_responses:
-        verdict = classify_output(response)
+    for generated in generated_responses:
+        verdict = output_safety_rule(generated)
         action = {
             "safe": "deliver",
             "pii": "BLOCK — redact before reply",
             "confidential": "BLOCK — internal-only marker",
         }[verdict]
-        # Truncate for display
-        preview = response if len(response) <= 50 else response[:47] + "..."
+        preview = generated if len(generated) <= 50 else generated[:47] + "..."
         print(f"{preview:52s}  {verdict:14s}  {action}")

@@ -58,18 +58,19 @@ cap, LLM shadow mode, output-safety gate.
 | Phase | Decision-maker | Learning component | Safety floor |
 |---|---|---|---|
 | `RULE` | Your rule | — | Rule (self) |
-| `LLM_SHADOW` | Your rule | LLM predicts, no effect on decision | Rule |
-| `LLM_PRIMARY` | LLM if confident | Rule fallback on low conf / LLM failure | Rule |
+| `MODEL_SHADOW` | Your rule | LLM predicts, no effect on decision | Rule |
+| `MODEL_PRIMARY` | LLM if confident | Rule fallback on low conf / LLM failure | Rule |
 | `ML_SHADOW` | LLM (or rule) | ML head trains, no effect | Rule |
 | `ML_WITH_FALLBACK` | ML if confident | Rule fallback | Rule |
 | `ML_PRIMARY` | ML | — | Rule (circuit breaker only) |
 
-Advance between phases when a paired-proportion statistical test
-(McNemar's exact or equivalent) rejects the null hypothesis that the
-higher-tier classifier is no better than the current phase's
-decision-maker. The probability that any transition produces
-worse-than-rule behavior is bounded above by the test's Type-I error
-rate.
+Advance between phases when the configured gate decides the
+higher-tier classifier is reliably better than the current one.
+The default gate (`McNemarGate`) is a paired-proportion
+statistical test bounding the probability of a worse-than-rule
+transition above by its Type-I error rate; `AccuracyMarginGate`,
+`CompositeGate`, `MinVolumeGate`, and `ManualGate` ship too, and
+any object satisfying the `Gate` protocol works.
 
 ## CLIs
 
@@ -154,7 +155,7 @@ def classify_output(response: str) -> str:
 
 ## LLM-as-teacher bootstrap
 
-Zero historical labels? Deploy at `Phase.LLM_PRIMARY`. The LLM
+Zero historical labels? Deploy at `Phase.MODEL_PRIMARY`. The LLM
 makes the decisions. Every classification writes an outcome record.
 After 500-5,000 records, train a local ML head on those LLM-labeled
 records, graduate to `Phase.ML_WITH_FALLBACK`, and the hot path
@@ -171,13 +172,14 @@ used = train_ml_from_llm_outcomes(
 )
 ```
 
-See `docs/working/llm-as-teacher.md` for the full pattern.
+See [`examples/07_llm_as_teacher.py`](./examples/07_llm_as_teacher.py) for a
+runnable demo of the full pattern.
 
 ## Project structure
 
 ```
 src/dendra/
-├── core.py           # LearnedSwitch, Phase, SwitchConfig, OutcomeRecord
+├── core.py           # LearnedSwitch, Phase, SwitchConfig, ClassificationRecord
 ├── decorator.py      # @ml_switch
 ├── storage.py        # Self-rotating file storage + in-memory
 ├── llm.py            # OpenAI / Anthropic / Ollama / llamafile adapters
@@ -227,11 +229,7 @@ file. Commercial licensing that removes the BSL restrictions is
 available — contact `licensing@b-treeventures.com`.
 
 The underlying classification primitive is covered by a filed
-US provisional patent (application pending). See
-[`docs/working/license-strategy.md`](./docs/working/license-strategy.md)
-for the decision rationale and
-[`docs/working/patent-strategy.md`](./docs/working/patent-strategy.md)
-for the patent strategy.
+US provisional patent (application pending).
 
 ## Status
 

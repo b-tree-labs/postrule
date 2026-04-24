@@ -4,71 +4,70 @@
 
 Run: `python examples/06_ml_primary.py`
 
-Phase.ML_PRIMARY is the final phase of Dendra's lifecycle. The ML
-head makes the decision on every call. There is no runtime
-fallback to the rule *on normal traffic*. But the rule has not
-been removed — it waits, as the circuit-breaker target. When the
-ML head fails (raises, times out, returns nonsense), the breaker
-trips and routing falls back to the rule until an operator
-resets.
-
-The rule floor is never deleted. It is the thing the system
-falls back to when the ML head is unhealthy — which is, in the
-end, the whole safety story.
+At Phase.ML_PRIMARY the ML head decides on every call. The rule
+isn't on the hot path — but it's not deleted either: it sits as
+the circuit-breaker target, ready to take over the moment the ML
+head raises, times out, or returns nonsense. That's the whole
+safety story at the end-state.
 """
 
 from __future__ import annotations
 
-from dendra import (
-    InMemoryStorage,
-    LearnedSwitch,
-    MLHead,
-    MLPrediction,
-    Outcome,
-    Phase,
-    SwitchConfig,
-)
+from dendra import LearnedSwitch, MLPrediction, Phase
 
 
-def rule(ticket: dict) -> str:
-    """The safety-floor classifier. Plain Python, no ML."""
-    title = (ticket.get("title") or "").lower()
-    if "crash" in title or "error" in title:
+def triage_rule(ticket: dict) -> str:
+    """Classify one ticket into bug / feature_request / question."""
+    heading = (ticket.get("title") or "").lower()
+    if "crash" in heading or "error" in heading:
         return "bug"
-    if title.endswith("?"):
+    if heading.endswith("?"):
         return "question"
     return "feature_request"
 
 
 class HealthyMLHead:
-    """An ML head that's been trained + is working. Decides confidently.
-    The `labels` arg comes from the switch's declared label set — most
-    heads ignore it, but production heads often use it to constrain
-    predictions or for sanity checks."""
+    """Stub ML head that's trained and healthy.
 
-    def fit(self, records): pass
+    Production would wrap an sklearn / ONNX / HuggingFace model;
+    we hardcode the predictions so the example is deterministic.
+    """
 
-    def predict(self, input, labels=None) -> MLPrediction:
-        title = (input.get("title") or "").lower()
-        if "crash" in title or "error" in title:
+    def fit(self, _records):
+        """No-op — the stub is hard-coded and doesn't learn."""
+
+    def predict(self, ticket, _labels=None) -> MLPrediction:
+        """Deterministic prediction for the given ticket."""
+        heading = (ticket.get("title") or "").lower()
+        if "crash" in heading or "error" in heading:
             return MLPrediction(label="bug", confidence=0.98)
-        if "add" in title or "feature" in title or "support" in title:
+        if "add" in heading or "feature" in heading or "support" in heading:
             return MLPrediction(label="feature_request", confidence=0.93)
         return MLPrediction(label="question", confidence=0.90)
 
+    def model_version(self) -> str:
+        """Version string surfaced in ``SwitchStatus.model_version``."""
+        return "stub-healthy-1.0"
+
 
 class FlakyMLHead:
-    """An ML head that's started failing. Simulates a degraded model."""
+    """Stub that can be forced to raise on the next predict() call."""
 
     def __init__(self) -> None:
         self.raise_on_next = False
 
-    def fit(self, records): pass
+    def fit(self, _records):
+        """No-op — the stub is hard-coded and doesn't learn."""
 
-    def predict(self, input, labels=None) -> MLPrediction:
+    def predict(self, _ticket, _labels=None) -> MLPrediction:
+        """Raise on demand, else return a dummy 'question' prediction."""
         if self.raise_on_next:
             raise RuntimeError("model server returned 503")
         return MLPrediction(label="question", confidence=0.95)
+
+    def model_version(self) -> str:
+        """Version string surfaced in ``SwitchStatus.model_version``."""
+        return "stub-flaky-0.1"
 
 
 if __name__ == "__main__":
@@ -77,17 +76,15 @@ if __name__ == "__main__":
     # ------------------------------------------------------------
     print("--- Part 1: ML_PRIMARY happy path ---\n")
 
-    storage = InMemoryStorage()
+    # Real ML_PRIMARY deployments should pass ``persist=True`` so
+    # breaker-trip events land in the audit log; we skip that here
+    # to keep the demo self-contained.
     switch = LearnedSwitch(
         name="triage",
-        rule=rule,
-        author="@triage:ml-primary",
+        rule=triage_rule,
         ml_head=HealthyMLHead(),
-        storage=storage,
-        config=SwitchConfig(
-            starting_phase=Phase.ML_PRIMARY,
-            phase_limit=Phase.ML_PRIMARY,  # explicit — no further advancement
-        ),
+        starting_phase=Phase.ML_PRIMARY,
+        phase_limit=Phase.ML_PRIMARY,
     )
 
     cases = [
@@ -95,11 +92,10 @@ if __name__ == "__main__":
         {"title": "add dark mode"},
         {"title": "is my account suspended?"},
     ]
-    for ticket in cases:
-        result = switch.classify(ticket)
-        print(f"  {ticket['title']:40s}  → {result.output:18s}  source={result.source}")
+    for case in cases:
+        result = switch.classify(case)
+        print(f"  {case['title']:40s}  → {result.label:18s}  source={result.source}")
 
-    # Every call was decided by the ML head.
     assert all(r.source == "ml" for r in [switch.classify(c) for c in cases])
 
     # ------------------------------------------------------------
@@ -110,37 +106,32 @@ if __name__ == "__main__":
     flaky = FlakyMLHead()
     switch2 = LearnedSwitch(
         name="triage-flaky",
-        rule=rule,
-        author="@triage:ml-primary",
+        rule=triage_rule,
         ml_head=flaky,
-        config=SwitchConfig(starting_phase=Phase.ML_PRIMARY),
+        starting_phase=Phase.ML_PRIMARY,
     )
 
-    # Warm-up — ML is fine.
-    switch2.classify({"title": "what is the status of my ticket?"})
+    switch2.classify({"title": "what is the status of my ticket?"})  # warm-up
 
-    # Simulate the ML server failing. Dendra's breaker trips after
-    # consecutive failures (see SwitchConfig for tuning); with the
-    # default the first raise trips it.
+    # Drive the breaker past its trip threshold. The ML head raises
+    # RuntimeError on each failing call; we catch that specific
+    # class (not bare Exception) to keep the demo honest about what
+    # the breaker is handling.
     flaky.raise_on_next = True
     for _ in range(3):
         try:
             switch2.classify({"title": "app crashes on login"})
-        except Exception:
-            pass  # breaker swallows; routing falls back
+        except RuntimeError:
+            pass
 
-    # Subsequent calls route to the rule — even though we're still
-    # in ML_PRIMARY. Phase didn't change; the breaker is just
-    # sitting between the call and the ML head until reset. The
-    # source string is "rule_fallback" to distinguish "rule because
-    # breaker is tripped" from "rule because that's this phase's
-    # normal decision-maker."
-    flaky.raise_on_next = False  # ML is actually healthy again now
+    # Phase is still ML_PRIMARY; the breaker sits between classify()
+    # and the ML head until reset. source="rule_fallback" (not
+    # "rule") distinguishes breaker-trip from phase-normal rule use.
+    flaky.raise_on_next = False
     result = switch2.classify({"title": "app crashes on login"})
     print(f"  After breaker trip → decided by: {result.source}")
-    assert result.source == "rule_fallback", "breaker should route to rule_fallback"
+    assert result.source == "rule_fallback"
 
-    # Operator decides the ML head is healthy enough to re-enable.
     switch2.reset_circuit_breaker()
     result = switch2.classify({"title": "add dark mode"})
     print(f"  After reset_circuit_breaker()   → decided by: {result.source}")
