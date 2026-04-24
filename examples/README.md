@@ -31,6 +31,8 @@ the minimum required vs optional surface.
 | 12 | [`12_llm_committee.py`](./12_llm_committee.py) | `LLMCommitteeSource` — majority / unanimous / confidence-weighted aggregation across a committee of distinct LLM judges. Unanimous mode biases toward caution (any dissent → UNKNOWN) for expensive-false-positive workflows. |
 | 13 | [`13_webhook_verdicts.py`](./13_webhook_verdicts.py) | `WebhookVerdictSource` — pull verdicts from an external HTTP endpoint (CRM, fraud system, ticketing tool). All failure modes absorb as UNKNOWN so a downstream outage never breaks the audit loop. |
 | 14 | [`14_human_reviewer_queue.py`](./14_human_reviewer_queue.py) | `HumanReviewerSource` — queue-backed human-in-the-loop. `pending` queue drains to your reviewer tool; `verdicts` queue fills from it. Timeout → UNKNOWN so no reviewer on shift doesn't stall the classifier. |
+| 15 | [`15_async_fastapi.py`](./15_async_fastapi.py) | FastAPI route with `await sw.aclassify(...)`, reviewer roundtrip via `apply_reviews`, and a sync `/status` handler. Shows sync + async on the same switch. Requires `pip install fastapi uvicorn`. |
+| 16 | [`16_async_committee.py`](./16_async_committee.py) | `LLMCommitteeSource.ajudge` via `asyncio.gather` — committee latency is `max(judge_latency)`, not `sum`. Sequential-vs-parallel timing delta printed inline (3× on a 3-judge committee). |
 
 ## On the roadmap
 
