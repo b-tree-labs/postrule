@@ -70,7 +70,7 @@ two very different sales conversations:
   same input and returns a label. We use TF-IDF + logistic regression
   — simple, fast, interpretable. Bigger models would do better but
   would muddy the comparison.
-- **Outcome.** A row in the log saying *"when the input was X, the
+- **Verdict.** A row in the log saying *"when the input was X, the
   correct label was Y"*. In production, this comes from user
   correction, audit trails, downstream-signal inference.
 - **Training stream.** We feed training examples to Dendra one at a
@@ -82,8 +82,8 @@ two very different sales conversations:
   outcome count. Each JSONL row (except the summary) is one checkpoint.
 - **Crossover / transition depth.** The smallest outcome count at
   which ML beats the rule on the test set. The paper's headline metric.
-- **Phase (0-5).** Dendra's six lifecycle stages: RULE → LLM_SHADOW
-  → LLM_PRIMARY → ML_SHADOW → ML_WITH_FALLBACK → ML_PRIMARY. Higher
+- **Phase (0-5).** Dendra's six lifecycle stages: RULE → MODEL_SHADOW
+  → MODEL_PRIMARY → ML_SHADOW → ML_WITH_FALLBACK → ML_PRIMARY. Higher
   phase = more autonomy; the rule is always the safety floor.
 - **Shadow mode.** The LLM or ML runs, its prediction is recorded,
   but the rule's decision is still what the user sees. Lets you

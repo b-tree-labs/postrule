@@ -57,7 +57,7 @@ project with labeled data.
 About **0.5 microseconds p50** at Phase.RULE over the bare rule
 call, measured in `tests/test_latency.py`. At Phase.ML_WITH_FALLBACK
 with a TF-IDF + logistic head, it's ~105 µs p50 — well inside
-typical web-request budgets. At LLM_PRIMARY with a local
+typical web-request budgets. At MODEL_PRIMARY with a local
 llama3.2:1b, it's ~250 ms (dominated by the LLM, not Dendra).
 
 ## What's the cost overhead?
@@ -72,13 +72,13 @@ sentence-transformer heads cost more but are still local.
 No. You configure an adapter (`OpenAIAdapter` / `AnthropicAdapter` /
 `OllamaAdapter` / `LlamafileAdapter`) with your own credentials
 and you pick the phase. At Phase.RULE the LLM is never called.
-At Phase.LLM_SHADOW the LLM is called but doesn't affect output.
-At Phase.LLM_PRIMARY the LLM is called and its output is the
+At Phase.MODEL_SHADOW the LLM is called but doesn't affect output.
+At Phase.MODEL_PRIMARY the LLM is called and its output is the
 decision unless confidence is below a configured threshold.
 
 ## Is my data sent anywhere?
 
-By default, nothing leaves your process. Outcome records go to
+By default, nothing leaves your process. Verdict records go to
 whatever storage backend you configure — `InMemoryStorage`,
 `FileStorage`, or a custom `Storage` implementation. No Dendra
 cloud, no telemetry home-call, no phone-home.

@@ -159,7 +159,7 @@ class TestDendraSwitchOverhead:
             f"p95={stats['p95_us']:.2f}µs "
             f"ops/s={stats['throughput_ops_s']:,.0f}"
         )
-        # Switch adds a function call, a SwitchResult dataclass, a phase
+        # Switch adds a function call, a ClassificationResult dataclass, a phase
         # check. Cap overhead at ≤20µs.
         assert stats["p50_us"] < 20.0
 

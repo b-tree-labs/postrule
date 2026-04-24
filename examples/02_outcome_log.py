@@ -1,22 +1,26 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Record outcomes and read them back.
+"""Record outcomes and read them back — durable across restarts.
 
 Run: `python examples/02_outcome_log.py`
 
-Dendra's value starts accumulating the moment you record outcomes.
-Each call to `record_outcome()` writes a structured record into the
-configured storage — here we use `InMemoryStorage` for easy
-inspection; a production deployment would use `FileStorage` or a
-custom backend.
+``persist=True`` wraps a ``FileStorage`` in ``ResilientStorage`` so
+outcomes survive process restart and feed later phase-transition
+analysis, ROI reports, and the dashboard. Records land under
+``./runtime/dendra/<name>/outcomes.jsonl``.
+
+For scratch workflows, omit ``persist`` — the default
+``BoundedInMemoryStorage`` keeps the most recent 10 000 records
+per switch.
 """
 
 from __future__ import annotations
 
-from dendra import InMemoryStorage, LearnedSwitch, Outcome
+from dendra import LearnedSwitch, Verdict
 
 
-def rule(ticket: dict) -> str:
+def triage_rule(ticket: dict) -> str:
+    """Classify one ticket into bug / feature_request."""
     title = (ticket.get("title") or "").lower()
     if "crash" in title:
         return "bug"
@@ -24,36 +28,48 @@ def rule(ticket: dict) -> str:
 
 
 if __name__ == "__main__":
-    storage = InMemoryStorage()
     switch = LearnedSwitch(
         name="triage",
-        rule=rule,
+        rule=triage_rule,
+        # `author` is the provenance marker audit tooling reads. It
+        # auto-derives from the rule's module when omitted (see other
+        # examples). Override explicitly for a team-owned scheme
+        # (`@team:subsystem`, service account, compliance tag) that
+        # survives refactors.
         author="@triage:outcome-log",
-        storage=storage,
+        persist=True,
     )
 
+    # Each case pairs an input with the GROUND TRUTH verdict — the
+    # label a human reviewer (or a downstream signal) would assign
+    # AFTER seeing the classification. It is NOT the rule's
+    # prediction; the rule's prediction is compared against this
+    # ground truth when we record the outcome below. The outcome log
+    # is the substrate for phase graduation, drift detection, ROI
+    # estimation, and multi-LLM comparison — ground truth is what
+    # turns classifications into an evidence base.
     cases = [
-        ({"title": "app crashes on login"}, Outcome.CORRECT),
-        ({"title": "add dark mode"}, Outcome.CORRECT),
-        ({"title": "error in checkout flow"}, Outcome.CORRECT),
-        # A mislabel — rule thinks "crash" is always a bug, even if
-        # the ticket is actually a user question about crash reports.
-        ({"title": "can I download my crash reports?"}, Outcome.INCORRECT),
+        ({"title": "app crashes on login"}, Verdict.CORRECT),
+        ({"title": "add dark mode"}, Verdict.CORRECT),
+        ({"title": "error in checkout flow"}, Verdict.CORRECT),
+        # Rule assumes "crash" → bug; reality is a user question.
+        ({"title": "can I download my crash reports?"}, Verdict.INCORRECT),
     ]
 
-    for ticket, ground_truth in cases:
-        result = switch.classify(ticket)
-        switch.record_outcome(
-            input=ticket,
-            output=result.output,
+    for case, ground_truth in cases:
+        result = switch.classify(case)
+        switch.record_verdict(
+            input=case,
+            label=result.label,
             outcome=ground_truth.value,
         )
-        title = ticket["title"]
-        pred = result.output
-        print(f"{title:45s}  predicted={pred:18s}  actual={ground_truth.name}")
+        print(
+            f"{case['title']:45s}  predicted={result.label:18s}  "
+            f"actual={ground_truth.name}"
+        )
 
     print()
-    records = storage.load_outcomes(switch.name)
-    print(f"Recorded {len(records)} outcomes.")
-    correct = sum(1 for r in records if r.outcome == Outcome.CORRECT.value)
+    records = switch.storage.load_records(switch.name)
+    print(f"Recorded {len(records)} outcomes  (persisted to ./runtime/dendra/triage/).")
+    correct = sum(1 for r in records if r.outcome == Verdict.CORRECT.value)
     print(f"Rule accuracy so far: {correct}/{len(records)}  ({correct / len(records):.0%})")

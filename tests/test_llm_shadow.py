@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for Phase 1 (LLM_SHADOW) — rule decides, LLM predicts alongside."""
+"""Tests for Phase 1 (MODEL_SHADOW) — rule decides, LLM predicts alongside."""
 
 from __future__ import annotations
 
@@ -10,15 +10,15 @@ from dataclasses import dataclass
 import pytest
 
 from dendra import (
+    ClassificationRecord,
+    ClassificationResult,
     InMemoryStorage,
     LearnedSwitch,
-    LLMClassifier,
-    LLMPrediction,
-    Outcome,
-    OutcomeRecord,
+    ModelClassifier,
+    ModelPrediction,
     Phase,
     SwitchConfig,
-    SwitchResult,
+    Verdict,
     ml_switch,
 )
 
@@ -29,15 +29,15 @@ from dendra import (
 
 @dataclass
 class FakeLLM:
-    """Deterministic LLMClassifier for tests — returns the label it's told to."""
+    """Deterministic ModelClassifier for tests — returns the label it's told to."""
 
     label: str = "bug"
     confidence: float = 0.91
     calls: int = 0
 
-    def classify(self, input, labels):  # matches LLMClassifier protocol
+    def classify(self, input, labels):  # matches ModelClassifier protocol
         self.calls += 1
-        return LLMPrediction(label=self.label, confidence=self.confidence)
+        return ModelPrediction(label=self.label, confidence=self.confidence)
 
 
 def _rule(ticket: dict) -> str:
@@ -56,8 +56,8 @@ class TestPhaseEnum:
         names = {p.name for p in Phase}
         assert names == {
             "RULE",
-            "LLM_SHADOW",
-            "LLM_PRIMARY",
+            "MODEL_SHADOW",
+            "MODEL_PRIMARY",
             "ML_SHADOW",
             "ML_WITH_FALLBACK",
             "ML_PRIMARY",
@@ -69,17 +69,17 @@ class TestPhaseEnum:
 
 
 # ---------------------------------------------------------------------------
-# LLMClassifier protocol
+# ModelClassifier protocol
 # ---------------------------------------------------------------------------
 
 
 class TestLLMClassifierProtocol:
     def test_fake_llm_satisfies_protocol(self):
         f = FakeLLM()
-        assert isinstance(f, LLMClassifier)
+        assert isinstance(f, ModelClassifier)
 
     def test_prediction_has_label_and_confidence(self):
-        p = LLMPrediction(label="bug", confidence=0.9)
+        p = ModelPrediction(label="bug", confidence=0.9)
         assert p.label == "bug"
         assert 0.0 <= p.confidence <= 1.0
 
@@ -95,15 +95,15 @@ class TestPhase1LLMShadow:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(label="feature_request", confidence=0.95),
-            config=SwitchConfig(phase=Phase.LLM_SHADOW),
+            model=FakeLLM(label="feature_request", confidence=0.95),
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         result = s.classify({"title": "App keeps crashing"})
         # Rule says "bug"; LLM disagrees with "feature_request".
         # In shadow, the rule's verdict is what the caller sees.
-        assert result.output == "bug"
+        assert result.label == "bug"
         assert result.source == "rule"
-        assert result.phase is Phase.LLM_SHADOW
+        assert result.phase is Phase.MODEL_SHADOW
 
     def test_llm_is_invoked_in_shadow(self):
         llm = FakeLLM(label="bug", confidence=0.8)
@@ -111,8 +111,8 @@ class TestPhase1LLMShadow:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=llm,
-            config=SwitchConfig(phase=Phase.LLM_SHADOW),
+            model=llm,
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         s.classify({"title": "App keeps crashing"})
         assert llm.calls == 1
@@ -122,9 +122,9 @@ class TestPhase1LLMShadow:
             name="triage",
             rule=_rule,
             author="alice",
-            config=SwitchConfig(phase=Phase.LLM_SHADOW),
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
-        with pytest.raises(ValueError, match="llm"):
+        with pytest.raises(ValueError, match="model"):
             s.classify({"title": "App keeps crashing"})
 
     def test_rule_phase_ignores_missing_llm(self):
@@ -143,32 +143,32 @@ class TestPhase1LLMShadow:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=BrokenLLM(),
-            config=SwitchConfig(phase=Phase.LLM_SHADOW),
+            model=BrokenLLM(),
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         # Shadow failure must NOT break the user's decision. Rule still wins.
         result = s.classify({"title": "App keeps crashing"})
-        assert result.output == "bug"
+        assert result.label == "bug"
         assert result.source == "rule"
 
 
 # ---------------------------------------------------------------------------
-# OutcomeRecord extension
+# ClassificationRecord extension
 # ---------------------------------------------------------------------------
 
 
 class TestOutcomeRecordLLMFields:
     def test_llm_fields_default_to_none(self):
-        r = OutcomeRecord(
+        r = ClassificationRecord(
             timestamp=1.0,
             input={"x": 1},
-            output="bug",
-            outcome=Outcome.CORRECT.value,
+            label="bug",
+            outcome=Verdict.CORRECT.value,
             source="rule",
             confidence=1.0,
         )
-        assert r.llm_output is None
-        assert r.llm_confidence is None
+        assert r.model_output is None
+        assert r.model_confidence is None
 
     def test_llm_fields_populate_on_shadow_record(self):
         store = InMemoryStorage()
@@ -176,22 +176,22 @@ class TestOutcomeRecordLLMFields:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(label="feature_request", confidence=0.77),
+            model=FakeLLM(label="feature_request", confidence=0.77),
             storage=store,
-            config=SwitchConfig(phase=Phase.LLM_SHADOW),
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         s.classify({"title": "App keeps crashing"})
-        s.record_outcome(
+        s.record_verdict(
             input={"title": "App keeps crashing"},
-            output="bug",
-            outcome=Outcome.CORRECT.value,
+            label="bug",
+            outcome=Verdict.CORRECT.value,
         )
-        records = store.load_outcomes("triage")
+        records = store.load_records("triage")
         # Phase 1 auto-captures the LLM prediction alongside each classify()
         # so the next record carries the shadow observation.
         assert len(records) == 1
-        assert records[0].llm_output == "feature_request"
-        assert records[0].llm_confidence == pytest.approx(0.77)
+        assert records[0].model_output == "feature_request"
+        assert records[0].model_confidence == pytest.approx(0.77)
 
 
 # ---------------------------------------------------------------------------
@@ -206,19 +206,19 @@ class TestShadowAgreementRate:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=llm,
-            config=SwitchConfig(phase=Phase.LLM_SHADOW),
+            model=llm,
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         for title in ("crash 1", "crash 2", "crash 3"):
             s.classify({"title": title})
-            s.record_outcome(
+            s.record_verdict(
                 input={"title": title},
-                output="bug",
-                outcome=Outcome.CORRECT.value,
+                label="bug",
+                outcome=Verdict.CORRECT.value,
             )
         st = s.status()
         # All three LLM predictions matched the rule → 100% agreement.
-        assert st.phase is Phase.LLM_SHADOW
+        assert st.phase is Phase.MODEL_SHADOW
         assert st.shadow_agreement_rate == pytest.approx(1.0)
 
     def test_disagreement_lowers_rate(self):
@@ -227,23 +227,23 @@ class TestShadowAgreementRate:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=llm,
-            config=SwitchConfig(phase=Phase.LLM_SHADOW),
+            model=llm,
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         # Rule returns "bug" (crash keyword); LLM returns "feature_request".
         for title in ("crash 1", "crash 2"):
             s.classify({"title": title})
-            s.record_outcome(
+            s.record_verdict(
                 input={"title": title},
-                output="bug",
-                outcome=Outcome.CORRECT.value,
+                label="bug",
+                outcome=Verdict.CORRECT.value,
             )
         st = s.status()
         assert st.shadow_agreement_rate == pytest.approx(0.0)
 
 
 # ---------------------------------------------------------------------------
-# @ml_switch decorator with llm= kwarg
+# @ml_switch decorator with model= kwarg
 # ---------------------------------------------------------------------------
 
 
@@ -252,13 +252,13 @@ class TestDecoratorLLMKwarg:
         @ml_switch(
             labels=["bug", "feature_request"],
             author="alice",
-            llm=FakeLLM(label="bug", confidence=0.9),
-            config=SwitchConfig(phase=Phase.LLM_SHADOW),
+            model=FakeLLM(label="bug", confidence=0.9),
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         def triage(ticket):
             return _rule(ticket)
 
         result = triage.switch.classify({"title": "App keeps crashing"})
-        assert isinstance(result, SwitchResult)
+        assert isinstance(result, ClassificationResult)
         assert result.source == "rule"
-        assert triage.switch.phase() is Phase.LLM_SHADOW
+        assert triage.switch.phase() is Phase.MODEL_SHADOW

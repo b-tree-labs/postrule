@@ -5,33 +5,37 @@ services, no API keys — and targets a single conceptual piece of
 the Dendra primitive.
 
 ```bash
-pip install dendra
+pip install git+https://github.com/axiom-labs-os/dendra
 python examples/01_hello_world.py
 ```
+
+New to Dendra? Start with [`01_hello_world.py`](./01_hello_world.py),
+then skim [`../docs/api-reference.md`](../docs/api-reference.md) for
+the minimum required vs optional surface.
 
 ## Gallery
 
 | # | File | What it shows |
 |---|---|---|
-| 1 | [`01_hello_world.py`](./01_hello_world.py) | The smallest possible `@ml_switch` wrap. Rule-only phase. Behavior is identical to the un-wrapped rule. |
-| 2 | [`02_outcome_log.py`](./02_outcome_log.py) | Recording outcomes into `InMemoryStorage`; reading them back; computing rule accuracy. The outcome log is what feeds phase-transition decisions later. |
-| 3 | [`03_safety_critical.py`](./03_safety_critical.py) | `safety_critical=True` refuses construction in `Phase.ML_PRIMARY`. The rule floor is architecturally guaranteed for authorization-class decisions. |
-| 4 | [`04_llm_shadow.py`](./04_llm_shadow.py) | Phase 1 (LLM_SHADOW). Rule still decides; LLM runs in parallel, predictions captured for later statistical analysis. Uses a stub LLM — swap to `OpenAIAdapter` / `AnthropicAdapter` / `OllamaAdapter` for production. |
-| 5 | [`05_output_safety.py`](./05_output_safety.py) | Wrapping *LLM output* classification with `safety_critical=True`. PII / confidential markers detected before delivery to users. |
-| 6 | [`06_ml_primary.py`](./06_ml_primary.py) | The end-state: `Phase.ML_PRIMARY` with a healthy ML head deciding, the rule sitting silently as the circuit-breaker target. Part 2 simulates an ML failure to show breaker trip + operator reset. |
-| 7 | [`07_llm_as_teacher.py`](./07_llm_as_teacher.py) | Cold-start pattern: start at `Phase.LLM_PRIMARY` with zero labeled data, let the LLM decide + label production traffic, then train a local ML head on the accumulated labels and graduate to `Phase.ML_WITH_FALLBACK`. |
+| 1 | [`01_hello_world.py`](./01_hello_world.py) | Smallest complete example: dict-labels + dispatch. |
+| 2 | [`02_outcome_log.py`](./02_outcome_log.py) | `persist=True` + ground-truth verdicts; reading the log back. The outcome log feeds phase graduation, ROI, drift. |
+| 3 | [`03_safety_critical.py`](./03_safety_critical.py) | `safety_critical=True` refuses construction in `Phase.ML_PRIMARY` — the rule floor is architecturally guaranteed. |
+| 4 | [`04_llm_shadow.py`](./04_llm_shadow.py) | `Phase.MODEL_SHADOW`: rule decides, LLM observes; paired predictions land in the outcome log for later transition-gate analysis. Stub LLM (swap for `OpenAIAdapter` / `AnthropicAdapter` / `OllamaAdapter` / `LlamafileAdapter` in production). |
+| 5 | [`05_output_safety.py`](./05_output_safety.py) | Same primitive on LLM *output* — PII / confidentiality gating. `list[str]` labels (no dispatch; caller handles). |
+| 6 | [`06_ml_primary.py`](./06_ml_primary.py) | End-state: `Phase.ML_PRIMARY` with a healthy ML head deciding and the rule as circuit-breaker target. Part 2 simulates an ML failure → breaker trip → operator reset. |
+| 7 | [`07_llm_as_teacher.py`](./07_llm_as_teacher.py) | Cold-start: start at `Phase.MODEL_PRIMARY` with zero labeled data, let the LLM label production traffic, then train a local ML head and graduate (operator-triggered). |
+| 8 | [`08_classify_vs_dispatch.py`](./08_classify_vs_dispatch.py) | The two verbs: `classify()` pure (tests / dashboards); `dispatch()` classify + fire the handler. Includes the graceful-failure contract — a handler that raises is captured on `action_raised`, not propagated. |
+| 9 | [`09_verdict_webhook.py`](./09_verdict_webhook.py) | Verdicts arriving async from outside the process (simulated reviewer thread feeding a queue). Shows the three ergonomic shapes — direct `record_verdict`, fluent `.mark_correct()`, and `verdict_for()` context manager — plus the `on_verdict=` mirror-to-audit hook. |
 
-## What's not here yet
+## On the roadmap
 
-The following examples are on the roadmap (see
-`docs/working/roadmap-2026-04-20.md` §1.5) but not yet written:
+Not yet written — contributions welcome via
+[`../CONTRIBUTING.md`](../CONTRIBUTING.md):
 
-- Circuit-breaker-under-ML-failure demo.
-- End-to-end transition curve on an ATIS-like public benchmark.
+- End-to-end transition curve on a public benchmark (ATIS-class).
 - `dendra roi` report from an accumulated outcome log.
 - Integration with LangSmith / Weights & Biases telemetry.
-
-Contributions welcome — see [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
+- Vision / audio / multimodal adapters.
 
 ## License
 

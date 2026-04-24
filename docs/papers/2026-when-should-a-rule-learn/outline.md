@@ -114,8 +114,8 @@ Table 1: **Six-phase lifecycle**.
 | Phase | Decision-maker | Learning component | Safety floor |
 |---|---|---|---|
 | P0: RULE | Rule | — | Rule (self) |
-| P1: LLM_SHADOW | Rule | LLM predicts, no effect on decision | Rule |
-| P2: LLM_PRIMARY | LLM | LLM if confident, rule fallback | Rule |
+| P1: MODEL_SHADOW | Rule | LLM predicts, no effect on decision | Rule |
+| P2: MODEL_PRIMARY | LLM | LLM if confident, rule fallback | Rule |
 | P3: ML_SHADOW | LLM (or Rule) | ML classifier trains, no effect | Rule |
 | P4: ML_WITH_FALLBACK | ML | ML if confident, rule fallback | Rule |
 | P5: ML_PRIMARY | ML | — | Rule (circuit breaker only) |
@@ -173,7 +173,7 @@ Rules are released with the dataset so replicators can reproduce
 exactly. *Deliberately simple* — this represents the real-world
 "day-zero rule" not an expert-tuned baseline.
 
-### 4.3 Outcome simulation
+### 4.3 Verdict simulation
 
 Production systems accumulate outcomes over time; benchmark
 experiments simulate this by:
@@ -237,7 +237,7 @@ Break transition depth by:
 
 - Label cardinality (few-shot per-class vs many-shot)
 - Distribution stability (KL divergence window-over-window)
-- Outcome quality (direct label vs inferred)
+- Verdict quality (direct label vs inferred)
 
 ---
 
@@ -250,8 +250,8 @@ tell practitioners *before* deployment when to expect graduation.
 
 1. **Label cardinality**: 2 → 1000.
 2. **Distribution stability**: stable / moderate / unstable.
-3. **Outcome latency**: seconds → days.
-4. **Outcome quality**: direct human label > indirect metric >
+3. **Verdict latency**: seconds → days.
+4. **Verdict quality**: direct human label > indirect metric >
    inferred.
 5. **Feature dimensionality**: low (hand-crafted) → high (embeddings).
 
@@ -335,7 +335,7 @@ What this paper changes for practitioners:
 - Federated training: aggregating outcome pools across
   institutions without raw-data sharing. Does federation
   accelerate transitions?
-- LLM-as-shadow-labeler: Phase 1 (LLM_SHADOW) specifically tests
+- LLM-as-shadow-labeler: Phase 1 (MODEL_SHADOW) specifically tests
   whether an off-the-shelf LLM can serve as the graduation
   intermediate. Potentially skip directly to Phase 4.
 - Transition dynamics under adversarial drift: what happens when
@@ -365,7 +365,7 @@ learn?*
 
 ## Outstanding TODOs (outline → paper)
 
-- [ ] Dendra v0.2.0 — Phase 1 (LLM_SHADOW) implementation
+- [ ] Dendra v0.2.0 — Phase 1 (MODEL_SHADOW) implementation
 - [ ] Dendra v0.3.0 — Phase 3/4 (ML_SHADOW, ML_WITH_FALLBACK)
 - [ ] Benchmark loaders for the four datasets (HuggingFace Datasets)
 - [ ] Reference rules per benchmark

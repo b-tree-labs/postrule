@@ -13,10 +13,10 @@ from __future__ import annotations
 import time
 
 from dendra import (
+    ClassificationRecord,
     InMemoryStorage,
     LearnedSwitch,
-    LLMPrediction,
-    OutcomeRecord,
+    ModelPrediction,
 )
 from dendra.research import train_ml_from_llm_outcomes
 
@@ -32,7 +32,7 @@ class _FakeMLHead:
         self.trained_records = records
 
     def predict(self, input, labels):
-        return LLMPrediction(label="stub", confidence=1.0)  # unused
+        return ModelPrediction(label="stub", confidence=1.0)  # unused
 
     def model_version(self) -> str:
         return "fake"
@@ -53,12 +53,12 @@ def _make_switch() -> LearnedSwitch:
 
 def _write_outcomes(switch: LearnedSwitch, n: int, source: str, outcome: str):
     for i in range(n):
-        switch.storage.append_outcome(
+        switch.storage.append_record(
             switch.name,
-            OutcomeRecord(
+            ClassificationRecord(
                 timestamp=time.time(),
                 input=f"input {i}",
-                output="label_a",
+                label="label_a",
                 outcome=outcome,
                 source=source,
                 confidence=0.9,
@@ -72,7 +72,7 @@ def _write_outcomes(switch: LearnedSwitch, n: int, source: str, outcome: str):
 class TestLLMAsTeacherHelper:
     def test_fits_when_llm_outcomes_meet_threshold(self):
         sw = _make_switch()
-        _write_outcomes(sw, 250, source="llm", outcome="correct")
+        _write_outcomes(sw, 250, source="model", outcome="correct")
 
         head = _FakeMLHead()
         used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=200)
@@ -81,7 +81,7 @@ class TestLLMAsTeacherHelper:
 
     def test_skips_fit_when_below_threshold(self):
         sw = _make_switch()
-        _write_outcomes(sw, 50, source="llm", outcome="correct")
+        _write_outcomes(sw, 50, source="model", outcome="correct")
 
         head = _FakeMLHead()
         used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=200)
@@ -90,7 +90,7 @@ class TestLLMAsTeacherHelper:
 
     def test_filters_out_non_llm_outcomes(self):
         sw = _make_switch()
-        _write_outcomes(sw, 100, source="llm", outcome="correct")
+        _write_outcomes(sw, 100, source="model", outcome="correct")
         _write_outcomes(sw, 500, source="rule", outcome="correct")
 
         head = _FakeMLHead()
@@ -102,9 +102,9 @@ class TestLLMAsTeacherHelper:
 
     def test_filters_out_incorrect_outcomes(self):
         sw = _make_switch()
-        _write_outcomes(sw, 300, source="llm", outcome="correct")
-        _write_outcomes(sw, 200, source="llm", outcome="incorrect")
-        _write_outcomes(sw, 100, source="llm", outcome="unknown")
+        _write_outcomes(sw, 300, source="model", outcome="correct")
+        _write_outcomes(sw, 200, source="model", outcome="incorrect")
+        _write_outcomes(sw, 100, source="model", outcome="unknown")
 
         head = _FakeMLHead()
         used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=100)
@@ -113,8 +113,8 @@ class TestLLMAsTeacherHelper:
 
     def test_custom_outcome_filter_accepted(self):
         sw = _make_switch()
-        _write_outcomes(sw, 100, source="llm", outcome="correct")
-        _write_outcomes(sw, 50, source="llm", outcome="unknown")
+        _write_outcomes(sw, 100, source="model", outcome="correct")
+        _write_outcomes(sw, 50, source="model", outcome="unknown")
 
         head = _FakeMLHead()
         used = train_ml_from_llm_outcomes(

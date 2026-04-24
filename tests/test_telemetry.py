@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from dendra import LearnedSwitch, Outcome
+from dendra import LearnedSwitch, Verdict
 from dendra.telemetry import ListEmitter, NullEmitter
 
 
@@ -35,10 +35,10 @@ class TestTelemetry:
         em = ListEmitter()
         s = LearnedSwitch(name="t", rule=_rule, author="alice", telemetry=em)
         s.classify({"title": "crash"})
-        s.record_outcome(
+        s.record_verdict(
             input={"title": "crash"},
-            output="bug",
-            outcome=Outcome.CORRECT.value,
+            label="bug",
+            outcome=Verdict.CORRECT.value,
         )
         names = [n for n, _ in em.events]
         assert "classify" in names
@@ -56,4 +56,4 @@ class TestTelemetry:
             telemetry=BrokenEmitter(),
         )
         r = s.classify({"title": "crash"})
-        assert r.output == "bug"
+        assert r.label == "bug"

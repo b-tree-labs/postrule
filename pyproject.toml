@@ -112,6 +112,7 @@ python_files = ["test_*.py"]
 addopts = "-q --strict-markers"
 markers = [
     "benchmark: opt-in latency / throughput benchmarks (run with -m benchmark)",
+    "concurrency: red-bar tests for thread-safety bugs (run with -m concurrency)",
 ]
 filterwarnings = [
     "error",
@@ -154,3 +155,6 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Tests may use assertions with long context, unused imports for fixtures.
 "tests/*" = ["E501"]
+
+# Pylint configuration lives in .pylintrc at the repo root (for broader
+# editor compatibility — some pylint versions don't read pyproject.toml).

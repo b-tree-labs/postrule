@@ -115,8 +115,7 @@ Version numbers follow [Semantic Versioning](https://semver.org).
   Business Source License 1.1 with Change Date **2030-05-01**
   (auto-converts to Apache 2.0) and an Additional Use Grant
   that permits customer production use but prohibits offering a
-  competing hosted Dendra service. Rationale:
-  `docs/working/license-strategy.md`.
+  competing hosted Dendra service.
 - **`pyproject.toml` license metadata** moved to the PEP 639
   SPDX form: `license = "Apache-2.0 AND LicenseRef-BSL-1.1"`
   with an explicit `license-files` glob covering both license
@@ -146,17 +145,12 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ### Documentation
 
-- **`docs/working/license-strategy.md`.** Full decision record
-  for the split-license posture — rationale, BSL vs SSPL/ELv2
-  tradeoff, per-file mapping, risks, mitigations.
-- **`docs/working/trademark-strategy.md`.** Trademark filing
-  strategy — DENDRA (P0), TRANSITION CURVES (P1 post-launch),
-  AXIOM LABS (P2); why generic synonyms stay SEO fuel, not
-  trademarks.
-- Updates to `docs/marketing/entry-with-end-in-mind.md` §4,
-  `docs/working/patent-strategy.md` §9, and
-  `docs/marketing/business-model-and-moat.md` §3.1 to reflect
-  the split.
+- `LICENSE.md` expanded with the split-license rationale and
+  the BSL Change Date mechanics.
+- `LICENSING.md` added as the developer-facing "can I use this?"
+  guide covering the Apache vs BSL boundary.
+- `TRADEMARKS.md` added covering the DENDRA / TRANSITION CURVES /
+  AXIOM LABS marks.
 
 ## [0.2.0] — 2026-04-21
 
@@ -225,8 +219,7 @@ primitive with measured transition curves on four public benchmarks.
 ### Patent
 
 - Filed US provisional patent application (pending). Apache-2.0 users
-  receive a royalty-free patent license per the Apache grant. See
-  `docs/working/patent-strategy.md` §9.
+  receive a royalty-free patent license per the Apache grant.
 
 ## [0.1.0] — 2026-04-20
 

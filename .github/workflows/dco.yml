@@ -1,14 +1,7 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
-# SPDX-License-Identifier: Apache-2.0
-#
-# Enforces Developer Certificate of Origin sign-off on every commit
-# in a pull request. See CONTRIBUTING.md for contributor instructions
-# (use `git commit -s`) and https://developercertificate.org/ for the
-# full DCO text.
-#
-# Skipped for bot users (dependabot, github-actions) whose commits are
-# exempt by convention.
 name: dco
+# Enforces DCO sign-off on every commit in a PR (see CONTRIBUTING.md).
+# Bots are exempted by convention. Copyright (c) 2026 B-Tree Ventures, LLC.
+# SPDX-License-Identifier: Apache-2.0
 
 on:
   pull_request:

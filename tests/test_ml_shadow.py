@@ -11,12 +11,12 @@ import pytest
 
 from dendra import (
     LearnedSwitch,
-    LLMPrediction,
     MLHead,
     MLPrediction,
-    Outcome,
+    ModelPrediction,
     Phase,
     SwitchConfig,
+    Verdict,
 )
 
 
@@ -45,7 +45,7 @@ class FakeLLM:
     confidence: float = 0.9
 
     def classify(self, input, labels):
-        return LLMPrediction(label=self.label, confidence=self.confidence)
+        return ModelPrediction(label=self.label, confidence=self.confidence)
 
 
 def _rule(ticket: dict) -> str:
@@ -75,15 +75,15 @@ class TestMLShadowRouting:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=llm,
+            model=llm,
             ml_head=ml,
-            config=SwitchConfig(phase=Phase.ML_SHADOW, confidence_threshold=0.85),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW, confidence_threshold=0.85),
         )
         # ML disagrees loudly; shadow mode must NOT let it influence the answer.
-        # The primary path at Phase 3 is LLM_PRIMARY semantics — LLM decides.
+        # The primary path at Phase 3 is MODEL_PRIMARY semantics — LLM decides.
         r = s.classify({"title": "App keeps crashing"})
-        assert r.output == "bug"
-        assert r.source == "llm"
+        assert r.label == "bug"
+        assert r.source == "model"
         assert r.phase is Phase.ML_SHADOW
         # ML head IS invoked for shadow capture.
         assert ml.predict_calls == 1
@@ -93,8 +93,8 @@ class TestMLShadowRouting:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(),
-            config=SwitchConfig(phase=Phase.ML_SHADOW),
+            model=FakeLLM(),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         with pytest.raises(ValueError, match="ml"):
             s.classify({"title": "x"})
@@ -112,13 +112,13 @@ class TestMLShadowRouting:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(label="bug", confidence=0.9),
+            model=FakeLLM(label="bug", confidence=0.9),
             ml_head=BrokenML(),
-            config=SwitchConfig(phase=Phase.ML_SHADOW),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         r = s.classify({"title": "App keeps crashing"})
-        assert r.output == "bug"
-        assert r.source == "llm"
+        assert r.label == "bug"
+        assert r.source == "model"
 
 
 class TestMLShadowOutcomeCapture:
@@ -128,25 +128,25 @@ class TestMLShadowOutcomeCapture:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(label="bug", confidence=0.9),
+            model=FakeLLM(label="bug", confidence=0.9),
             ml_head=ml,
-            config=SwitchConfig(phase=Phase.ML_SHADOW),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         r = s.classify({"title": "App keeps crashing"})
-        s.record_outcome(
+        s.record_verdict(
             input={"title": "App keeps crashing"},
-            output=r.output,
-            outcome=Outcome.CORRECT.value,
+            label=r.label,
+            outcome=Verdict.CORRECT.value,
             source=r.source,
             confidence=r.confidence,
         )
-        recs = s.storage.load_outcomes("triage")
+        recs = s.storage.load_records("triage")
         assert len(recs) == 1
         assert recs[0].ml_output == "feature_request"
         assert recs[0].ml_confidence == pytest.approx(0.6)
         # rule and llm shadows still captured for side-by-side analysis.
         assert recs[0].rule_output == "bug"
-        assert recs[0].llm_output == "bug"
+        assert recs[0].model_output == "bug"
 
 
 class TestMLShadowStatus:
@@ -156,16 +156,16 @@ class TestMLShadowStatus:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(label="bug", confidence=0.95),
+            model=FakeLLM(label="bug", confidence=0.95),
             ml_head=ml,
-            config=SwitchConfig(phase=Phase.ML_SHADOW),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         for t in ("crash a", "crash b", "crash c"):
             r = s.classify({"title": t})
-            s.record_outcome(
+            s.record_verdict(
                 input={"title": t},
-                output=r.output,
-                outcome=Outcome.CORRECT.value,
+                label=r.label,
+                outcome=Verdict.CORRECT.value,
                 source=r.source,
                 confidence=r.confidence,
             )

@@ -1,125 +1,113 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Cold-start: bootstrap from LLM_PRIMARY, then graduate to ML.
+"""Cold-start: bootstrap from MODEL_PRIMARY, then graduate to ML.
 
 Run: `python examples/07_llm_as_teacher.py`
 
-The cold-start problem: a brand-new product has zero labeled data
-and no hand-written rule for routing. You can't write the if/else
-chain because you don't know the patterns yet. You can't train an
-ML head because you have no labels.
+Cold-start: new product, zero labeled data, no hand-written rule
+yet. The LLM-as-teacher pattern:
 
-The LLM-as-teacher pattern solves this. Start the switch at
-Phase.LLM_PRIMARY — the LLM makes every decision. Every
-classification is logged as (input, llm_label) — the LLM is
-labeling your data for you, in production. After enough outcomes
-accumulate, train a local ML head on the LLM's labels, then
-graduate to Phase.ML_WITH_FALLBACK: the ML head decides on its
-confident cases, the rule catches the rest, the LLM is retired
-from the hot path.
+1. Start at ``Phase.MODEL_PRIMARY`` — the LLM decides. Every call
+   logs ``(input, llm_label)``: the LLM is labeling your data for
+   you, in production.
+2. Call ``switch.advance()`` periodically. The default
+   :class:`McNemarGate` reads the paired-prediction log; when the
+   target phase is statistically better (p < 0.01 on ≥200 paired
+   samples), the switch graduates itself. No manual phase mutation.
+3. Train a local ML head on the accumulated LLM labels; the ML
+   head carries subsequent graduations toward ML_WITH_FALLBACK.
 
-This example uses a stub LLM so the script runs without API
-credentials. In production you'd swap for OpenAIAdapter /
-AnthropicAdapter / OllamaAdapter.
+Graduation is evidence-gated, not operator-gated. Custom gates
+(``ManualGate`` for always-operator-approval, composite gates
+with extra thresholds) are swappable via the ``gate=`` kwarg.
+
+Uses a stub LLM so the script runs without API credentials.
 """
 
 from __future__ import annotations
 
-from typing import Any
 from collections.abc import Iterable
+from typing import Any
 
-from dendra import (
-    InMemoryStorage,
-    LearnedSwitch,
-    LLMPrediction,
-    MLPrediction,
-    Outcome,
-    Phase,
-    SwitchConfig,
-)
+from dendra import LearnedSwitch, MLPrediction, ModelPrediction, Phase, Verdict
 
 
-def minimal_rule(ticket: dict) -> str:
-    """The eventual safety floor — written LATER, after the LLM has
-    taught us what the patterns are. At bootstrap time we don't have
-    one; we define it here so the code runs."""
-    title = (ticket.get("title") or "").lower()
-    if "crash" in title or "error" in title:
+def triage_rule(ticket: dict) -> str:
+    """Eventual safety floor — written LATER once the LLM has taught
+    us the patterns. Defined here so the code runs."""
+    heading = (ticket.get("title") or "").lower()
+    if "crash" in heading or "error" in heading:
         return "bug"
     return "feature_request"
 
 
 class StubLLM:
-    """Stand-in for OpenAIAdapter / AnthropicAdapter / OllamaAdapter.
-    Implements the LLMClassifier protocol: `classify(input, labels)`."""
+    """Deterministic stand-in for a real LLM adapter."""
 
-    def classify(self, input: Any, labels: Iterable[str]) -> LLMPrediction:
-        title = (input.get("title") or "").lower()
-        # The LLM is more discerning than what any small rule could
-        # capture: it reads context, recognizes paraphrases, handles
-        # patterns the rule-writer hasn't imagined yet.
-        if any(kw in title for kw in ("crash", "error", "broken", "hang")):
-            return LLMPrediction(label="bug", confidence=0.94)
-        if any(kw in title for kw in ("add", "support for", "option to", "feature")):
-            return LLMPrediction(label="feature_request", confidence=0.90)
-        if title.endswith("?") or title.startswith("how ") or title.startswith("can i"):
-            return LLMPrediction(label="question", confidence=0.88)
-        return LLMPrediction(label="feature_request", confidence=0.72)
+    def classify(self, ticket: Any, _labels: Iterable[str]) -> ModelPrediction:
+        """Return a deterministic prediction for the given ticket."""
+        heading = (ticket.get("title") or "").lower()
+        if any(kw in heading for kw in ("crash", "error", "broken", "hang")):
+            return ModelPrediction(label="bug", confidence=0.94)
+        if any(kw in heading for kw in ("add", "support for", "option to", "feature")):
+            return ModelPrediction(label="feature_request", confidence=0.90)
+        if heading.endswith("?") or heading.startswith("how ") or heading.startswith("can i"):
+            return ModelPrediction(label="question", confidence=0.88)
+        return ModelPrediction(label="feature_request", confidence=0.72)
 
 
 class LocalMLHead:
-    """A simple ML head we'll train on the LLM's accumulated labels.
-    In production: scikit-learn TF-IDF + LogisticRegression, a
-    sentence-transformer + linear probe, or a small ONNX classifier."""
+    """Trained on the LLM's accumulated labels. Production would be
+    scikit-learn TF-IDF+LR, a sentence-transformer probe, or a small
+    ONNX classifier — here we ship a toy for determinism."""
 
     def __init__(self) -> None:
         self._label_counts: dict[str, int] = {}
 
     def fit(self, records):
-        # Minimalist: use the most-common LLM label as a fallback.
-        # A real head would train a text classifier on (title, label)
-        # pairs and learn actual patterns.
+        """Count the most-common LLM-assigned labels from the log."""
         self._label_counts = {}
         for r in records:
-            if r.llm_output is None:
+            if r.model_output is None:
                 continue
-            self._label_counts[r.llm_output] = self._label_counts.get(r.llm_output, 0) + 1
+            self._label_counts[r.model_output] = self._label_counts.get(r.model_output, 0) + 1
 
-    def predict(self, input, labels=None) -> MLPrediction:
-        title = (input.get("title") or "").lower()
-        # Learned pattern from the LLM's teaching data
-        if any(kw in title for kw in ("crash", "error", "broken")):
+    def predict(self, ticket, _labels=None) -> MLPrediction:
+        """Predict a label for the ticket; fall back to the most-common
+        observed label for unfamiliar inputs."""
+        heading = (ticket.get("title") or "").lower()
+        if any(kw in heading for kw in ("crash", "error", "broken")):
             return MLPrediction(label="bug", confidence=0.91)
-        if any(kw in title for kw in ("add", "support")):
+        if any(kw in heading for kw in ("add", "support")):
             return MLPrediction(label="feature_request", confidence=0.85)
-        # Fallback to most-common label
         if self._label_counts:
-            most_common = max(self._label_counts, key=self._label_counts.get)
+            # `key=dict.__getitem__` returns a guaranteed int (we're
+            # iterating the dict's own keys); `dict.get` returns
+            # int | None, which Pylance rejects under strict mode.
+            most_common = max(self._label_counts, key=self._label_counts.__getitem__)
             return MLPrediction(label=most_common, confidence=0.55)
         return MLPrediction(label="question", confidence=0.50)
+
+    def model_version(self) -> str:
+        """Version string surfaced in ``SwitchStatus.model_version``."""
+        return "local-stub-1.0"
 
 
 if __name__ == "__main__":
     # ------------------------------------------------------------
-    # Phase 1: Bootstrap. Start at LLM_PRIMARY. The LLM decides.
-    # Every call is labeled by the LLM and stored as training data.
+    # Step 1: Bootstrap at MODEL_PRIMARY — LLM decides, logs labels.
     # ------------------------------------------------------------
-    print("--- Bootstrap: starting at LLM_PRIMARY with no ML head ---\n")
+    print("--- Bootstrap: starting at MODEL_PRIMARY with no ML head ---\n")
 
-    storage = InMemoryStorage()
+    # Production: pass ``persist=True`` so the cold-start log
+    # (weeks of LLM labels) survives process restart.
     switch = LearnedSwitch(
         name="triage-bootstrap",
-        rule=minimal_rule,  # present but not on the decision path yet
-        author="@triage:bootstrap",
-        llm=StubLLM(),
-        storage=storage,
-        config=SwitchConfig(
-            starting_phase=Phase.LLM_PRIMARY,
-            phase_limit=Phase.ML_PRIMARY,  # room to graduate
-        ),
+        rule=triage_rule,
+        model=StubLLM(),
+        starting_phase=Phase.MODEL_PRIMARY,
     )
 
-    # Simulated early production traffic
     early_tickets = [
         ("app crashes on login", "bug"),
         ("how do I reset my password?", "question"),
@@ -129,59 +117,47 @@ if __name__ == "__main__":
         ("payment page is broken", "bug"),
         ("support for markdown in comments", "feature_request"),
     ]
-    for title, ground_truth in early_tickets:
-        ticket = {"title": title}
-        result = switch.classify(ticket)
-        # In production, ground_truth comes from support agent review.
-        # We include it here to measure how well the LLM labeled.
-        outcome = (
-            Outcome.CORRECT if result.output == ground_truth else Outcome.INCORRECT
-        )
-        switch.record_outcome(input=ticket, output=result.output, outcome=outcome.value)
+    for subject, ground_truth in early_tickets:
+        payload = {"title": subject}
+        result = switch.classify(payload)
+        verdict = Verdict.CORRECT if result.label == ground_truth else Verdict.INCORRECT
+        switch.record_verdict(input=payload, label=result.label, outcome=verdict.value)
 
-    records = storage.load_outcomes("triage-bootstrap")
-    correct = sum(1 for r in records if r.outcome == Outcome.CORRECT.value)
-    print(f"  LLM decided {len(records)} tickets; {correct} correct ({correct/len(records):.0%})")
-    print(f"  Every ticket is now (input, llm_label) training data.\n")
+    bootstrap_log = switch.storage.load_records("triage-bootstrap")
+    correct = sum(1 for r in bootstrap_log if r.outcome == Verdict.CORRECT.value)
+    print(
+        f"  LLM decided {len(bootstrap_log)} tickets; "
+        f"{correct} correct ({correct/len(bootstrap_log):.0%})"
+    )
+    print("  Every ticket is now (input, llm_label) training data.\n")
 
     # ------------------------------------------------------------
-    # Phase 2: Graduate. Train an ML head on the LLM's labels, run
-    # it in shadow for a while, then make it primary with the rule
-    # as fallback for low-confidence cases.
+    # Step 2: Train ML head on the LLM's labels, promote phase.
     # ------------------------------------------------------------
-    print("--- Graduate: train an ML head on LLM-labeled data ---\n")
+    print("--- Graduate (operator-triggered): train ML + promote phase ---\n")
 
     ml_head = LocalMLHead()
-    ml_head.fit(records)  # uses the accumulated llm_output as labels
+    ml_head.fit(bootstrap_log)
 
-    # New switch that starts at ML_WITH_FALLBACK (skipping ML_SHADOW
-    # for brevity; in production you'd do the shadow phase first).
+    # Skipping ML_SHADOW for brevity; safety-conscious deployments
+    # would run ML in shadow for another evidence window first.
     switch2 = LearnedSwitch(
         name="triage-graduated",
-        rule=minimal_rule,
-        author="@triage:graduated",
-        llm=StubLLM(),  # kept for occasional LLM calls, no longer primary
+        rule=triage_rule,
+        model=StubLLM(),  # kept warm for retraining / fallback
         ml_head=ml_head,
-        storage=storage,
-        config=SwitchConfig(
-            starting_phase=Phase.ML_WITH_FALLBACK,
-            phase_limit=Phase.ML_PRIMARY,
-        ),
+        starting_phase=Phase.ML_WITH_FALLBACK,
     )
 
-    # Production traffic — now the ML head decides on confident cases;
-    # the rule catches the rest. LLM is no longer on every call.
     new_tickets = [
         {"title": "app crashed during onboarding"},
         {"title": "how to integrate with Slack?"},
         {"title": "add support for CSV export"},
     ]
-    for ticket in new_tickets:
-        result = switch2.classify(ticket)
-        print(f"  {ticket['title']:40s}  → {result.output:18s}  source={result.source}")
+    for sample in new_tickets:
+        result = switch2.classify(sample)
+        print(f"  {sample['title']:40s}  → {result.label:18s}  source={result.source}")
 
     print("\n(The LLM taught the ML head by labeling production traffic.")
     print(" The rule was never on the hot path — but it's still there as")
-    print(" the safety floor. The LLM is retired from the hot path now;")
-    print(" brought back only when confidence is below threshold or the")
-    print(" ML head needs retraining.)")
+    print(" the safety floor.)")
