@@ -50,6 +50,35 @@ class _HealthyMLHead:
 # ---------------------------------------------------------------------------
 
 
+class TestSlotsRuleFreeze:
+    """#9: LearnedSwitch uses __slots__ to refuse silent rule hot-swap.
+
+    The rule is security-load-bearing — a classifier that can have
+    its rule swapped at runtime without an AttributeError is a
+    classifier whose audit chain claims "source=rule" for decisions
+    the user thinks they own, but that a mutation elsewhere in the
+    process may have redirected.
+    """
+
+    def test_cannot_add_novel_attributes(self):
+        sw = LearnedSwitch(rule=_rule, name="slots_test", author="t")
+        with pytest.raises(AttributeError):
+            sw.typo_field = "oops"
+
+    def test_rule_is_in_slots_not_dict(self):
+        sw = LearnedSwitch(rule=_rule, name="slots_dict", author="t")
+        # No __dict__ means every attribute access goes through the
+        # slots machinery — stops silent attribute creation.
+        assert not hasattr(sw, "__dict__")
+
+    def test_existing_slot_assignments_still_work(self):
+        """Slots preserves the legitimate attribute surface."""
+        sw = LearnedSwitch(rule=_rule, name="slots_ok", author="t")
+        # Circuit-breaker reset touches _circuit_tripped; if slots
+        # didn't list it, this would AttributeError.
+        sw.reset_circuit_breaker()
+
+
 class TestSafetyCriticalRuntimeCheck:
     def test_direct_mutation_of_starting_phase_refused_at_classify(self):
         """Construction blocked ML_PRIMARY — runtime must refuse too.

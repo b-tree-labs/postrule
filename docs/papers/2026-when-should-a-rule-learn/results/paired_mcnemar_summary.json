@@ -1,0 +1,154 @@
+{
+  "atis": {
+    "summary": {
+      "kind": "summary",
+      "benchmark": "atis",
+      "labels": 26,
+      "train_rows": 4978,
+      "test_rows": 893,
+      "seed_size": 100,
+      "kw_per_label": 5,
+      "checkpoint_every": 250,
+      "citation": "Hemphill et al. 1990, 'The ATIS Spoken Language Systems Pilot Corpus'"
+    },
+    "final_rule_acc": 0.6998880179171333,
+    "final_ml_acc": 0.8868980963045913,
+    "final_ml_version": "sklearn-4978",
+    "final_training_outcomes": 4978,
+    "first_ckpt_training_outcomes": 250,
+    "first_ckpt_ml_acc": 0.7558790593505039,
+    "final_mcnemar": {
+      "b": 191,
+      "c": 24,
+      "n": 893,
+      "discordant": 215,
+      "p_value": 1.7537607225040477e-33,
+      "chi2": 128.16744186046512
+    },
+    "transition_depth": [
+      250,
+      {
+        "b": 146,
+        "c": 96,
+        "n": 893,
+        "discordant": 242,
+        "p_value": 0.0015795318704355606,
+        "chi2": 9.921487603305785
+      }
+    ]
+  },
+  "hwu64": {
+    "summary": {
+      "kind": "summary",
+      "benchmark": "hwu64",
+      "labels": 64,
+      "train_rows": 8954,
+      "test_rows": 1076,
+      "seed_size": 100,
+      "kw_per_label": 5,
+      "checkpoint_every": 250,
+      "citation": "Liu et al. 2019, 'Benchmarking Natural Language Understanding Services for Building Conversational Agents'"
+    },
+    "final_rule_acc": 0.017657992565055763,
+    "final_ml_acc": 0.8355018587360595,
+    "final_ml_version": "sklearn-8954",
+    "final_training_outcomes": 8954,
+    "first_ckpt_training_outcomes": 250,
+    "first_ckpt_ml_acc": 0.02695167286245353,
+    "final_mcnemar": {
+      "b": 881,
+      "c": 1,
+      "n": 1076,
+      "discordant": 882,
+      "p_value": 5.476896370250283e-263,
+      "chi2": 876.0102040816327
+    },
+    "transition_depth": [
+      250,
+      {
+        "b": 10,
+        "c": 0,
+        "n": 1076,
+        "discordant": 10,
+        "p_value": 0.001953125,
+        "chi2": 8.1
+      }
+    ]
+  },
+  "banking77": {
+    "summary": {
+      "kind": "summary",
+      "benchmark": "banking77",
+      "labels": 77,
+      "train_rows": 10003,
+      "test_rows": 3080,
+      "seed_size": 100,
+      "kw_per_label": 5,
+      "checkpoint_every": 250,
+      "citation": "Casanueva et al. 2020, 'Efficient Intent Detection with Dual Sentence Encoders'"
+    },
+    "final_rule_acc": 0.012987012987012988,
+    "final_ml_acc": 0.8772727272727273,
+    "final_ml_version": "sklearn-10000",
+    "final_training_outcomes": 10003,
+    "first_ckpt_training_outcomes": 250,
+    "first_ckpt_ml_acc": 0.02564935064935065,
+    "final_mcnemar": {
+      "b": 2666,
+      "c": 4,
+      "n": 3080,
+      "discordant": 2670,
+      "p_value": 0.0,
+      "chi2": 2652.030337078652
+    },
+    "transition_depth": [
+      250,
+      {
+        "b": 40,
+        "c": 1,
+        "n": 3080,
+        "discordant": 41,
+        "p_value": 3.8198777474462986e-11,
+        "chi2": 35.21951219512195
+      }
+    ]
+  },
+  "clinc150": {
+    "summary": {
+      "kind": "summary",
+      "benchmark": "clinc150",
+      "labels": 151,
+      "train_rows": 15250,
+      "test_rows": 5500,
+      "seed_size": 100,
+      "kw_per_label": 5,
+      "checkpoint_every": 250,
+      "citation": "Larson et al. 2019, 'An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction'"
+    },
+    "final_rule_acc": 0.005454545454545455,
+    "final_ml_acc": 0.5909090909090909,
+    "final_ml_version": "sklearn-10000",
+    "final_training_outcomes": 15250,
+    "first_ckpt_training_outcomes": 250,
+    "first_ckpt_ml_acc": 0.016,
+    "final_mcnemar": {
+      "b": 3250,
+      "c": 30,
+      "n": 5500,
+      "discordant": 3280,
+      "p_value": 0.0,
+      "chi2": 3159.1344512195124
+    },
+    "transition_depth": [
+      250,
+      {
+        "b": 58,
+        "c": 0,
+        "n": 5500,
+        "discordant": 58,
+        "p_value": 6.938893903907228e-18,
+        "chi2": 56.01724137931034
+      }
+    ]
+  }
+}
