@@ -54,11 +54,18 @@ project with labeled data.
 
 ## What's the latency overhead?
 
-About **0.5 microseconds p50** at Phase.RULE over the bare rule
-call, measured in `tests/test_latency.py`. At Phase.ML_WITH_FALLBACK
-with a TF-IDF + logistic head, it's ~105 µs p50 — well inside
-typical web-request budgets. At MODEL_PRIMARY with a local
-llama3.2:1b, it's ~250 ms (dominated by the LLM, not Dendra).
+At Phase.RULE with `auto_record=False`, **0.50 µs p50** over the
+bare rule call. With the default `auto_record=True` it's 1.67 µs
+p50 (writes an UNKNOWN outcome record each call). Measured in
+`tests/test_latency_pinned.py` on Apple M5 / Python 3.13.
+
+At Phase.ML_WITH_FALLBACK with a TF-IDF + logistic head, ~105 µs
+p50 — well inside typical web-request budgets. At MODEL_PRIMARY
+with a local llama3.2:1b, ~250 ms (dominated by the LLM, not
+Dendra). `persist=True` (batched FileStorage) adds 33 µs p50;
+per-call fsync durability is an explicit 195 µs opt-in for
+regulated workloads. See `docs/working/v1-audit-benchmarks.md`
+for the full matrix.
 
 ## What's the cost overhead?
 
