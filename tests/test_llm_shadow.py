@@ -180,12 +180,8 @@ class TestOutcomeRecordLLMFields:
             storage=store,
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
-        s.classify({"title": "App keeps crashing"})
-        s.record_verdict(
-            input={"title": "App keeps crashing"},
-            label="bug",
-            outcome=Verdict.CORRECT.value,
-        )
+        r = s.classify({"title": "App keeps crashing"})
+        r.mark_correct()
         records = store.load_records("triage")
         # Phase 1 auto-captures the LLM prediction alongside each classify()
         # so the next record carries the shadow observation.
@@ -210,12 +206,8 @@ class TestShadowAgreementRate:
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         for title in ("crash 1", "crash 2", "crash 3"):
-            s.classify({"title": title})
-            s.record_verdict(
-                input={"title": title},
-                label="bug",
-                outcome=Verdict.CORRECT.value,
-            )
+            r = s.classify({"title": title})
+            r.mark_correct()
         st = s.status()
         # All three LLM predictions matched the rule → 100% agreement.
         assert st.phase is Phase.MODEL_SHADOW
@@ -232,12 +224,8 @@ class TestShadowAgreementRate:
         )
         # Rule returns "bug" (crash keyword); LLM returns "feature_request".
         for title in ("crash 1", "crash 2"):
-            s.classify({"title": title})
-            s.record_verdict(
-                input={"title": title},
-                label="bug",
-                outcome=Verdict.CORRECT.value,
-            )
+            r = s.classify({"title": title})
+            r.mark_correct()
         st = s.status()
         assert st.shadow_agreement_rate == pytest.approx(0.0)
 

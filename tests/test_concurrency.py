@@ -156,16 +156,14 @@ class TestShadowStashIntegrity:
         N = 100
 
         def worker(token: int) -> None:
-            sw.classify(token)
+            result = sw.classify(token)
             # Yield — encourages another thread's classify to land
-            # between this thread's classify and its record_verdict.
+            # between this thread's classify and its verdict call.
+            # Under the pre-fix design, the single-slot ``_last_shadow``
+            # would be stomped in this window. Under the fix, shadow
+            # observations travel on ``result`` and survive the race.
             time.sleep(0)
-            sw.record_verdict(
-                input=token,
-                label=f"rule-{token}",
-                outcome=Verdict.CORRECT.value,
-                source="model",
-            )
+            result.mark_correct()
 
         with ThreadPoolExecutor(max_workers=32) as pool:
             list(pool.map(worker, range(N)))

@@ -133,13 +133,7 @@ class TestMLShadowOutcomeCapture:
             config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         r = s.classify({"title": "App keeps crashing"})
-        s.record_verdict(
-            input={"title": "App keeps crashing"},
-            label=r.label,
-            outcome=Verdict.CORRECT.value,
-            source=r.source,
-            confidence=r.confidence,
-        )
+        r.mark_correct()
         recs = s.storage.load_records("triage")
         assert len(recs) == 1
         assert recs[0].ml_output == "feature_request"
@@ -162,13 +156,7 @@ class TestMLShadowStatus:
         )
         for t in ("crash a", "crash b", "crash c"):
             r = s.classify({"title": t})
-            s.record_verdict(
-                input={"title": t},
-                label=r.label,
-                outcome=Verdict.CORRECT.value,
-                source=r.source,
-                confidence=r.confidence,
-            )
+            r.mark_correct()
         st = s.status()
         assert st.ml_agreement_rate == pytest.approx(1.0)
         assert st.model_version == "fake-0"

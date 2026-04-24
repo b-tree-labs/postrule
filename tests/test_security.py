@@ -254,13 +254,7 @@ class TestAuditTrail:
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         r = s.classify("itar technology discussed")
-        s.record_verdict(
-            input="itar technology discussed",
-            label=r.label,
-            outcome=Verdict.CORRECT.value,
-            source=r.source,
-            confidence=r.confidence,
-        )
+        r.mark_correct()
         [rec] = s.storage.load_records("sensitivity")
         assert rec.rule_output == "EXPORT_CONTROLLED"
         # Shadow observation captured — the JAILBREAK ATTEMPT is on tape.
