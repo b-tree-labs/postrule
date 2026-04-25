@@ -3,26 +3,15 @@
   <img src="brand/logo/dendra-wordmark-horizontal.svg" alt="Dendra" width="420">
 </picture>
 
-**The classification primitive every production codebase is missing.**
-
-Every production system has classification decisions — routing a
-ticket, classifying an intent, selecting a retrieval strategy,
-screening an output for PII. They start as hand-written rules
-because no training data exists on day one. Outcome data
-accumulates over time, but the rules stay frozen because migrating
-each site to ML is bespoke engineering at every decision point.
-
-Dendra wraps a classifier and lets it graduate through six
-lifecycle phases (rule → LLM-shadow → LLM → ML-shadow → ML), with
-a paired-statistical gate at every transition and the original
-rule retained as a safety floor. A circuit breaker on the
-highest-autonomy phase reverts to the rule on ML failure,
-automatically.
+**Drop a rule. Drop a verifier. Watch your classifier get smarter automatically.**
 
 ```python
-from dendra import ml_switch
+from dendra import ml_switch, default_verifier
 
-@ml_switch(labels=["bug", "feature_request", "question"])
+@ml_switch(
+    labels=["bug", "feature_request", "question"],
+    verifier=default_verifier(),  # auto-detects Ollama → OpenAI → Anthropic
+)
 def triage(ticket: dict) -> str:
     title = (ticket.get("title") or "").lower()
     if "crash" in title:
@@ -32,10 +21,35 @@ def triage(ticket: dict) -> str:
     return "feature_request"
 ```
 
-Zero behavior change on day one — the rule still decides. Dendra
-logs every outcome. When statistical evidence accumulates, the
-phase advances and the LLM or ML head takes over with the rule
-always available as the floor.
+That's the whole setup. Every classification gets routed through
+the verifier automatically. Verdicts feed the outcome log. The
+McNemar gate decides when the LLM (or a learned ML head) has
+earned the front seat. The rule stays as the safety floor —
+forever, behind a circuit breaker that auto-reverts on ML
+failure.
+
+**No reviewer queues. No labeled-data prerequisite. No manual
+`mark_correct()` calls scattered through your code.** Drop the
+verifier and Dendra's autonomous mode does the rest.
+
+## What this replaces
+
+Every production system has classification decisions — routing
+a ticket, classifying an intent, selecting a retrieval strategy,
+screening an output for PII, dispatching an exception to retry
+vs escalate vs drop. They start as hand-written rules because
+no training data exists on day one. Outcome data accumulates,
+but the rules stay frozen because migrating each site to ML is
+bespoke engineering at every decision point — and "we should ML
+this" tickets sit in backlogs forever because nobody has the
+time to build the migration scaffolding.
+
+Dendra is the migration scaffolding. Six lifecycle phases (rule
+→ LLM-shadow → LLM → ML-shadow → ML), a paired-McNemar
+statistical gate at every transition, the rule retained as a
+safety floor with a circuit breaker, and an autonomous-
+verification default so the gate has evidence to evaluate
+without you wiring a reviewer queue.
 
 ## Install
 
