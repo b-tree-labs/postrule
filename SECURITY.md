@@ -3,13 +3,14 @@
 ## Supported versions
 
 Security patches are backported to the current minor release only.
-Dendra follows semver: patches (0.2.x) land on 0.2 as long as 0.2 is
-current; minor-release cutoffs are announced in
+Dendra follows semver: patches (1.0.x) land on 1.0 as long as 1.0
+is current; minor-release cutoffs are announced in
 [CHANGELOG.md](CHANGELOG.md).
 
 | Version | Security patches |
 |---|---|
-| 0.2.x | ✅ yes |
+| 1.0.x | ✅ yes |
+| 0.2.x | ❌ no (pre-public-launch internal release; superseded) |
 | 0.1.x | ❌ no (superseded) |
 
 ## Reporting a vulnerability
@@ -74,7 +75,7 @@ Dendra releases are:
 Verify a release:
 
 ```bash
-git verify-tag v0.2.0
+git verify-tag v1.0.0
 ```
 
 ## Hall of fame
