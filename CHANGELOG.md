@@ -4,9 +4,106 @@ All notable changes to Dendra are documented in this file. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Version numbers follow [Semantic Versioning](https://semver.org).
 
-## [Unreleased]
+## [1.0.0] — 2026-05-13
 
-### Added
+The first public release. Ships alongside the companion paper
+*"When should a rule learn? A statistical framework for
+graduated ML autonomy"* on arXiv.
+
+### Highlights
+
+- **Six-phase graduated-autonomy lifecycle** (`Phase.RULE` →
+  `Phase.MODEL_SHADOW` → `Phase.MODEL_PRIMARY` → `Phase.ML_SHADOW`
+  → `Phase.ML_WITH_FALLBACK` → `Phase.ML_PRIMARY`) with paired-
+  McNemar statistical gates at every transition.
+- **Rule safety floor** retained throughout. `safety_critical=True`
+  refuses construction in any phase without a rule fallback;
+  the circuit breaker auto-reverts ML decisions to the rule on
+  failure and persists across process restart when `persist=True`.
+- **`CandidateHarness`** for autoresearch / agent-loop integration.
+  Shadow candidate classifiers against live production, run paired-
+  McNemar significance tests against a truth oracle, return
+  promotion verdicts. The production substrate that turns "the
+  loop suggests it's better" into "the evidence justifies the
+  swap."
+- **Native async API** — `aclassify`, `adispatch`, `arecord_verdict`,
+  `abulk_record_verdicts`. Async LLM adapter siblings
+  (`OpenAIAsyncAdapter`, `AnthropicAsyncAdapter`,
+  `OllamaAsyncAdapter`, `LlamafileAsyncAdapter`). Committee
+  judging via `asyncio.gather` for parallel-LLM verdicts.
+- **VerdictSource family** — `CallableVerdictSource`,
+  `LLMJudgeSource` (with self-judgment bias guardrail referencing
+  G-Eval / MT-Bench / Arena literature), `LLMCommitteeSource`
+  (majority / unanimous aggregation), `WebhookVerdictSource`,
+  `HumanReviewerSource`.
+- **Bulk ingestion** — `bulk_record_verdicts`,
+  `bulk_record_verdicts_from_source`, `export_for_review` /
+  `apply_reviews` for reviewer round-trip.
+- **Storage backends** — `BoundedInMemoryStorage` (default),
+  `InMemoryStorage`, `FileStorage` (POSIX flock + optional fsync
+  + batched-async mode), `SqliteStorage` (WAL),
+  `ResilientStorage` (auto-fallback wrapper). Pluggable `redact=`
+  hook at the storage boundary for HIPAA / PII workloads.
+- **Production performance** — 33 µs p50 classify on the
+  `persist=True` recommended path (batched FileStorage), 195 µs
+  p50 with per-call fsync durability, 0.5 µs p50 at Phase 0
+  with `auto_record=False`.
+- **Paired-McNemar transition depth** ≤ 250 outcomes across
+  ATIS / HWU64 / Banking77 / CLINC150 — every benchmark clears
+  paired statistical significance at the first checkpoint.
+  Tighter than the previously-published unpaired-z-test depths
+  in the same literature.
+
+### Key contributions vs prior art
+
+- Production-deployment substrate for autoresearch loops — every
+  primitive needed (shadow phases, statistical gate, rule floor,
+  audit chain, async committee judging, redaction hooks) ships
+  in one library. See `docs/autoresearch.md` for the positioning.
+- Tighter paired-McNemar transition depth (≤ 250 outcomes across
+  4 NLU benchmarks) compared to the unpaired-z-test results in
+  earlier cascade-routing literature.
+- Architectural rule-floor guarantee. `safety_critical=True`
+  refuses construction in any phase without a rule fallback;
+  cannot be removed without a code change.
+
+### Breaking changes from v0.2.x
+
+The v0.2.x release was internal-only; any downstream code from a
+private v0.2.x snapshot would need to handle:
+
+- `record_prediction` → `record_verdict`.
+- `Phase.LLM_*` → `Phase.MODEL_*`.
+- `ClassificationResult.output` → `.label`;
+  `ClassificationRecord.output` → `.label`.
+- `auto_record=True` is now the default on `LearnedSwitch` —
+  classify / dispatch auto-append an UNKNOWN outcome record.
+  Pass `auto_record=False` to suppress.
+- `auto_advance=True` is now the default — `record_verdict`
+  triggers `advance()` every `auto_advance_interval` records
+  (default 500).
+- `LearnedSwitch` now uses `__slots__` — subclasses adding
+  attributes must declare their own `__slots__`.
+
+### Statistics
+
+- 473 tests passing, 4 skipped (require optional extras).
+- 19 runnable examples (`examples/01_hello_world.py` through
+  `examples/19_autoresearch_loop.py`).
+- 0 hard runtime dependencies. LLM adapters, ML head, and
+  benchmarks are optional extras.
+
+### License
+
+- Client SDK: Apache-2.0.
+- Analyzer / server / dashboards: BSL-1.1 with Change Date
+  2030-05-01 (production self-hosted use is permitted by the
+  license; competing-hosted-service is prohibited).
+
+### Brand identity system
+
+The full v1.0.0 release also ships the public brand identity
+work that landed during the pre-launch period:
 
 - **Extended brand identity system** in `brand/`. Completes the
   identity kit beyond the mark + basic docs:
