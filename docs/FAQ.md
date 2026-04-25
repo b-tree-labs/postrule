@@ -9,6 +9,36 @@ it graduate from rule → LLM-shadow → LLM → ML-shadow → ML —
 with a paired-proportion statistical gate at every transition
 and the original rule retained as the safety floor.
 
+## Do I actually need this? Can't I just use if/else?
+
+For some classifiers, yes — and we'll say so directly.
+
+If your classifier has 3-5 stable cases, no meaningful drift,
+no audit requirement, and lives in a non-critical path, **you
+probably don't need Dendra**. A plain if/else block is the
+right tool. We'd rather you ship that.
+
+Dendra is for classifiers where one of these is true:
+
+- **Outcome data is accumulating and you're not using it.**
+  Every day your rule misclassifies and the data sits
+  unanalyzed is optionality you're throwing away.
+- **There's a "we should ML this" backlog ticket that doesn't
+  move.** That's exactly the migration we're a primitive for.
+- **The decision has audit / compliance implications.** HIPAA,
+  export-control, regulated industries need an auditable chain
+  on every classification.
+- **Wrong classifications cost real money or trust.** Production-
+  grade classifiers warrant the safety floor + circuit breaker
+  even when the average case is fine.
+- **You're running an autoresearch / agent loop.** The
+  `CandidateHarness` is the missing deployment substrate.
+
+If none of the above match your classifier, keep your if/else.
+We mean it. Dendra is opinionated about being a primitive for
+production-grade classification — not a general-purpose
+dispatcher.
+
 ## Why not just use shadow mode / A-B testing / a feature flag?
 
 Shadow mode says "run both, log both." Dendra says "run both,

@@ -36,6 +36,7 @@ the minimum required vs optional surface.
 | 17 | [`17_exception_handling.py`](./17_exception_handling.py) | Dendra as the try/except-tree replacement: exception-handling as classification. Rule picks retry / fallback / escalate / drop; outcomes feed back from downstream signals so the policy can learn endpoint-specific patterns the author couldn't hand-write. |
 | 18 | [`18_system_defaults_tuning.py`](./18_system_defaults_tuning.py) | Post-install tuning: ship hand-written defaults, let the installed system re-derive them from its own workload. HTTP cache-TTL selection as the worked example — rule-agreement rate becomes a health metric; graduation upgrades defaults without shipping a new binary. |
 | 19 | [`19_autoresearch_loop.py`](./19_autoresearch_loop.py) | **Autoresearch loop driving Dendra promotions** — `CandidateHarness` shadows candidate classifiers against production, runs paired-McNemar significance tests, and tells the loop which proposals statistically clear the bar. The slam-dunk integration story: *autoresearch tells you what to try; Dendra tells you when it worked.* Production rule at 55% accuracy ratchets to 100% across four loop iterations. |
+| 20 | [`20_verifier_default.py`](./20_verifier_default.py) | **Autonomous-verification default** — `verifier=default_verifier()` and every classification gets routed through an LLM judge automatically. No reviewer queues, no labeled-data prerequisite, no manual `mark_correct()`. The biggest adoption-barrier removed. |
 
 ## On the roadmap
 
