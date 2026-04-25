@@ -43,14 +43,49 @@ formal phase vocabulary. Dendra is specifically about the
 with the migration gated by evidence and the human-authored
 version preserved throughout. Different problem.
 
+## Is Dendra "machine learning"?
+
+Strictly, no. Dendra is an **MLOps framework** — an
+orchestration runtime for graduating production classifiers
+from rule to LLM to learned ML, with paired-statistical gates
+and a rule safety floor. The ML happens *inside* the switch
+(your sklearn pipeline, your LLM adapter, your fine-tuned
+model); Dendra is the deployment scaffold around it.
+
+The closest formal ML subfield is **online model selection /
+cascade routing** (FrugalGPT lineage, Dekoninck et al.). The
+statistical machinery (paired McNemar, two-sided exact-binomial
+on discordant pairs) is **classical sequential hypothesis
+testing**, not ML proper.
+
+Calling Dendra "ML" overclaims. Calling it "the deployment
+runtime that ML ships into" is precise.
+
 ## How is this different from AutoML / H2O / Sagemaker Autopilot?
 
-AutoML platforms pick a model given a training set. They don't
-address the rule-to-ML migration path, don't provide a safety
-floor, and don't graduate phases based on production outcome
-data. Dendra is a primitive for production systems that already
-have a rule; AutoML is a tool for kicking off a greenfield ML
-project with labeled data.
+AutoML platforms search the model-and-hyperparameter space
+**offline**, against a static labeled dataset, and output "the
+best model." That's a useful tool for kicking off a greenfield
+ML project. It's a different problem from what Dendra solves.
+
+Dendra is the **online** companion: candidates flow in (from
+AutoML output, from an autoresearch loop, from a human running
+experiments), Dendra shadows them against live production
+traffic, runs paired-McNemar significance tests against a truth
+oracle, and tells you which candidates statistically clear the
+bar. The rule safety floor protects production from bad
+candidates throughout. A useful one-liner:
+
+> **AutoML automates offline model selection.**
+> **Dendra automates online model promotion.**
+
+Where AutoML stops — at "here's the best candidate" — Dendra
+picks up. The two compose: AutoML finds candidates; Dendra
+gates their deployment.
+
+See [`docs/autoresearch.md`](autoresearch.md) and
+[`examples/19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py)
+for the full picture.
 
 ## How does this relate to Karpathy's "autoresearch" loop pattern?
 
