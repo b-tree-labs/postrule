@@ -54,37 +54,61 @@ project with labeled data.
 
 ## How does this relate to Karpathy's "autoresearch" loop pattern?
 
-The autoresearch pattern is a *discovery* primitive: an LLM
-proposes experiments, runs them, reads results, iterates.
-Dendra is a *deployment* primitive: it wraps a decision with an
-evidence-gated migration path from hand-written rule to learned
-policy, with a statistical bar for every phase transition.
+> **Autoresearch tells you what to try. Dendra tells you when it worked.**
 
-They compose cleanly — they solve different layers of the same
-problem:
+The autoresearch pattern is a *discovery* primitive: an LLM (or
+agent) proposes candidate classifiers / prompts / gating
+thresholds, reads results, iterates. Where it falls down is the
+last mile — getting candidates from "this looks promising on
+the eval set" to "deployed in production with statistical
+confidence." Teams duct-tape evals harnesses around their loops
+and call it MLOps.
 
-- An autoresearch loop is great at **generating candidates** —
-  "here's a new routing rule the LLM synthesized from the last
-  100 outcomes," or "here's a refined prompt that might do
-  better." What it doesn't give you is a non-negotiable gate
-  for when those candidates earn production traffic.
-- Dendra gives you that gate. Point an autoresearch loop at a
-  Dendra switch: candidates land in `MODEL_SHADOW`, the
-  McNemar gate compares them to the rule on paired outcomes,
-  `advance()` promotes them when the evidence says so. The
-  rule floor holds throughout. Autoresearch failures produce
-  un-promoted candidates rather than silent regressions.
-- Dendra's outcome log is exactly the substrate an autoresearch
-  loop needs to reason about. Each record carries the rule's
-  output, the model's output, the ML head's output, and the
-  verdict. An LLM running the loop can query "show me the last
-  1,000 records where the rule and LLM disagreed and the LLM
-  won" and produce a targeted proposal. Then Dendra tests the
-  proposal.
+Dendra is the missing substrate. We ship a
+[`CandidateHarness`](../src/dendra/autoresearch.py) that wraps a
+live `LearnedSwitch`, lets an external loop register candidates,
+shadows them against production traffic, and returns paired-
+McNemar verdicts on whether each candidate beats the live
+decision. The autoresearch loop reads
+`report.recommend_promote`; the rule floor of the underlying
+switch protects production from bad proposals throughout.
 
-One-line mental model: **autoresearch picks what to try;
-Dendra proves when it worked.** They're orthogonal. The
-interesting teams will ship both.
+```python
+from dendra import CandidateHarness, LearnedSwitch
+
+sw = LearnedSwitch(rule=production_rule, ...)
+
+def truth(input):
+    return labeled_validation_set[input.id]  # or your reviewer/judge
+
+harness = CandidateHarness(switch=sw, truth_oracle=truth, alpha=0.05)
+
+# The autoresearch loop's iteration:
+candidate = autoresearch_agent.propose_candidate(switch.outcome_log)
+harness.register("v3_attempt_2", candidate)
+harness.observe_batch(evaluation_traffic)
+report = harness.evaluate("v3_attempt_2")
+
+if report.recommend_promote:
+    autoresearch_agent.commit_candidate(candidate)
+```
+
+Every primitive an autoresearch loop needs lines up with what
+Dendra already ships:
+
+| Autoresearch needs | Dendra ships |
+|---|---|
+| A way to evaluate candidates against real traffic | `CandidateHarness.observe()` + shadow phases |
+| A statistical bar for "this candidate is better" | Paired-McNemar gate at configurable `alpha` |
+| Rollback if a candidate poisons production | Circuit breaker + rule floor |
+| An audit trail of every promotion decision | Full outcome-log audit chain |
+| A way to compare N candidates concurrently | `CandidateHarness.evaluate_all()` |
+
+See [`examples/19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py)
+for the full loop end-to-end — a deterministic-faked agent
+ratchets keyword-expansion candidates from a 55%-accurate
+production rule up to 100% across four iterations, gated by
+McNemar at every step.
 
 ## What's the latency overhead?
 
