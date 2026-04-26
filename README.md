@@ -416,11 +416,25 @@ Dendra is split-licensed:
   self-hosted use is permitted** — the BSL only prohibits
   offering a competing hosted Dendra service.
 
-See [`LICENSE.md`](LICENSE.md) for the split map and
-[`LICENSING.md`](LICENSING.md) for developer-facing Q&A.
-Per-file headers declare the specific license for each source
-file. Commercial licensing that removes the BSL restrictions is
-available — contact `licensing@b-treeventures.com`.
+**The split lives at the per-file level inside `src/dendra/`**, not
+at the directory level. Most files in `src/dendra/` are Apache 2.0;
+the four BSL-licensed exceptions are
+[`src/dendra/analyzer.py`](src/dendra/analyzer.py),
+[`src/dendra/cli.py`](src/dendra/cli.py),
+[`src/dendra/research.py`](src/dendra/research.py), and
+[`src/dendra/roi.py`](src/dendra/roi.py). Tests for those four files
+mirror the BSL identifier; everything else is Apache. Each source
+file's `SPDX-License-Identifier:` header is authoritative when in
+doubt — the `.github/workflows/license-check.yml` workflow enforces
+the split on every PR.
+
+See [`LICENSE.md`](LICENSE.md) for the split map,
+[`LICENSING.md`](LICENSING.md) for developer-facing Q&A,
+[`LICENSE-APACHE`](LICENSE-APACHE) for the canonical Apache 2.0
+text, and [`LICENSE-BSL`](LICENSE-BSL) for the canonical BSL 1.1
+text + the Additional Use Grant. Commercial licensing that removes
+the BSL restrictions is available — contact
+`licensing@b-treeventures.com`.
 
 The underlying classification primitive is covered by a filed
 US provisional patent (application pending, filed 2026-04-21).
@@ -457,6 +471,9 @@ pytest tests/
 
 _Copyright © 2026 B-Tree Ventures, LLC (dba Axiom Labs).
 Split-licensed — Apache 2.0 on the client SDK, BSL 1.1 on
-Dendra-operated components; see `LICENSE.md`. "Dendra",
-"Transition Curves", and "Axiom Labs" are trademarks of
-B-Tree Ventures, LLC._
+Dendra-operated components; see [`LICENSE.md`](LICENSE.md).
+Dendra, Transition Curves, and Axiom Labs are trademarks of
+B-Tree Ventures, LLC. Neither the Apache 2.0 license nor the
+BSL 1.1 license grants any right to use these marks — see
+[`TRADEMARKS.md`](TRADEMARKS.md) for the project's fair-use
+position._
