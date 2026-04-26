@@ -142,10 +142,7 @@ class TestConcurrentWriters:
         with ctx.Pool(n_workers) as pool:
             results = pool.starmap(
                 _worker_append,
-                [
-                    (str(db), "triage", records_per_worker, f"w{i}")
-                    for i in range(n_workers)
-                ],
+                [(str(db), "triage", records_per_worker, f"w{i}") for i in range(n_workers)],
             )
         assert sum(results) == n_workers * records_per_worker
 

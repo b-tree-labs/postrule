@@ -125,9 +125,7 @@ class TestMcNemarGateInsufficientData:
 
     def test_refuses_below_min_paired(self):
         gate = McNemarGate(min_paired=200)
-        records = [
-            _rec(label="bug", rule_output="bug", model_output="bug") for _ in range(10)
-        ]
+        records = [_rec(label="bug", rule_output="bug", model_output="bug") for _ in range(10)]
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
         assert decision.advance is False
         assert decision.paired_sample_size == 10
@@ -169,10 +167,7 @@ class TestMcNemarGateAdvances:
     def test_refuses_when_equal(self):
         """Both sides correct on same records → no discordant pairs → refuse."""
         gate = McNemarGate(alpha=0.01, min_paired=100)
-        records = [
-            _rec(label="bug", rule_output="bug", model_output="bug")
-            for _ in range(200)
-        ]
+        records = [_rec(label="bug", rule_output="bug", model_output="bug") for _ in range(200)]
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
         assert decision.advance is False
 
@@ -200,8 +195,12 @@ class TestMcNemarGateIgnoresIncorrectOutcomes:
         truth for them without a correct-label field."""
         gate = McNemarGate(min_paired=5)
         records = [
-            _rec(label="bug", outcome=Verdict.INCORRECT.value,
-                 rule_output="bug", model_output="feature_request")
+            _rec(
+                label="bug",
+                outcome=Verdict.INCORRECT.value,
+                rule_output="bug",
+                model_output="feature_request",
+            )
             for _ in range(500)
         ]
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
@@ -238,11 +237,13 @@ class TestAccuracyMarginGate:
         for i in range(100):
             rule_right = i < 40  # 40% accuracy
             model_right = i < 80  # 80% accuracy
-            records.append(_rec(
-                label="bug",
-                rule_output="bug" if rule_right else "feature_request",
-                model_output="bug" if model_right else "feature_request",
-            ))
+            records.append(
+                _rec(
+                    label="bug",
+                    rule_output="bug" if rule_right else "feature_request",
+                    model_output="bug" if model_right else "feature_request",
+                )
+            )
         d = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
         assert d.advance is True
         assert d.current_accuracy == pytest.approx(0.40)
@@ -254,18 +255,19 @@ class TestAccuracyMarginGate:
         for i in range(100):
             rule_right = i < 80
             model_right = i < 85  # only 5% better
-            records.append(_rec(
-                label="bug",
-                rule_output="bug" if rule_right else "feature_request",
-                model_output="bug" if model_right else "feature_request",
-            ))
+            records.append(
+                _rec(
+                    label="bug",
+                    rule_output="bug" if rule_right else "feature_request",
+                    model_output="bug" if model_right else "feature_request",
+                )
+            )
         d = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
         assert d.advance is False
 
     def test_refuses_below_min_paired(self):
         gate = AccuracyMarginGate(margin=0.05, min_paired=500)
-        records = [_rec(label="bug", rule_output="bug", model_output="bug")
-                   for _ in range(50)]
+        records = [_rec(label="bug", rule_output="bug", model_output="bug") for _ in range(50)]
         d = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
         assert d.advance is False
         assert "insufficient" in d.rationale
@@ -285,7 +287,9 @@ class TestAccuracyMarginGate:
 class TestMinVolumeGate:
     def test_refuses_below_volume_threshold(self):
         class _AlwaysYes:
-            def evaluate(self, _r, _c, _t): return GateDecision(advance=True, rationale="y")
+            def evaluate(self, _r, _c, _t):
+                return GateDecision(advance=True, rationale="y")
+
         gate = MinVolumeGate(_AlwaysYes(), min_records=100)
         records = [_rec(label="bug") for _ in range(50)]
         d = gate.evaluate(records, Phase.RULE, Phase.MODEL_SHADOW)
@@ -294,7 +298,9 @@ class TestMinVolumeGate:
 
     def test_delegates_once_volume_threshold_met(self):
         class _AlwaysYes:
-            def evaluate(self, _r, _c, _t): return GateDecision(advance=True, rationale="inner yes")
+            def evaluate(self, _r, _c, _t):
+                return GateDecision(advance=True, rationale="inner yes")
+
         gate = MinVolumeGate(_AlwaysYes(), min_records=10)
         records = [_rec(label="bug") for _ in range(20)]
         d = gate.evaluate(records, Phase.RULE, Phase.MODEL_SHADOW)
@@ -314,16 +320,22 @@ class TestMinVolumeGate:
 class TestCompositeGate:
     def test_all_of_advances_when_every_sub_advances(self):
         class _Yes:
-            def evaluate(self, _r, _c, _t): return GateDecision(advance=True, rationale="yes")
+            def evaluate(self, _r, _c, _t):
+                return GateDecision(advance=True, rationale="yes")
+
         gate = CompositeGate.all_of([_Yes(), _Yes(), _Yes()])
         d = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
         assert d.advance is True
 
     def test_all_of_refuses_when_any_sub_refuses(self):
         class _Yes:
-            def evaluate(self, _r, _c, _t): return GateDecision(advance=True, rationale="yes")
+            def evaluate(self, _r, _c, _t):
+                return GateDecision(advance=True, rationale="yes")
+
         class _No:
-            def evaluate(self, _r, _c, _t): return GateDecision(advance=False, rationale="no")
+            def evaluate(self, _r, _c, _t):
+                return GateDecision(advance=False, rationale="no")
+
         gate = CompositeGate.all_of([_Yes(), _No(), _Yes()])
         d = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
         assert d.advance is False
@@ -331,16 +343,22 @@ class TestCompositeGate:
 
     def test_any_of_advances_when_any_sub_advances(self):
         class _Yes:
-            def evaluate(self, _r, _c, _t): return GateDecision(advance=True, rationale="yes")
+            def evaluate(self, _r, _c, _t):
+                return GateDecision(advance=True, rationale="yes")
+
         class _No:
-            def evaluate(self, _r, _c, _t): return GateDecision(advance=False, rationale="no")
+            def evaluate(self, _r, _c, _t):
+                return GateDecision(advance=False, rationale="no")
+
         gate = CompositeGate.any_of([_No(), _Yes(), _No()])
         d = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
         assert d.advance is True
 
     def test_any_of_refuses_when_all_sub_refuse(self):
         class _No:
-            def evaluate(self, _r, _c, _t): return GateDecision(advance=False, rationale="no")
+            def evaluate(self, _r, _c, _t):
+                return GateDecision(advance=False, rationale="no")
+
         gate = CompositeGate.any_of([_No(), _No()])
         d = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
         assert d.advance is False
@@ -440,9 +458,7 @@ class TestAdvance:
         )
         s.advance()
         # ListEmitter stores (event_name, payload) tuples.
-        advance_events = [
-            payload for (name, payload) in events.events if name == "advance"
-        ]
+        advance_events = [payload for (name, payload) in events.events if name == "advance"]
         assert len(advance_events) == 1
         payload = advance_events[0]
         assert payload["from"] == "RULE"
@@ -451,9 +467,11 @@ class TestAdvance:
 
     def test_auto_advance_fires_at_interval(self):
         """record_verdict calls advance() every auto_advance_interval rows."""
+
         class _YesGate:
             def __init__(self):
                 self.calls = 0
+
             def evaluate(self, _records, _current, _target):
                 self.calls += 1
                 return GateDecision(advance=True, rationale="yes")
@@ -469,14 +487,12 @@ class TestAdvance:
         )
         # 2 records — no advance yet.
         for _ in range(2):
-            s.record_verdict(input={"title": "x"}, label="bug",
-                                outcome=Verdict.CORRECT.value)
+            s.record_verdict(input={"title": "x"}, label="bug", outcome=Verdict.CORRECT.value)
         assert gate.calls == 0
         assert s.phase() is Phase.RULE
 
         # 3rd record — triggers advance.
-        s.record_verdict(input={"title": "x"}, label="bug",
-                            outcome=Verdict.CORRECT.value)
+        s.record_verdict(input={"title": "x"}, label="bug", outcome=Verdict.CORRECT.value)
         assert gate.calls == 1
         assert s.phase() is Phase.MODEL_SHADOW
 
@@ -484,17 +500,20 @@ class TestAdvance:
         class _YesGate:
             def evaluate(self, _r, _c, _t):
                 return GateDecision(advance=True, rationale="yes")
+
         s = LearnedSwitch(
-            rule=_rule, gate=_YesGate(), auto_advance=False,
+            rule=_rule,
+            gate=_YesGate(),
+            auto_advance=False,
             auto_advance_interval=1,
         )
         for _ in range(50):
-            s.record_verdict(input={"title": "x"}, label="bug",
-                                outcome=Verdict.CORRECT.value)
+            s.record_verdict(input={"title": "x"}, label="bug", outcome=Verdict.CORRECT.value)
         assert s.phase() is Phase.RULE  # never advanced
 
     def test_auto_advance_tags_telemetry(self):
         from dendra import ListEmitter
+
         events = ListEmitter()
 
         class _YesGate:
@@ -502,12 +521,13 @@ class TestAdvance:
                 return GateDecision(advance=True, rationale="yes")
 
         s = LearnedSwitch(
-            rule=_rule, gate=_YesGate(),
-            auto_advance=True, auto_advance_interval=1,
+            rule=_rule,
+            gate=_YesGate(),
+            auto_advance=True,
+            auto_advance_interval=1,
             telemetry=events,
         )
-        s.record_verdict(input={"title": "x"}, label="bug",
-                            outcome=Verdict.CORRECT.value)
+        s.record_verdict(input={"title": "x"}, label="bug", outcome=Verdict.CORRECT.value)
         advance_payloads = [p for (n, p) in events.events if n == "advance"]
         assert len(advance_payloads) == 1
         assert advance_payloads[0]["auto"] is True
@@ -521,15 +541,19 @@ class TestAdvance:
 
     def test_manual_advance_still_works_with_auto_on(self):
         class _YesGate:
-            def __init__(self): self.calls = 0
+            def __init__(self):
+                self.calls = 0
+
             def evaluate(self, _r, _c, _t):
                 self.calls += 1
                 return GateDecision(advance=True, rationale="yes")
 
         gate = _YesGate()
         s = LearnedSwitch(
-            rule=_rule, gate=gate,
-            auto_advance=True, auto_advance_interval=100,
+            rule=_rule,
+            gate=gate,
+            auto_advance=True,
+            auto_advance_interval=100,
         )
         # One manual call — doesn't wait for the interval.
         s.advance()
@@ -537,17 +561,19 @@ class TestAdvance:
 
     def test_auto_advance_gate_exception_does_not_break_record(self):
         """A broken gate must not take down record_verdict."""
+
         class _BrokenGate:
             def evaluate(self, _r, _c, _t):
                 raise RuntimeError("gate is broken")
 
         s = LearnedSwitch(
-            rule=_rule, gate=_BrokenGate(),
-            auto_advance=True, auto_advance_interval=1,
+            rule=_rule,
+            gate=_BrokenGate(),
+            auto_advance=True,
+            auto_advance_interval=1,
         )
         # Should not raise.
-        s.record_verdict(input={"title": "x"}, label="bug",
-                            outcome=Verdict.CORRECT.value)
+        s.record_verdict(input={"title": "x"}, label="bug", outcome=Verdict.CORRECT.value)
 
     def test_advance_on_real_records_with_mcnemar(self):
         """End-to-end: paired rule-vs-model records, real McNemarGate."""

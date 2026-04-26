@@ -52,10 +52,7 @@ if __name__ == "__main__":
             label=result.label,
             outcome=ground_truth.value,
         )
-        print(
-            f"{case['title']:45s}  predicted={result.label:18s}  "
-            f"actual={ground_truth.name}"
-        )
+        print(f"{case['title']:45s}  predicted={result.label:18s}  actual={ground_truth.name}")
 
     print()
     records = switch.storage.load_records(switch.name)

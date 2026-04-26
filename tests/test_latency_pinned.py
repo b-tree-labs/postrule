@@ -116,10 +116,10 @@ def _assert_p99_below(stats: dict[str, float], limit_ns: float, *, cell: str) ->
     """Fail with a descriptive message if p99 exceeds the limit."""
     assert stats["p99_ns"] < limit_ns, (
         f"Latency regression in {cell}: "
-        f"p50={stats['p50_ns']/1000:.2f}µs  "
-        f"p95={stats['p95_ns']/1000:.2f}µs  "
-        f"p99={stats['p99_ns']/1000:.2f}µs  "
-        f"(limit: {limit_ns/1000:.2f}µs). "
+        f"p50={stats['p50_ns'] / 1000:.2f}µs  "
+        f"p95={stats['p95_ns'] / 1000:.2f}µs  "
+        f"p99={stats['p99_ns'] / 1000:.2f}µs  "
+        f"(limit: {limit_ns / 1000:.2f}µs). "
         "See docs/benchmarks/v1-audit-benchmarks.md for the baseline."
     )
 
@@ -369,7 +369,9 @@ def test_classify_auto_record_plus_persist_file_storage_sync():
     # well under ms-scale even with that). Real regressions blow
     # past 5ms; this catches them.
     _assert_p99_below(
-        stats, 3_000_000, cell="classify.RULE.auto_record+FileStorage.sync",
+        stats,
+        3_000_000,
+        cell="classify.RULE.auto_record+FileStorage.sync",
     )
 
 
@@ -399,7 +401,9 @@ def test_classify_auto_record_plus_persist_file_storage_batched():
         finally:
             storage.close()
     _assert_p99_below(
-        stats, 1_500_000, cell="classify.RULE.auto_record+FileStorage.batched",
+        stats,
+        1_500_000,
+        cell="classify.RULE.auto_record+FileStorage.batched",
     )
 
 
@@ -423,15 +427,11 @@ def test_record_verdict_auto_advance_interval_boundary():
         storage=BoundedInMemoryStorage(),
     )
     stats = _measure(
-        lambda: sw.record_verdict(
-            input=INPUT, label="flight", outcome="unknown"
-        ),
+        lambda: sw.record_verdict(input=INPUT, label="flight", outcome="unknown"),
         n=5000,
     )
     # Observed p99: 287µs; ceiling 1.5ms (regression-guard; see #30).
-    _assert_p99_below(
-        stats, 1_500_000, cell="record_verdict.auto_advance_interval=100"
-    )
+    _assert_p99_below(stats, 1_500_000, cell="record_verdict.auto_advance_interval=100")
 
 
 def test_composite_gate_all_of_vs_mcnemar_alone():
@@ -468,6 +468,4 @@ def test_composite_gate_all_of_vs_mcnemar_alone():
         warmup=10,
     )
     # Observed p99: ~4.5ms; ceiling 20ms (regression-guard; see #31).
-    _assert_p99_below(
-        stats, 20_000_000, cell="CompositeGate.all_of[McNemar,Accuracy]"
-    )
+    _assert_p99_below(stats, 20_000_000, cell="CompositeGate.all_of[McNemar,Accuracy]")

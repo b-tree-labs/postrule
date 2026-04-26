@@ -12,14 +12,14 @@ import pytest
 from dendra import (
     BoundedInMemoryStorage,
     CallableVerdictSource,
-    LearnedSwitch,
     JudgeSource,
+    LearnedSwitch,
     ModelPrediction,
+    NoVerifierAvailableError,
     Phase,
     SwitchConfig,
     Verdict,
     default_verifier,
-    NoVerifierAvailableError,
 )
 
 
@@ -57,7 +57,9 @@ class TestVerifierOnClassify:
     def test_verifier_records_verdict_directly(self):
         verifier = JudgeSource(_StubLM(reply="correct"))
         sw = LearnedSwitch(
-            rule=_rule, name="v_correct", author="t",
+            rule=_rule,
+            name="v_correct",
+            author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier),
             storage=BoundedInMemoryStorage(),
         )
@@ -70,7 +72,9 @@ class TestVerifierOnClassify:
 
     def test_no_verifier_keeps_auto_record_unknown(self):
         sw = LearnedSwitch(
-            rule=_rule, name="v_none", author="t",
+            rule=_rule,
+            name="v_none",
+            author="t",
             config=SwitchConfig(auto_advance=False),
             storage=BoundedInMemoryStorage(),
         )
@@ -87,7 +91,9 @@ class TestVerifierOnClassify:
 
         verifier = CallableVerdictSource(boom, name="flaky")
         sw = LearnedSwitch(
-            rule=_rule, name="v_fail", author="t",
+            rule=_rule,
+            name="v_fail",
+            author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier),
             storage=BoundedInMemoryStorage(),
         )
@@ -101,7 +107,9 @@ class TestVerifierOnClassify:
     def test_verifier_incorrect_records_incorrect(self):
         verifier = JudgeSource(_StubLM(reply="incorrect"))
         sw = LearnedSwitch(
-            rule=_rule, name="v_incorrect", author="t",
+            rule=_rule,
+            name="v_incorrect",
+            author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier),
             storage=BoundedInMemoryStorage(),
         )
@@ -119,7 +127,9 @@ class TestVerifierSampleRate:
     def test_zero_sample_rate_skips_verifier(self):
         verifier = JudgeSource(_StubLM(reply="correct"))
         sw = LearnedSwitch(
-            rule=_rule, name="v_zero", author="t",
+            rule=_rule,
+            name="v_zero",
+            author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier, verifier_sample_rate=0.0),
             storage=BoundedInMemoryStorage(),
         )
@@ -143,7 +153,9 @@ class TestVerifierSampleRate:
         random.seed(0)
         verifier = JudgeSource(_StubLM(reply="correct"))
         sw = LearnedSwitch(
-            rule=_rule, name="v_partial", author="t",
+            rule=_rule,
+            name="v_partial",
+            author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier, verifier_sample_rate=0.3),
             storage=BoundedInMemoryStorage(),
         )
@@ -168,7 +180,9 @@ class TestSelfJudgmentGuardrail:
         shared = _StubLM()
         with pytest.raises(ValueError, match="same language model"):
             LearnedSwitch(
-                rule=_rule, name="v_same_llm", author="t",
+                rule=_rule,
+                name="v_same_llm",
+                author="t",
                 model=shared,
                 config=SwitchConfig(
                     starting_phase=Phase.MODEL_SHADOW,
@@ -182,7 +196,9 @@ class TestSelfJudgmentGuardrail:
         v = _StubLM()
         v._model = "judge-B"
         sw = LearnedSwitch(
-            rule=_rule, name="v_distinct", author="t",
+            rule=_rule,
+            name="v_distinct",
+            author="t",
             model=m,
             config=SwitchConfig(
                 starting_phase=Phase.MODEL_SHADOW,
@@ -201,7 +217,9 @@ class TestAsyncVerifier:
     def test_aclassify_runs_async_verifier(self):
         verifier = JudgeSource(_AsyncStubLM(reply="correct"))
         sw = LearnedSwitch(
-            rule=_rule, name="v_async", author="t",
+            rule=_rule,
+            name="v_async",
+            author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier),
             storage=BoundedInMemoryStorage(),
         )
@@ -216,7 +234,9 @@ class TestAsyncVerifier:
 
     def test_aclassify_no_verifier_falls_back_to_to_thread(self):
         sw = LearnedSwitch(
-            rule=_rule, name="v_async_none", author="t",
+            rule=_rule,
+            name="v_async_none",
+            author="t",
             config=SwitchConfig(auto_advance=False),
             storage=BoundedInMemoryStorage(),
         )
@@ -244,8 +264,7 @@ class TestDefaultVerifier:
         msg = str(exc_info.value)
         # Helpful message lists at least one recovery option.
         assert any(
-            hint in msg.lower()
-            for hint in ["ollama", "openai_api_key", "anthropic_api_key"]
+            hint in msg.lower() for hint in ["ollama", "openai_api_key", "anthropic_api_key"]
         )
 
     def test_prefer_invalid_path_raises(self, monkeypatch):

@@ -32,7 +32,9 @@ class TestAutoRecordDefault:
         assert recs[0].label == "bug"
 
     def test_dispatch_auto_appends_unknown_record(self):
-        def handler(t): return "handled"
+        def handler(t):
+            return "handled"
+
         s = LearnedSwitch(rule=_rule, labels={"bug": handler, "feature_request": handler})
         s.dispatch({"title": "app crashes"})
         recs = s.storage.load_records(s.name)
@@ -145,6 +147,7 @@ class TestOnVerdictHook:
     def test_hook_exceptions_do_not_break_record_verdict(self):
         def bad_hook(_record):
             raise RuntimeError("hook blew up")
+
         s = LearnedSwitch(rule=_rule, auto_record=False, on_verdict=bad_hook)
         # Must not raise.
         s.record_verdict(input={"t": 1}, label="bug", outcome=Verdict.CORRECT.value)

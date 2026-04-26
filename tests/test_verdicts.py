@@ -76,8 +76,9 @@ class TestCallableVerdictSource:
         assert s.source_name == "callable:echo"
 
     def test_non_verdict_return_raises(self):
-        def _bad(i, l):
+        def _bad(i, lbl):
             return "correct"  # str, not Verdict
+
         s = CallableVerdictSource(_bad, name="bad")
         with pytest.raises(TypeError, match="must return a Verdict"):
             s.judge("x", "y")

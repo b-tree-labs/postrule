@@ -14,7 +14,6 @@ from dendra import (
     ModelPrediction,
     Phase,
     SwitchConfig,
-    Verdict,
 )
 
 
@@ -46,7 +45,9 @@ class TestModelPrimaryRouting:
             rule=_rule,
             author="alice",
             model=FakeLM(label="feature_request", confidence=0.97),
-            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_PRIMARY, confidence_threshold=0.85),
+            config=SwitchConfig(
+                auto_record=False, phase=Phase.MODEL_PRIMARY, confidence_threshold=0.85
+            ),
         )
         # Rule would say "bug" for a crash ticket; LLM disagrees with high
         # confidence → LLM's answer wins.
@@ -62,7 +63,9 @@ class TestModelPrimaryRouting:
             rule=_rule,
             author="alice",
             model=FakeLM(label="feature_request", confidence=0.40),
-            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_PRIMARY, confidence_threshold=0.85),
+            config=SwitchConfig(
+                auto_record=False, phase=Phase.MODEL_PRIMARY, confidence_threshold=0.85
+            ),
         )
         r = s.classify({"title": "App keeps crashing"})
         # LLM confidence below threshold → rule wins.

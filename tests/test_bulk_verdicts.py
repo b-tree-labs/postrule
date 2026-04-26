@@ -12,10 +12,7 @@ import pytest
 
 from dendra import (
     BulkVerdict,
-    BulkVerdictSummary,
     LearnedSwitch,
-    ModelPrediction,
-    Phase,
     SwitchConfig,
     Verdict,
 )
@@ -38,7 +35,9 @@ def _rule(x):
 class TestBulkRecordVerdicts:
     def test_appends_every_row(self):
         sw = LearnedSwitch(
-            rule=_rule, name="bulk_basic", author="t",
+            rule=_rule,
+            name="bulk_basic",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         batch = [
@@ -53,7 +52,9 @@ class TestBulkRecordVerdicts:
 
     def test_empty_batch_is_no_op(self):
         sw = LearnedSwitch(
-            rule=_rule, name="bulk_empty", author="t",
+            rule=_rule,
+            name="bulk_empty",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         s = sw.bulk_record_verdicts([])
@@ -64,7 +65,9 @@ class TestBulkRecordVerdicts:
     def test_failed_row_absorbed_not_propagated(self):
         """One malformed row doesn't poison the batch."""
         sw = LearnedSwitch(
-            rule=_rule, name="bulk_poison", author="t",
+            rule=_rule,
+            name="bulk_poison",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         batch = [
@@ -85,11 +88,14 @@ class TestBulkRecordVerdicts:
         class _CountingGate:
             def evaluate(self, records, current, target, /):
                 from dendra.gates import GateDecision
+
                 advance_calls.append(len(records))
                 return GateDecision(advance=False, rationale="never")
 
         sw = LearnedSwitch(
-            rule=_rule, name="bulk_autoadv", author="t",
+            rule=_rule,
+            name="bulk_autoadv",
+            author="t",
             config=SwitchConfig(
                 auto_record=False,
                 auto_advance=True,
@@ -97,10 +103,7 @@ class TestBulkRecordVerdicts:
                 gate=_CountingGate(),
             ),
         )
-        batch = [
-            BulkVerdict(input=i, label="x", outcome=Verdict.CORRECT.value)
-            for i in range(25)
-        ]
+        batch = [BulkVerdict(input=i, label="x", outcome=Verdict.CORRECT.value) for i in range(25)]
         s = sw.bulk_record_verdicts(batch)
         # Without the defer, advance would fire 5 times (interval=5, total=25).
         # With it, fires exactly once at end-of-batch.
@@ -117,11 +120,14 @@ class TestBulkRecordVerdicts:
         class _CountingGate:
             def evaluate(self, records, current, target, /):
                 from dendra.gates import GateDecision
+
                 advance_calls.append(len(records))
                 return GateDecision(advance=False, rationale="never")
 
         sw = LearnedSwitch(
-            rule=_rule, name="bulk_resume", author="t",
+            rule=_rule,
+            name="bulk_resume",
+            author="t",
             config=SwitchConfig(
                 auto_record=False,
                 auto_advance=True,
@@ -130,14 +136,15 @@ class TestBulkRecordVerdicts:
             ),
         )
         sw.bulk_record_verdicts(
-            [BulkVerdict(input=i, label="x", outcome=Verdict.CORRECT.value)
-             for i in range(2)],
+            [BulkVerdict(input=i, label="x", outcome=Verdict.CORRECT.value) for i in range(2)],
         )
         advance_calls.clear()
         # Individual calls resume; counter was reset so the next 3 trigger.
         for i in range(3):
             sw.record_verdict(
-                input=i, label="x", outcome=Verdict.CORRECT.value,
+                input=i,
+                label="x",
+                outcome=Verdict.CORRECT.value,
             )
         assert len(advance_calls) == 1
 
@@ -153,7 +160,9 @@ class TestBulkFromSource:
             return Verdict.CORRECT if label == f"rule-{input}" else Verdict.INCORRECT
 
         sw = LearnedSwitch(
-            rule=_rule, name="pipe_oracle", author="t",
+            rule=_rule,
+            name="pipe_oracle",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         src = CallableVerdictSource(oracle, name="oracle")
@@ -172,13 +181,16 @@ class TestBulkFromSource:
 class TestReviewerRoundTrip:
     def test_export_returns_unknown_records_only(self):
         sw = LearnedSwitch(
-            rule=_rule, name="exp_unknown", author="t",
+            rule=_rule,
+            name="exp_unknown",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         # Mix of outcomes — only UNKNOWN should export.
         for i in range(5):
             sw.record_verdict(
-                input=i, label=f"rule-{i}",
+                input=i,
+                label=f"rule-{i}",
                 outcome=Verdict.UNKNOWN.value if i % 2 == 0 else Verdict.CORRECT.value,
             )
         queue_out = sw.export_for_review()
@@ -187,23 +199,30 @@ class TestReviewerRoundTrip:
 
     def test_export_limit_respected(self):
         sw = LearnedSwitch(
-            rule=_rule, name="exp_limit", author="t",
+            rule=_rule,
+            name="exp_limit",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         for i in range(10):
             sw.record_verdict(
-                input=i, label="x", outcome=Verdict.UNKNOWN.value,
+                input=i,
+                label="x",
+                outcome=Verdict.UNKNOWN.value,
             )
         assert len(sw.export_for_review(limit=3)) == 3
 
     def test_apply_reviews_matches_by_input_hash(self):
         sw = LearnedSwitch(
-            rule=_rule, name="apply_roundtrip", author="t",
+            rule=_rule,
+            name="apply_roundtrip",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         for i in range(3):
             sw.record_verdict(
-                input={"id": i}, label=f"rule-{i}",
+                input={"id": i},
+                label=f"rule-{i}",
                 outcome=Verdict.UNKNOWN.value,
             )
         queue_out = sw.export_for_review()
@@ -226,13 +245,17 @@ class TestReviewerRoundTrip:
 
     def test_apply_reviews_unmatched_hash_counted_as_failed(self):
         sw = LearnedSwitch(
-            rule=_rule, name="apply_miss", author="t",
+            rule=_rule,
+            name="apply_miss",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
-        s = sw.apply_reviews([
-            {"input_hash": "deadbeef", "outcome": Verdict.CORRECT.value},
-            {"input_hash": "cafebabe", "outcome": Verdict.INCORRECT.value},
-        ])
+        s = sw.apply_reviews(
+            [
+                {"input_hash": "deadbeef", "outcome": Verdict.CORRECT.value},
+                {"input_hash": "cafebabe", "outcome": Verdict.INCORRECT.value},
+            ]
+        )
         assert s.recorded == 0
         assert s.failed == 2
 
@@ -247,7 +270,10 @@ class TestHumanReviewerSource:
         pending: queue.Queue = queue.Queue()
         verdicts: queue.Queue = queue.Queue()
         src = HumanReviewerSource(
-            pending=pending, verdicts=verdicts, timeout=2.0, name="test",
+            pending=pending,
+            verdicts=verdicts,
+            timeout=2.0,
+            name="test",
         )
 
         def fake_reviewer():
@@ -275,7 +301,9 @@ class TestHumanReviewerSource:
         pending: queue.Queue = queue.Queue()
         verdicts: queue.Queue = queue.Queue()
         src = HumanReviewerSource(
-            pending=pending, verdicts=verdicts, timeout=2.0,
+            pending=pending,
+            verdicts=verdicts,
+            timeout=2.0,
         )
         verdicts.put("incorrect")
         assert src.judge("x", "y") is Verdict.INCORRECT
@@ -292,6 +320,7 @@ class TestWebhookVerdictSource:
 
     def _mock_httpx(self, ws, *, status=200, payload=None, raises=None):
         """Install a fake httpx.post on the source."""
+
         class _FakeResp:
             def __init__(self, status, payload):
                 self.status_code = status
@@ -300,8 +329,11 @@ class TestWebhookVerdictSource:
             def raise_for_status(self):
                 if self.status_code >= 400:
                     import httpx
+
                     raise httpx.HTTPStatusError(
-                        "bad", request=None, response=self,  # type: ignore[arg-type]
+                        "bad",
+                        request=None,
+                        response=self,  # type: ignore[arg-type]
                     )
 
             def json(self):
@@ -323,6 +355,7 @@ class TestWebhookVerdictSource:
 
     def test_http_failure_absorbed_as_unknown(self):
         import httpx
+
         ws = WebhookVerdictSource("http://example.invalid/verdict", timeout=1.0)
         self._mock_httpx(ws, raises=httpx.ConnectError("down"))
         assert ws.judge("x", "y") is Verdict.UNKNOWN

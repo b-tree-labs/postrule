@@ -127,7 +127,7 @@ if __name__ == "__main__":
     correct = sum(1 for r in bootstrap_log if r.outcome == Verdict.CORRECT.value)
     print(
         f"  language model decided {len(bootstrap_log)} tickets; "
-        f"{correct} correct ({correct/len(bootstrap_log):.0%})"
+        f"{correct} correct ({correct / len(bootstrap_log):.0%})"
     )
     print("  Every ticket is now (input, llm_label) training data.\n")
 

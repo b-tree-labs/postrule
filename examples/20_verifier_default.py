@@ -45,7 +45,7 @@ from __future__ import annotations
 
 from _stubs import FakeJudgeLM
 
-from dendra import LearnedSwitch, JudgeSource, Verdict
+from dendra import JudgeSource, LearnedSwitch, Verdict
 
 
 def production_rule(ticket: dict) -> str:

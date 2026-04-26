@@ -31,7 +31,7 @@ except ImportError:
         "  uvicorn examples.15_async_fastapi:app --reload",
         file=sys.stderr,
     )
-    raise SystemExit(1)
+    raise SystemExit(1) from None
 
 from dendra import LearnedSwitch, ml_switch
 

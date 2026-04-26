@@ -31,7 +31,7 @@ production:
 
 from __future__ import annotations
 
-from dendra import ModelPrediction, Verdict
+from dendra import ModelPrediction
 from dendra.verdicts import JudgeCommittee
 
 

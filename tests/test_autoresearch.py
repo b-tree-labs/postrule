@@ -10,7 +10,6 @@ import pytest
 from dendra import LearnedSwitch, SwitchConfig
 from dendra.autoresearch import CandidateHarness, CandidateReport
 
-
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
@@ -114,6 +113,7 @@ class TestEvaluation:
 
     def test_worse_candidate_holds(self):
         """A candidate strictly worse than production must hold."""
+
         def worse(input: int) -> str:
             return "negative"  # always wrong on positives
 
@@ -131,6 +131,7 @@ class TestEvaluation:
         candidate to be observably more accurate than production.
         Guards against the ``b > 0, c >> b`` case where production
         looks worse but is actually winning."""
+
         # Construct a contrived dataset where production has a
         # higher accuracy than the candidate but b > 0.
         def near_perfect_with_one_miss(input: int) -> str:
@@ -173,6 +174,7 @@ class TestCandidateFailures:
     def test_candidate_exception_counted_as_wrong(self):
         """A flaky candidate doesn't poison the run — its exceptions
         produce candidate_label=None, which is counted as wrong."""
+
         def flaky(input: int) -> str:
             if input == 5:
                 raise RuntimeError("boom")
@@ -189,6 +191,7 @@ class TestCandidateFailures:
     def test_truth_oracle_exception_propagates(self):
         """Truth-oracle failures stop observation — there's no useful
         work the harness can do without ground truth."""
+
         def bad_oracle(input: int):
             raise RuntimeError("truth source down")
 
@@ -294,7 +297,7 @@ class TestCandidateReport:
 # ---------------------------------------------------------------------------
 
 
-from dendra import Tournament, TournamentReport  # noqa: E402
+from dendra import Tournament  # noqa: E402
 
 
 def _perfect(input: int) -> str:

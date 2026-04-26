@@ -28,7 +28,6 @@ from dendra import (
     ModelPrediction,
     Phase,
     SwitchConfig,
-    Verdict,
 )
 
 # ---------------------------------------------------------------------------
@@ -122,7 +121,9 @@ class TestRuleFloorUnjailbreakability:
             rule=_export_control_rule,
             author="@security:platform",
             model=LowConfJailbreak(),
-            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_PRIMARY, confidence_threshold=0.85),
+            config=SwitchConfig(
+                auto_record=False, phase=Phase.MODEL_PRIMARY, confidence_threshold=0.85
+            ),
         )
         r = s.classify("itar technology export")
         # Rule wins because LLM came in below threshold.
@@ -146,7 +147,9 @@ class TestSafetyCriticalCap:
                 rule=_export_control_rule,
                 author="@security:platform",
                 ml_head=PoisonedMLHead(),
-                config=SwitchConfig(auto_record=False, phase=Phase.ML_PRIMARY, safety_critical=True),
+                config=SwitchConfig(
+                    auto_record=False, phase=Phase.ML_PRIMARY, safety_critical=True
+                ),
             )
 
     def test_safety_critical_allowed_at_ml_with_fallback(self):

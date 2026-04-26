@@ -18,9 +18,6 @@ They cover:
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
 import pytest
 
 from dendra.bundled import (
@@ -87,25 +84,19 @@ class TestIsCached:
 
 
 class TestEnsureModelOffline:
-    def test_offline_env_raises_when_not_cached(
-        self, isolated_cache, monkeypatch
-    ):
+    def test_offline_env_raises_when_not_cached(self, isolated_cache, monkeypatch):
         monkeypatch.setenv("DENDRA_BUNDLED_OFFLINE", "1")
         with pytest.raises(BundledModelUnavailableError, match="not cached"):
             ensure_model("judge")
 
-    def test_offline_env_returns_cached_path(
-        self, isolated_cache, monkeypatch
-    ):
+    def test_offline_env_returns_cached_path(self, isolated_cache, monkeypatch):
         monkeypatch.setenv("DENDRA_BUNDLED_OFFLINE", "1")
         target = cache_path("judge")
         target.write_bytes(b"FAKE GGUF")
         # Cached → no network even with OFFLINE=1
         assert ensure_model("judge") == target
 
-    def test_offline_error_lists_recovery_options(
-        self, isolated_cache, monkeypatch
-    ):
+    def test_offline_error_lists_recovery_options(self, isolated_cache, monkeypatch):
         monkeypatch.setenv("DENDRA_BUNDLED_OFFLINE", "1")
         with pytest.raises(BundledModelUnavailableError) as exc_info:
             ensure_model("classifier")
@@ -118,9 +109,7 @@ class TestEnsureModelOffline:
 
 
 class TestEnsureModelDownload:
-    def test_download_failure_raises_with_recovery_options(
-        self, isolated_cache, monkeypatch
-    ):
+    def test_download_failure_raises_with_recovery_options(self, isolated_cache, monkeypatch):
         # Point at a deliberately-unreachable CDN; the urllib call
         # will fail; we want a clean error with recovery paths.
         monkeypatch.setenv(
@@ -135,9 +124,7 @@ class TestEnsureModelDownload:
         assert "ollama pull" in msg
         assert "OPENAI_API_KEY" in msg
 
-    def test_failed_download_does_not_leave_partial_file(
-        self, isolated_cache, monkeypatch
-    ):
+    def test_failed_download_does_not_leave_partial_file(self, isolated_cache, monkeypatch):
         monkeypatch.setenv(
             "DENDRA_BUNDLED_CDN_BASE",
             "http://127.0.0.1:1/never-listening",
@@ -155,9 +142,7 @@ class TestCdnBase:
         assert cdn_base() == "https://models.dendra.dev"
 
     def test_env_override(self, monkeypatch):
-        monkeypatch.setenv(
-            "DENDRA_BUNDLED_CDN_BASE", "https://my-mirror.internal"
-        )
+        monkeypatch.setenv("DENDRA_BUNDLED_CDN_BASE", "https://my-mirror.internal")
         assert cdn_base() == "https://my-mirror.internal"
 
 
@@ -190,8 +175,10 @@ class TestDefaultClassifierImportShape:
 
     def test_default_classifier_is_importable(self):
         from dendra.bundled import default_classifier
+
         assert callable(default_classifier)
 
     def test_default_verifier_bundled_is_importable(self):
         from dendra.bundled import default_verifier_bundled
+
         assert callable(default_verifier_bundled)

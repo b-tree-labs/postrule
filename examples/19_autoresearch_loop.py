@@ -61,7 +61,6 @@ from dendra import (
     LearnedSwitch,
 )
 
-
 # ---------------------------------------------------------------------------
 # The loop
 # ---------------------------------------------------------------------------
@@ -205,6 +204,7 @@ def truth_oracle(ticket: dict) -> str:
 
 def _make_keyword_rule(keywords: tuple[str, ...]) -> Callable[[dict], str]:
     """Factory: build a classifier that flags 'bug' on any of these keywords."""
+
     def rule(ticket: dict) -> str:
         title = (ticket.get("title") or "").lower()
         if any(kw in title for kw in keywords):
@@ -212,6 +212,7 @@ def _make_keyword_rule(keywords: tuple[str, ...]) -> Callable[[dict], str]:
         if title.endswith("?"):
             return "question"
         return "feature_request"
+
     return rule
 
 
