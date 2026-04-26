@@ -119,6 +119,13 @@ Runnable examples in [`examples/`](./examples/) — each file is
 self-contained (no API keys, no external services) and walks one
 concept end-to-end. Python 3.10+.
 
+> **Heading to production?** Add `persist=True` —
+> the default storage is in-memory and dies with the process.
+> Below ~2% verdict rate, in-mem also evicts verdicts before the
+> gate has enough paired evidence to advance. See
+> [`docs/storage-backends.md`](./docs/storage-backends.md#low-verdict-rate-footgun)
+> for the math.
+
 ## The six phases
 
 | Phase | Decision-maker | Learning component | Safety floor |
