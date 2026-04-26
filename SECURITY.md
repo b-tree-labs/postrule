@@ -25,7 +25,8 @@ Include:
 - Steps to reproduce, ideally with a minimal code sample.
 - The affected Dendra version (`pip show dendra` output).
 - If relevant: the threat model you're assuming (attacker position,
-  preconditions, what they gain).
+  preconditions, what they gain). Dendra's documented threat model
+  is in [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 
 You can expect:
 
