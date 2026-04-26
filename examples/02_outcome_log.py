@@ -28,26 +28,15 @@ def triage_rule(ticket: dict) -> str:
 
 
 if __name__ == "__main__":
-    switch = LearnedSwitch(
-        name="triage",
-        rule=triage_rule,
-        # `author` is the provenance marker audit tooling reads. It
-        # auto-derives from the rule's module when omitted (see other
-        # examples). Override explicitly for a team-owned scheme
-        # (`@team:subsystem`, service account, compliance tag) that
-        # survives refactors.
-        author="@triage:outcome-log",
-        persist=True,
-    )
+    switch = LearnedSwitch(rule=triage_rule, persist=True)
 
-    # Each case pairs an input with the GROUND TRUTH verdict — the
+    # Each case pairs an input with the ground-truth verdict — the
     # label a human reviewer (or a downstream signal) would assign
-    # AFTER seeing the classification. It is NOT the rule's
+    # after seeing the classification. It is NOT the rule's
     # prediction; the rule's prediction is compared against this
-    # ground truth when we record the outcome below. The outcome log
-    # is the substrate for phase graduation, drift detection, ROI
-    # estimation, and multi-LLM comparison — ground truth is what
-    # turns classifications into an evidence base.
+    # ground truth when we record the outcome below. Phase
+    # graduation, drift detection, and ROI estimation all read off
+    # the outcome log.
     cases = [
         ({"title": "app crashes on login"}, Verdict.CORRECT),
         ({"title": "add dark mode"}, Verdict.CORRECT),
@@ -70,6 +59,6 @@ if __name__ == "__main__":
 
     print()
     records = switch.storage.load_records(switch.name)
-    print(f"Recorded {len(records)} outcomes  (persisted to ./runtime/dendra/triage/).")
+    print(f"Recorded {len(records)} outcomes  (persisted to ./runtime/dendra/{switch.name}/).")
     correct = sum(1 for r in records if r.outcome == Verdict.CORRECT.value)
     print(f"Rule accuracy so far: {correct}/{len(records)}  ({correct / len(records):.0%})")

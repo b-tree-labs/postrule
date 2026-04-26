@@ -287,3 +287,204 @@ class TestCandidateReport:
         h.observe_batch(range(30))
         r = h.evaluate("clone")
         assert "HOLD" in r.summary_line()
+
+
+# ---------------------------------------------------------------------------
+# Tournament — round-robin N-way candidate selection
+# ---------------------------------------------------------------------------
+
+
+from dendra import Tournament, TournamentReport  # noqa: E402
+
+
+def _perfect(input: int) -> str:
+    return "positive" if (input % 2 == 0 or input % 3 == 0) else "negative"
+
+
+def _half_right(input: int) -> str:
+    return "positive" if input % 2 == 0 else "negative"
+
+
+def _wrong_half(input: int) -> str:
+    return "negative" if input % 2 == 0 else "positive"
+
+
+def _always_positive(_input: int) -> str:
+    return "positive"
+
+
+def _always_negative(_input: int) -> str:
+    return "negative"
+
+
+class TestTournamentConstruction:
+    def test_basic_construction(self):
+        t = Tournament(
+            candidates={"a": _perfect, "b": _half_right},
+            truth_oracle=_truth,
+        )
+        assert len(t) == 2
+        assert "a" in t
+        assert t.names == ["a", "b"]
+
+    def test_requires_at_least_two_candidates(self):
+        with pytest.raises(ValueError, match=">= 2"):
+            Tournament(candidates={"only": _perfect}, truth_oracle=_truth)
+
+    def test_alpha_validation(self):
+        with pytest.raises(ValueError, match="alpha"):
+            Tournament(
+                candidates={"a": _perfect, "b": _half_right},
+                truth_oracle=_truth,
+                alpha=0.0,
+            )
+        with pytest.raises(ValueError, match="alpha"):
+            Tournament(
+                candidates={"a": _perfect, "b": _half_right},
+                truth_oracle=_truth,
+                alpha=1.0,
+            )
+
+    def test_truth_oracle_must_be_callable(self):
+        with pytest.raises(TypeError, match="truth_oracle"):
+            Tournament(
+                candidates={"a": _perfect, "b": _half_right},
+                truth_oracle="not callable",  # type: ignore[arg-type]
+            )
+
+    def test_candidate_must_be_callable(self):
+        with pytest.raises(TypeError, match="must be callable"):
+            Tournament(
+                candidates={"a": _perfect, "b": "not callable"},  # type: ignore[dict-item]
+                truth_oracle=_truth,
+            )
+
+    def test_empty_candidate_name_rejected(self):
+        with pytest.raises(ValueError, match="cannot be empty"):
+            Tournament(
+                candidates={"a": _perfect, "": _half_right},
+                truth_oracle=_truth,
+            )
+
+
+class TestTournamentEvaluation:
+    def test_perfect_candidate_wins(self):
+        t = Tournament(
+            candidates={"perfect": _perfect, "noise": _half_right, "wrong": _wrong_half},
+            truth_oracle=_truth,
+        )
+        t.observe_batch(range(120))
+        report = t.evaluate()
+        assert report.winner == "perfect"
+        assert report.unanimous is False
+        assert report.accuracies["perfect"] > report.accuracies["noise"]
+
+    def test_unanimous_short_circuit(self):
+        # All three candidates produce identical predictions on every input.
+        t = Tournament(
+            candidates={
+                "a": _always_positive,
+                "b": _always_positive,
+                "c": _always_positive,
+            },
+            truth_oracle=_truth,
+        )
+        t.observe_batch(range(50))
+        report = t.evaluate()
+        assert report.unanimous is True
+        # Convention: first-registered wins on unanimity.
+        assert report.winner == "a"
+        # Pairwise reports should be empty (short-circuited).
+        assert report.pairwise_reports == {}
+
+    def test_no_winner_when_no_candidate_sweeps(self):
+        # Two candidates with the same overall accuracy but
+        # disagreeing on different inputs — neither sweeps.
+        def odd_only(input):
+            return "positive" if input % 2 == 1 else "negative"
+
+        def divisible_by_three_only(input):
+            return "positive" if input % 3 == 0 else "negative"
+
+        t = Tournament(
+            candidates={"odd": odd_only, "div3": divisible_by_three_only},
+            truth_oracle=_truth,
+        )
+        t.observe_batch(range(20))
+        report = t.evaluate()
+        # They produce different predictions (so not unanimous) but
+        # neither has a statistical edge sufficient to clear alpha=0.05
+        # at this sample size.
+        assert report.unanimous is False
+        # Either no sweep or a true tie at the top.
+        if report.winner is None:
+            assert report.reason in ("no_candidate_swept", "tie_at_top")
+
+    def test_summary_table_unanimous(self):
+        t = Tournament(
+            candidates={"a": _always_positive, "b": _always_positive},
+            truth_oracle=_truth,
+        )
+        t.observe_batch(range(30))
+        report = t.evaluate()
+        s = report.summary_table()
+        assert "agreed" in s.lower() or "unanimous" in s.lower()
+        assert "a" in s
+
+    def test_summary_table_with_winner(self):
+        t = Tournament(
+            candidates={"perfect": _perfect, "noise": _half_right},
+            truth_oracle=_truth,
+        )
+        t.observe_batch(range(120))
+        report = t.evaluate()
+        s = report.summary_table()
+        assert "perfect" in s
+        assert "WINNER" in s
+
+    def test_pairwise_reports_populated_round_robin(self):
+        t = Tournament(
+            candidates={"a": _perfect, "b": _half_right, "c": _wrong_half},
+            truth_oracle=_truth,
+        )
+        t.observe_batch(range(120))
+        report = t.evaluate()
+        # 3 candidates -> 3*2 = 6 ordered pairs
+        assert len(report.pairwise_reports) == 6
+        # No self-pairs
+        for chal, base in report.pairwise_reports:
+            assert chal != base
+        # Perfect (a) should beat noise (b) head-to-head
+        ab = report.pairwise_reports[("a", "b")]
+        assert ab.recommend_promote is True
+        # And losing direction holds
+        ba = report.pairwise_reports[("b", "a")]
+        assert ba.recommend_promote is False
+
+
+class TestTournamentEdgeCases:
+    def test_flaky_candidate_absorbed(self):
+        def flaky(_input):
+            raise RuntimeError("flake")
+
+        t = Tournament(
+            candidates={"perfect": _perfect, "flaky": flaky},
+            truth_oracle=_truth,
+        )
+        # No errors should propagate from candidates.
+        t.observe_batch(range(50))
+        report = t.evaluate()
+        # Perfect should win — flaky never gets a verdict right.
+        assert report.winner == "perfect"
+        assert report.accuracies["flaky"] == 0.0
+
+    def test_truth_oracle_errors_propagate(self):
+        def broken_oracle(_input):
+            raise RuntimeError("oracle down")
+
+        t = Tournament(
+            candidates={"a": _perfect, "b": _half_right},
+            truth_oracle=broken_oracle,
+        )
+        with pytest.raises(RuntimeError, match="oracle down"):
+            t.observe(0)

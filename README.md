@@ -23,7 +23,7 @@ def triage(ticket: dict) -> str:
 
 That's the whole setup. Every classification gets routed through
 the verifier automatically. Verdicts feed the outcome log. The
-McNemar gate decides when the LLM (or a learned ML head) has
+evidence gate decides when the language model (or a learned ML head) has
 earned the front seat. The rule stays as the safety floor —
 forever, behind a circuit breaker that auto-reverts on ML
 failure.
@@ -45,34 +45,88 @@ this" tickets sit in backlogs forever because nobody has the
 time to build the migration scaffolding.
 
 Dendra is the migration scaffolding. Six lifecycle phases (rule
-→ LLM-shadow → LLM → ML-shadow → ML), a paired-McNemar
-statistical gate at every transition, the rule retained as a
-safety floor with a circuit breaker, and an autonomous-
-verification default so the gate has evidence to evaluate
-without you wiring a reviewer queue.
+→ model-shadow → model → ML-shadow → ML), a head-to-head evidence
+gate at every transition (McNemar's exact test under the hood —
+swappable), the rule retained as a safety floor with a circuit
+breaker, and an autonomous-verification default so the gate has
+evidence to evaluate without you wiring a reviewer queue.
 
 ## Install
 
+Three ways in. Pick whichever matches what you have on hand.
+
+### A. Bring your own API key (fastest first verdict)
+
 ```bash
 pip install dendra
+export OPENAI_API_KEY=sk-...        # or ANTHROPIC_API_KEY=...
+```
+```python
+from dendra import default_verifier
+verifier = default_verifier(prefer="openai")     # or "anthropic"
 ```
 
-Zero hard runtime dependencies. Optional extras: `train`
-(scikit-learn), `bench` (HuggingFace datasets), `viz` (matplotlib),
-`openai` / `anthropic` / `ollama` adapters. Python 3.10+.
+Verdicts land in <1 s per classification. No local models, no
+disk, no Ollama install. Recurring API cost.
+
+### B. Bundled local model (privacy + offline-capable)
+
+```bash
+pip install dendra[bundled]
+```
+```python
+from dendra.bundled import default_verifier_bundled, default_classifier
+verifier = default_verifier_bundled()    # qwen2.5:7b, ~4.7 GB
+model    = default_classifier()           # gemma2:2b, ~1.6 GB
+```
+
+First call lazy-downloads the GGUFs to
+`~/.cache/llama.cpp/models/` (the community-standard location, so
+any other `llama-cpp-python` tool on the same machine reuses the
+same weights). Inference runs locally via `llama-cpp-python` —
+no Ollama daemon, no third-party hosting at runtime, works the
+same on macOS / Linux / Windows. Model picks are
+benchmark-justified — see
+[`docs/benchmarks/slm-verifier-results.md`](docs/benchmarks/slm-verifier-results.md).
+
+### C. Axiom node (shared local LM runtime for other tools)
+
+```bash
+pip install axi-platform
+axi serve     # starts the bundled local-LM server on localhost
+pip install dendra
+```
+```python
+from dendra import LearnedSwitch, JudgeSource, LlamafileAdapter
+verifier = JudgeSource(LlamafileAdapter())   # talks to the running axi node
+```
+
+If you already run an [Axiom](https://github.com/axiom-labs-os/axiom)
+node — or you'd like other tools on this machine to share one
+local-LM runtime — Path C wires Dendra's verifier through it.
+
+### Try it in 60 seconds (no API keys, no Ollama)
+
+```bash
+pip install dendra
+dendra quickstart           # copies a working example into the cwd and runs it
+```
+```bash
+dendra quickstart --list    # see the menu (hello / tournament / autoresearch / ...)
+```
 
 Runnable examples in [`examples/`](./examples/) — each file is
 self-contained (no API keys, no external services) and walks one
-concept end-to-end.
+concept end-to-end. Python 3.10+.
 
 ## The six phases
 
 | Phase | Decision-maker | Learning component | Safety floor |
 |---|---|---|---|
 | `RULE` | Your rule | — | Rule (self) |
-| `MODEL_SHADOW` | Your rule | LLM predicts, no effect on decision | Rule |
-| `MODEL_PRIMARY` | LLM if confident | Rule fallback on low conf / LLM failure | Rule |
-| `ML_SHADOW` | LLM (or rule) | ML head trains, no effect | Rule |
+| `MODEL_SHADOW` | Your rule | Model predicts, no effect on decision | Rule |
+| `MODEL_PRIMARY` | Model if confident | Rule fallback on low conf / model failure | Rule |
+| `ML_SHADOW` | Model (or rule) | ML head trains, no effect | Rule |
 | `ML_WITH_FALLBACK` | ML if confident | Rule fallback | Rule |
 | `ML_PRIMARY` | ML | — | Rule (circuit breaker only) |
 
@@ -86,15 +140,17 @@ any object satisfying the `Gate` protocol works.
 
 ## Autoresearch + agent loops
 
-The dirty secret of LLM-driven autoresearch loops is the last
-mile: the loop generates good candidate classifiers, and the
-deployment story is duct tape.
+Language-model-driven autoresearch loops have a deployment gap:
+the loop generates good candidate classifiers, but the path
+from "this candidate looks promising" to "ship it under
+statistical confidence with rollback" is usually duct tape.
 
 `CandidateHarness` is the production substrate. Wrap a live
 switch, register candidates, shadow them against production, get
-paired-McNemar verdicts on whether each candidate beats the live
-decision. The autoresearch loop reads `report.recommend_promote`;
-the rule floor protects production from bad proposals throughout.
+a head-to-head significance verdict on whether each candidate
+beats the live decision. The autoresearch loop reads
+`report.recommend_promote`; the rule floor protects production
+from bad proposals throughout.
 
 ```python
 from dendra import CandidateHarness, LearnedSwitch
@@ -172,10 +228,10 @@ Measured latency (Apple M5 / Python 3.13 / macOS 26):
 - `persist=True` classify (per-call fsync — explicit opt-in for
   regulated workloads): 195 µs p50 / 260 µs p99.
 - Real ML head (TF-IDF + LR on ATIS): 105 µs p50.
-- Local LLM (llama3.2:1b via Ollama): ~250 ms p50.
+- Local SLM (llama3.2:1b via Ollama): ~250 ms p50.
 
 Raw numbers + JSONL benchmark data:
-[`docs/working/v1-audit-benchmarks.md`](docs/working/v1-audit-benchmarks.md).
+[`docs/benchmarks/v1-audit-benchmarks.md`](docs/benchmarks/v1-audit-benchmarks.md).
 Regression-guard tests:
 [`tests/test_latency_pinned.py`](tests/test_latency_pinned.py).
 
@@ -187,11 +243,11 @@ ships five built-in `VerdictSource` implementations:
 - `CallableVerdictSource` — any `(input, label) -> Verdict`
   callable. The escape hatch for downstream-signal oracles,
   business rules, pre-computed labels.
-- `LLMJudgeSource` — single-LLM judge with a self-judgment bias
+- `JudgeSource` — single-model judge with a self-judgment bias
   guardrail (refuses construction when classifier and judge
   resolve to the same model — G-Eval / MT-Bench / Arena
   literature).
-- `LLMCommitteeSource` — multi-LLM majority / unanimous
+- `JudgeCommittee` — multi-model majority / unanimous
   aggregation. Async committee judging via `asyncio.gather` runs
   N judges in parallel.
 - `WebhookVerdictSource` — POST to an external HTTP endpoint
@@ -212,7 +268,7 @@ decision matrix.
 
 Every sync entry point has an `a`-prefixed coroutine peer:
 `aclassify`, `adispatch`, `arecord_verdict`,
-`abulk_record_verdicts`. Async LLM adapter siblings —
+`abulk_record_verdicts`. Async language-model adapter siblings —
 `OpenAIAsyncAdapter`, `AnthropicAsyncAdapter`,
 `OllamaAsyncAdapter`, `LlamafileAsyncAdapter`. FastAPI / LangGraph
 / LlamaIndex callers can `await sw.aclassify(input)` directly.
@@ -227,7 +283,7 @@ Full surface + interop contract: [`docs/async.md`](docs/async.md).
 ## Security properties
 
 - **20-pattern jailbreak corpus:** 100% rule-floor preserved when
-  the shadow LLM is configured to return the attacker-desired
+  the shadow language model is configured to return the attacker-desired
   label at 0.99 confidence. Each payload is authentic sensitive
   content (ITAR, EXPORT_CONTROLLED, `classified:secret`,
   `samsung_internal` markers) concatenated with an injection
@@ -242,7 +298,7 @@ Full surface + interop contract: [`docs/async.md`](docs/async.md).
   breaker trips once, stays tripped, only explicit operator
   reset restores ML routing. Breaker state persists across
   process restart when `persist=True`.
-- **Adversarial-shadow latency:** shadow LLM hangs and throws →
+- **Adversarial-shadow latency:** shadow language model hangs and throws →
   rule decision unblocked.
 - **Path-traversal guard:** storage backends reject `..`,
   absolute paths, and any switch name that resolves outside its
@@ -258,7 +314,7 @@ See `tests/test_security.py`, `tests/test_security_benchmarks.py`,
 
 ## Output safety
 
-The same primitive wraps classifications of LLM-*generated
+The same primitive wraps classifications of language-model-*generated
 output* before delivery to users. `safety_critical=True` refuses
 construction at `Phase.ML_PRIMARY` — the rule floor cannot be
 removed without a code change.
@@ -279,17 +335,18 @@ def classify_output(response: str) -> str:
     ...
 ```
 
-## LLM-as-teacher bootstrap
+## Language-model-as-teacher bootstrap
 
-Zero historical labels? Deploy at `Phase.MODEL_PRIMARY`. The LLM
-makes the decisions. Every classification writes an outcome
-record. After 500–5,000 records, train a local ML head on those
-LLM-labeled records, graduate to `Phase.ML_WITH_FALLBACK`, and
-the hot path runs at sub-millisecond per call with zero token
-cost on the 80%+ of traffic the ML handles confidently.
+Zero historical labels? Deploy at `Phase.MODEL_PRIMARY`. The
+language model makes the decisions. Every classification writes
+an outcome record. After 500–5,000 records, train a local ML
+head on those model-labeled records, graduate to
+`Phase.ML_WITH_FALLBACK`, and the hot path runs at sub-
+millisecond per call with zero token cost on the 80%+ of
+traffic the ML handles confidently.
 
 ```python
-from dendra.research import train_ml_from_llm_outcomes
+from dendra.research import train_ml_from_model_outcomes
 
 used = train_ml_from_llm_outcomes(
     switch=triage.switch,
@@ -371,7 +428,7 @@ US provisional patent (application pending, filed 2026-04-21).
 ## Status
 
 **v1.0.0** — public release.
-Six lifecycle phases ✓ Paired-McNemar gates ✓
+Six lifecycle phases ✓ Head-to-head evidence gates ✓
 Native async API ✓ VerdictSource family ✓
 CandidateHarness for autoresearch loops ✓
 473 tests passing.

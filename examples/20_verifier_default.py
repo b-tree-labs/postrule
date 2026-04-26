@@ -1,45 +1,51 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Autonomous-verification — drop a rule, drop a verifier, done.
+"""Configuring a language model verifier so verdicts are recorded automatically.
 
 Run: `python examples/20_verifier_default.py`
 
-The biggest adoption barrier in graduated-classifier systems is
-the implicit expectation that *somebody* will supply verdicts —
-human reviewers, downstream signals, labeled validation queues.
-For most teams adopting a new library, that's a non-starter.
-
-This example shows the autonomous mode: pass a verifier, every
-classification gets routed through it automatically, verdict-
-bearing records land in the outcome log, the McNemar gate
-graduates phases on accumulated evidence. **No reviewer queues.
-No labeled-data prerequisite. No manual ``mark_correct()``.**
+Pass a verdict source via ``verifier=``. Every ``classify()``
+call runs the verifier on the (input, label) pair and records
+a verdict-bearing row directly. No manual ``record_verdict()``
+call is needed.
 
 Production swap-ins for the verifier (any one works):
 
     from dendra import default_verifier
     verifier = default_verifier()
-    # Local-only by default — auto-detects Ollama, raises if not running.
+    # Auto-detects a running local Ollama; raises if not reachable.
 
-    from dendra import LLMJudgeSource, OllamaAdapter
-    verifier = LLMJudgeSource(OllamaAdapter(model="llama3.2:3b"))
-    # Explicit local. Zero cost, no API key, privacy-preserving.
+    from dendra import JudgeSource, OllamaAdapter
+    verifier = JudgeSource(OllamaAdapter(model="llama3.2:3b"))
 
-    from dendra import LLMJudgeSource, OpenAIAdapter
-    verifier = LLMJudgeSource(OpenAIAdapter(model="gpt-4o-mini"))
-    # Cloud. Faster gate graduation; costs tokens.
+    from dendra import JudgeSource, OpenAIAdapter
+    verifier = JudgeSource(OpenAIAdapter(model="gpt-4o-mini"))
 
-This file uses ``FakeLLMJudge`` from ``_stubs.py`` so the demo
-runs offline. The fake's specific output values are NOT load-
-bearing for the teaching point — they're deterministic so the
-example output reproduces.
+The example uses ``FakeJudgeLM`` from ``_stubs.py`` to keep
+the demo offline-runnable.
+
+What ``verifier=`` buys you, in one line each:
+
+- *Time to first verdict:* < 1 s per classify with the
+  shipped default vs hours-to-weeks for reviewer queues or
+  downstream signals.
+- *Faster graduation:* roughly 5–10× speedup on
+  calendar-time-to-``ML_PRIMARY`` over typical reviewer-
+  queue verdict rates.
+- *Format compliance of the shipped default:* 97% on
+  Dendra's verdict task (n=30,
+  ``docs/benchmarks/slm-verifier-results.md``). Failures
+  log as ``UNKNOWN``; the rule floor is unaffected.
+
+Situations where each of these is most impactful — and
+where they aren't — are in ``docs/scenarios.md``.
 """
 
 from __future__ import annotations
 
-from _stubs import FakeLLMJudge
+from _stubs import FakeJudgeLM
 
-from dendra import LearnedSwitch, LLMJudgeSource, SwitchConfig, Verdict
+from dendra import LearnedSwitch, JudgeSource, Verdict
 
 
 def production_rule(ticket: dict) -> str:
@@ -53,24 +59,13 @@ def production_rule(ticket: dict) -> str:
 
 
 def main() -> None:
-    # The autonomous setup: rule + verifier. That's the whole
-    # public surface most users need. The verdict-bearing rows
-    # accumulate; the McNemar gate fires automatically when the
-    # auto_advance_interval is reached.
     sw = LearnedSwitch(
         rule=production_rule,
         labels=["bug", "feature_request", "question"],
-        config=SwitchConfig(
-            verifier=LLMJudgeSource(FakeLLMJudge()),
-            # Off here so the demo output is reproducible.
-            # Production: defaults are fine — the gate fires every
-            # 500 verdicts and you don't think about it.
-            auto_advance=False,
-        ),
+        verifier=JudgeSource(FakeJudgeLM()),
+        auto_advance=False,  # deterministic demo output
     )
 
-    # Drop traffic in. Every classify() runs the verifier inline
-    # and records a verdict-bearing row. No manual mark_correct().
     samples = [
         {"title": "app crashes on login"},
         {"title": "how do I export data?"},
@@ -81,8 +76,8 @@ def main() -> None:
         result = sw.classify(ticket)
         print(f"  {ticket['title']:40s} -> {result.label}")
 
-    # The outcome log is verdict-bearing (CORRECT / INCORRECT),
-    # not UNKNOWN — the verifier supplied the verdict on every call.
+    # Each row carries an outcome from the verifier rather than the
+    # UNKNOWN auto-log entry that fires when no verifier is set.
     print("\nOutcome log:")
     for r in sw.storage.load_records(sw.name):
         marker = "✓" if r.outcome == Verdict.CORRECT.value else "✗"

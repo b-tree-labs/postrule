@@ -22,8 +22,8 @@ from dendra import (
 )
 from dendra.verdicts import (
     CallableVerdictSource,
-    LLMCommitteeSource,
-    LLMJudgeSource,
+    JudgeCommittee,
+    JudgeSource,
 )
 
 
@@ -31,14 +31,14 @@ def _rule(x):
     return f"rule-{x}"
 
 
-class _StubSyncLLM:
+class _StubSyncLM:
     _model = "sync-stub"
 
     def classify(self, input, labels):
         return ModelPrediction(label="bug", confidence=0.95)
 
 
-class _StubAsyncLLM:
+class _StubAsyncLM:
     _model = "async-stub"
 
     async def aclassify(self, input, labels):
@@ -147,14 +147,14 @@ class TestAsyncSwitchMethods:
 
 
 # ---------------------------------------------------------------------------
-# Async LLMJudgeSource — ajudge uses aclassify when available
+# Async JudgeSource — ajudge uses aclassify when available
 # ---------------------------------------------------------------------------
 
 
-class TestAsyncLLMJudgeSource:
+class TestAsyncJudgeSource:
     def test_ajudge_uses_async_path_when_available(self):
         judge_model = _StubAsyncJudge("judge-async", "correct", delay=0.01)
-        src = LLMJudgeSource(judge_model)
+        src = JudgeSource(judge_model)
 
         async def _run():
             return await src.ajudge("x", "bug")
@@ -163,10 +163,10 @@ class TestAsyncLLMJudgeSource:
 
     def test_ajudge_falls_back_to_thread_for_sync_judge(self):
         """Mixed-mode: sync judge, async caller. Must still work."""
-        src = LLMJudgeSource(_StubSyncLLM())
+        src = JudgeSource(_StubSyncLM())
 
         async def _run():
-            # _StubSyncLLM always says "bug" — not one of the
+            # _StubSyncLM always says "bug" — not one of the
             # judge-label vocabulary, so this maps to UNKNOWN. The
             # important thing is that it doesn't hang or raise.
             return await src.ajudge("x", "bug")
@@ -176,16 +176,16 @@ class TestAsyncLLMJudgeSource:
 
 
 # ---------------------------------------------------------------------------
-# Async LLMCommitteeSource — ajudge fires judges in parallel
+# Async JudgeCommittee — ajudge fires judges in parallel
 # ---------------------------------------------------------------------------
 
 
-class TestAsyncLLMCommitteeSource:
+class TestAsyncJudgeCommittee:
     def test_ajudge_runs_judges_in_parallel(self):
         """Committee latency should be ~max(delays), not sum(delays)."""
         import time as _time
 
-        committee = LLMCommitteeSource(
+        committee = JudgeCommittee(
             [
                 _StubAsyncJudge("a", "correct", delay=0.1),
                 _StubAsyncJudge("b", "correct", delay=0.1),
@@ -208,7 +208,7 @@ class TestAsyncLLMCommitteeSource:
         )
 
     def test_ajudge_aggregates_majority(self):
-        committee = LLMCommitteeSource(
+        committee = JudgeCommittee(
             [
                 _StubAsyncJudge("a", "correct", delay=0.01),
                 _StubAsyncJudge("b", "correct", delay=0.01),

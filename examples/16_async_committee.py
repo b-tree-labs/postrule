@@ -1,6 +1,6 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Async LLM committee — asyncio.gather across N judges in parallel.
+"""Async model committee — asyncio.gather across N judges in parallel.
 
 Run: `python examples/16_async_committee.py`
 
@@ -10,7 +10,7 @@ pays the max. For a 3-judge committee at 300 ms per judge, that's
 900 ms sequential vs ~300 ms concurrent — large enough to change
 whether the committee fits inside a request budget.
 
-:class:`LLMCommitteeSource.ajudge` uses ``asyncio.gather`` under
+:class:`JudgeCommittee.ajudge` uses ``asyncio.gather`` under
 the hood: each judge's ``aclassify`` is scheduled on the same
 event loop; aggregation happens once all N return. Judges that
 expose only sync ``classify`` fall back to ``asyncio.to_thread``,
@@ -23,11 +23,11 @@ import asyncio
 import time
 
 from dendra import ModelPrediction, Verdict
-from dendra.verdicts import LLMCommitteeSource
+from dendra.verdicts import JudgeCommittee
 
 
 class _AsyncStubJudge:
-    """Stand-in for a real async LLM adapter. Fixed verdict, tunable delay."""
+    """Stand-in for a real async language-model adapter. Fixed verdict, tunable delay."""
 
     def __init__(self, model: str, verdict: str, delay_ms: int) -> None:
         self._model = model
@@ -39,8 +39,8 @@ class _AsyncStubJudge:
         return ModelPrediction(label=self._verdict, confidence=0.9)
 
 
-def _build_committee() -> LLMCommitteeSource:
-    return LLMCommitteeSource(
+def _build_committee() -> JudgeCommittee:
+    return JudgeCommittee(
         [
             _AsyncStubJudge("gpt-4o-mini", "correct", delay_ms=300),
             _AsyncStubJudge("claude-haiku-4-5", "correct", delay_ms=300),

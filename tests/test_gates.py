@@ -60,7 +60,7 @@ def _rule(ticket: dict) -> str:
     return "feature_request"
 
 
-class _StubLLM:
+class _StubLM:
     def __init__(self, label: str, confidence: float = 0.97) -> None:
         self._label = label
         self._confidence = confidence
@@ -554,7 +554,7 @@ class TestAdvance:
         s = LearnedSwitch(
             rule=_rule,
             starting_phase=Phase.MODEL_SHADOW,
-            model=_StubLLM(label="bug"),
+            model=_StubLM(label="bug"),
             gate=McNemarGate(alpha=0.01, min_paired=200),
         )
         # Inject clear evidence: model beats rule 270/300 vs 50/300.

@@ -37,7 +37,7 @@ from dendra import (
 
 
 @dataclass
-class JailbreakingLLM:
+class JailbreakingLM:
     """Simulates an LLM that's been prompt-injected into returning a
     dangerous label regardless of input."""
 
@@ -87,7 +87,7 @@ class TestRuleFloorUnjailbreakability:
     prompt injection. Dendra's rule-first architecture makes this
     category of incident impossible at the classification boundary."""
 
-    def test_jailbroken_llm_cannot_override_rule_in_shadow(self):
+    def test_jailbroken_model_cannot_override_rule_in_shadow(self):
         # Attacker's injection makes the LLM say "PUBLIC" for sensitive
         # input. In Phase 1 (MODEL_SHADOW) the rule stays the decision
         # maker — the LLM runs only for observation.
@@ -95,7 +95,7 @@ class TestRuleFloorUnjailbreakability:
             name="sensitivity-router",
             rule=_export_control_rule,
             author="@security:platform",
-            model=JailbreakingLLM(dangerous_label="PUBLIC"),
+            model=JailbreakingLM(dangerous_label="PUBLIC"),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         malicious_query = (
@@ -108,7 +108,7 @@ class TestRuleFloorUnjailbreakability:
         )
         assert result.source == "rule"
 
-    def test_llm_primary_still_enforces_rule_fallback_on_low_confidence(self):
+    def test_model_primary_still_enforces_rule_fallback_on_low_confidence(self):
         # Even at Phase 2 (LLM decides when confident), the threshold is
         # a fixed numeric gate — attacker can forge the answer but
         # cannot push confidence past a keyword-explicit threshold they
@@ -250,7 +250,7 @@ class TestAuditTrail:
             name="sensitivity",
             rule=_export_control_rule,
             author="@incident-reviewer:platform",
-            model=JailbreakingLLM(dangerous_label="PUBLIC"),
+            model=JailbreakingLM(dangerous_label="PUBLIC"),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         r = s.classify("itar technology discussed")

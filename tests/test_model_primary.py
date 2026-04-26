@@ -19,7 +19,7 @@ from dendra import (
 
 
 @dataclass
-class FakeLLM:
+class FakeLM:
     label: str = "bug"
     confidence: float = 0.95
     raises: bool = False
@@ -39,13 +39,13 @@ def _rule(ticket: dict) -> str:
 # ---------------------------------------------------------------------------
 
 
-class TestLLMPrimaryRouting:
-    def test_uses_llm_output_when_confident(self):
+class TestModelPrimaryRouting:
+    def test_uses_model_output_when_confident(self):
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(label="feature_request", confidence=0.97),
+            model=FakeLM(label="feature_request", confidence=0.97),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_PRIMARY, confidence_threshold=0.85),
         )
         # Rule would say "bug" for a crash ticket; LLM disagrees with high
@@ -61,7 +61,7 @@ class TestLLMPrimaryRouting:
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(label="feature_request", confidence=0.40),
+            model=FakeLM(label="feature_request", confidence=0.40),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_PRIMARY, confidence_threshold=0.85),
         )
         r = s.classify({"title": "App keeps crashing"})
@@ -69,12 +69,12 @@ class TestLLMPrimaryRouting:
         assert r.label == "bug"
         assert r.source == "rule_fallback"
 
-    def test_rule_fallback_on_llm_error(self):
+    def test_rule_fallback_on_model_error(self):
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(raises=True),
+            model=FakeLM(raises=True),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_PRIMARY),
         )
         r = s.classify({"title": "App keeps crashing"})
@@ -82,7 +82,7 @@ class TestLLMPrimaryRouting:
         assert r.source == "rule_fallback"
         assert r.confidence == 1.0  # rule is certain of its own output
 
-    def test_requires_llm(self):
+    def test_requires_model(self):
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
@@ -93,13 +93,13 @@ class TestLLMPrimaryRouting:
             s.classify({"title": "x"})
 
 
-class TestLLMPrimaryOutcomeCapture:
-    def test_llm_decision_records_llm_fields(self):
+class TestModelPrimaryOutcomeCapture:
+    def test_llm_decision_records_model_fields(self):
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(label="feature_request", confidence=0.97),
+            model=FakeLM(label="feature_request", confidence=0.97),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_PRIMARY),
         )
         r = s.classify({"title": "App keeps crashing"})

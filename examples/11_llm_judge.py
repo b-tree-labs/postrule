@@ -1,26 +1,39 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""LLMJudgeSource — single-LLM judge with the self-judgment guardrail.
+"""JudgeSource — single-model judge with the self-judgment guardrail.
 
 Run: `python examples/11_llm_judge.py`
 
-When ground truth is hard to collect but a second, distinct LLM
-can act as a critic, :class:`LLMJudgeSource` wires one up. The
-guardrail: the judge must not be the same LLM as the one
+When ground truth is hard to collect but a second, distinct language model
+can act as a critic, :class:`JudgeSource` wires one up. The
+guardrail: the judge must not be the same language model as the one
 producing the classifier's decision. Using the same model as both
 classifier and judge is a well-documented bias pattern (G-Eval,
 MT-Bench, Chatbot Arena) — the model agrees with its own outputs
 even when wrong.
 
-This example uses two local stub LLMs so it runs without network
+This example uses two local stub language models so it runs without network
 or API keys. In production, pass real adapters:
 
     classifier = OpenAIAdapter(model="gpt-4o-mini")
     judge_model = AnthropicAdapter(model="claude-haiku-4-5")
-    judge = LLMJudgeSource(judge_model, require_distinct_from=classifier)
+    judge = JudgeSource(judge_model, require_distinct_from=classifier)
 
 The guardrail fires at construction if both sides resolve to the
 same ``(adapter_class, model_string)`` pair.
+
+What the guardrail buys you:
+
+- Bounds a 5–15 pp inflation in perceived accuracy that the
+  literature attributes to language model self-judgment (G-Eval, Liu
+  et al. 2023; MT-Bench, Zheng et al. 2023).
+- Fails at construction, not in production — by the time a
+  real classification lands, the judge is already proven
+  distinct.
+
+For the situations where this bias actually shows up in a
+shipped switch, see ``docs/scenarios.md`` §"Self-judgment
+bias guardrail".
 """
 
 from __future__ import annotations
@@ -29,14 +42,13 @@ from dendra import (
     LearnedSwitch,
     ModelPrediction,
     Phase,
-    SwitchConfig,
     Verdict,
 )
-from dendra.verdicts import LLMJudgeSource
+from dendra.verdicts import JudgeSource
 
 
 class _StubClassifier:
-    """Local stand-in for a production LLM. Always returns 'bug'."""
+    """Local stand-in for a production language model. Always returns 'bug'."""
 
     _model = "stub-classifier-v1"
 
@@ -72,11 +84,11 @@ def main() -> None:
     judge_model = _StubJudge()
 
     # Guardrail: refuses construction if classifier and judge are the
-    # same LLM. Uncomment to see it raise.
+    # same language model. Uncomment to see it raise.
     # shared = _StubClassifier()
-    # LLMJudgeSource(shared, require_distinct_from=shared)  # ValueError
+    # JudgeSource(shared, require_distinct_from=shared)  # ValueError
 
-    judge = LLMJudgeSource(
+    judge = JudgeSource(
         judge_model,
         require_distinct_from=classifier,
     )
@@ -84,14 +96,10 @@ def main() -> None:
 
     sw = LearnedSwitch(
         rule=_rule,
-        name="ticket_triage_with_judge",
-        author="@examples:11",
         model=classifier,
-        config=SwitchConfig(
-            starting_phase=Phase.MODEL_SHADOW,
-            auto_record=False,
-            auto_advance=False,
-        ),
+        starting_phase=Phase.MODEL_SHADOW,
+        auto_record=False,
+        auto_advance=False,
     )
 
     tickets = [

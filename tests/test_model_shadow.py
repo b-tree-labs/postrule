@@ -28,7 +28,7 @@ from dendra import (
 
 
 @dataclass
-class FakeLLM:
+class FakeLM:
     """Deterministic ModelClassifier for tests — returns the label it's told to."""
 
     label: str = "bug"
@@ -73,9 +73,9 @@ class TestPhaseEnum:
 # ---------------------------------------------------------------------------
 
 
-class TestLLMClassifierProtocol:
-    def test_fake_llm_satisfies_protocol(self):
-        f = FakeLLM()
+class TestModelClassifierProtocol:
+    def test_fake_model_satisfies_protocol(self):
+        f = FakeLM()
         assert isinstance(f, ModelClassifier)
 
     def test_prediction_has_label_and_confidence(self):
@@ -95,7 +95,7 @@ class TestPhase1LLMShadow:
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(label="feature_request", confidence=0.95),
+            model=FakeLM(label="feature_request", confidence=0.95),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         result = s.classify({"title": "App keeps crashing"})
@@ -105,19 +105,19 @@ class TestPhase1LLMShadow:
         assert result.source == "rule"
         assert result.phase is Phase.MODEL_SHADOW
 
-    def test_llm_is_invoked_in_shadow(self):
-        llm = FakeLLM(label="bug", confidence=0.8)
+    def test_model_is_invoked_in_shadow(self):
+        model_stub = FakeLM(label="bug", confidence=0.8)
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            model=llm,
+            model=model_stub,
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         s.classify({"title": "App keeps crashing"})
-        assert llm.calls == 1
+        assert model_stub.calls == 1
 
-    def test_shadow_without_llm_raises(self):
+    def test_shadow_without_model_raises(self):
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
@@ -127,14 +127,14 @@ class TestPhase1LLMShadow:
         with pytest.raises(ValueError, match="model"):
             s.classify({"title": "App keeps crashing"})
 
-    def test_rule_phase_ignores_missing_llm(self):
+    def test_rule_phase_ignores_missing_model(self):
         # Phase 0 should still work without an LLM configured.
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
         r = s.classify({"title": "App keeps crashing"})
         assert r.source == "rule"
         assert r.phase is Phase.RULE
 
-    def test_llm_failure_does_not_block_rule_decision(self):
+    def test_model_failure_does_not_block_rule_decision(self):
         class BrokenLLM:
             def classify(self, input, labels):
                 raise RuntimeError("provider unavailable")
@@ -157,8 +157,8 @@ class TestPhase1LLMShadow:
 # ---------------------------------------------------------------------------
 
 
-class TestOutcomeRecordLLMFields:
-    def test_llm_fields_default_to_none(self):
+class TestOutcomeRecordModelFields:
+    def test_model_fields_default_to_none(self):
         r = ClassificationRecord(
             timestamp=1.0,
             input={"x": 1},
@@ -170,13 +170,13 @@ class TestOutcomeRecordLLMFields:
         assert r.model_output is None
         assert r.model_confidence is None
 
-    def test_llm_fields_populate_on_shadow_record(self):
+    def test_model_fields_populate_on_shadow_record(self):
         store = InMemoryStorage()
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(label="feature_request", confidence=0.77),
+            model=FakeLM(label="feature_request", confidence=0.77),
             storage=store,
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
@@ -197,12 +197,12 @@ class TestOutcomeRecordLLMFields:
 
 class TestShadowAgreementRate:
     def test_reports_agreement_rate_in_shadow(self):
-        llm = FakeLLM(label="bug", confidence=0.9)  # agrees with rule
+        model_stub = FakeLM(label="bug", confidence=0.9)  # agrees with rule
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            model=llm,
+            model=model_stub,
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         for title in ("crash 1", "crash 2", "crash 3"):
@@ -214,12 +214,12 @@ class TestShadowAgreementRate:
         assert st.shadow_agreement_rate == pytest.approx(1.0)
 
     def test_disagreement_lowers_rate(self):
-        llm = FakeLLM(label="feature_request", confidence=0.6)
+        model_stub = FakeLM(label="feature_request", confidence=0.6)
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            model=llm,
+            model=model_stub,
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         # Rule returns "bug" (crash keyword); LLM returns "feature_request".
@@ -235,12 +235,12 @@ class TestShadowAgreementRate:
 # ---------------------------------------------------------------------------
 
 
-class TestDecoratorLLMKwarg:
-    def test_decorator_accepts_llm(self):
+class TestDecoratorModelKwarg:
+    def test_decorator_accepts_model(self):
         @ml_switch(
             labels=["bug", "feature_request"],
             author="alice",
-            model=FakeLLM(label="bug", confidence=0.9),
+            model=FakeLM(label="bug", confidence=0.9),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW),
         )
         def triage(ticket):

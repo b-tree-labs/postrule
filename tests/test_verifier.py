@@ -13,7 +13,7 @@ from dendra import (
     BoundedInMemoryStorage,
     CallableVerdictSource,
     LearnedSwitch,
-    LLMJudgeSource,
+    JudgeSource,
     ModelPrediction,
     Phase,
     SwitchConfig,
@@ -27,7 +27,7 @@ def _rule(x):
     return f"rule-{x}"
 
 
-class _StubLLM:
+class _StubLM:
     _model = "stub-1"
 
     def __init__(self, reply: str = "correct") -> None:
@@ -37,7 +37,7 @@ class _StubLLM:
         return ModelPrediction(label=self._reply, confidence=0.95)
 
 
-class _AsyncStubLLM:
+class _AsyncStubLM:
     _model = "async-stub-1"
 
     def __init__(self, reply: str = "correct") -> None:
@@ -55,7 +55,7 @@ class _AsyncStubLLM:
 
 class TestVerifierOnClassify:
     def test_verifier_records_verdict_directly(self):
-        verifier = LLMJudgeSource(_StubLLM(reply="correct"))
+        verifier = JudgeSource(_StubLM(reply="correct"))
         sw = LearnedSwitch(
             rule=_rule, name="v_correct", author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier),
@@ -66,7 +66,7 @@ class TestVerifierOnClassify:
         # One verdict-bearing record (CORRECT), no UNKNOWN auto-log.
         assert len(recs) == 1
         assert recs[0].outcome == Verdict.CORRECT.value
-        assert recs[0].source.startswith("llm-judge:")
+        assert recs[0].source.startswith("judge:")
 
     def test_no_verifier_keeps_auto_record_unknown(self):
         sw = LearnedSwitch(
@@ -99,7 +99,7 @@ class TestVerifierOnClassify:
         assert recs[0].outcome == Verdict.UNKNOWN.value
 
     def test_verifier_incorrect_records_incorrect(self):
-        verifier = LLMJudgeSource(_StubLLM(reply="incorrect"))
+        verifier = JudgeSource(_StubLM(reply="incorrect"))
         sw = LearnedSwitch(
             rule=_rule, name="v_incorrect", author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier),
@@ -117,7 +117,7 @@ class TestVerifierOnClassify:
 
 class TestVerifierSampleRate:
     def test_zero_sample_rate_skips_verifier(self):
-        verifier = LLMJudgeSource(_StubLLM(reply="correct"))
+        verifier = JudgeSource(_StubLM(reply="correct"))
         sw = LearnedSwitch(
             rule=_rule, name="v_zero", author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier, verifier_sample_rate=0.0),
@@ -141,7 +141,7 @@ class TestVerifierSampleRate:
         import random
 
         random.seed(0)
-        verifier = LLMJudgeSource(_StubLLM(reply="correct"))
+        verifier = JudgeSource(_StubLM(reply="correct"))
         sw = LearnedSwitch(
             rule=_rule, name="v_partial", author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier, verifier_sample_rate=0.3),
@@ -164,29 +164,29 @@ class TestVerifierSampleRate:
 
 
 class TestSelfJudgmentGuardrail:
-    def test_same_llm_as_model_and_verifier_refused(self):
-        shared = _StubLLM()
-        with pytest.raises(ValueError, match="same LLM"):
+    def test_same_model_as_model_and_verifier_refused(self):
+        shared = _StubLM()
+        with pytest.raises(ValueError, match="same language model"):
             LearnedSwitch(
                 rule=_rule, name="v_same_llm", author="t",
                 model=shared,
                 config=SwitchConfig(
                     starting_phase=Phase.MODEL_SHADOW,
-                    verifier=LLMJudgeSource(shared),
+                    verifier=JudgeSource(shared),
                 ),
             )
 
-    def test_different_llms_permitted(self):
-        m = _StubLLM()
+    def test_different_models_permitted(self):
+        m = _StubLM()
         m._model = "model-A"
-        v = _StubLLM()
+        v = _StubLM()
         v._model = "judge-B"
         sw = LearnedSwitch(
             rule=_rule, name="v_distinct", author="t",
             model=m,
             config=SwitchConfig(
                 starting_phase=Phase.MODEL_SHADOW,
-                verifier=LLMJudgeSource(v),
+                verifier=JudgeSource(v),
             ),
         )
         assert sw.config.verifier is not None
@@ -199,7 +199,7 @@ class TestSelfJudgmentGuardrail:
 
 class TestAsyncVerifier:
     def test_aclassify_runs_async_verifier(self):
-        verifier = LLMJudgeSource(_AsyncStubLLM(reply="correct"))
+        verifier = JudgeSource(_AsyncStubLM(reply="correct"))
         sw = LearnedSwitch(
             rule=_rule, name="v_async", author="t",
             config=SwitchConfig(auto_advance=False, verifier=verifier),

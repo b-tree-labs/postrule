@@ -9,7 +9,7 @@ Run (after ``pip install fastapi uvicorn``):
 The point: on an async web framework (FastAPI, Starlette,
 Hypercorn), `sw.classify(x)` would burn a threadpool worker per
 request. `await sw.aclassify(x)` hands the event loop back during
-any underlying I/O (storage writes, LLM calls) and cooperates
+any underlying I/O (storage writes, model calls) and cooperates
 naturally with other in-flight requests.
 
 Dendra doesn't hard-depend on FastAPI — this file only imports it
@@ -33,16 +33,10 @@ except ImportError:
     )
     raise SystemExit(1)
 
-from dendra import LearnedSwitch, SwitchConfig, Verdict, ml_switch
+from dendra import LearnedSwitch, ml_switch
 
 
-@ml_switch(
-    labels=["bug", "feature_request", "question"],
-    # persist=True routes to the batched FileStorage + ResilientStorage
-    # default — async classify + durable outcome log on one event loop,
-    # ~33 µs p50 per classify.
-    config=SwitchConfig(auto_record=True, auto_advance=True),
-)
+@ml_switch(labels=["bug", "feature_request", "question"])
 def triage_rule(ticket: dict) -> str:
     title = (ticket.get("title") or "").lower()
     if "crash" in title or "error" in title:

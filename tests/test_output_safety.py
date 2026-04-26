@@ -20,8 +20,7 @@ Scenarios exercised:
    still decides and the user-visible path is unaffected.
 
 This is both a test and a working reference for the "LLM output
-moderation" category in ``docs/marketing/industry-applicability.md``
-§3 Tier 1 item 7.
+moderation" use case (see ``docs/scenarios.md``).
 """
 
 from __future__ import annotations
@@ -155,7 +154,7 @@ class TestPhase0RuleFloor:
 
 
 @dataclass
-class FakeModeratorLLM:
+class FakeModeratorLM:
     """Stand-in for Perspective / OpenAI Moderation — deterministic."""
 
     always: str = "safe"
@@ -168,12 +167,12 @@ class FakeModeratorLLM:
 class TestPhase1ShadowOverOutputs:
     """LLM moderator observes; rule is still the source of truth."""
 
-    def test_llm_shadow_records_disagreement(self):
+    def test_model_shadow_records_disagreement(self):
         sw = LearnedSwitch(
             name="output_gate",
             rule=_output_rule,
             author="@safety:output-gate",
-            model=FakeModeratorLLM(always="toxic", conf=0.98),
+            model=FakeModeratorLM(always="toxic", conf=0.98),
             config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW, safety_critical=True),
         )
         # Rule says "safe" for this text; the LLM moderator says "toxic".

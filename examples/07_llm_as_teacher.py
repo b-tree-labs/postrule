@@ -7,21 +7,21 @@ Run: `python examples/07_llm_as_teacher.py`
 Cold-start: new product, zero labeled data, no hand-written rule
 yet. The LLM-as-teacher pattern:
 
-1. Start at ``Phase.MODEL_PRIMARY`` — the LLM decides. Every call
-   logs ``(input, llm_label)``: the LLM is labeling your data for
+1. Start at ``Phase.MODEL_PRIMARY`` — the language model decides. Every call
+   logs ``(input, llm_label)``: the language model is labeling your data for
    you, in production.
 2. Call ``switch.advance()`` periodically. The default
    :class:`McNemarGate` reads the paired-prediction log; when the
    target phase is statistically better (p < 0.01 on ≥200 paired
    samples), the switch graduates itself. No manual phase mutation.
-3. Train a local ML head on the accumulated LLM labels; the ML
+3. Train a local ML head on the accumulated language model labels; the ML
    head carries subsequent graduations toward ML_WITH_FALLBACK.
 
 Graduation is evidence-gated, not operator-gated. Custom gates
 (``ManualGate`` for always-operator-approval, composite gates
 with extra thresholds) are swappable via the ``gate=`` kwarg.
 
-Uses a stub LLM so the script runs without API credentials.
+Uses a stub language model so the script runs without API credentials.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from dendra import LearnedSwitch, MLPrediction, ModelPrediction, Phase, Verdict
 
 
 def triage_rule(ticket: dict) -> str:
-    """Eventual safety floor — written LATER once the LLM has taught
+    """Eventual safety floor — written LATER once the language model has taught
     us the patterns. Defined here so the code runs."""
     heading = (ticket.get("title") or "").lower()
     if "crash" in heading or "error" in heading:
@@ -41,8 +41,8 @@ def triage_rule(ticket: dict) -> str:
     return "feature_request"
 
 
-class StubLLM:
-    """Deterministic stand-in for a real LLM adapter."""
+class StubLM:
+    """Deterministic stand-in for a real language-model adapter."""
 
     def classify(self, ticket: Any, _labels: Iterable[str]) -> ModelPrediction:
         """Return a deterministic prediction for the given ticket."""
@@ -57,7 +57,7 @@ class StubLLM:
 
 
 class LocalMLHead:
-    """Trained on the LLM's accumulated labels. Production would be
+    """Trained on the language model's accumulated labels. Production would be
     scikit-learn TF-IDF+LR, a sentence-transformer probe, or a small
     ONNX classifier — here we ship a toy for determinism."""
 
@@ -65,7 +65,7 @@ class LocalMLHead:
         self._label_counts: dict[str, int] = {}
 
     def fit(self, records):
-        """Count the most-common LLM-assigned labels from the log."""
+        """Count the most-common language model-assigned labels from the log."""
         self._label_counts = {}
         for r in records:
             if r.model_output is None:
@@ -95,16 +95,16 @@ class LocalMLHead:
 
 if __name__ == "__main__":
     # ------------------------------------------------------------
-    # Step 1: Bootstrap at MODEL_PRIMARY — LLM decides, logs labels.
+    # Step 1: Bootstrap at MODEL_PRIMARY — language model decides, logs labels.
     # ------------------------------------------------------------
     print("--- Bootstrap: starting at MODEL_PRIMARY with no ML head ---\n")
 
     # Production: pass ``persist=True`` so the cold-start log
-    # (weeks of LLM labels) survives process restart.
+    # (weeks of language model labels) survives process restart.
     switch = LearnedSwitch(
         name="triage-bootstrap",
         rule=triage_rule,
-        model=StubLLM(),
+        model=StubLM(),
         starting_phase=Phase.MODEL_PRIMARY,
     )
 
@@ -126,13 +126,13 @@ if __name__ == "__main__":
     bootstrap_log = switch.storage.load_records("triage-bootstrap")
     correct = sum(1 for r in bootstrap_log if r.outcome == Verdict.CORRECT.value)
     print(
-        f"  LLM decided {len(bootstrap_log)} tickets; "
+        f"  language model decided {len(bootstrap_log)} tickets; "
         f"{correct} correct ({correct/len(bootstrap_log):.0%})"
     )
     print("  Every ticket is now (input, llm_label) training data.\n")
 
     # ------------------------------------------------------------
-    # Step 2: Train ML head on the LLM's labels, promote phase.
+    # Step 2: Train ML head on the language model's labels, promote phase.
     # ------------------------------------------------------------
     print("--- Graduate (operator-triggered): train ML + promote phase ---\n")
 
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     switch2 = LearnedSwitch(
         name="triage-graduated",
         rule=triage_rule,
-        model=StubLLM(),  # kept warm for retraining / fallback
+        model=StubLM(),  # kept warm for retraining / fallback
         ml_head=ml_head,
         starting_phase=Phase.ML_WITH_FALLBACK,
     )
@@ -158,6 +158,6 @@ if __name__ == "__main__":
         result = switch2.classify(sample)
         print(f"  {sample['title']:40s}  → {result.label:18s}  source={result.source}")
 
-    print("\n(The LLM taught the ML head by labeling production traffic.")
+    print("\n(The language model taught the ML head by labeling production traffic.")
     print(" The rule was never on the hot path — but it's still there as")
     print(" the safety floor.)")

@@ -1,36 +1,29 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra as a post-install tuner for system defaults.
+"""Using a Dendra switch to tune system defaults post-install.
 
 Run: `python examples/18_system_defaults_tuning.py`
 
-Every deployed system ships with defaults that were right for
-the author's bench and approximate for the operator's workload.
 Cache TTLs, retry policies, batch sizes, timeout ceilings,
-queue priorities — all classification decisions ("what TTL for
-this response?", "what retry bound for this endpoint?") that
-the installed system would benefit from re-deriving under real
-traffic.
+queue priorities are all bucketed classification decisions
+("what TTL for this response?"). Routing the decision through a
+:class:`LearnedSwitch` records each choice on the outcome log;
+once the system's own signals (cache hit vs stale, retry
+success vs permanent failure) feed back as verdicts, an ML head
+can graduate against the shipped rule on the operator's actual
+workload.
 
 The pattern:
 
-1. Ship the system with a hand-written rule (Phase.RULE). Same
-   defaults everyone gets at install time, based on the author's
-   best guess.
-2. Every decision routes through the Dendra switch. The rule is
-   the live picker on day 0.
-3. Outcomes come from the system's own signals:
-   - Was the cache hit useful, or did we serve stale data?
-   - Did the short timeout abandon a request that would have
-     completed?
-   - Did the batch size lead to backpressure?
-4. As the log grows, the operator (or an ML head) can graduate a
-   learned policy that outperforms the generic rule **on their
-   specific workload** — with a McNemar gate proving it.
-
-The installed system learns its own defaults without the author
-shipping a new version. That is the long-tail customization
-story, not a feature flag.
+1. Ship the system with a hand-written rule (Phase.RULE) — the
+   same defaults everyone gets at install time.
+2. Every decision routes through the Dendra switch, so the rule
+   is the live picker on day 0 and every choice is recorded.
+3. Outcomes come from the system's own signals (cache hit
+   useful or stale, timeout abandoned vs completed, batch size
+   vs backpressure).
+4. As the log grows, an ML head trained on those outcomes
+   graduates against the rule under the evidence gate.
 
 This example walks HTTP-response cache-TTL selection — the rule
 picks one of four TTL buckets; outcomes score whether the chosen
@@ -41,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from dendra import LearnedSwitch, SwitchConfig, Verdict
+from dendra import LearnedSwitch, Verdict
 
 
 @dataclass
@@ -55,9 +48,8 @@ class HTTPResponseContext:
     has_etag: bool
 
 
-# Four TTL buckets — a discrete classification problem, not a
-# continuous regression. Discrete buckets are the shape Dendra
-# handles natively and that human operators reason about.
+# Four TTL buckets — a discrete classification problem rather
+# than a continuous regression.
 TTL_BUCKETS = ["short_30s", "medium_5min", "long_1h", "no_cache"]
 
 
@@ -77,10 +69,8 @@ def default_ttl_rule(ctx: HTTPResponseContext) -> str:
 def main() -> None:
     sw = LearnedSwitch(
         rule=default_ttl_rule,
-        name="cache_ttl_tuner",
-        author="@examples:18",
         labels=TTL_BUCKETS,  # list form — no actions attached; caller dispatches
-        config=SwitchConfig(auto_record=True, auto_advance=False),
+        auto_advance=False,  # deterministic example output
     )
 
     # Simulated workload: a mix of responses the installed system sees.
@@ -158,9 +148,9 @@ def main() -> None:
     #    Tuesday?" is a one-line query against the outcome log.
 
     print(
-        "\nThe installed system now carries the evidence to graduate "
-        "beyond the author's guess\nwithout shipping a new binary. See "
-        "examples/06_ml_primary.py for the full lifecycle."
+        "\nThe outcome log now holds the evidence an ML head needs to "
+        "graduate against the rule.\nSee examples/06_ml_primary.py for "
+        "the full lifecycle."
     )
 
 

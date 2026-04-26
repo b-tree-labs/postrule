@@ -9,6 +9,19 @@ isn't on the hot path — but it's not deleted either: it sits as
 the circuit-breaker target, ready to take over the moment the ML
 head raises, times out, or returns nonsense. That's the whole
 safety story at the end-state.
+
+What ML_PRIMARY is worth:
+
+- Accuracy lift on the four shipped NLU benchmarks ranges
+  from **+18.7 pp** (26 labels) to **+86.5 pp** (77 labels)
+  at final training depth — bigger label space, bigger gap
+  (see ``docs/papers/2026-when-should-a-rule-learn/``).
+- The rule-floor circuit breaker means an ML failure routes
+  back to the rule's accuracy, not to a 500.
+
+For the situations where each of these matters most — and
+where rule-vs-ML lift is small enough that ML_PRIMARY
+isn't worth it — see ``docs/scenarios.md``.
 """
 
 from __future__ import annotations

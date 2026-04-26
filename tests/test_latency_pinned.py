@@ -5,7 +5,7 @@
 
 Numeric ranges derived from `scripts/run_v1_benchmarks.py` on the
 reference machine (Apple M5 / Python 3.13 / macOS 26, see
-`docs/working/v1-audit-benchmarks.md` for the source numbers).
+`docs/benchmarks/v1-audit-benchmarks.md` for the source numbers).
 Thresholds are set to **~2× observed p99** so the tests fail on real
 regressions but don't flap on CI noise.
 
@@ -60,7 +60,7 @@ def _rule_atis(text: str) -> str:
     return "flight"
 
 
-class _StubLLM:
+class _StubLM:
     def classify(self, input, labels):
         return ModelPrediction(label="flight", confidence=0.95)
 
@@ -120,7 +120,7 @@ def _assert_p99_below(stats: dict[str, float], limit_ns: float, *, cell: str) ->
         f"p95={stats['p95_ns']/1000:.2f}µs  "
         f"p99={stats['p99_ns']/1000:.2f}µs  "
         f"(limit: {limit_ns/1000:.2f}µs). "
-        "See docs/working/v1-audit-benchmarks.md for the baseline."
+        "See docs/benchmarks/v1-audit-benchmarks.md for the baseline."
     )
 
 
@@ -174,7 +174,7 @@ def test_classify_phase_model_primary():
             auto_record=False,
             auto_advance=False,
         ),
-        model=_StubLLM(),
+        model=_StubLM(),
     )
     stats = _measure(lambda: sw.classify(INPUT), n=5000)
     # Observed p99: 1.00µs (stub LLM); ceiling 5µs.
@@ -334,7 +334,8 @@ def test_dispatch_overhead():
 # tests pass today. Session 3 of the fix sprint drives the numbers down;
 # when fixes land, tighten these ceilings to the new observed p99 × 2.
 #
-# Cross-ref: docs/working/v1-readiness.md § 2, findings 28-31.
+# Tighten ceilings to new-observed-p99 × 2 once the underlying
+# perf work that motivated the looser thresholds lands.
 
 
 def test_classify_auto_record_plus_persist_file_storage_sync():
