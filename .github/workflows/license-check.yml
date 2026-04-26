@@ -1,0 +1,106 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+#
+# Enforces the dual-license boundary at PR time:
+#   - Every tracked .py file MUST have an SPDX-License-Identifier header
+#     in the first 5 lines.
+#   - The identifier MUST be exactly "Apache-2.0" or "LicenseRef-BSL-1.1".
+#   - "LicenseRef-BSL-1.1" is allowed only on the explicit path allowlist
+#     below; adding a new BSL file requires editing this workflow.
+#
+# The path allowlist is intentional friction. The split-license map of
+# record lives in LICENSE.md; this workflow keeps the repo from drifting
+# away from it without a deliberate, reviewable change.
+
+name: license-check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    name: SPDX headers + BSL path allowlist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate SPDX headers
+        run: |
+          set -euo pipefail
+
+          # ──────────────────────────────────────────────────────────────
+          # BSL path allowlist. Adding a new BSL file requires editing
+          # this list — the friction is intentional. Mirror any change
+          # in LICENSE.md's component table.
+          # ──────────────────────────────────────────────────────────────
+          is_bsl_allowed() {
+            case "$1" in
+              src/dendra/analyzer.py|\
+              src/dendra/cli.py|\
+              src/dendra/research.py|\
+              src/dendra/roi.py|\
+              tests/test_analyzer.py|\
+              tests/test_cli.py|\
+              tests/test_research.py|\
+              tests/test_roi.py)
+                return 0 ;;
+              *)
+                return 1 ;;
+            esac
+          }
+
+          errors=0
+          checked=0
+
+          while IFS= read -r file; do
+            checked=$((checked + 1))
+
+            # Locate the SPDX line within the first 5 lines.
+            spdx_line=$(head -5 "$file" \
+              | grep -nE 'SPDX-License-Identifier:' \
+              | head -1 \
+              || true)
+
+            if [ -z "$spdx_line" ]; then
+              echo "::error file=$file,line=1::Missing SPDX-License-Identifier header in the first 5 lines"
+              errors=$((errors + 1))
+              continue
+            fi
+
+            # spdx_line shape: "3:# SPDX-License-Identifier: Apache-2.0"
+            line_num="${spdx_line%%:*}"
+            spdx_value=$(printf '%s' "$spdx_line" \
+              | sed -nE 's/.*SPDX-License-Identifier:[[:space:]]*([A-Za-z0-9._+-]+).*/\1/p')
+
+            case "$spdx_value" in
+              "Apache-2.0")
+                : # accepted
+                ;;
+              "LicenseRef-BSL-1.1")
+                if ! is_bsl_allowed "$file"; then
+                  echo "::error file=$file,line=$line_num::File carries SPDX 'LicenseRef-BSL-1.1' but is not on the BSL path allowlist. Edit .github/workflows/license-check.yml::is_bsl_allowed to add this path intentionally, and mirror the change in LICENSE.md."
+                  errors=$((errors + 1))
+                fi
+                ;;
+              "")
+                echo "::error file=$file,line=$line_num::Empty or unparseable SPDX-License-Identifier value"
+                errors=$((errors + 1))
+                ;;
+              *)
+                echo "::error file=$file,line=$line_num::Unknown SPDX identifier '$spdx_value' — only 'Apache-2.0' and 'LicenseRef-BSL-1.1' are allowed"
+                errors=$((errors + 1))
+                ;;
+            esac
+          done < <(git ls-files '*.py')
+
+          echo ""
+          echo "Checked $checked Python files."
+          if [ "$errors" -gt 0 ]; then
+            echo "License check FAILED with $errors error(s)."
+            echo "Policy lives in LICENSE.md; this workflow at .github/workflows/license-check.yml."
+            exit 1
+          fi
+          echo "License check PASSED — all SPDX headers valid + BSL path allowlist clean."
