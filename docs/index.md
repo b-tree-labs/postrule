@@ -23,6 +23,9 @@ where you are:
 - **[Async API](async.md)** — `aclassify` / `adispatch` /
   parallel-committee judging. FastAPI / LangGraph / LlamaIndex
   interop.
+- **[Threat model](THREAT_MODEL.md)** — trust boundaries, threats
+  considered + mitigations, audit-chain integrity claims, what's
+  out of scope. Written for enterprise pre-checks.
 
 ## Deep dives
 
