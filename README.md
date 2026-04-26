@@ -145,6 +145,21 @@ transition by its Type-I error rate. `AccuracyMarginGate`,
 `MinVolumeGate`, `CompositeGate`, and `ManualGate` ship too;
 any object satisfying the `Gate` protocol works.
 
+**Calendar time to `ML_PRIMARY`** (default config, three gated
+transitions, `min_paired=200`):
+
+| Workload | Verdict rate | Time to ML_PRIMARY |
+|---|---|---|
+| 1k req/day, 100% verdicts (`verifier=default_verifier()`) | 1,000/day | **~1.5–6 days** |
+| 1k req/day, 5% verdicts (reviewer queue) | 50/day | ~30–120 days |
+| 10k+ req/day, 100% verdicts | ≥10k/day | < 1 day |
+
+The autonomous verifier (default) closes the loop dramatically.
+Without it, reviewer throughput is the gating constraint — which
+is the whole reason `verifier=default_verifier()` is on by
+default. See [`docs/getting-started.md`](./docs/getting-started.md#4-graduation--automatic-3-minutes)
+for the math.
+
 ## Autoresearch + agent loops
 
 Language-model-driven autoresearch loops have a deployment gap:
