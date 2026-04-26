@@ -1,33 +1,53 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Autoresearch loop driving Dendra promotions.
+"""Karpathy-style autoresearch loop, gated by ``CandidateHarness``.
 
 Run: `python examples/19_autoresearch_loop.py`
 
-The pattern this example demonstrates is the production-substrate
-play for autoresearch loops:
+The autoresearch loop pattern (popularised by Andrej Karpathy):
 
-    Autoresearch tells you what to try.
-    Dendra tells you when it worked.
+    +------------+      +------------+      +------------+
+    |  PROPOSE   | ---> |  EVALUATE  | ---> |  REFLECT   | ---+
+    +------------+      +------------+      +------------+    |
+          ^                                                   |
+          +---------------------- next iter ------------------+
 
-The dirty secret of LLM-driven autoresearch loops today is that
-they're great at *generating* candidate classifiers (new rules,
-new prompts, new gating thresholds) and terrible at *deploying*
-them with statistical confidence to production. Teams duct-tape
-evals harnesses around their loops and call it MLOps.
+A language-model agent reads recent results (REFLECT), proposes a fresh
+candidate classifier (PROPOSE), the candidate runs against a
+truth oracle (EVALUATE), and the loop repeats. The agent decides
+when to stop.
 
-Dendra is the missing piece. The :class:`CandidateHarness`
-shadows every candidate against the production switch's decision,
-runs paired-McNemar significance testing against a truth oracle,
-and tells the loop whether each candidate is statistically
-justified to promote. The rule floor of the underlying
-:class:`LearnedSwitch` protects production from bad proposals
-throughout.
+This example wires that loop. ``CandidateHarness`` is the
+EVALUATE rung — it shadows each candidate against the production
+switch on the same inputs, runs a head-to-head significance
+test, and returns a ``CandidateReport``. The loop's ``REFLECT``
+step reads that report; the loop's ``PROPOSE`` step is the place
+a language-model agent plugs in.
 
-This example fakes the autoresearch loop with a deterministic
-"propose-evaluate-iterate" cycle so it runs without LLM keys.
-The loop pattern itself is real — swap the propose-step for
-your favorite autoresearch agent and the rest just works.
+The propose-step here is a deterministic stand-in (a hardcoded
+ratchet through known keyword expansions) so the example runs
+offline with no API keys. Replace ``propose_next_candidate`` with
+a language-model-backed function and the rest of the loop is unchanged.
+
+What the harness gives your loop, in one line each:
+
+- *Bounded false-promotion rate.* False promotions are
+  capped at the ``alpha`` you pass (default ``0.05``), not
+  by the candidate generator's appetite.
+- *Faster convergence per paired sample.* Head-to-head
+  testing on the same inputs is statistically tighter than
+  independent-samples testing — 1.7–6× faster on the four
+  NLU benchmarks shipped here.
+- *Reproducible promotion decisions.* Every recommendation
+  carries a p-value and the discordant-pair counts
+  (``b``, ``c``) that drove it.
+
+For the situations where each of these matters most — and
+the situations where they don't — see ``docs/scenarios.md``.
+That doc opens with an at-a-glance table of high-volume,
+high-stakes industries (card fraud, AML, SOC, prior-auth,
+brand safety, returns fraud, customs) where the autoresearch
+loop's promotion gate carries direct financial weight.
 """
 
 from __future__ import annotations
@@ -37,13 +57,103 @@ from collections.abc import Callable
 
 from dendra import (
     CandidateHarness,
+    CandidateReport,
     LearnedSwitch,
-    SwitchConfig,
 )
 
 
 # ---------------------------------------------------------------------------
-# The world: ticket triage with day-zero rule and a known truth oracle
+# The loop
+# ---------------------------------------------------------------------------
+
+
+def main() -> None:
+    sw = LearnedSwitch(rule=production_rule)
+    harness = CandidateHarness(switch=sw, truth_oracle=truth_oracle, alpha=0.05)
+
+    print("Production rule misses bugs phrased as 'error'/'down'/'stuck'/'broken'.")
+    print("Loop will propose keyword expansions; harness gates each.\n")
+
+    history: list[CandidateReport] = []
+    for iter_num in range(1, MAX_ITERS + 1):
+        # 1. PROPOSE — the agent reads history and produces a new candidate.
+        #    Swap this for a model call: read history, decide what to try next.
+        proposal = propose_next_candidate(history)
+        if proposal is None:
+            print("Agent says: nothing left to try. Stopping.")
+            break
+        name, candidate = proposal
+
+        # 2. EVALUATE — harness shadows the candidate, head-to-head vs production.
+        harness.register(name, candidate)
+        harness.observe_batch(_TICKETS)
+        report = harness.evaluate(name)
+
+        # 3. REFLECT — the agent reads the report. Stop on convergence or
+        #    diminishing returns; otherwise feed it into the next propose.
+        history.append(report)
+        _print_report(iter_num, report)
+        if should_stop(report):
+            print("Agent says: candidate accuracy at ceiling. Stopping.")
+            break
+
+    promoted = [r.candidate_name for r in history if r.recommend_promote]
+    print(f"\nLoop complete after {len(history)} iteration(s).")
+    print(f"Recommended for promotion: {promoted}")
+    print(
+        "\nIn production, the loop reads ``report.recommend_promote`` "
+        "and acts on it: swap the candidate into the switch's rule, "
+        "ml_head, or model and ship through your normal deployment "
+        "process. The rule floor stays in place throughout — even a "
+        "bad promotion can't remove the day-zero safety net."
+    )
+
+
+# ---------------------------------------------------------------------------
+# The three loop steps (PROPOSE / EVALUATE / REFLECT)
+# ---------------------------------------------------------------------------
+#
+# EVALUATE is implemented by ``CandidateHarness.evaluate`` directly;
+# the other two are below. The PROPOSE step is the language-model agent hook.
+
+
+# Deterministic stand-in for the language model proposer. Real loops use an
+# agent that reads ``history`` (the prior CandidateReports + the
+# ground-truth misses each surface) and proposes the next refinement.
+_PROGRESSION = [
+    ("v1_kw2", ("crash", "error")),
+    ("v2_kw3", ("crash", "error", "down")),
+    ("v3_kw4", ("crash", "error", "down", "stuck")),
+    ("v4_kw5", ("crash", "error", "down", "stuck", "broken")),
+]
+
+
+def propose_next_candidate(
+    history: list[CandidateReport],
+) -> tuple[str, Callable[[dict], str]] | None:
+    """PROPOSE step. Returns ``(name, candidate_classifier)`` or None to stop.
+
+    Production swap-in: a language-model agent that reads ``history`` (the
+    prior reports), inspects which inputs the production rule got
+    wrong, and emits the next refinement to try.
+    """
+    idx = len(history)
+    if idx >= len(_PROGRESSION):
+        return None
+    name, keywords = _PROGRESSION[idx]
+    return name, _make_keyword_rule(keywords)
+
+
+def should_stop(report: CandidateReport) -> bool:
+    """REFLECT step's stop-decision. Real loops layer in plateau detection,
+    cost ceilings, or agent-controlled halt. Here: stop on perfect
+    accuracy."""
+    return report.candidate_accuracy >= 1.0
+
+
+# ---------------------------------------------------------------------------
+# World setup — production rule, truth oracle, evaluation traffic.
+# Below the loop because the loop is the point of the file.
 # ---------------------------------------------------------------------------
 #
 # Ground-truth labeling rule (what we WISH the classifier knew):
@@ -56,11 +166,16 @@ from dendra import (
 #   - "?" at end → question
 #   - everything else → feature_request
 #
-# The production rule misses bugs phrased as "error"/"down"/"stuck"/"broken".
-# Day zero, the team didn't think of those keywords. The autoresearch loop's
-# job is to discover them — and Dendra's job is to gate the discovery.
+# The production rule misses bugs phrased as "error"/"down"/
+# "stuck"/"broken". Day zero, the team didn't think of those
+# keywords. The autoresearch loop's job is to discover them — and
+# the harness's job is to gate the discovery.
 
 _BUG_KEYWORDS_TRUTH = ("crash", "error", "down", "stuck", "broken")
+
+# Stop after this many propose-evaluate cycles even if the agent
+# keeps proposing. Cost ceiling on a real loop.
+MAX_ITERS = 10
 
 
 def production_rule(ticket: dict) -> str:
@@ -74,12 +189,11 @@ def production_rule(ticket: dict) -> str:
 
 
 def truth_oracle(ticket: dict) -> str:
-    """Ground truth — what we'd want a perfect classifier to return.
+    """Ground truth — what a perfect classifier would return.
 
-    In production, this would be a labeled validation set, a
-    downstream signal that resolves later (with a wrapper that
-    waits for it), a reviewer-pool aggregator, or an LLM-judge
-    committee with bias guardrails.
+    In production: a labeled validation set, a downstream signal
+    (with a wrapper that waits for it), a reviewer-pool aggregator,
+    or a language-model judge committee with bias guardrails.
     """
     title = (ticket.get("title") or "").lower()
     if any(kw in title for kw in _BUG_KEYWORDS_TRUTH):
@@ -89,14 +203,8 @@ def truth_oracle(ticket: dict) -> str:
     return "feature_request"
 
 
-# ---------------------------------------------------------------------------
-# The autoresearch loop (faked deterministically here; in production this
-# would be an LLM-driven proposal-eval-iterate cycle)
-# ---------------------------------------------------------------------------
-
-
 def _make_keyword_rule(keywords: tuple[str, ...]) -> Callable[[dict], str]:
-    """Factory: build a rule that catches `bug` on any of these keywords."""
+    """Factory: build a classifier that flags 'bug' on any of these keywords."""
     def rule(ticket: dict) -> str:
         title = (ticket.get("title") or "").lower()
         if any(kw in title for kw in keywords):
@@ -107,19 +215,8 @@ def _make_keyword_rule(keywords: tuple[str, ...]) -> Callable[[dict], str]:
     return rule
 
 
-# Each "iteration" the loop proposes a candidate that adds keywords.
-# Real loops would have an LLM read the outcome log and propose;
-# we simulate by ratcheting through a known progression.
-_LOOP_PROPOSALS = [
-    ("crash", "error"),                                     # iter 1: add "error"
-    ("crash", "error", "down"),                             # iter 2: add "down"
-    ("crash", "error", "down", "stuck"),                    # iter 3: add "stuck"
-    ("crash", "error", "down", "stuck", "broken"),          # iter 4: add "broken"
-]
-
-
-# Sample tickets the loop evaluates against. In production this would
-# be live traffic; for the example we hard-code a representative mix.
+# Sample tickets the loop evaluates against. In production this is
+# live traffic; for the example we hard-code a representative mix.
 _TICKETS = [
     # Bugs the production rule catches:
     {"title": "app crashes on startup"},
@@ -147,77 +244,22 @@ _TICKETS = [
     # More features:
     {"title": "feature: bulk-upload UI"},
     {"title": "add a setting for default view"},
-] * 5  # repeat to give the harness enough volume for stat power
+] * 5  # repeat to give the harness statistical power
 
 
 # ---------------------------------------------------------------------------
-# The loop
+# Reporting
 # ---------------------------------------------------------------------------
 
 
-def main() -> None:
-    # Production switch — the real classifier in front of users.
-    sw = LearnedSwitch(
-        rule=production_rule,
-        name="ticket_triage_prod",
-        author="@examples:19",
-        config=SwitchConfig(auto_record=False, auto_advance=False),
-    )
-
-    promoted: list[str] = []
-
-    def on_promote(report) -> None:
-        promoted.append(report.candidate_name)
-        print(f"  >> PROMOTION RECOMMENDATION: {report.summary_line()}")
-
-    harness = CandidateHarness(
-        switch=sw,
-        truth_oracle=truth_oracle,
-        alpha=0.05,
-        on_promote_recommendation=on_promote,
-    )
-
-    print("Production rule misses bugs phrased as 'error'/'down'/'stuck'/'broken'.")
-    print("Autoresearch loop will propose keyword expansions; Dendra gates each.\n")
-
-    # The autoresearch loop. In production this is an LLM agent
-    # reading the outcome log and proposing rules. Here we ratchet
-    # through deterministic proposals.
-    for i, keywords in enumerate(_LOOP_PROPOSALS, start=1):
-        candidate_name = f"v{i}_kw{len(keywords)}"
-        candidate = _make_keyword_rule(keywords)
-        harness.register(candidate_name, candidate)
-
-        # Stream the evaluation traffic through the harness.
-        # In production this is your live traffic stream.
-        harness.observe_batch(_TICKETS)
-
-        report = harness.evaluate(candidate_name)
-        verdict = "PROMOTE" if report.recommend_promote else "HOLD  "
-        print(
-            f"iter {i}: {candidate_name:14s} kw={list(keywords)}\n"
-            f"        prod_acc={report.prod_accuracy:.1%}  "
-            f"cand_acc={report.candidate_accuracy:.1%}  "
-            f"b={report.b}  c={report.c}  p={report.p_value:.2e}  "
-            f"-> {verdict}"
-        )
-
-        # In a real loop, the agent reads the report and decides
-        # what to propose next. The simulated loop just continues
-        # ratcheting through its plan.
-
-    # Final summary: which candidates cleared the McNemar bar?
-    print(f"\nLoop complete. {len(promoted)} candidate(s) recommended for "
-          f"promotion: {promoted}")
+def _print_report(iter_num: int, report: CandidateReport) -> None:
+    verdict = "PROMOTE" if report.recommend_promote else "HOLD  "
     print(
-        "\nIn production, the autoresearch loop reads "
-        "report.recommend_promote and acts on it: swap the candidate "
-        "into the switch's rule, ml_head, or model;\nupdate "
-        "config.starting_phase if appropriate; commit the change "
-        "through your normal deployment process. The switch's rule "
-        "floor stays in place\nthroughout — even a bad promotion "
-        "can't remove the day-zero safety net the McNemar gate "
-        "couldn't fully validate."
+        f"iter {iter_num}: {report.candidate_name:14s}  "
+        f"prod_acc={report.prod_accuracy:.1%}  "
+        f"cand_acc={report.candidate_accuracy:.1%}  "
+        f"b={report.b}  c={report.c}  p={report.p_value:.2e}  "
+        f"-> {verdict}"
     )
 
 

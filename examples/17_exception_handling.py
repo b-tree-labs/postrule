@@ -1,15 +1,15 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra as an exception-handling strategy.
+"""Using a Dendra switch as an exception-handling dispatcher.
 
 Run: `python examples/17_exception_handling.py`
 
-Every production system has a try/except tree deciding what to
-do when things fail: retry, fall back, circuit-break, escalate
-to human, log and drop. That tree is a classifier — input is
-``(exception, context)``, output is one of a fixed set of
-strategies. Perfect fit for Dendra's graduated-autonomy
-primitive.
+A try/except tree that picks among retry, fallback, escalate,
+and drop is a classifier — input is ``(exception, context)``,
+output is one of a fixed strategy set. Wrapping the dispatch in
+a :class:`LearnedSwitch` records every decision on the outcome
+log and lets a learned policy graduate against the hand-written
+rule once enough outcomes accumulate.
 
 Day 0 (RULE)
     Hand-written dispatch on exception type + HTTP status.
@@ -22,17 +22,9 @@ Day N (MODEL_SHADOW → ML_PRIMARY)
     endpoint-specific patterns the rule can't see:
     "endpoint X's 503s clear in 2 s; endpoint Y's are permanent"
     or "this auth error on tenant Z is actually a billing
-    suspension, route to CS."
-
-Why this is a legit fit and not a stretch:
-
-- Exception-handling IS classification. The code path is already
-  branching on exception type; Dendra just makes the branches
-  evidence-backed and auditable.
-- The rule stays the floor — same paper §7.1 guarantee. A buggy
-  learned policy can never remove the "503 → retry" baseline.
-- Every decision is on tape (outcome log). "Why did we retry
-  endpoint X nine times last Tuesday?" has an answer.
+    suspension, route to CS." The rule remains the floor (paper
+    §7.1) — a buggy learned policy cannot remove the
+    "503 → retry" baseline.
 """
 
 from __future__ import annotations
@@ -40,7 +32,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from dendra import LearnedSwitch, SwitchConfig, Verdict
+from dendra import LearnedSwitch, Verdict
 
 
 @dataclass
@@ -104,15 +96,13 @@ def main() -> None:
 
     sw = LearnedSwitch(
         rule=handling_rule,
-        name="exception_handler",
-        author="@examples:17",
         labels={
             "retry": do_retry,
             "fallback": do_fallback,
             "escalate": do_escalate,
             "drop": do_drop,
         },
-        config=SwitchConfig(auto_record=True, auto_advance=False),
+        auto_advance=False,  # deterministic example output
     )
 
     # Simulated failure stream. In production this feeds off your
@@ -176,8 +166,8 @@ def main() -> None:
         "\nNext step (not shown here): as the log grows, an ML head "
         "trained on (ctx → correct_strategy) pairs graduates into\n"
         "MODEL_SHADOW / MODEL_PRIMARY. The rule stays as the safety "
-        "floor; the learned policy fires only when the McNemar gate\n"
-        "says it beats the rule with p < 0.05. See "
+        "floor; the learned policy fires only when the evidence gate\n"
+        "confirms it beats the rule head-to-head with p < 0.05. See "
         "examples/06_ml_primary.py for the full lifecycle."
     )
 

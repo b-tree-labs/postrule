@@ -29,14 +29,14 @@ supported; internal state is shared; the `threading.RLock` on
   Django sync views), batch scripts, notebooks, CLI tooling.
   Simpler semantics; no `await` chain.
 
-Mixing is allowed. Interior code that's heavy on LLM calls can
+Mixing is allowed. Interior code that's heavy on model calls can
 use the async path even when the outer caller is sync (via
 `asyncio.run`). A long-running sync batch can call
 `await self.acl assify(...)` from a nested event loop.
 
 ## Adapter siblings
 
-Every shipped LLM adapter has an async peer using the provider's
+Every shipped language-model adapter has an async peer using the provider's
 native async client:
 
 | Sync | Async | Native client |
@@ -48,7 +48,7 @@ native async client:
 
 Async adapters expose `aclassify(input, labels)` (coroutine)
 instead of `classify(input, labels)`. Use them with
-`LLMJudgeSource` / `LLMCommitteeSource` — both sources detect
+`JudgeSource` / `JudgeCommittee` — both sources detect
 `aclassify` automatically and dispatch through the async path on
 `ajudge` calls.
 
@@ -61,10 +61,10 @@ from dendra import (
     OpenAIAsyncAdapter,
     AnthropicAsyncAdapter,
     OllamaAsyncAdapter,
-    LLMCommitteeSource,
+    JudgeCommittee,
 )
 
-committee = LLMCommitteeSource(
+committee = JudgeCommittee(
     [
         OpenAIAsyncAdapter(model="gpt-4o-mini"),
         AnthropicAsyncAdapter(model="claude-haiku-4-5"),

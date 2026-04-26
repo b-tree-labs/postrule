@@ -6,10 +6,10 @@
 ## The problem
 
 Autoresearch loops — the pattern Andrej Karpathy and others have
-been describing publicly — wire an LLM (or agent) to a discovery
+been describing publicly — wire a language model (or agent) to a discovery
 cycle: propose a hypothesis, run an experiment, read the result,
 iterate. They're great at generating ideas. They're getting
-better fast. The pieces — proposal LLMs, eval harnesses, agent
+better fast. The pieces — proposal language models, eval harnesses, agent
 scaffolds — are converging.
 
 There's one piece missing.
@@ -37,11 +37,12 @@ Dendra ships a `CandidateHarness` that wraps a production
 harness, human running experiments — registers candidate
 classifiers with the harness. Every observed input runs through
 both production and every candidate. A truth oracle (labeled
-validation set, downstream signal, reviewer pool, LLM-judge
+validation set, downstream signal, reviewer pool, language-model judge
 committee with bias guardrails) provides ground truth. The
-harness pairs them, runs McNemar's exact-binomial test on the
-discordant pairs, and returns a `CandidateReport` with a
-recommendation.
+harness pairs them, runs a head-to-head significance test on
+the discordant pairs (McNemar's exact-binomial under the hood;
+swappable via the `Gate` protocol), and returns a
+`CandidateReport` with a recommendation.
 
 ```python
 from dendra import CandidateHarness, LearnedSwitch
@@ -51,7 +52,7 @@ sw = LearnedSwitch(rule=production_rule, ...)
 
 # Truth oracle. In a real loop, this is a labeled validation
 # set, a downstream signal that resolves later, a reviewer
-# pool's verdict aggregator, or a high-quality LLM-judge
+# pool's verdict aggregator, or a high-quality language-model judge
 # committee with bias guardrails.
 def truth(input):
     return ground_truth_lookup[input.id]
@@ -88,11 +89,11 @@ the loop needs:
 | Autoresearch needs | Dendra ships |
 |---|---|
 | A way to evaluate candidates against real traffic | `CandidateHarness.observe()` + the switch's shadow phases |
-| A statistical bar for "this candidate is better" | Paired-McNemar gate at configurable `alpha` |
+| A statistical bar for "this candidate is better" | Head-to-head evidence gate at configurable `alpha` (`McNemarGate` by default) |
 | Rollback if a candidate poisons production | Circuit breaker + rule safety floor (paper §7.1 architectural guarantee) |
 | An audit trail of every promotion decision | Full outcome-log audit chain |
 | A way to compare N candidates concurrently | `CandidateHarness.evaluate_all()` returns ranked reports |
-| Async-aware committee judging for the truth oracle | `LLMCommitteeSource.ajudge` runs N LLM judges in parallel |
+| Async-aware committee judging for the truth oracle | `JudgeCommittee.ajudge` runs N model judges in parallel |
 | HIPAA / PII redaction at the storage boundary | `Storage(redact=fn)` hook |
 
 ## What the harness does NOT do
@@ -134,16 +135,17 @@ iter 4: v4_kw5  kw=['crash', 'error', 'down', 'stuck', 'broken']
         prod_acc=55.0%  cand_acc=100.0%  b=45  c=0  p=5.68e-14  -> PROMOTE
 ```
 
-The harness paired-McNemar's every candidate against production
-on the same 100 inputs. Every iteration cleared `p < 0.05`. The
-loop knows it can promote because the statistics say so.
+The harness ran a head-to-head significance test on every
+candidate against production on the same 100 inputs. Every
+iteration cleared `p < 0.05`. The loop knows it can promote
+because the statistics say so.
 
-In a production setup, you'd plug an LLM agent in place of the
+In a production setup, you'd plug a language-model agent in place of the
 deterministic ratchet. The agent reads the outcome log
 (`sw.storage.load_records(sw.name)`) — finds inputs where
 production was wrong — proposes a refinement — registers it —
 gets a verdict — iterates. The loop is a few hundred lines of
-agent code. Dendra is the substrate underneath it.
+agent code; the harness handles the gating.
 
 ## Where this fits in the roadmap
 
@@ -169,7 +171,7 @@ on GitHub](https://github.com/axiom-labs-os/dendra/issues).
 - [`docs/api-reference.md`](api-reference.md) — `CandidateHarness` and
   `CandidateReport` API.
 - [`docs/verdict-sources.md`](verdict-sources.md) — `VerdictSource`
-  family for sourcing truth (LLM judges, committees, webhooks,
+  family for sourcing truth (model judges, committees, webhooks,
   human reviewers). The harness's `truth_oracle` parameter
   accepts any of these.
 - [`docs/async.md`](async.md) — async classify / dispatch /

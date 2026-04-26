@@ -1,6 +1,6 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Output safety — classify LLM *output* before it reaches users.
+"""Output safety — classify language model *output* before it reaches users.
 
 Run: `python examples/05_output_safety.py`
 
@@ -8,7 +8,7 @@ The same primitive that gates input routing gates output delivery.
 ``safety_critical=True`` guarantees the rule floor remains reachable
 even after the switch graduates — PII and confidential markers are
 caught even if an ML head is compromised or silently fails. Paired
-with shadow-logging, the rule/LLM boundary converges on what
+with shadow-logging, the rule/language model boundary converges on what
 actually ships rather than what an analyst guessed.
 """
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         "INTERNAL ONLY: see me about the Q2 numbers, please.",
     ]
 
-    print("LLM output -> safety classification")
+    print("model output -> safety classification")
     print("-" * 72)
     for generated in generated_responses:
         verdict = output_safety_rule(generated)

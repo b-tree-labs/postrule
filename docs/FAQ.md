@@ -5,7 +5,7 @@ Answers to the questions people ask first. Updated 2026-04-22.
 ## What is Dendra, in one sentence?
 
 A Python decorator that wraps a classification function and lets
-it graduate from rule → LLM-shadow → LLM → ML-shadow → ML —
+it graduate from rule → model-shadow → language model → ML-shadow → ML —
 with a paired-proportion statistical gate at every transition
 and the original rule retained as the safety floor.
 
@@ -50,7 +50,7 @@ tech-debt backlog every production team has). See the paper's
 §3.3 for the theorem bounding the probability of
 worse-than-rule behavior by the test's α.
 
-## Why is there a *rule*? Isn't the LLM supposed to replace the rule?
+## Why is there a *rule*? Isn't the language model supposed to replace the rule?
 
 The rule is the **safety floor**. In the highest-autonomy phase
 (ML_PRIMARY) it's still there, watched by a circuit breaker that
@@ -77,9 +77,9 @@ version preserved throughout. Different problem.
 
 Strictly, no. Dendra is an **MLOps framework** — an
 orchestration runtime for graduating production classifiers
-from rule to LLM to learned ML, with paired-statistical gates
+from rule to language model to learned ML, with paired-statistical gates
 and a rule safety floor. The ML happens *inside* the switch
-(your sklearn pipeline, your LLM adapter, your fine-tuned
+(your sklearn pipeline, your language-model adapter, your fine-tuned
 model); Dendra is the deployment scaffold around it.
 
 The closest formal ML subfield is **online model selection /
@@ -101,9 +101,9 @@ ML project. It's a different problem from what Dendra solves.
 Dendra is the **online** companion: candidates flow in (from
 AutoML output, from an autoresearch loop, from a human running
 experiments), Dendra shadows them against live production
-traffic, runs paired-McNemar significance tests against a truth
-oracle, and tells you which candidates statistically clear the
-bar. The rule safety floor protects production from bad
+traffic, runs a head-to-head significance test on the same
+inputs against a truth oracle, and tells you which candidates
+statistically clear the bar. The rule safety floor protects production from bad
 candidates throughout. A useful one-liner:
 
 > **AutoML automates offline model selection.**
@@ -121,7 +121,7 @@ for the full picture.
 
 > **Autoresearch tells you what to try. Dendra tells you when it worked.**
 
-The autoresearch pattern is a *discovery* primitive: an LLM (or
+The autoresearch pattern is a *discovery* primitive: a language model (or
 agent) proposes candidate classifiers / prompts / gating
 thresholds, reads results, iterates. Where it falls down is the
 last mile — getting candidates from "this looks promising on
@@ -164,7 +164,7 @@ Dendra already ships:
 | Autoresearch needs | Dendra ships |
 |---|---|
 | A way to evaluate candidates against real traffic | `CandidateHarness.observe()` + shadow phases |
-| A statistical bar for "this candidate is better" | Paired-McNemar gate at configurable `alpha` |
+| A statistical bar for "this candidate is better" | Head-to-head evidence gate at configurable `alpha` (`McNemarGate` by default) |
 | Rollback if a candidate poisons production | Circuit breaker + rule floor |
 | An audit trail of every promotion decision | Full outcome-log audit chain |
 | A way to compare N candidates concurrently | `CandidateHarness.evaluate_all()` |
@@ -184,26 +184,26 @@ p50 (writes an UNKNOWN outcome record each call). Measured in
 
 At Phase.ML_WITH_FALLBACK with a TF-IDF + logistic head, ~105 µs
 p50 — well inside typical web-request budgets. At MODEL_PRIMARY
-with a local llama3.2:1b, ~250 ms (dominated by the LLM, not
+with a local llama3.2:1b, ~250 ms (dominated by the language model, not
 Dendra). `persist=True` (batched FileStorage) adds 33 µs p50;
 per-call fsync durability is an explicit 195 µs opt-in for
-regulated workloads. See `docs/working/v1-audit-benchmarks.md`
+regulated workloads. See `docs/benchmarks/v1-audit-benchmarks.md`
 for the full matrix.
 
 ## What's the cost overhead?
 
 Rule calls: negligible (your existing function is still there).
-LLM calls: the API bill for whatever provider you point at.
+model calls: the API bill for whatever provider you point at.
 ML calls: TF-IDF + LR is CPU-cheap and scikit-learn-shaped;
 sentence-transformer heads cost more but are still local.
 
-## Does Dendra call LLMs on my behalf without asking?
+## Does Dendra call language models on my behalf without asking?
 
 No. You configure an adapter (`OpenAIAdapter` / `AnthropicAdapter` /
 `OllamaAdapter` / `LlamafileAdapter`) with your own credentials
-and you pick the phase. At Phase.RULE the LLM is never called.
-At Phase.MODEL_SHADOW the LLM is called but doesn't affect output.
-At Phase.MODEL_PRIMARY the LLM is called and its output is the
+and you pick the phase. At Phase.RULE the language model is never called.
+At Phase.MODEL_SHADOW the language model is called but doesn't affect output.
+At Phase.MODEL_PRIMARY the language model is called and its output is the
 decision unless confidence is below a configured threshold.
 
 ## Is my data sent anywhere?
@@ -297,24 +297,19 @@ now.
 
 ## Is this abandoned in six months?
 
-We have a three-year plan, documented publicly in
-`docs/working/roadmap-2026-04-20.md` and
-`docs/marketing/entry-with-end-in-mind.md`. Year-one revenue
-target (bootstrap-sustainable) is $225k-$540k; we're building
-toward a $10M-ARR business over three years with the
-Snyk-Temporal hybrid pattern. The founder is working full-time
-on Dendra. If we can't sustain that business, we've promised
-the BSL code automatically converts to Apache 2.0 by
-2030-05-01 — regardless of whether B-Tree Ventures exists by
-then, the code's still there for the community.
+We have a three-year business plan and a year-one revenue
+target that is bootstrap-sustainable. The founder is working
+full-time on Dendra. The structural commitment we can put in
+the open repo: if we can't sustain the business, the BSL code
+automatically converts to Apache 2.0 on 2030-05-01 —
+regardless of whether B-Tree Ventures exists by then, the
+code is still there for the community.
 
 ## Who's behind Dendra?
 
 Benjamin Booth, sole inventor and sole operator of B-Tree
-Ventures, LLC (dba Axiom Labs). Full commercial + IP provenance
-documented in `docs/working/patent-strategy.md` §7 — clean
-B-Tree Ventures work, no academic or institutional
-co-ownership.
+Ventures, LLC (dba Axiom Labs). Clean B-Tree Ventures work, no
+academic or institutional co-ownership.
 
 ## How do I try it?
 

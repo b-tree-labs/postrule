@@ -37,7 +37,7 @@ def triage_rule(ticket: dict) -> str:
     return "feature_request"
 
 # Decide + act. The rule routes today. As the outcome log fills,
-# switch.advance() graduates the routing to LLM, then to a local
+# switch.advance() graduates the routing to language model, then to a local
 # ML head — the actions stay yours, the classifier behind them
 # earns its place through evidence.
 result = triage_rule.dispatch({"title": "app crashes on login"})
@@ -154,7 +154,7 @@ endpoint).
 **Role:** read-only accessors for the current phase and the
 ceiling enforced by `config.phase_limit`. Useful in branching
 code outside the switch that needs to know "are we trusting
-the LLM yet" without catching a telemetry event.
+the language model yet" without catching a telemetry event.
 
 **Signatures:**
 - `def phase() -> Phase`
@@ -209,9 +209,9 @@ The `@ml_switch(...)` decorator accepts the same kwargs except
 | Phase | Decision path | Rule on hot path? | Requires |
 |---|---|---|---|
 | `RULE` | rule | yes | — |
-| `MODEL_SHADOW` | rule; LLM observes | yes | `model=` |
-| `MODEL_PRIMARY` | LLM; rule on low-confidence | no (fallback only) | `model=` |
-| `ML_SHADOW` | LLM or rule; ML observes | yes | `model=`, `ml_head=` |
+| `MODEL_SHADOW` | rule; language model observes | yes | `model=` |
+| `MODEL_PRIMARY` | language model; rule on low-confidence | no (fallback only) | `model=` |
+| `ML_SHADOW` | language model or rule; ML observes | yes | `model=`, `ml_head=` |
 | `ML_WITH_FALLBACK` | ML; rule on low-confidence | no (fallback only) | `ml_head=` |
 | `ML_PRIMARY` | ML; rule on breaker trip | no (breaker only) | `ml_head=` |
 
@@ -268,8 +268,8 @@ never fires actions — it's pure.
 | 1 | `01_hello_world.py` | Smallest complete example: dict-labels + dispatch. |
 | 2 | `02_outcome_log.py` | `persist=True`; ground-truth verdicts; reading records back. |
 | 3 | `03_safety_critical.py` | `safety_critical=True` refuses ML_PRIMARY at construction. |
-| 4 | `04_llm_shadow.py` | MODEL_SHADOW: rule decides, LLM observes, paired log feeds graduation. |
-| 5 | `05_output_safety.py` | Same primitive on LLM *output*; list[str] labels (no dispatch). |
+| 4 | `04_llm_shadow.py` | MODEL_SHADOW: rule decides, language model observes, paired log feeds graduation. |
+| 5 | `05_output_safety.py` | Same primitive on language model *output*; list[str] labels (no dispatch). |
 | 6 | `06_ml_primary.py` | ML_PRIMARY end-state + circuit breaker trip/reset. |
 | 7 | `07_llm_as_teacher.py` | Cold-start at MODEL_PRIMARY; operator-triggered graduation. |
 | 8 | `08_classify_vs_dispatch.py` | `classify()` pure vs `dispatch()` side-effecting; graceful handler-failure contract. |
@@ -290,6 +290,77 @@ The rule function you pass to `rule=` MUST be:
   in the math sense, but two close-in-time calls on the same
   input should agree. Otherwise shadow-comparison math is noise.
 
+## Autoresearch primitives
+
+Two classes that pair with `LearnedSwitch` for picking among
+candidate classifiers with statistical confidence. Use them when
+you have multiple variants of the same classification problem
+(prompt variants, model architectures, retrieval strategies,
+scoring formulas) and need an evidence-backed answer to "which
+is best?"
+
+### `CandidateHarness`
+
+Shadow-evaluate candidate classifiers against a live production
+switch. Each candidate runs alongside production on real
+traffic; head-to-head significance verdicts surface promote/hold
+recommendations.
+
+```python
+from dendra import CandidateHarness, LearnedSwitch
+
+sw = LearnedSwitch(rule=production_rule)
+harness = CandidateHarness(switch=sw, truth_oracle=truth_fn, alpha=0.05)
+harness.register("v3", candidate_v3)
+harness.observe_batch(traffic)
+report = harness.evaluate("v3")
+if report.recommend_promote:
+    deploy(candidate_v3)
+```
+
+`CandidateReport` carries `recommend_promote` (the gate
+verdict), `p_value` (head-to-head significance), and `b` / `c`
+(discordant-pair counts). See `examples/19_autoresearch_loop.py`
+for the end-to-end loop.
+
+### `Tournament`
+
+Round-robin head-to-head selection across N candidates. Picks
+the candidate that beats every other at `p < alpha`. Has a
+unanimity short-circuit when all candidates agree on every
+input (no significance test needed in that case).
+
+```python
+from dendra import Tournament
+
+t = Tournament(
+    candidates={
+        "narrow":   narrow_rule,
+        "moderate": moderate_rule,
+        "broad":    broad_rule,
+    },
+    truth_oracle=ground_truth_fn,
+    alpha=0.05,
+)
+t.observe_batch(corpus)
+report = t.evaluate()
+print(report.summary_table())
+if report.winner:
+    ship_default(report.winner)
+```
+
+`TournamentReport` carries `winner`, `unanimous`, `accuracies`
+(per-candidate), and `pairwise_reports` (full N×(N−1) matrix
+of `CandidateReport`s). See `examples/21_tournament.py` for the
+worked walkthrough.
+
+**Pick CandidateHarness** when one candidate is being tested
+against an existing live decision-maker (production) — common
+in autoresearch loops that propose iterative refinements.
+**Pick Tournament** when N candidates need ranking against each
+other — common for picking among prompt variants or scoring
+formulas where there's no incumbent.
+
 ## What Dendra does NOT do (today)
 
 - **Auto-graduate phases.** You set `starting_phase` explicitly;
@@ -297,7 +368,7 @@ The rule function you pass to `rule=` MUST be:
 - **Learn the rule.** The rule is yours, written by you. Dendra
   learns *around* the rule — when to augment it, when to route
   past it.
-- **Manage model-serving infrastructure.** You bring the LLM
+- **Manage model-serving infrastructure.** You bring the language model
   adapter / ML head; Dendra calls `classify()` / `predict()`.
 - **Replace your observability stack.** The outcome log is
   structured and greppable; ship it to your metrics pipeline of

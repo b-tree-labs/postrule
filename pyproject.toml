@@ -82,6 +82,13 @@ anthropic = [
 ollama = [
     "httpx>=0.24",
 ]
+bundled = [
+    # llama-cpp-python is the inference engine for the lazy-downloaded
+    # GGUF defaults (qwen2.5:7b judge + gemma2:2b classifier). Pure-pip
+    # with prebuilt wheels for macOS / Linux / Windows on common
+    # platforms; falls back to compile-from-source on edge cases.
+    "llama-cpp-python>=0.3",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",

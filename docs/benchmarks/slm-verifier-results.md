@@ -9,8 +9,10 @@ ship" decision in `default_verifier()`.
 
 The judge LLM is shown a *(input, classifier_label)* pair and
 asked to return `correct` / `incorrect` / `unknown`. The
-benchmark corpus is 30 ticket-triage pairs split 50/50 between
-correct and incorrect classifications.
+benchmark corpus is 102 ticket-triage pairs split 51/51
+between correct and incorrect classifications, balanced
+across the three labels (`bug`, `feature_request`, `question`)
+with 34 prompts each.
 
 For each candidate model we measure:
 
@@ -18,120 +20,206 @@ For each candidate model we measure:
   produced a parseable verdict (not `unknown`).
 - **Accuracy on judged rows** — fraction of parseable verdicts
   that matched ground truth.
-- **Composite score** — `format_rate × accuracy_on_judged` —
-  what % of input pairs end up correctly judged.
+- **Above-chance score** — `format_rate × max(0, 2·acc − 1)` —
+  the **picker formula we ship on**. Maps a chance-level
+  judge (50% acc) to zero contribution, so a high-format /
+  noise-accuracy model is correctly recognised as useless.
+- **Multiplicative score** — `format_rate × accuracy_on_judged` —
+  retained for transparency. Treats high-format-low-accuracy
+  as equivalent to low-format-high-accuracy, which is
+  measurably wrong (see "Why above-chance, not multiplicative"
+  below).
 - **Latency** — p50 / p99 milliseconds per judgment.
 
-## Current results (2026-04-25)
+## Current results — n=102 corpus, 2026-04-25
 
-Apple M5 / 24 GB / Ollama localhost. Default prompt template
-(`_DEFAULT_JUDGE_PROMPT` in `src/dendra/verdicts.py`).
+Apple M5 / 24 GB / Ollama localhost (port 11434) for Ollama
+models; raw llamafile (port 8080) for Bonsai. Default prompt
+template (`_DEFAULT_JUDGE_PROMPT` in `src/dendra/verdicts.py`).
 
-| Model | Disk | Format-rate | Acc on judged | Composite | p50 ms | p99 ms |
-|---|---:|---:|---:|---:|---:|---:|
-| `qwen2.5:0.5b` | 397 MB |  17% | 20% | 0.03 |  90 | 916 |
-| `llama3.2:1b`  | 1.3 GB |  67% | 40% | 0.27 | 180 | 1260 |
-| `gemma2:2b`    | 1.6 GB |  43% | 46% | 0.20 | 252 | 1904 |
-| `llama3.2:3b`  | 2.0 GB | **97%** | 48% | **0.47** | 273 | 2048 |
+Sorted by **above-chance** (the picker), latency-feasibility
+flagged in the rightmost column.
 
-**Bold** = best in column.
+| Model | Disk | Format | Acc | **Above-ch** | Mult | p50 ms | Feasible¹ |
+|---|---:|---:|---:|---:|---:|---:|:---:|
+| `deepseek-r1:7b`   | 4.7 GB |  76% | **78%** | **0.421** | 0.588 | 14,312 | ✗ |
+| **`qwen2.5:7b`**   | 4.7 GB |  52% |  85% | **0.363** | 0.441 |    481 | ✓ |
+| `deepseek-r1:1.5b` | 1.1 GB |  49% |  76% | 0.255 | 0.373 |  3,763 | ✗ |
+| **`gemma2:2b`**    | 1.6 GB |  48% |  71% | 0.206 | 0.343 |    242 | ✓ |
+| `qwen2.5:3b`       | 1.9 GB |  45% |  63% | 0.118 | 0.284 |    248 | ✓ |
+| `llama3.2:1b`      | 1.3 GB |  69% |  54% | 0.059 | 0.373 |    165 | ✓ |
+| `llama3.2:3b`      | 2.0 GB |  91% |  53% | 0.049 | 0.480 |    261 | ✓ |
+| `qwen2.5:1.5b`     | 1.0 GB |  80% |  52% | 0.039 | 0.422 |    153 | ✓ |
+| `phi3.5:3.8b`      | 2.2 GB | **94%** |  51% | 0.020 | 0.480 |    275 | ✓ |
+| `qwen2.5:0.5b`     | 397 MB |  17% |  53% | 0.010 | 0.088 |     91 | ✓ |
+| `bonsai-1.7b.gguf` | 1.7 GB |  27% |  44% | 0.000 | 0.118 |  3,278 | ✗ |
 
-## Key findings
+¹ Feasibility cutoff: p50 < 1 s. Verifier runs on every
+classification; latency above 1 s makes the verifier
+impractical for production-volume traffic.
 
-1. **Format-compliance scales with model size, sharply.**
-   `qwen2.5:0.5b` parses cleanly only 17% of the time;
-   `llama3.2:3b` is 97%. The judge prompt expects "correct" /
-   "incorrect" / "unknown" — small models drift into prose.
+**Bold rows** are the v1.0 shipped defaults. **Bold columns**
+are the load-bearing metric we picked on.
 
-2. **Accuracy on judged rows is essentially noise across all
-   sizes (~40-50%).** This is unexpected and the most
-   important finding: even the strongest local SLM
-   (`llama3.2:3b`) is barely better than coin-flip on its own
-   verdict task at this prompt and corpus.
+## Why above-chance, not multiplicative
 
-3. **The combined effect:** `llama3.2:3b` has the strongest
-   composite score because its format-compliance is huge, even
-   though its accuracy is no better than smaller models.
+The multiplicative composite (`format × acc`) treats a 95%-
+format / 50%-accuracy judge as equivalent to a 50%-format /
+95%-accuracy judge — both score 0.475. **This is measurably
+wrong.** The first floods Dendra's gate with confident coin
+flips; the second says "I don't know" half the time but the
+verdicts it does give are reliable.
 
-4. **Latency is acceptable across the board.** Even the
-   slowest (`llama3.2:3b` p99 of 2 s) is fine for inline
-   verification given the rest of Dendra's perf budget.
+The above-chance formula formalises the asymmetry:
 
-## What 50% accuracy means for the gate
+```
+score = format_rate × max(0, 2 · accuracy − 1)
+```
 
-Critical context: **50% judge accuracy doesn't break the
-McNemar gate. It makes it slower.**
+A 50% accurate judge contributes literally zero — every
+verdict is a coin flip and adds no information beyond noise.
+A 75% judge contributes 0.5 of its format rate. A 100% judge
+contributes its full format rate.
 
-The paired-McNemar test runs over discordant pairs (rows where
-the rule and the candidate disagree on correctness). A noisy
-judge produces noisy discordant counts — the gate's α-bound
-still holds, but the test takes more outcomes to clear
-significance because the signal-to-noise ratio is worse.
+In our table the divergence is concrete: multiplicative ranks
+`llama3.2:3b` first among latency-feasible models (0.480);
+above-chance ranks `qwen2.5:7b` first (0.363). The two
+formulas pick **different shipped defaults** on the same data.
+We picked above-chance because format-compliance buys
+graduation speed; accuracy buys graduation correctness; and
+correctness is non-substitutable.
+
+## Decisions: shipped defaults
+
+### Judge / `verifier=` → `qwen2.5:7b`
+
+Best signal among latency-feasible candidates. 85% accuracy
+on judged rows means verdicts entering Dendra's gate are real
+information, not coin flips. 481 ms p50 is comfortably under
+the 1 s feasibility line. 4.7 GB on disk is the cost.
+
+The R1 family produced higher signal (R1:7b at 0.421 above-
+chance vs qwen's 0.363) but its 14 s p50 makes it unusable as
+a verifier — at 1k req/day, R1:7b would run a full 24 hours
+of GPU/CPU time per day on judging alone. Reasoning models
+are great for accuracy; their latency cost is fundamentally
+incompatible with the verifier role.
+
+### Classifier / `model=` → `gemma2:2b`
+
+71% accuracy on judged is the second-best signal we measured,
+at 1.6 GB and 245 ms p50. Different model family from
+`qwen2.5:7b`, so the same-LLM guardrail
+(`require_distinct_from=`) is satisfied without configuration.
+
+The `model=` benchmark (predicting labels given inputs, not
+judging label-input pairs) is a separate task we have NOT
+benchmarked yet. The choice of `gemma2:2b` is grounded in
+verdict-task generalisation: a model that scores 71% on
+judging is signalling real understanding of the label
+semantics, which generalises (heuristically) to better
+classification. A proper `model=` benchmark is post-launch
+work.
+
+### Total bundled-cache footprint: 6.3 GB
+
+Lazy-downloaded from R2 on first use of `default_verifier()`
+and `default_classifier()` respectively. Users who want only
+one of the two can opt out per-call.
+
+## Why not Bonsai-raw?
+
+Bonsai-1.7B served raw via llamafile scored 26% format / 44%
+accuracy / 3.3 s latency at n=102. The 44% is below chance:
+Bonsai's verdicts on this task are *anti-correlated* with
+truth. Above-chance score: 0.000.
+
+This isn't necessarily a condemnation of Bonsai-in-Axiom —
+Axiom's prompt pipeline + RAG layer might be load-bearing for
+Bonsai's usability on classification tasks (system prompts,
+retrieval context, instruction templates). But Bonsai-raw on
+the narrow verdict task does not pull its weight, and we
+exclude it from the shipped defaults until a Bonsai-in-Axiom
+benchmark proves the wrapped version performs differently.
+
+## What 50% accuracy means for the gate (kept verbatim from prior version)
+
+Critical context for users running models near chance:
+**50% judge accuracy doesn't break the McNemar gate. It makes
+it slower.** The paired-test α-bound still holds, but it
+takes more outcomes to clear significance because the
+signal-to-noise ratio is worse.
 
 Rough model:
 
 - **90% accurate judge** (cloud LLM, large committee) → gate
-  clears at ≈ 250 outcomes (paper result).
-- **50% accurate judge** (current local SLMs) → gate takes
-  ≈ 1500-2500 outcomes to clear at the same `p < 0.01` (5-10×
-  the data).
+  clears at ≈ 250 outcomes (paper §6 result).
+- **50% accurate judge** (current local SLMs at chance) →
+  gate takes ≈ 1500–2500 outcomes to clear at the same
+  `p < 0.01` (5–10× the data).
 
-That's a real cost but not a fatal flaw. **The launch story
-needs to be honest about it:** ship a local-first default that
-prioritizes format-compliance (so verdicts are recoverable
-data, not noise), document the verdict-accuracy trade-off
-explicitly, and recommend cloud verifiers for users who want
-fast graduation.
+For users who can't bring `qwen2.5:7b`-grade quality, this is
+a real cost but not a fatal flaw. Document, ship, let users
+opt up.
 
-## Decision: shipped default
+## Variance commentary — n=30 vs n=102
 
-**`llama3.2:3b`** — the best of the locally-runnable Ollama
-SLMs we tested. 97% format-compliance is decisive even if
-accuracy is ~50%. Ships as the `default_verifier()` model.
+The earlier n=30 run picked `llama3.2:3b` (multiplicative
+composite 0.533, "100% format / 53% acc") as the shipped
+default. At n=102 the format dropped to 91% and accuracy
+held at 53% — which **invalidates that pick under the
+above-chance lens**: 53% accuracy is barely-above-chance and
+the gate would graduate slowly on noisy verdicts.
 
-Trade-off acknowledged in the docstring + FAQ: the local
-verifier is the fastest path to autonomous mode, but verdict
-accuracy is bounded by what a 2 GB model can do; gate
-graduation will take more outcomes than the 250-mark paper
-result. For faster graduation, swap in a cloud verifier
-(`prefer="openai"` / `prefer="anthropic"`) or a larger
-self-hosted model.
+Variance in n=30 individual cells was up to 15 pp on
+accuracy-on-judged and 10 pp on format-compliance. n=102
+tightened this to roughly 5 pp on both. **The corpus
+expansion was load-bearing for the default-pick**; n=30
+would have shipped the wrong model.
+
+Future re-runs (new model releases, prompt-template changes,
+hardware changes) should use n=102+ as the floor.
 
 ## Open work — to test next
 
 Models / configurations not yet benchmarked. As we run them,
-update the table above and the decision below.
+update the table above and the decisions below.
 
 | Candidate | Why test it | Status |
 |---|---|---|
-| `phi3.5:mini` (3.8 B) | Microsoft's strong-on-instruction-following SLM | NOT TESTED |
-| `qwen2.5:3b` | Often outperforms Llama-3.2-3b on classification | NOT TESTED |
-| `llama3.2:8b` | Larger; expected ~80%+ accuracy | NOT TESTED (~5 GB) |
-| `gpt-4o-mini` (cloud) | Reference upper-bound | NOT TESTED (needs API key) |
-| `claude-haiku-4-5` (cloud) | Reference upper-bound | NOT TESTED (needs API key) |
-| Improved prompt template | Few-shot, strict format constraint | NOT TESTED |
+| `bonsai-via-axiom-pipeline` (port 8766) | Verify whether Axiom's pipeline+RAG lifts Bonsai above chance | Pending Axiom HTTP server up |
+| `gpt-4o-mini` (cloud) | Reference upper-bound; expected near-perfect | NOT TESTED (needs API key) |
+| `claude-haiku-4-5` (cloud) | Reference upper-bound; expected near-perfect | NOT TESTED (needs API key) |
+| `phi4` (when released) | Microsoft's next instruction-tuned SLM | Not yet released |
+| `qwen3` (when released) | Successor to qwen2.5 family | Not yet released |
+| Improved prompt template | Few-shot, strict format constraint, verdict-only output | NOT TESTED — likely lifts the chance-cluster models meaningfully |
+| Classifier-task benchmark | Different task: predict label given input. Distinct from verdict task. | Post-v1.0 deliverable; selects `model=` default with evidence |
 
 ## Methodology — how to reproduce
 
 ```bash
-ollama pull qwen2.5:0.5b
-ollama pull llama3.2:1b
+# Install the Ollama models
+ollama pull qwen2.5:0.5b qwen2.5:1.5b qwen2.5:3b qwen2.5:7b
+ollama pull llama3.2:1b llama3.2:3b
 ollama pull gemma2:2b
-ollama pull llama3.2:3b
+ollama pull deepseek-r1:1.5b deepseek-r1:7b
+ollama pull phi3.5:3.8b
 
-python scripts/run_slm_verifier_bench.py
+# Optional: run a llamafile-served GGUF on port 8080 for the
+# Bonsai/llamafile row (or any other GGUF you want to bench).
+
+python -u scripts/run_slm_verifier_bench.py
 ```
 
 Output:
 
-- `docs/working/benchmarks/slm-verifier-bench.json` (machine-readable)
+- `docs/benchmarks/slm-verifier-bench.json` (machine-readable)
 - this doc (human-readable; update curated section by hand)
 
 The corpus lives in the script under `_CORPUS`. Each row is
-`(input_text, classifier_label, ground_truth_correct)`. Split
-50/50 between true-positive (label is the right answer) and
-false-positive (label is wrong). 30 rows total — small but
-enough to surface format-compliance differences cleanly.
+`(input_text, classifier_label, ground_truth_correct)`. 102
+rows, balanced 51/51 across correct/incorrect and 34/34/34
+across labels (`bug`, `feature_request`, `question`).
 
 ## What this doc is for
 

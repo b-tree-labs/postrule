@@ -18,7 +18,7 @@ where you are:
   `FileStorage`, `SqliteStorage`, `ResilientStorage`. Decision
   matrix + custom-backend recipe.
 - **[Verdict sources](verdict-sources.md)** — `CallableVerdictSource`,
-  `LLMJudgeSource`, `LLMCommitteeSource`, `WebhookVerdictSource`,
+  `JudgeSource`, `JudgeCommittee`, `WebhookVerdictSource`,
   `HumanReviewerSource`. Decision matrix + bias-guardrail rationale.
 - **[Async API](async.md)** — `aclassify` / `adispatch` /
   parallel-committee judging. FastAPI / LangGraph / LlamaIndex
@@ -26,10 +26,10 @@ where you are:
 
 ## Deep dives
 
-- **[Autoresearch — the production substrate](autoresearch.md)** —
-  the slam-dunk integration story. Why your autoresearch loop
-  needs Dendra to ship its candidates to production with
-  statistical confidence.
+- **[Autoresearch loops](autoresearch.md)** —
+  using `CandidateHarness` to gate proposals from a language-model-driven
+  loop with head-to-head significance tests before they land
+  in production.
 - **[Paper](papers/2026-when-should-a-rule-learn/)** — *"When
   should a rule learn? A statistical framework for graduated ML
   autonomy"* — the academic anchor. Includes outline,
@@ -82,19 +82,19 @@ self-contained, runs without API keys, and walks one concept.
 | [`01_hello_world.py`](../examples/01_hello_world.py) | Smallest complete example. |
 | [`02_outcome_log.py`](../examples/02_outcome_log.py) | `persist=True` + ground-truth verdicts. |
 | [`03_safety_critical.py`](../examples/03_safety_critical.py) | Architectural rule-floor guarantee. |
-| [`04_llm_shadow.py`](../examples/04_llm_shadow.py) | LLM observes, rule decides. |
-| [`05_output_safety.py`](../examples/05_output_safety.py) | Same primitive on LLM output. |
+| [`04_llm_shadow.py`](../examples/04_llm_shadow.py) | language model observes, rule decides. |
+| [`05_output_safety.py`](../examples/05_output_safety.py) | Same primitive on model output. |
 | [`06_ml_primary.py`](../examples/06_ml_primary.py) | End-state ML decisions + circuit breaker. |
-| [`07_llm_as_teacher.py`](../examples/07_llm_as_teacher.py) | Cold-start with LLM-labeled outcomes. |
+| [`07_llm_as_teacher.py`](../examples/07_llm_as_teacher.py) | Cold-start with model-labeled outcomes. |
 | [`08_classify_vs_dispatch.py`](../examples/08_classify_vs_dispatch.py) | The two verbs. |
 | [`09_verdict_webhook.py`](../examples/09_verdict_webhook.py) | Async verdict ingestion. |
 | [`10_bulk_verdict_ingestion.py`](../examples/10_bulk_verdict_ingestion.py) | Bulk preload + reviewer round-trip. |
-| [`11_llm_judge.py`](../examples/11_llm_judge.py) | LLM judge with self-judgment guardrail. |
-| [`12_llm_committee.py`](../examples/12_llm_committee.py) | Multi-LLM committee aggregation. |
+| [`11_llm_judge.py`](../examples/11_llm_judge.py) | model judge with self-judgment guardrail. |
+| [`12_llm_committee.py`](../examples/12_llm_committee.py) | Multi-model committee aggregation. |
 | [`13_webhook_verdicts.py`](../examples/13_webhook_verdicts.py) | External-endpoint verdict source. |
 | [`14_human_reviewer_queue.py`](../examples/14_human_reviewer_queue.py) | Queue-backed human-in-the-loop. |
 | [`15_async_fastapi.py`](../examples/15_async_fastapi.py) | FastAPI integration. |
-| [`16_async_committee.py`](../examples/16_async_committee.py) | `asyncio.gather` over LLM judges. |
+| [`16_async_committee.py`](../examples/16_async_committee.py) | `asyncio.gather` over model judges. |
 | [`17_exception_handling.py`](../examples/17_exception_handling.py) | Dendra as a try/except-tree replacement. |
 | [`18_system_defaults_tuning.py`](../examples/18_system_defaults_tuning.py) | Post-install tuning of system defaults. |
 | [`19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py) | End-to-end autoresearch + Dendra. |

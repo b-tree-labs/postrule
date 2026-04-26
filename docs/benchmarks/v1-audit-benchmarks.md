@@ -160,7 +160,7 @@ Dispatch overhead over classify: **0.50 µs** p50 (label lookup + action invocat
 3. **Document the `auto_record` default tax in the README.** Pair it with a recipe: `auto_record=False` for throughput-sensitive call sites.
 4. **Record a live TF-IDF + real LLM measurement** to replace the hardcoded `105 µs` / `250 ms` README numbers. Current numbers above use stubs for determinism — they verify switch overhead, not ML-head cost.
 5. **Investigate the `record_verdict` + `FileStorage` ~1 ms cost.** Keep-fd-open or buffered-append variant would drop this into tens of µs. Already flagged in the earlier perf audit — now that we ship `auto_record=True` by default, the remediation is higher priority.
-6. **Re-run this suite on release hardware** before v1 and diff the JSONL against `docs/working/benchmarks/v1-baseline-YYYY-MM-DD.jsonl` — the raw data is stored one-row-per-cell so `jq` and pandas diffs are trivial.
+6. **Re-run this suite on release hardware** before v1 and diff the JSONL against the baseline kept under `docs/benchmarks/` — the raw data is stored one-row-per-cell so `jq` and pandas diffs are trivial.
 
 ## Methodology notes
 

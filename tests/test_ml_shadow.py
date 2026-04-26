@@ -40,7 +40,7 @@ class FakeMLHead:
 
 
 @dataclass
-class FakeLLM:
+class FakeLM:
     label: str = "bug"
     confidence: float = 0.9
 
@@ -70,12 +70,12 @@ class TestMLHeadProtocol:
 class TestMLShadowRouting:
     def test_shadow_does_not_change_user_decision(self):
         ml = FakeMLHead(label="feature_request", confidence=0.95)
-        llm = FakeLLM(label="bug", confidence=0.9)
+        model_stub = FakeLM(label="bug", confidence=0.9)
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            model=llm,
+            model=model_stub,
             ml_head=ml,
             config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW, confidence_threshold=0.85),
         )
@@ -93,7 +93,7 @@ class TestMLShadowRouting:
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(),
+            model=FakeLM(),
             config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         with pytest.raises(ValueError, match="ml"):
@@ -112,7 +112,7 @@ class TestMLShadowRouting:
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(label="bug", confidence=0.9),
+            model=FakeLM(label="bug", confidence=0.9),
             ml_head=BrokenML(),
             config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
@@ -128,7 +128,7 @@ class TestMLShadowOutcomeCapture:
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(label="bug", confidence=0.9),
+            model=FakeLM(label="bug", confidence=0.9),
             ml_head=ml,
             config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
@@ -138,7 +138,7 @@ class TestMLShadowOutcomeCapture:
         assert len(recs) == 1
         assert recs[0].ml_output == "feature_request"
         assert recs[0].ml_confidence == pytest.approx(0.6)
-        # rule and llm shadows still captured for side-by-side analysis.
+        # rule and model shadows still captured for side-by-side analysis.
         assert recs[0].rule_output == "bug"
         assert recs[0].model_output == "bug"
 
@@ -150,7 +150,7 @@ class TestMLShadowStatus:
             name="triage",
             rule=_rule,
             author="alice",
-            model=FakeLLM(label="bug", confidence=0.95),
+            model=FakeLM(label="bug", confidence=0.95),
             ml_head=ml,
             config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )

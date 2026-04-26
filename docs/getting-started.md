@@ -19,12 +19,14 @@ decorator; TypeScript and Mojo-compat bindings follow — that
 wraps a hand-written classification rule and manages its
 evolution through six lifecycle phases, from `RULE` (your rule
 decides) to `ML_PRIMARY` (a trained ML head decides, rule as
-safety net). Graduation between phases is **evidence-gated**: a
-configurable gate (the default is McNemar's paired-proportion
-test; `AccuracyMarginGate`, `CompositeGate`, `MinVolumeGate`,
-and `ManualGate` ship out of the box, and any `Gate`-conforming
-object works) reads the outcome log and advances only when the
-target phase is reliably better than the current one.
+safety net). Graduation between phases is **evidence-gated**:
+a configurable gate compares the candidate against the current
+decision-maker on the same inputs and advances only when the
+target phase is reliably better. The default is a head-to-head
+significance gate (`McNemarGate` — McNemar's exact test under
+the hood); `AccuracyMarginGate`, `CompositeGate`,
+`MinVolumeGate`, and `ManualGate` also ship, and any
+`Gate`-conforming object works.
 
 You keep the rule. Dendra learns around it.
 
@@ -33,11 +35,11 @@ You keep the rule. Dendra learns around it.
 Three things happen around a switch, in this order:
 
 1. **You call the rule** (or `.classify` / `.dispatch`). Dendra
-   runs it, optionally runs a shadow LLM or ML head depending on
+   runs it, optionally runs a shadow language model or ML head depending on
    the phase, and returns the label. **Dendra also auto-appends
    a `ClassificationRecord`** to the outcome log with
    `outcome=UNKNOWN` and every shadow observation captured —
-   drift dashboards, ROI reports, and multi-LLM scorecards now
+   drift dashboards, ROI reports, and multi-language model scorecards now
    work for you with no extra calls.
 2. **You report the verdict when it arrives.** The ergonomic
    path is `result.mark_correct()` /
@@ -313,8 +315,8 @@ the gate. Pass `gate=ManualGate()` or set `auto_advance=False`
 for operator-only graduation; then call `switch.advance()`
 yourself from a cron or ops workflow.
 
-**Does the rule still run once the LLM takes over?**
-At MODEL_SHADOW and ML_SHADOW, yes — the rule decides; the LLM
+**Does the rule still run once the language model takes over?**
+At MODEL_SHADOW and ML_SHADOW, yes — the rule decides; the language model
 or ML is shadow-observed. At MODEL_PRIMARY and
 ML_WITH_FALLBACK, the rule runs as a fallback when the primary
 has low confidence or fails. At ML_PRIMARY, the rule is only
@@ -333,7 +335,7 @@ If your model adapter is async, wrap it with `asyncio.run`
 inside a sync adapter shim. Native async support is on the
 roadmap.
 
-**Where's the LLM adapter?**
+**Where's the language-model adapter?**
 `OpenAIAdapter`, `AnthropicAdapter`, `OllamaAdapter`,
 `LlamafileAdapter` ship out of the box; import from `dendra`.
 Pass one as `model=` to the switch; Dendra calls its

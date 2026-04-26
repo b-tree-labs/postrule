@@ -442,19 +442,10 @@ submission.
 
 ### Deeper reads
 
-- **`docs/marketing/industry-applicability.md`** — full
-  per-category analysis, unit economics, worked example of org-level
-  savings, honest "where Dendra doesn't fit" list.
-- **`docs/marketing/business-model-and-moat.md`** — Snyk+Temporal
-  analog, three-mode analyzer design (static scanner → dynamic
-  measurement → full graduation), monetization tiers, 8 moat bricks
-  ranked by durability.
-- **`docs/marketing/entry-with-end-in-mind.md`** — year-one
-  positioning calibrated against year-three endpoints (canonical
-  primitive, analyzer corpus moat, regulated-vertical enterprise).
-- **`docs/marketing/dendra-one-pager.md`** — 1-page buyer pitch.
-- **`docs/working/internal-use-cases-scan-2026-04-20.md`** — the
-  nine Dendra-fit sites in the Axiom codebase, ranked.
+- **`docs/scenarios.md`** — public-facing per-industry
+  applicability analysis with cited volume + financial-impact
+  ranges; complementary to the per-category breakdown the paper
+  cites.
 - **`strengthening-plan.md`** (this directory) — tier-A/B/C rigor
   plan to strengthen the paper before submission.
 

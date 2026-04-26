@@ -123,12 +123,12 @@ hand-coded rules don't share.
 
 Cited specifically in the verdict-source / committee-bias
 discussion. The self-judgment-bias guardrail in
-`LLMJudgeSource` rests on this literature.
+`JudgeSource` rests on this literature.
 
 ### MUST
 
 - **Liu, Y., Iter, D., Xu, Y., Wang, S., Xu, R., & Zhu, C. (2023). G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment.** *EMNLP 2023.* arXiv:2303.16634.
-  *LLM-as-judge methodology + the bias caveats. Direct citation for our `LLMJudgeSource` self-judgment guardrail.*
+  *LLM-as-judge methodology + the bias caveats. Direct citation for our `JudgeSource` self-judgment guardrail.*
 
 - **Zheng, L., Chiang, W.-L., Sheng, Y., Zhuang, S., Wu, Z., Zhuang, Y., Lin, Z., Li, Z., Li, D., Xing, E. P., Zhang, H., Gonzalez, J. E., & Stoica, I. (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena.** *NeurIPS 2023.* arXiv:2306.05685.
   *Establishes when LLM-as-judge is reliable and where the bias is. Cite in §verdict-sources for the same-LLM-as-judge-and-classifier anti-pattern.*

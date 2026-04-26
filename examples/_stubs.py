@@ -10,7 +10,7 @@
 The purpose: every example in `examples/01_*.py` through
 `examples/20_*.py` is self-contained, runs without network, and
 demonstrates exactly one Dendra concept. To keep that promise we
-need stand-ins for the real LLM adapters / ML heads / verdict
+need stand-ins for the real language-model adapters / ML heads / verdict
 sources — and we want those stand-ins to be visually obvious so
 a reader doesn't waste cognitive cycles tracing whether the
 fixture is "real" or "demo only."
@@ -21,8 +21,8 @@ in" line showing what to replace it with.
 
 Examples import from here as a sibling module:
 
-    from _stubs import FakeLLMJudge
-    # ... use FakeLLMJudge wherever a real LLM adapter would go.
+    from _stubs import FakeJudgeLM
+    # ... use FakeJudgeLM wherever a real language-model adapter would go.
 
 Python's automatic addition of the script's directory to
 `sys.path[0]` makes the bare `from _stubs import ...` work when
@@ -38,23 +38,23 @@ from dendra import MLPrediction, ModelPrediction, Verdict
 
 
 # ---------------------------------------------------------------------------
-# LLM adapters — fake "ModelClassifier" implementations
+# language-model adapters — fake "ModelClassifier" implementations
 # ---------------------------------------------------------------------------
 
 
-class FakeLLMJudge:
-    """Demo fixture — pretends to be an LLM judge for offline runs.
+class FakeJudgeLM:
+    """Demo fixture — pretends to be a model judge for offline runs.
 
     **Production swap-in:**
 
-    - ``LLMJudgeSource(OllamaAdapter(model="llama3.2:3b"))`` — local, zero cost
-    - ``LLMJudgeSource(OpenAIAdapter(model="gpt-4o-mini"))`` — cloud, fastest
+    - ``JudgeSource(OllamaAdapter(model="llama3.2:3b"))`` — local, zero cost
+    - ``JudgeSource(OpenAIAdapter(model="gpt-4o-mini"))`` — cloud, fastest
     - ``default_verifier()`` — auto-detects whichever you have
 
     The classify() method is given a rendered prompt (string)
     that contains the original input + the classifier's label.
     It returns ``correct`` / ``incorrect`` / ``unknown`` so the
-    surrounding LLMJudgeSource can map to a Verdict.
+    surrounding JudgeSource can map to a Verdict.
 
     Toy logic: agree (return "correct") on prompts that mention
     "crash" or "how do i"; disagree otherwise. The specific
@@ -71,8 +71,8 @@ class FakeLLMJudge:
         return ModelPrediction(label="incorrect", confidence=0.85)
 
 
-class FakeLLMClassifier:
-    """Demo fixture — pretends to be an LLM classifier for offline runs.
+class FakeLMClassifier:
+    """Demo fixture — pretends to be a language model classifier for offline runs.
 
     **Production swap-in:**
 
@@ -169,8 +169,8 @@ class FakeFlakyMLHead:
 
 
 # ---------------------------------------------------------------------------
-# Verdict sources — fake VerdictSource implementations beyond the LLM judges
-# above (the LLMJudgeSource family already wraps FakeLLMJudge cleanly)
+# Verdict sources — fake VerdictSource implementations beyond the model judges
+# above (the JudgeSource family already wraps FakeJudgeLM cleanly)
 # ---------------------------------------------------------------------------
 
 
@@ -182,7 +182,7 @@ class FakeOracle:
     - A labeled validation-set lookup
     - A downstream-signal aggregator (with the time-delay wrapper
       to wait for the signal)
-    - An ``LLMCommitteeSource`` for high-quality consensus
+    - An ``JudgeCommittee`` for high-quality consensus
 
     Returns whatever ground-truth label the example needs to
     demonstrate its concept.

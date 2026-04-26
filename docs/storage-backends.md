@@ -4,10 +4,10 @@
 Relevant code: `src/dendra/storage.py`, tests under
 `tests/test_storage*.py`.
 
-The outcome log is the substrate for every decision Dendra
-makes downstream — phase graduation, drift detection, ROI
-estimation, multi-LLM comparison. Picking the right backend is
-the single most important deployment choice.
+Every downstream decision Dendra makes — phase graduation,
+drift detection, ROI estimation, multi-language model comparison — reads
+off the outcome log, so the storage backend choice is the
+deployment knob with the largest blast radius.
 
 ## Backend matrix
 

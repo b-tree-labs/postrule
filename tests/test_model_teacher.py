@@ -3,7 +3,7 @@
 
 """Tests for the LLM-as-teacher bootstrapping pattern.
 
-Verifies ``train_ml_from_llm_outcomes`` correctly filters the outcome
+Verifies ``train_ml_from_model_outcomes`` correctly filters the outcome
 log to LLM-labeled records and trains only when the minimum-sample
 threshold is met.
 """
@@ -18,7 +18,7 @@ from dendra import (
     LearnedSwitch,
     ModelPrediction,
 )
-from dendra.research import train_ml_from_llm_outcomes
+from dendra.research import train_ml_from_model_outcomes
 
 
 class _FakeMLHead:
@@ -69,13 +69,13 @@ def _write_outcomes(switch: LearnedSwitch, n: int, source: str, outcome: str):
 # ---------------------------------------------------------------------------
 
 
-class TestLLMAsTeacherHelper:
-    def test_fits_when_llm_outcomes_meet_threshold(self):
+class TestLMAsTeacherHelper:
+    def test_fits_when_model_outcomes_meet_threshold(self):
         sw = _make_switch()
         _write_outcomes(sw, 250, source="model", outcome="correct")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=200)
+        used = train_ml_from_model_outcomes(switch=sw, ml_head=head, min_llm_outcomes=200)
         assert used == 250
         assert head.trained_count == 250
 
@@ -84,17 +84,17 @@ class TestLLMAsTeacherHelper:
         _write_outcomes(sw, 50, source="model", outcome="correct")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=200)
+        used = train_ml_from_model_outcomes(switch=sw, ml_head=head, min_llm_outcomes=200)
         assert used == 0
         assert head.trained_count == 0
 
-    def test_filters_out_non_llm_outcomes(self):
+    def test_filters_out_non_model_outcomes(self):
         sw = _make_switch()
         _write_outcomes(sw, 100, source="model", outcome="correct")
         _write_outcomes(sw, 500, source="rule", outcome="correct")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=50)
+        used = train_ml_from_model_outcomes(switch=sw, ml_head=head, min_llm_outcomes=50)
         # Only the 100 LLM records qualify; the 500 rule records are
         # ignored (this is the LLM-as-teacher intent — train only on
         # LLM-labeled data).
@@ -107,7 +107,7 @@ class TestLLMAsTeacherHelper:
         _write_outcomes(sw, 100, source="model", outcome="unknown")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=100)
+        used = train_ml_from_model_outcomes(switch=sw, ml_head=head, min_llm_outcomes=100)
         # Default filter keeps only "correct" outcomes.
         assert used == 300
 
@@ -117,7 +117,7 @@ class TestLLMAsTeacherHelper:
         _write_outcomes(sw, 50, source="model", outcome="unknown")
 
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(
+        used = train_ml_from_model_outcomes(
             switch=sw,
             ml_head=head,
             min_llm_outcomes=100,
@@ -128,6 +128,6 @@ class TestLLMAsTeacherHelper:
     def test_empty_log_returns_zero(self):
         sw = _make_switch()
         head = _FakeMLHead()
-        used = train_ml_from_llm_outcomes(switch=sw, ml_head=head, min_llm_outcomes=100)
+        used = train_ml_from_model_outcomes(switch=sw, ml_head=head, min_llm_outcomes=100)
         assert used == 0
         assert head.trained_count == 0

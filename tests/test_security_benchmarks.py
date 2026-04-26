@@ -23,9 +23,9 @@ produce measurable numbers for the applicability doc (§8.7):
 - **Circuit-breaker stress (BRK)**: repeated ML failures over many
   classifications; breaker trips once, stays tripped until reset.
 
-Numbers produced by these tests are cited in
-``docs/marketing/industry-applicability.md`` §8.7 / Property 7
-("LLM output classification / moderation").
+Numbers produced by these tests cover the "LLM output
+classification / moderation" property (see ``docs/scenarios.md``
+for the situations where this matters most).
 """
 
 from __future__ import annotations
@@ -321,7 +321,7 @@ class TestJailbreakCorpus:
         reason=(
             "Live-provider jailbreak run is opt-in — no network / no "
             "API keys consumed by default. Set DENDRA_JAILBREAK_LIVE=1 "
-            "to enable. See docs/working/v1-readiness.md decision D1."
+            "to enable."
         ),
     )
     def test_rule_floor_holds_on_all_jailbreaks_live_provider(self):
@@ -364,7 +364,7 @@ class TestJailbreakCorpus:
                 hits += 1
         assert hits == len(_JAILBREAK_CORPUS)
 
-    def test_shadow_llm_recorded_but_not_decision_making(self):
+    def test_shadow_model_recorded_but_not_decision_making(self):
         @dataclass
         class JailbrokenLLM:
             def classify(self, input, labels):

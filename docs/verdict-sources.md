@@ -13,8 +13,8 @@ protocol so you can add your own.
 | Source | Use when | Bias risk | Latency |
 |---|---|---|---|
 | [`CallableVerdictSource`](#callableverdictsource) | Truth is computable locally — downstream signal, DB lookup, business rule. | None (deterministic code). | Callable-bound. |
-| [`LLMJudgeSource`](#llmjudgesource) | A distinct LLM can critique the classifier's output. | **Medium** — mitigated by the self-judgment guardrail. | One LLM call per verdict. |
-| [`LLMCommitteeSource`](#llmcommitteesource) | Multiple distinct LLMs; willing to pay N× cost for tighter bias control. | Low under majority / unanimous aggregation. | N LLM calls per verdict. |
+| [`JudgeSource`](#llmjudgesource) | A distinct language model can critique the classifier's output. | **Medium** — mitigated by the self-judgment guardrail. | One model call per verdict. |
+| [`JudgeCommittee`](#llmcommitteesource) | Multiple distinct language models; willing to pay N× cost for tighter bias control. | Low under majority / unanimous aggregation. | N model calls per verdict. |
 | [`WebhookVerdictSource`](#webhookverdictsource) | External system (CRM, fraud, payments) can report outcomes on demand. | External-system-dependent. | HTTP round-trip per verdict. |
 | [`HumanReviewerSource`](#humanreviewersource) | A human in the loop produces the ground-truth signal. | None (if reviewers are disciplined). | Queue-bound; timeout → UNKNOWN. |
 
@@ -29,8 +29,8 @@ at end-of-batch.
 Every `VerdictSource` exposes a stable `source_name` string:
 
 - `CallableVerdictSource(fn, name="oracle")` → `callable:oracle`
-- `LLMJudgeSource(GPT)` → `llm-judge:gpt-4o-mini`
-- `LLMCommitteeSource([A, B, C], mode="majority")` → `llm-committee:A|B|C(majority)`
+- `JudgeSource(GPT)` → `llm-judge:gpt-4o-mini`
+- `JudgeCommittee([A, B, C], mode="majority")` → `llm-committee:A|B|C(majority)`
 - `WebhookVerdictSource(endpoint, name="crm")` → `webhook:crm`
 - `HumanReviewerSource(name="ops-team")` → `human-reviewer:ops-team`
 
@@ -42,7 +42,7 @@ human-verified verdicts" become a simple
 
 ## Self-judgment bias guardrail
 
-Using the same LLM as both classifier and judge is a
+Using the same language model as both classifier and judge is a
 well-documented failure mode
 ([G-Eval, NAACL 2023](https://arxiv.org/abs/2303.16634);
 [MT-Bench, NeurIPS 2023](https://arxiv.org/abs/2306.05685);
@@ -50,12 +50,12 @@ Chatbot Arena, ICML 2024). The same model agrees with its own
 outputs even when wrong, biasing verdicts toward the
 classifier's own errors.
 
-Both `LLMJudgeSource` and `LLMCommitteeSource` accept
+Both `JudgeSource` and `JudgeCommittee` accept
 `require_distinct_from=<classifier>`. At construction, Dendra
 checks `judge is classifier` **and** `(class_name,
 model_string)` — which catches the "two separate
 `OpenAIAdapter(model='gpt-4o-mini')` instances" case. If they
-resolve to the same LLM, construction raises `ValueError` with
+resolve to the same language model, construction raises `ValueError` with
 a reference to the literature. Pass
 `guard_against_same_llm=False` only when the caller explicitly
 accepts the bias risk and has their own mitigation.
@@ -78,15 +78,15 @@ Any `(input, label) -> Verdict` callable works. Return value
 must be a `Verdict` instance — string values raise `TypeError`
 so a mistyped return doesn't silently poison the log.
 
-### LLMJudgeSource
+### JudgeSource
 
 ```python
-from dendra import OpenAIAdapter, AnthropicAdapter, LLMJudgeSource
+from dendra import OpenAIAdapter, AnthropicAdapter, JudgeSource
 
 classifier = OpenAIAdapter(model="gpt-4o-mini")
 judge_model = AnthropicAdapter(model="claude-haiku-4-5")
 
-judge = LLMJudgeSource(judge_model, require_distinct_from=classifier)
+judge = JudgeSource(judge_model, require_distinct_from=classifier)
 verdict = judge.judge(input, classifier_label)
 ```
 
@@ -94,12 +94,12 @@ Judge-side failures (network error, rate-limit, parse error)
 absorb to `Verdict.UNKNOWN` — an outage on the critic never
 breaks the caller's audit loop.
 
-### LLMCommitteeSource
+### JudgeCommittee
 
 ```python
-from dendra import LLMCommitteeSource
+from dendra import JudgeCommittee
 
-committee = LLMCommitteeSource(
+committee = JudgeCommittee(
     [OpenAIAdapter(model="gpt-4o-mini"),
      AnthropicAdapter(model="claude-haiku-4-5"),
      OllamaAdapter(model="llama3.2:1b")],

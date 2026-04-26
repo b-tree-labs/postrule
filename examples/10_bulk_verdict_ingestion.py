@@ -30,7 +30,6 @@ from __future__ import annotations
 from dendra import (
     BulkVerdict,
     LearnedSwitch,
-    SwitchConfig,
     Verdict,
     ml_switch,
 )
@@ -39,7 +38,7 @@ from dendra import (
 @ml_switch(
     labels=["bug", "feature_request", "question"],
     # auto_advance off so the example's output is deterministic.
-    config=SwitchConfig(auto_record=True, auto_advance=False),
+    auto_advance=False,
 )
 def triage_rule(ticket: dict) -> str:
     """Route a ticket into one of the three labels."""

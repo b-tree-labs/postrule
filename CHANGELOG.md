@@ -194,14 +194,6 @@ work that landed during the pre-launch period:
 - **`docs/FAQ.md`** — pre-answers to the questions HN / r/ML
   commenters routinely ask (shadow mode / online learning /
   AutoML / licensing / patent / latency).
-- **`docs/marketing/analyzer-dogfood-2026-04-22.md`** —
-  launch-week blog post with `dendra analyze` results from
-  Sentry, PostHog, HuggingFace Transformers, LangChain (+
-  calibration contrast from Airbyte CDK and dbt-core).
-- **`docs/marketing/launch-post-drafts.md`** — copy-paste-ready
-  drafts for HN + r/ML + LinkedIn, plus launch-day cadence
-  guidance.
-
 ### Changed
 
 - **License: now split Apache 2.0 + BSL 1.1.** The client SDK

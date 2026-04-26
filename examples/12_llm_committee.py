@@ -1,10 +1,10 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""LLMCommitteeSource — multi-LLM committee aggregation.
+"""JudgeCommittee — multi-model committee aggregation.
 
 Run: `python examples/12_llm_committee.py`
 
-A committee of distinct LLMs judges each classification. Three
+A committee of distinct language models judges each classification. Three
 aggregation modes:
 
 - ``majority``: the plurality wins; ties go to UNKNOWN.
@@ -15,8 +15,8 @@ aggregation modes:
   this falls through to majority semantics so callers can pin the
   enum name today and upgrade later without code changes.
 
-The same self-judgment guardrail as :class:`LLMJudgeSource`
-applies: none of the committee members may be the same LLM as
+The same self-judgment guardrail as :class:`JudgeSource`
+applies: none of the committee members may be the same language model as
 the classifier. Construction fails loudly if they are.
 
 This example runs locally with stubs; swap in real adapters for
@@ -32,7 +32,7 @@ production:
 from __future__ import annotations
 
 from dendra import ModelPrediction, Verdict
-from dendra.verdicts import LLMCommitteeSource
+from dendra.verdicts import JudgeCommittee
 
 
 class _StubJudge:
@@ -54,7 +54,7 @@ def main() -> None:
         _StubJudge("claude-haiku-4-5", "correct"),
         _StubJudge("llama3.2:1b", "incorrect"),  # dissent
     ]
-    committee = LLMCommitteeSource(majority_judges, mode="majority")
+    committee = JudgeCommittee(majority_judges, mode="majority")
     print(f"  {committee.source_name}")
     print(f"  verdict: {committee.judge('input', 'bug').value}")
 
@@ -65,13 +65,13 @@ def main() -> None:
         _StubJudge("claude-haiku-4-5", "incorrect"),  # blocks
         _StubJudge("llama3.2:1b", "correct"),
     ]
-    strict = LLMCommitteeSource(unan_judges, mode="unanimous")
+    strict = JudgeCommittee(unan_judges, mode="unanimous")
     print(f"  {strict.source_name}")
     v = strict.judge("input", "bug")
     print(f"  verdict: {v.value}  # one dissent → UNKNOWN, not CORRECT")
 
     # Flip all three to correct → unanimous fires.
-    agree_all = LLMCommitteeSource(
+    agree_all = JudgeCommittee(
         [
             _StubJudge("gpt-4o-mini", "correct"),
             _StubJudge("claude-haiku-4-5", "correct"),
@@ -85,7 +85,7 @@ def main() -> None:
     print("\nPattern 3: guardrail\n")
     try:
         classifier = _StubJudge("gpt-4o-mini", "correct")
-        LLMCommitteeSource(
+        JudgeCommittee(
             [
                 _StubJudge("claude-haiku-4-5", "correct"),
                 _StubJudge("gpt-4o-mini", "correct"),  # same as classifier
