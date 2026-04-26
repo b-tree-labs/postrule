@@ -261,6 +261,17 @@ matrix.
 def triage_rule(ticket): ...
 ```
 
+> **Production heads-up.** The default storage is
+> `BoundedInMemoryStorage` — fast, but the log dies with the
+> process and rotates FIFO at 10k records. **For any deployment
+> that has to survive restarts, or where your verdict rate is
+> below ~2%, set `persist=True` (or pick a durable
+> `storage=`).** Below that rate, FIFO eviction silently rolls
+> verdict-bearing rows out before the gate has enough paired
+> evidence to advance — the classifier just looks stuck.
+> [`storage-backends.md`](./storage-backends.md#low-verdict-rate-footgun)
+> has the math.
+
 **Safety-critical cap.** For classifications where the rule
 floor must remain reachable (auth, content-safety, HIPAA-bound
 decisions): refuse the final phase at construction time.
