@@ -68,7 +68,7 @@ committee = JudgeCommittee(
     [
         OpenAIAsyncAdapter(model="gpt-4o-mini"),
         AnthropicAsyncAdapter(model="claude-haiku-4-5"),
-        OllamaAsyncAdapter(model="llama3.2:1b"),
+        OllamaAsyncAdapter(model="qwen2.5:7b"),
     ],
     mode="majority",
 )

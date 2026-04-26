@@ -184,8 +184,9 @@ p50 (writes an UNKNOWN outcome record each call). Measured in
 
 At Phase.ML_WITH_FALLBACK with a TF-IDF + logistic head, ~105 µs
 p50 — well inside typical web-request budgets. At MODEL_PRIMARY
-with a local llama3.2:1b, ~250 ms (dominated by the language model, not
-Dendra). `persist=True` (batched FileStorage) adds 33 µs p50;
+with the shipped local default (`qwen2.5:7b` via Ollama), ~481 ms
+p50 (dominated by the language model, not Dendra). `persist=True`
+(batched FileStorage) adds 33 µs p50;
 per-call fsync durability is an explicit 195 µs opt-in for
 regulated workloads. See `docs/benchmarks/v1-audit-benchmarks.md`
 for the full matrix.

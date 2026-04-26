@@ -25,7 +25,7 @@ production:
     judges = [
         OpenAIAdapter(model="gpt-4o-mini"),
         AnthropicAdapter(model="claude-haiku-4-5"),
-        OllamaAdapter(model="llama3.2:1b"),
+        OllamaAdapter(model="qwen2.5:7b"),
     ]
 """
 

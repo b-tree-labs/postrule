@@ -47,7 +47,7 @@ class FakeJudgeLM:
 
     **Production swap-in:**
 
-    - ``JudgeSource(OllamaAdapter(model="llama3.2:3b"))`` — local, zero cost
+    - ``JudgeSource(OllamaAdapter(model="qwen2.5:7b"))`` — local, zero cost
     - ``JudgeSource(OpenAIAdapter(model="gpt-4o-mini"))`` — cloud, fastest
     - ``default_verifier()`` — auto-detects whichever you have
 
@@ -78,7 +78,7 @@ class FakeLMClassifier:
 
     - ``OpenAIAdapter(model="gpt-4o-mini")``
     - ``AnthropicAdapter(model="claude-haiku-4-5")``
-    - ``OllamaAdapter(model="llama3.2:3b")``
+    - ``OllamaAdapter(model="qwen2.5:7b")``
 
     Used in examples that show MODEL_SHADOW or MODEL_PRIMARY
     phases. Returns a deterministic prediction matching the
