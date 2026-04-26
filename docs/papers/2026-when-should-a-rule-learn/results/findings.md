@@ -70,7 +70,7 @@ two very different sales conversations:
   same input and returns a label. We use TF-IDF + logistic regression
   — simple, fast, interpretable. Bigger models would do better but
   would muddy the comparison.
-- **Outcome.** A row in the log saying *"when the input was X, the
+- **Verdict.** A row in the log saying *"when the input was X, the
   correct label was Y"*. In production, this comes from user
   correction, audit trails, downstream-signal inference.
 - **Training stream.** We feed training examples to Dendra one at a
@@ -82,8 +82,8 @@ two very different sales conversations:
   outcome count. Each JSONL row (except the summary) is one checkpoint.
 - **Crossover / transition depth.** The smallest outcome count at
   which ML beats the rule on the test set. The paper's headline metric.
-- **Phase (0-5).** Dendra's six lifecycle stages: RULE → LLM_SHADOW
-  → LLM_PRIMARY → ML_SHADOW → ML_WITH_FALLBACK → ML_PRIMARY. Higher
+- **Phase (0-5).** Dendra's six lifecycle stages: RULE → MODEL_SHADOW
+  → MODEL_PRIMARY → ML_SHADOW → ML_WITH_FALLBACK → ML_PRIMARY. Higher
   phase = more autonomy; the rule is always the safety floor.
 - **Shadow mode.** The LLM or ML runs, its prediction is recorded,
   but the rule's decision is still what the user sees. Lets you
@@ -96,8 +96,11 @@ two very different sales conversations:
   probability the difference is random. Unpaired = we don't use
   per-example correlations (more conservative).
 - **McNemar's paired test.** A stronger version of the above that
-  uses per-example agreement. Tighter but requires saving per-row
-  predictions; deferred.
+  uses per-example agreement. Requires per-row predictions on the
+  test set. **Now the primary result** — per-example correctness
+  persists in each checkpoint's ``rule_correct`` / ``ml_correct``
+  arrays, and the "Statistical transition depth" section reports
+  paired p-values.
 - **Seed size.** How many training examples the author looked at
   when writing the rule. Paper default: 100.
 
@@ -241,7 +244,38 @@ wired and ready — only the model choice changes.
 
 ## Statistical transition depth (§4.4)
 
-Using an unpaired two-proportion z-test (p < 0.01):
+### Paired McNemar (primary result, 2026-04-24 re-run)
+
+Each benchmark re-executed with per-example correctness recorded.
+McNemar's paired-proportion test compares rule vs ML on the same
+held-out rows, counting discordant pairs (``b`` = ML right while
+rule wrong; ``c`` = rule right while ML wrong) and taking the
+exact two-sided binomial p-value on the minority side.
+
+| Benchmark | Labels | Rule acc | ML @ 250 ckpt | ML final | b    | c   | McNemar p (final) | Transition depth (paired p < 0.01) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **ATIS**       |  26 | 70.0% | 75.6% | **88.7%** |  191 |  24 | 1.8e-33   | **≤ 250** (p = 1.6e-3) |
+| **HWU64**      |  64 |  1.8% |  2.7% | **83.6%** |  881 |   1 | < 1e-260  | **≤ 250** (p = 2.0e-3) |
+| **Banking77**  |  77 |  1.3% |  2.6% | **87.7%** | 2,665 |   4 | ≈ 0       | **≤ 250** (p = 3.8e-11) |
+| **CLINC150**   | 151 |  0.5% |  1.6% | **81.9%** | 4,478 |   6 | ≈ 0       | **≤ 250** (p = 6.9e-18) |
+
+Every benchmark crosses paired significance at the **first**
+checkpoint (250 training outcomes). Under the unpaired z-test
+previously reported (see below), the transition depths were
+looser — 500 / 1000 / 1000 / 1500 — because the unpaired test
+ignores per-example correlation and is conservative when the
+same test rows are scored by two classifiers. The paired result
+is both tighter and methodologically correct.
+
+Raw per-example correctness lists are persisted in
+``*_paired.jsonl`` alongside this document; a consolidated summary
+(final accuracy, b/c counts, p-values, transition depths) is at
+``paired_mcnemar_summary.json``. The McNemar computation used
+is defined in ``src/dendra/gates.py::McNemarGate``.
+
+### Unpaired z-test (historical, for comparison)
+
+Using an unpaired two-proportion z-test on the original runs (p < 0.01):
 
 | Benchmark | Stat depth | Crossover | Final gap |
 |---|---:|---:|---:|
@@ -250,9 +284,45 @@ Using an unpaired two-proportion z-test (p < 0.01):
 | Banking77  | 1000  | 1000  | **+86.3%** |
 | CLINC150   | 1500  | 1500  | **+81.3%** |
 
-In every benchmark, the first visible crossover is already
-statistically significant at p < 0.01 given the held-out test-set size.
-Run with `BenchmarkRun.transition_depth(alpha=0.01)`.
+### Investigation: CLINC150 regression, found and fixed
+
+The first 2026-04-24 re-run landed CLINC150 at 59.1 % final ML
+accuracy — bit-identical to the original through 9,000 training
+outcomes, then diverging sharply. The regression reproduced
+deterministically on clean environments, ruling out a sklearn
+version delta. Root cause:
+
+CLINC150's training stream is **label-blocked** — each 1,000-
+example window contains exactly 10 distinct labels × 100
+examples each. The v1 API introduced a default
+``BoundedInMemoryStorage(max_records=10_000)`` to prevent
+runaway memory growth in production switches. The benchmark
+harness inherited that default. At training outcome 10,500, the
+FIFO cap evicted the first 500 records — removing 5 entire
+label classes from the ML head's training view. By 15,250
+outcomes, ~50 label classes had zero training examples; the LR
+classifier collapsed to ~50 % on the lost portion.
+
+The fix: ``run_benchmark_experiment`` now explicitly constructs
+the backing switch with ``storage=InMemoryStorage()``. The
+benchmark harness owns the full training set and bounds its own
+lifetime; the production-default cap does not apply.
+
+A regression test (``tests/test_research.py::TestBenchmarkExperimentStorage``)
+locks the invariant: any future change that reintroduces a
+bounded-by-default storage on the benchmark path fails at test
+time. The v2 run with the fix in place reproduces CLINC150's
+original 81.9 % final ML accuracy exactly; the other three
+benchmarks are unchanged (all below the 10k cap or within
+noise of it).
+
+This episode updated the v1-readiness story: the
+production-default storage cap was correct engineering for a
+long-running switch, but wrong as a silent default for any
+harness that operates on a fixed corpus. Callers working with
+known, bounded datasets should use ``InMemoryStorage`` (or an
+explicit large cap on ``BoundedInMemoryStorage``) so training
+data isn't silently truncated.
 
 ## Caveats
 
@@ -269,9 +339,11 @@ Run with `BenchmarkRun.transition_depth(alpha=0.01)`.
 - The out-of-scope label in CLINC150 hurts rule-only keyword matching
   disproportionately; a rule-class for "unknown/OOS" would raise the
   baseline modestly. Deferred.
-- The unpaired z-test above is conservative. A paired McNemar test on
-  per-example predictions would be tighter; implementation requires
-  saving per-example outputs (not currently persisted).
+- The **paired McNemar** analysis landed in the 2026-04-24 re-run
+  (see the "Statistical transition depth" section above for the
+  tighter numbers). Per-example correctness is now persisted in
+  the ``*_paired.jsonl`` files. The older unpaired-z-test numbers
+  remain for comparison only.
 
 ---
 
@@ -370,19 +442,10 @@ submission.
 
 ### Deeper reads
 
-- **`docs/marketing/industry-applicability.md`** — full
-  per-category analysis, unit economics, worked example of org-level
-  savings, honest "where Dendra doesn't fit" list.
-- **`docs/marketing/business-model-and-moat.md`** — Snyk+Temporal
-  analog, three-mode analyzer design (static scanner → dynamic
-  measurement → full graduation), monetization tiers, 8 moat bricks
-  ranked by durability.
-- **`docs/marketing/entry-with-end-in-mind.md`** — year-one
-  positioning calibrated against year-three endpoints (canonical
-  primitive, analyzer corpus moat, regulated-vertical enterprise).
-- **`docs/marketing/dendra-one-pager.md`** — 1-page buyer pitch.
-- **`docs/working/internal-use-cases-scan-2026-04-20.md`** — the
-  nine Dendra-fit sites in the Axiom codebase, ranked.
+- **`docs/scenarios.md`** — public-facing per-industry
+  applicability analysis with cited volume + financial-impact
+  ranges; complementary to the per-category breakdown the paper
+  cites.
 - **`strengthening-plan.md`** (this directory) — tier-A/B/C rigor
   plan to strengthen the paper before submission.
 

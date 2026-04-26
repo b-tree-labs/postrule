@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import InMemoryStorage, LearnedSwitch, Outcome, Phase, ml_switch
+from dendra import InMemoryStorage, LearnedSwitch, Phase, Verdict, ml_switch
 
 # ---------------------------------------------------------------------------
 # Basic behavior
@@ -44,10 +44,10 @@ class TestDecoratorBehavior:
             return "a"
 
         f({"input": 1})
-        f.record_outcome(
+        f.record_verdict(
             input={"input": 1},
-            output="a",
-            outcome=Outcome.CORRECT.value,
+            label="a",
+            outcome=Verdict.CORRECT.value,
         )
         assert f.status().outcomes_total == 1
         assert f.status().outcomes_correct == 1

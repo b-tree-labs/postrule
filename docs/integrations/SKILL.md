@@ -9,9 +9,9 @@ description: Wrap a Python function that returns a string label from a finite se
 
 The user has a Python function that returns a string label from a
 fixed set (if/elif chains, match/case dispatch, keyword lookup,
-regex dispatch, or an LLM-prompted classifier). Your job is to wrap
+regex dispatch, or a model-prompted classifier). Your job is to wrap
 it with Dendra's `@ml_switch` decorator so the function logs outcomes
-and can graduate through six phases (RULE → LLM_SHADOW → LLM_PRIMARY
+and can graduate through six phases (RULE → MODEL_SHADOW → MODEL_PRIMARY
 → ML_SHADOW → ML_WITH_FALLBACK → ML_PRIMARY) with a statistical gate
 at every transition.
 
@@ -193,6 +193,6 @@ modified function so the user can review.
 - `README.md` in the Dendra repo — overview and quickstart
 - `docs/papers/2026-when-should-a-rule-learn/outline.md` — the
   formal framework behind the six phases
-- `docs/marketing/industry-applicability.md` §8.7 — security
-  properties (why safety_critical matters)
+- `docs/scenarios.md` — industry-scale applicability with
+  cited volume / impact ranges
 - `dendra init --help` — CLI reference

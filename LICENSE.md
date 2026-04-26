@@ -31,8 +31,8 @@ automatically convert to Apache 2.0.
 ## Trademarks
 
 Neither license grants any right to use the DENDRA name or logo.
-See [`trademark-strategy.md`](./docs/working/trademark-strategy.md)
-for the project's position on fair use of the name.
+See [`TRADEMARKS.md`](./TRADEMARKS.md) for the project's
+position on fair use of the name.
 
 ## Commercial licensing
 
@@ -43,12 +43,10 @@ Dendra-derivative service) is available. Contact
 
 ## Why this split
 
-See
-[`docs/working/license-strategy.md`](./docs/working/license-strategy.md)
-for the full decision record, including the rationale for choosing
-BSL over SSPL/ELv2, the per-module mapping, and the risks and
-mitigations considered. Short version: the Apache 2.0 client SDK
-preserves Dendra's primitive-positioning and citation story; the
-BSL-licensed components protect a four-year moat-build window
-against hyperscaler clones without compromising code
-auditability or enterprise procurement acceptability.
+The Apache 2.0 client SDK preserves Dendra's primitive-
+positioning and citation story; the BSL-licensed components
+protect a four-year moat-build window against hyperscaler
+clones without compromising code auditability or enterprise
+procurement acceptability. On the BSL Change Date
+(**2030-05-01**), all BSL-licensed files automatically convert
+to Apache 2.0.

@@ -1,25 +1,45 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra hello-world — wrap a rule with `@ml_switch`.
+"""Dendra hello-world — rule + dispatch in the smallest form.
 
 Run: `python examples/01_hello_world.py`
 
-Zero dependencies beyond dendra itself. Demonstrates the smallest
-possible Dendra integration: wrap an existing rule function, call it,
-observe that behavior is identical to the un-wrapped rule.
+Pass ``labels=`` as a dict mapping label → action, call
+``rule.dispatch(input)``, done. Each dict entry is a
+**label-based conditional expression** — "when the classifier's
+output equals this label, evaluate this action."
 """
 
 from __future__ import annotations
 
-from dendra import Phase, SwitchConfig, ml_switch
+from dendra import ml_switch
+
+
+def send_to_engineering(ticket: dict) -> str:
+    """Action fired when the classifier returns ``label="bug"``."""
+    return f"engineering ← {ticket['title']}"
+
+
+def send_to_product(ticket: dict) -> str:
+    """Action fired when the classifier returns ``label="feature_request"``."""
+    return f"product ← {ticket['title']}"
+
+
+def send_to_support(ticket: dict) -> str:
+    """Action fired when the classifier returns ``label="question"``."""
+    return f"support ← {ticket['title']}"
 
 
 @ml_switch(
-    labels=["bug", "feature_request", "question"],
-    author="@triage:hello-world",
-    config=SwitchConfig(phase=Phase.RULE),
+    labels={
+        "bug": send_to_engineering,
+        "feature_request": send_to_product,
+        "question": send_to_support,
+    },
+    # `author` omitted — auto-derives to "@__main__:triage_rule".
 )
-def triage(ticket: dict) -> str:
+def triage_rule(ticket: dict) -> str:
+    """Classify one ticket into exactly one of the declared labels."""
     title = (ticket.get("title") or "").lower()
     if "crash" in title or "error" in title:
         return "bug"
@@ -34,6 +54,6 @@ if __name__ == "__main__":
         {"title": "how do I reset my password?"},
         {"title": "add dark mode"},
     ]
-    for ticket in samples:
-        label = triage(ticket)
-        print(f"{ticket['title']:40s}  ->  {label}")
+    for sample in samples:
+        c = triage_rule.dispatch(sample)
+        print(f"{sample['title']:40s}  →  label={c.label:18s}  →  action={c.action_result}")

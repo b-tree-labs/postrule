@@ -35,4 +35,4 @@ body:
     id: dendra-version
     attributes:
       label: Dendra version (if relevant)
-      placeholder: "0.2.0"
+      placeholder: "1.0.0"

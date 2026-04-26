@@ -4,9 +4,8 @@
 """Latency + throughput benchmarks — the 2nd-order performance story.
 
 These are real measurements run against a trained classifier, not
-extrapolations. The numbers they produce feed
-``docs/marketing/industry-applicability.md`` §8 (second-order
-benefits).
+extrapolations. The numbers they produce feed the README's
+performance section and ``docs/benchmarks/v1-audit-benchmarks.md``.
 
 Latency claims we verify here:
 
@@ -159,7 +158,7 @@ class TestDendraSwitchOverhead:
             f"p95={stats['p95_us']:.2f}µs "
             f"ops/s={stats['throughput_ops_s']:,.0f}"
         )
-        # Switch adds a function call, a SwitchResult dataclass, a phase
+        # Switch adds a function call, a ClassificationResult dataclass, a phase
         # check. Cap overhead at ≤20µs.
         assert stats["p50_us"] < 20.0
 
@@ -202,26 +201,26 @@ class TestThroughputProjection:
 
         # LLM baseline: we measured llama3.2:1b at ~250ms per classify
         # in an earlier session. Hardcode that number for the projection.
-        llm_p50_us = 250_000
+        model_p50_us = 250_000
 
         daily_traffic = 1_000_000
         rule_only_sec_per_day = rule_stats["p50_us"] * daily_traffic / 1e6
         ml_only_sec_per_day = ml_stats["p50_us"] * daily_traffic / 1e6
-        llm_only_sec_per_day = llm_p50_us * daily_traffic / 1e6
+        model_only_sec_per_day = model_p50_us * daily_traffic / 1e6
 
         print("\n[throughput] at 1M classifications/day:")
         print(f"  rule-only:   {rule_only_sec_per_day:>10,.1f} CPU-sec/day")
         print(f"  ml-only:     {ml_only_sec_per_day:>10,.1f} CPU-sec/day")
         print(
-            f"  llm-only:    {llm_only_sec_per_day:>10,.1f} CPU-sec/day "
-            f"(= {llm_only_sec_per_day / 3600:.2f} CPU-hours)"
+            f"  llm-only:    {model_only_sec_per_day:>10,.1f} CPU-sec/day "
+            f"(= {model_only_sec_per_day / 3600:.2f} CPU-hours)"
         )
         print("  dendra Phase 0: same as rule")
         print(
             f"  dendra Phase 2 (20% LLM fallback): "
-            f"~{0.8 * rule_only_sec_per_day + 0.2 * llm_only_sec_per_day:,.0f} "
+            f"~{0.8 * rule_only_sec_per_day + 0.2 * model_only_sec_per_day:,.0f} "
             f"CPU-sec/day"
         )
 
         # Sanity: LLM is ≥3 orders of magnitude slower than rule.
-        assert llm_p50_us / rule_stats["p50_us"] > 1000
+        assert model_p50_us / rule_stats["p50_us"] > 1000

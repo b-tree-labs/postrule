@@ -58,7 +58,7 @@ class TestMLWithFallback:
             config=SwitchConfig(phase=Phase.ML_WITH_FALLBACK, confidence_threshold=0.85),
         )
         r = s.classify({"title": "App keeps crashing"})
-        assert r.output == "feature_request"
+        assert r.label == "feature_request"
         assert r.source == "ml"
         assert r.confidence == pytest.approx(0.97)
 
@@ -71,7 +71,7 @@ class TestMLWithFallback:
             config=SwitchConfig(phase=Phase.ML_WITH_FALLBACK, confidence_threshold=0.85),
         )
         r = s.classify({"title": "App keeps crashing"})
-        assert r.output == "bug"
+        assert r.label == "bug"
         assert r.source == "rule_fallback"
 
     def test_rule_fallback_on_ml_error(self):
@@ -83,7 +83,7 @@ class TestMLWithFallback:
             config=SwitchConfig(phase=Phase.ML_WITH_FALLBACK),
         )
         r = s.classify({"title": "App keeps crashing"})
-        assert r.output == "bug"
+        assert r.label == "bug"
         assert r.source == "rule_fallback"
 
     def test_requires_ml_head(self):
@@ -114,7 +114,7 @@ class TestMLPrimary:
         # Even at low confidence, Phase 5 trusts the ML — the safety floor
         # is the circuit breaker, not the confidence threshold.
         r = s.classify({"title": "App keeps crashing"})
-        assert r.output == "feature_request"
+        assert r.label == "feature_request"
         assert r.source == "ml"
 
     def test_circuit_trips_on_ml_error(self):
@@ -129,7 +129,7 @@ class TestMLPrimary:
         r = s.classify({"title": "App keeps crashing"})
         # First call trips breaker and falls back.
         assert r.source == "rule_fallback"
-        assert r.output == "bug"
+        assert r.label == "bug"
         assert s.status().circuit_breaker_tripped is True
 
     def test_subsequent_calls_stay_in_fallback_until_reset(self):
@@ -162,16 +162,12 @@ class TestMLPrimary:
         s.reset_circuit_breaker()
         r = s.classify({"title": "App keeps crashing"})
         assert r.source == "ml"
-        assert r.output == "bug"
+        assert r.label == "bug"
 
     def test_safety_critical_caps_at_phase_4(self):
         # Paper §7.1: safety_critical=True must refuse to graduate to ML_PRIMARY.
-        cfg = SwitchConfig(phase=Phase.ML_PRIMARY, safety_critical=True)
+        # Check now fires at SwitchConfig.__post_init__ (tighter — the
+        # misconfiguration is caught at the config-construction source rather
+        # than at LearnedSwitch construction).
         with pytest.raises(ValueError, match="safety_critical"):
-            LearnedSwitch(
-                name="triage",
-                rule=_rule,
-                author="alice",
-                ml_head=FakeMLHead(),
-                config=cfg,
-            )
+            SwitchConfig(starting_phase=Phase.ML_PRIMARY, safety_critical=True)

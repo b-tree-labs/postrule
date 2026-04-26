@@ -11,10 +11,9 @@ import pytest
 
 from dendra import (
     LearnedSwitch,
-    LLMPrediction,
     MLHead,
     MLPrediction,
-    Outcome,
+    ModelPrediction,
     Phase,
     SwitchConfig,
 )
@@ -40,12 +39,12 @@ class FakeMLHead:
 
 
 @dataclass
-class FakeLLM:
+class FakeLM:
     label: str = "bug"
     confidence: float = 0.9
 
     def classify(self, input, labels):
-        return LLMPrediction(label=self.label, confidence=self.confidence)
+        return ModelPrediction(label=self.label, confidence=self.confidence)
 
 
 def _rule(ticket: dict) -> str:
@@ -70,20 +69,22 @@ class TestMLHeadProtocol:
 class TestMLShadowRouting:
     def test_shadow_does_not_change_user_decision(self):
         ml = FakeMLHead(label="feature_request", confidence=0.95)
-        llm = FakeLLM(label="bug", confidence=0.9)
+        model_stub = FakeLM(label="bug", confidence=0.9)
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
             author="alice",
-            llm=llm,
+            model=model_stub,
             ml_head=ml,
-            config=SwitchConfig(phase=Phase.ML_SHADOW, confidence_threshold=0.85),
+            config=SwitchConfig(
+                auto_record=False, phase=Phase.ML_SHADOW, confidence_threshold=0.85
+            ),
         )
         # ML disagrees loudly; shadow mode must NOT let it influence the answer.
-        # The primary path at Phase 3 is LLM_PRIMARY semantics — LLM decides.
+        # The primary path at Phase 3 is MODEL_PRIMARY semantics — LLM decides.
         r = s.classify({"title": "App keeps crashing"})
-        assert r.output == "bug"
-        assert r.source == "llm"
+        assert r.label == "bug"
+        assert r.source == "model"
         assert r.phase is Phase.ML_SHADOW
         # ML head IS invoked for shadow capture.
         assert ml.predict_calls == 1
@@ -93,8 +94,8 @@ class TestMLShadowRouting:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(),
-            config=SwitchConfig(phase=Phase.ML_SHADOW),
+            model=FakeLM(),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         with pytest.raises(ValueError, match="ml"):
             s.classify({"title": "x"})
@@ -112,13 +113,13 @@ class TestMLShadowRouting:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(label="bug", confidence=0.9),
+            model=FakeLM(label="bug", confidence=0.9),
             ml_head=BrokenML(),
-            config=SwitchConfig(phase=Phase.ML_SHADOW),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         r = s.classify({"title": "App keeps crashing"})
-        assert r.output == "bug"
-        assert r.source == "llm"
+        assert r.label == "bug"
+        assert r.source == "model"
 
 
 class TestMLShadowOutcomeCapture:
@@ -128,25 +129,19 @@ class TestMLShadowOutcomeCapture:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(label="bug", confidence=0.9),
+            model=FakeLM(label="bug", confidence=0.9),
             ml_head=ml,
-            config=SwitchConfig(phase=Phase.ML_SHADOW),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         r = s.classify({"title": "App keeps crashing"})
-        s.record_outcome(
-            input={"title": "App keeps crashing"},
-            output=r.output,
-            outcome=Outcome.CORRECT.value,
-            source=r.source,
-            confidence=r.confidence,
-        )
-        recs = s.storage.load_outcomes("triage")
+        r.mark_correct()
+        recs = s.storage.load_records("triage")
         assert len(recs) == 1
         assert recs[0].ml_output == "feature_request"
         assert recs[0].ml_confidence == pytest.approx(0.6)
-        # rule and llm shadows still captured for side-by-side analysis.
+        # rule and model shadows still captured for side-by-side analysis.
         assert recs[0].rule_output == "bug"
-        assert recs[0].llm_output == "bug"
+        assert recs[0].model_output == "bug"
 
 
 class TestMLShadowStatus:
@@ -156,19 +151,13 @@ class TestMLShadowStatus:
             name="triage",
             rule=_rule,
             author="alice",
-            llm=FakeLLM(label="bug", confidence=0.95),
+            model=FakeLM(label="bug", confidence=0.95),
             ml_head=ml,
-            config=SwitchConfig(phase=Phase.ML_SHADOW),
+            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW),
         )
         for t in ("crash a", "crash b", "crash c"):
             r = s.classify({"title": t})
-            s.record_outcome(
-                input={"title": t},
-                output=r.output,
-                outcome=Outcome.CORRECT.value,
-                source=r.source,
-                confidence=r.confidence,
-            )
+            r.mark_correct()
         st = s.status()
         assert st.ml_agreement_rate == pytest.approx(1.0)
         assert st.model_version == "fake-0"

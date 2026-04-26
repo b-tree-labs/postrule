@@ -82,6 +82,13 @@ anthropic = [
 ollama = [
     "httpx>=0.24",
 ]
+bundled = [
+    # llama-cpp-python is the inference engine for the lazy-downloaded
+    # GGUF defaults (qwen2.5:7b judge + gemma2:2b classifier). Pure-pip
+    # with prebuilt wheels for macOS / Linux / Windows on common
+    # platforms; falls back to compile-from-source on edge cases.
+    "llama-cpp-python>=0.3",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
@@ -109,9 +116,10 @@ packages = ["src/dendra"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-q --strict-markers"
+addopts = "-q --strict-markers -m 'not benchmark'"
 markers = [
     "benchmark: opt-in latency / throughput benchmarks (run with -m benchmark)",
+    "concurrency: red-bar tests for thread-safety bugs (run with -m concurrency)",
 ]
 filterwarnings = [
     "error",
@@ -154,3 +162,6 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Tests may use assertions with long context, unused imports for fixtures.
 "tests/*" = ["E501"]
+
+# Pylint configuration lives in .pylintrc at the repo root (for broader
+# editor compatibility — some pylint versions don't read pyproject.toml).
