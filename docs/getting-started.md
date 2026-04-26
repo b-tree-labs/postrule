@@ -245,6 +245,25 @@ def triage_rule(ticket): ...
 # with a different gate, or mutates config.gate.
 ```
 
+**How long does graduation take in calendar time?** Three of the
+five phase transitions are statistically gated, each needing
+≥200 paired CORRECT/INCORRECT outcomes (`min_paired=200`) plus
+McNemar p < 0.01. Auto-advance fires every 500 records.
+
+| Workload | Verdict rate | Cycles to `ML_PRIMARY` |
+|---|---|---|
+| 1k req/day, 100% verdicts (`verifier=default_verifier()`) | 1,000/day | **~1.5–6 days** |
+| 1k req/day, 5% verdicts (reviewer queue) | 50/day | ~30–120 days |
+| 10k req/day, 100% verdicts | 10,000/day | < 1 day |
+| 100k req/day, 100% verdicts | 100,000/day | hours |
+
+Lower bound is ≈1,500 verdicts (the gate clears on the first
+auto-advance check after each transition); realistic case is
+3,000–6,000 verdicts when the candidate's wins are incremental.
+The autonomous-verifier default closes the loop dramatically;
+without it, reviewer-queue throughput is the constraint — which
+is the entire point of `verifier=default_verifier()`.
+
 ## 5. Going to production — persistence, safety, observability (5 minutes)
 
 The four knobs that turn the 2-minute demo into a production
