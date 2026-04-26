@@ -208,6 +208,38 @@ class TestSelfJudgmentGuardrail:
         assert sw.config.verifier is not None
 
 
+class TestHumanReviewerOnClassifyHotPathRefused:
+    """``verifier=HumanReviewerSource(...)`` would block classify() on the
+    inline hot path waiting for a human (default 30s). LearnedSwitch must
+    refuse the misconfiguration with an actionable message; the safe
+    patterns are bulk_record_verdicts_from_source / export_for_review."""
+
+    def test_human_reviewer_as_verifier_refused(self):
+        from dendra import HumanReviewerSource
+
+        with pytest.raises(ValueError, match="HumanReviewerSource"):
+            LearnedSwitch(
+                rule=_rule,
+                name="v_human_refused",
+                author="t",
+                verifier=HumanReviewerSource(timeout=5.0, name="ops"),
+            )
+
+    def test_error_mentions_safe_patterns(self):
+        from dendra import HumanReviewerSource
+
+        with pytest.raises(ValueError) as exc:
+            LearnedSwitch(
+                rule=_rule,
+                name="v_human_msg",
+                author="t",
+                verifier=HumanReviewerSource(name="ops"),
+            )
+        msg = str(exc.value)
+        assert "bulk_record_verdicts_from_source" in msg
+        assert "export_for_review" in msg
+
+
 # ---------------------------------------------------------------------------
 # Async path — verifier runs natively via ajudge
 # ---------------------------------------------------------------------------
