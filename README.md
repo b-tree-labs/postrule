@@ -10,7 +10,7 @@ from dendra import ml_switch, default_verifier
 
 @ml_switch(
     labels=["bug", "feature_request", "question"],
-    verifier=default_verifier(),  # auto-detects Ollama → OpenAI → Anthropic
+    verifier=default_verifier(),  # local Ollama (qwen2.5:7b) by default; see Install for other paths
 )
 def triage(ticket: dict) -> str:
     title = (ticket.get("title") or "").lower()
@@ -228,7 +228,9 @@ Measured latency (Apple M5 / Python 3.13 / macOS 26):
 - `persist=True` classify (per-call fsync — explicit opt-in for
   regulated workloads): 195 µs p50 / 260 µs p99.
 - Real ML head (TF-IDF + LR on ATIS): 105 µs p50.
-- Local SLM (llama3.2:1b via Ollama): ~250 ms p50.
+- Local SLM (shipped default `qwen2.5:7b` via Ollama or
+  bundled llama-cpp-python): ~481 ms p50 — see
+  [`docs/benchmarks/slm-verifier-results.md`](docs/benchmarks/slm-verifier-results.md).
 
 Raw numbers + JSONL benchmark data:
 [`docs/benchmarks/v1-audit-benchmarks.md`](docs/benchmarks/v1-audit-benchmarks.md).

@@ -16,7 +16,7 @@ Production swap-ins for the verifier (any one works):
     # Auto-detects a running local Ollama; raises if not reachable.
 
     from dendra import JudgeSource, OllamaAdapter
-    verifier = JudgeSource(OllamaAdapter(model="llama3.2:3b"))
+    verifier = JudgeSource(OllamaAdapter(model="qwen2.5:7b"))
 
     from dendra import JudgeSource, OpenAIAdapter
     verifier = JudgeSource(OpenAIAdapter(model="gpt-4o-mini"))
