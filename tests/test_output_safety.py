@@ -12,7 +12,7 @@ Scenarios exercised:
 
 1. **Phase 0 rule-floor** — regex-based PII + blocklist catches the
    obvious cases at sub-microsecond cost.
-2. **Phase 1 LLM_SHADOW** — a commodity moderator runs alongside the
+2. **Phase 1 MODEL_SHADOW** — a commodity moderator runs alongside the
    rule; disagreements are logged for later graduation analysis.
 3. **Safety-critical cap** — ``safety_critical=True`` refuses
    construction at Phase 5 (ML_PRIMARY).
@@ -20,8 +20,7 @@ Scenarios exercised:
    still decides and the user-visible path is unaffected.
 
 This is both a test and a working reference for the "LLM output
-moderation" category in ``docs/marketing/industry-applicability.md``
-§3 Tier 1 item 7.
+moderation" use case (see ``docs/scenarios.md``).
 """
 
 from __future__ import annotations
@@ -33,8 +32,7 @@ import pytest
 
 from dendra import (
     LearnedSwitch,
-    LLMPrediction,
-    Outcome,
+    ModelPrediction,
     Phase,
     SwitchConfig,
     ml_switch,
@@ -97,7 +95,7 @@ class TestPhase0RuleFloor:
         @ml_switch(
             labels=OUTPUT_LABELS,
             author="@safety:output-gate",
-            config=SwitchConfig(phase=Phase.RULE, safety_critical=True),
+            config=SwitchConfig(auto_record=False, phase=Phase.RULE, safety_critical=True),
         )
         def gate(response: str) -> str:
             return _output_rule(response)
@@ -108,7 +106,7 @@ class TestPhase0RuleFloor:
         @ml_switch(
             labels=OUTPUT_LABELS,
             author="@safety:output-gate",
-            config=SwitchConfig(phase=Phase.RULE, safety_critical=True),
+            config=SwitchConfig(auto_record=False, phase=Phase.RULE, safety_critical=True),
         )
         def gate(response: str) -> str:
             return _output_rule(response)
@@ -119,7 +117,7 @@ class TestPhase0RuleFloor:
         @ml_switch(
             labels=OUTPUT_LABELS,
             author="@safety:output-gate",
-            config=SwitchConfig(phase=Phase.RULE, safety_critical=True),
+            config=SwitchConfig(auto_record=False, phase=Phase.RULE, safety_critical=True),
         )
         def gate(response: str) -> str:
             return _output_rule(response)
@@ -130,7 +128,7 @@ class TestPhase0RuleFloor:
         @ml_switch(
             labels=OUTPUT_LABELS,
             author="@safety:output-gate",
-            config=SwitchConfig(phase=Phase.RULE, safety_critical=True),
+            config=SwitchConfig(auto_record=False, phase=Phase.RULE, safety_critical=True),
         )
         def gate(response: str) -> str:
             return _output_rule(response)
@@ -141,7 +139,7 @@ class TestPhase0RuleFloor:
         @ml_switch(
             labels=OUTPUT_LABELS,
             author="@safety:output-gate",
-            config=SwitchConfig(phase=Phase.RULE, safety_critical=True),
+            config=SwitchConfig(auto_record=False, phase=Phase.RULE, safety_critical=True),
         )
         def gate(response: str) -> str:
             return _output_rule(response)
@@ -150,47 +148,43 @@ class TestPhase0RuleFloor:
 
 
 # ---------------------------------------------------------------------------
-# 2. Phase 1 — LLM_SHADOW over outputs
+# 2. Phase 1 — MODEL_SHADOW over outputs
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class FakeModeratorLLM:
+class FakeModeratorLM:
     """Stand-in for Perspective / OpenAI Moderation — deterministic."""
 
     always: str = "safe"
     conf: float = 0.9
 
     def classify(self, input, labels):
-        return LLMPrediction(label=self.always, confidence=self.conf)
+        return ModelPrediction(label=self.always, confidence=self.conf)
 
 
 class TestPhase1ShadowOverOutputs:
     """LLM moderator observes; rule is still the source of truth."""
 
-    def test_llm_shadow_records_disagreement(self):
+    def test_model_shadow_records_disagreement(self):
         sw = LearnedSwitch(
             name="output_gate",
             rule=_output_rule,
             author="@safety:output-gate",
-            llm=FakeModeratorLLM(always="toxic", conf=0.98),
-            config=SwitchConfig(phase=Phase.LLM_SHADOW, safety_critical=True),
+            model=FakeModeratorLM(always="toxic", conf=0.98),
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW, safety_critical=True),
         )
         # Rule says "safe" for this text; the LLM moderator says "toxic".
         # In shadow mode the rule wins; the disagreement lands in the
         # outcome log once recorded.
         r = sw.classify("the weather is nice today")
-        assert r.output == "safe"
+        assert r.label == "safe"
         assert r.source == "rule"
-        sw.record_outcome(
-            input="the weather is nice today",
-            output="safe",
-            outcome=Outcome.CORRECT.value,
-        )
-        [row] = sw.storage.load_outcomes("output_gate")
+        r.mark_correct()
+        [row] = sw.storage.load_records("output_gate")
         assert row.rule_output == "safe"
-        assert row.llm_output == "toxic"  # moderator observed
-        assert row.llm_confidence == pytest.approx(0.98)
+        assert row.model_output == "toxic"  # moderator observed
+        assert row.model_confidence == pytest.approx(0.98)
 
     def test_broken_moderator_cannot_block_output(self):
         class BrokenModerator:
@@ -201,12 +195,12 @@ class TestPhase1ShadowOverOutputs:
             name="output_gate",
             rule=_output_rule,
             author="@safety:output-gate",
-            llm=BrokenModerator(),
-            config=SwitchConfig(phase=Phase.LLM_SHADOW, safety_critical=True),
+            model=BrokenModerator(),
+            config=SwitchConfig(auto_record=False, phase=Phase.MODEL_SHADOW, safety_critical=True),
         )
         # The moderator blows up; rule must still decide.
         r = sw.classify("your SSN is 123-45-6789")
-        assert r.output == "pii"
+        assert r.label == "pii"
         assert r.source == "rule"
 
 
@@ -224,7 +218,9 @@ class TestSafetyCriticalCap:
                 name="output_gate",
                 rule=_output_rule,
                 author="@safety:output-gate",
-                config=SwitchConfig(phase=Phase.ML_PRIMARY, safety_critical=True),
+                config=SwitchConfig(
+                    auto_record=False, phase=Phase.ML_PRIMARY, safety_critical=True
+                ),
             )
 
     def test_ml_with_fallback_is_the_cap(self):
@@ -252,7 +248,7 @@ class TestSafetyCriticalCap:
         )
         # ML says "safe" with 0.99 — above threshold, so ML decides.
         r = sw.classify("the weather is nice today")
-        assert r.output == "safe"
+        assert r.label == "safe"
         assert r.source == "ml"
 
 
@@ -270,7 +266,7 @@ class TestDecoratorWiring:
             labels=OUTPUT_LABELS,
             author="@safety:output-gate",
             name="llm_output_gate",
-            config=SwitchConfig(phase=Phase.RULE, safety_critical=True),
+            config=SwitchConfig(auto_record=False, phase=Phase.RULE, safety_critical=True),
         )
         def gate(response: str) -> str:
             return _output_rule(response)

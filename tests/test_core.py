@@ -8,14 +8,14 @@ from __future__ import annotations
 import pytest
 
 from dendra import (
+    ClassificationRecord,
+    ClassificationResult,
     InMemoryStorage,
     LearnedSwitch,
-    Outcome,
-    OutcomeRecord,
     Phase,
     SwitchConfig,
-    SwitchResult,
     SwitchStatus,
+    Verdict,
 )
 
 
@@ -49,9 +49,11 @@ class TestConstruction:
         with pytest.raises(ValueError, match="author"):
             LearnedSwitch(name="x", rule=_rule, author="")
 
-    def test_default_storage_is_in_memory(self):
+    def test_default_storage_is_bounded_in_memory(self):
+        from dendra import BoundedInMemoryStorage
+
         s = LearnedSwitch(name="x", rule=_rule, author="alice")
-        assert isinstance(s.storage, InMemoryStorage)
+        assert isinstance(s.storage, BoundedInMemoryStorage)
 
     def test_accepts_explicit_storage(self):
         store = InMemoryStorage()
@@ -68,8 +70,8 @@ class TestClassify:
     def test_returns_rule_output(self):
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
         result = s.classify({"title": "App keeps crashing"})
-        assert isinstance(result, SwitchResult)
-        assert result.output == "bug"
+        assert isinstance(result, ClassificationResult)
+        assert result.label == "bug"
 
     def test_source_is_rule_in_phase_0(self):
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
@@ -80,32 +82,32 @@ class TestClassify:
 
 
 # ---------------------------------------------------------------------------
-# record_outcome()
+# record_verdict()
 # ---------------------------------------------------------------------------
 
 
 class TestRecordOutcome:
     def test_appends_record_to_storage(self):
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
-        s.record_outcome(
+        s.record_verdict(
             input={"title": "App keeps crashing"},
-            output="bug",
-            outcome=Outcome.CORRECT.value,
+            label="bug",
+            outcome=Verdict.CORRECT.value,
         )
-        records = s.storage.load_outcomes("triage")
+        records = s.storage.load_records("triage")
         assert len(records) == 1
-        assert records[0].outcome == Outcome.CORRECT.value
-        assert records[0].output == "bug"
+        assert records[0].outcome == Verdict.CORRECT.value
+        assert records[0].label == "bug"
 
     def test_records_carry_timestamp_and_source(self):
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
-        s.record_outcome(
+        s.record_verdict(
             input={"title": "x"},
-            output="feature_request",
-            outcome=Outcome.INCORRECT.value,
+            label="feature_request",
+            outcome=Verdict.INCORRECT.value,
         )
-        r = s.storage.load_outcomes("triage")[0]
-        assert isinstance(r, OutcomeRecord)
+        r = s.storage.load_records("triage")[0]
+        assert isinstance(r, ClassificationRecord)
         assert r.timestamp > 0
         assert r.source == "rule"
         assert r.confidence == 1.0
@@ -113,9 +115,9 @@ class TestRecordOutcome:
     def test_rejects_unknown_outcome_string(self):
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
         with pytest.raises(ValueError, match="outcome"):
-            s.record_outcome(
+            s.record_verdict(
                 input={},
-                output="x",
+                label="x",
                 outcome="not-a-valid-outcome",
             )
 
@@ -138,9 +140,9 @@ class TestStatus:
     def test_tracks_outcomes(self):
         s = LearnedSwitch(name="triage", rule=_rule, author="alice")
         for _ in range(3):
-            s.record_outcome(input={}, output="bug", outcome=Outcome.CORRECT.value)
-        s.record_outcome(input={}, output="bug", outcome=Outcome.INCORRECT.value)
-        s.record_outcome(input={}, output="bug", outcome=Outcome.UNKNOWN.value)
+            s.record_verdict(input={}, label="bug", outcome=Verdict.CORRECT.value)
+        s.record_verdict(input={}, label="bug", outcome=Verdict.INCORRECT.value)
+        s.record_verdict(input={}, label="bug", outcome=Verdict.UNKNOWN.value)
         st = s.status()
         assert st.outcomes_total == 5
         assert st.outcomes_correct == 3

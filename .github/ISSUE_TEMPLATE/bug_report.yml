@@ -48,7 +48,7 @@ body:
     attributes:
       label: Dendra version
       description: Output of `pip show dendra | grep Version`.
-      placeholder: "0.2.0"
+      placeholder: "1.0.0"
     validations:
       required: true
 
