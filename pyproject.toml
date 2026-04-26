@@ -116,7 +116,7 @@ packages = ["src/dendra"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-q --strict-markers"
+addopts = "-q --strict-markers -m 'not benchmark'"
 markers = [
     "benchmark: opt-in latency / throughput benchmarks (run with -m benchmark)",
     "concurrency: red-bar tests for thread-safety bugs (run with -m concurrency)",
