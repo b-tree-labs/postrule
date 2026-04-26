@@ -42,7 +42,6 @@ from dendra import (
     LearnedSwitch,
     ModelPrediction,
     Phase,
-    Verdict,
 )
 from dendra.verdicts import JudgeSource
 
@@ -119,14 +118,10 @@ def main() -> None:
             confidence=result.confidence,
             _result_ctx=result,
         )
-        print(
-            f"  {t['title']:35s} -> rule={result.label!r:20s} "
-            f"judge={verdict.value}"
-        )
+        print(f"  {t['title']:35s} -> rule={result.label!r:20s} judge={verdict.value}")
 
     recs = sw.storage.load_records(sw.name)
-    print(f"\noutcome log: {len(recs)} rows, sources: "
-          f"{sorted({r.source for r in recs})}")
+    print(f"\noutcome log: {len(recs)} rows, sources: {sorted({r.source for r in recs})}")
 
 
 if __name__ == "__main__":

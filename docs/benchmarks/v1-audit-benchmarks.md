@@ -1,6 +1,6 @@
 # Benchmark refresh — v1 baseline
 
-Run date: **2026-04-24**  
+Run date: **2026-04-24**
 Measured by: `scripts/run_v1_benchmarks.py` (perf_counter_ns, 10k iter / cell, 1k warmup)
 
 ## Environment

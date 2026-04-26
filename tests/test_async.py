@@ -10,13 +10,10 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from dendra import (
     BulkVerdict,
     LearnedSwitch,
     ModelPrediction,
-    Phase,
     SwitchConfig,
     Verdict,
 )
@@ -66,7 +63,9 @@ class _StubAsyncJudge:
 class TestAsyncSwitchMethods:
     def test_aclassify_returns_same_as_classify(self):
         sw = LearnedSwitch(
-            rule=_rule, name="a_classify", author="t",
+            rule=_rule,
+            name="a_classify",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
 
@@ -86,7 +85,9 @@ class TestAsyncSwitchMethods:
             return "done"
 
         sw = LearnedSwitch(
-            rule=_rule, name="a_dispatch", author="t",
+            rule=_rule,
+            name="a_dispatch",
+            author="t",
             labels={"rule-x": _action},
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
@@ -100,13 +101,17 @@ class TestAsyncSwitchMethods:
 
     def test_arecord_verdict_persists(self):
         sw = LearnedSwitch(
-            rule=_rule, name="a_record", author="t",
+            rule=_rule,
+            name="a_record",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
 
         async def _run():
             await sw.arecord_verdict(
-                input="x", label="rule-x", outcome=Verdict.CORRECT.value,
+                input="x",
+                label="rule-x",
+                outcome=Verdict.CORRECT.value,
             )
 
         asyncio.run(_run())
@@ -114,12 +119,13 @@ class TestAsyncSwitchMethods:
 
     def test_abulk_record_verdicts_summary(self):
         sw = LearnedSwitch(
-            rule=_rule, name="a_bulk", author="t",
+            rule=_rule,
+            name="a_bulk",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         batch = [
-            BulkVerdict(input=i, label=f"rule-{i}", outcome=Verdict.CORRECT.value)
-            for i in range(5)
+            BulkVerdict(input=i, label=f"rule-{i}", outcome=Verdict.CORRECT.value) for i in range(5)
         ]
 
         async def _run():
@@ -131,7 +137,9 @@ class TestAsyncSwitchMethods:
     def test_concurrent_aclassify_calls(self):
         """The whole point of async — many in-flight calls on one loop."""
         sw = LearnedSwitch(
-            rule=_rule, name="a_concurrent", author="t",
+            rule=_rule,
+            name="a_concurrent",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
 
@@ -203,9 +211,7 @@ class TestAsyncJudgeCommittee:
         assert v is Verdict.CORRECT
         # Sum of delays is 0.3s; parallel should finish in ~0.1s +
         # overhead. Give generous headroom for CI.
-        assert elapsed < 0.25, (
-            f"committee took {elapsed*1000:.0f}ms — looks serialized"
-        )
+        assert elapsed < 0.25, f"committee took {elapsed * 1000:.0f}ms — looks serialized"
 
     def test_ajudge_aggregates_majority(self):
         committee = JudgeCommittee(
@@ -232,11 +238,14 @@ class TestAsyncBulkFromSource:
     def test_async_pipeline_with_sync_source_uses_thread_wrap(self):
         """Sync VerdictSource still works via the async bulk path."""
         sw = LearnedSwitch(
-            rule=_rule, name="abulk_sync", author="t",
+            rule=_rule,
+            name="abulk_sync",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
         src = CallableVerdictSource(
-            lambda i, l: Verdict.CORRECT, name="oracle",
+            lambda i, lbl: Verdict.CORRECT,
+            name="oracle",
         )
 
         async def _run():
@@ -247,7 +256,9 @@ class TestAsyncBulkFromSource:
 
     def test_async_pipeline_with_async_source_native_path(self):
         sw = LearnedSwitch(
-            rule=_rule, name="abulk_async", author="t",
+            rule=_rule,
+            name="abulk_async",
+            author="t",
             config=SwitchConfig(auto_record=False, auto_advance=False),
         )
 
@@ -263,7 +274,8 @@ class TestAsyncBulkFromSource:
 
         async def _run():
             return await sw.abulk_record_verdicts_from_source(
-                range(5), _AsyncOracle(),
+                range(5),
+                _AsyncOracle(),
             )
 
         s = asyncio.run(_run())

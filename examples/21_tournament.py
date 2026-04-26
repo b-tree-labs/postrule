@@ -43,7 +43,6 @@ from __future__ import annotations
 
 from dendra import Tournament
 
-
 # ---------------------------------------------------------------------------
 # Three candidate triage rules — same task, different keyword strategies
 # ---------------------------------------------------------------------------
@@ -130,9 +129,9 @@ _TICKETS = [
 def main() -> None:
     t = Tournament(
         candidates={
-            "narrow":   _narrow_rule,
+            "narrow": _narrow_rule,
             "moderate": _moderate_rule,
-            "broad":    _broad_rule,
+            "broad": _broad_rule,
         },
         truth_oracle=truth_oracle,
         alpha=0.05,

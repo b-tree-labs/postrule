@@ -85,8 +85,16 @@ def main() -> None:
         (HTTPResponseContext("/api/v1/session", "application/json", 200, "private", False), True),
         (HTTPResponseContext("/api/v1/prices", "application/json", 800, "public", False), False),
         (HTTPResponseContext("/api/v1/catalog", "application/json", 50_000, "public", True), True),
-        (HTTPResponseContext("/assets/app.js", "application/javascript", 280_000, "public", True), True),
-        (HTTPResponseContext("/api/v1/billing", "application/json", 1_200, "no-store", False), True),
+        (
+            HTTPResponseContext(
+                "/assets/app.js", "application/javascript", 280_000, "public", True
+            ),
+            True,
+        ),
+        (
+            HTTPResponseContext("/api/v1/billing", "application/json", 1_200, "no-store", False),
+            True,
+        ),
         (HTTPResponseContext("/api/v1/feed", "application/json", 6_000, "public", False), False),
     ]
 
@@ -94,11 +102,7 @@ def main() -> None:
     print("-" * 78)
     for ctx, _ in traffic:
         result = sw.classify(ctx)
-        print(
-            f"  {ctx.endpoint:25s} "
-            f"ct={ctx.content_type:24s} "
-            f"-> {result.label}"
-        )
+        print(f"  {ctx.endpoint:25s} ct={ctx.content_type:24s} -> {result.label}")
 
     # The installed system now records operational outcomes —
     # whether the TTL the rule picked actually matched reality.
@@ -115,15 +119,8 @@ def main() -> None:
         )
 
     status = sw.status()
-    acc = (
-        status.outcomes_correct / status.outcomes_total
-        if status.outcomes_total
-        else 0.0
-    )
-    print(
-        f"outcome log: {status.outcomes_total} rows, "
-        f"rule-agreement={acc:.1%}"
-    )
+    acc = status.outcomes_correct / status.outcomes_total if status.outcomes_total else 0.0
+    print(f"outcome log: {status.outcomes_total} rows, rule-agreement={acc:.1%}")
 
     # What the operator gets:
     #

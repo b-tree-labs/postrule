@@ -124,9 +124,7 @@ if __name__ == "__main__":
             ticket, label, outcome = verdicts.get(timeout=1.0)
         except queue.Empty:
             break
-        triage_rule.record_verdict(
-            input=ticket, label=label, outcome=outcome.value
-        )
+        triage_rule.record_verdict(input=ticket, label=label, outcome=outcome.value)
         collected += 1
         print(f"  verdict:    {ticket['title']:45s} → {outcome.name}")
 

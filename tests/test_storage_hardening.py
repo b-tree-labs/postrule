@@ -184,10 +184,7 @@ class TestMultiProcessWriters:
         with ctx.Pool(n_workers) as pool:
             results = pool.starmap(
                 _worker_append,
-                [
-                    (str(tmp_path), "triage", records_per_worker, f"w{i}")
-                    for i in range(n_workers)
-                ],
+                [(str(tmp_path), "triage", records_per_worker, f"w{i}") for i in range(n_workers)],
             )
         assert sum(results) == n_workers * records_per_worker
 
@@ -276,9 +273,7 @@ class TestLockOptOut:
 
 
 class TestWindowsFallback:
-    @pytest.mark.skipif(
-        sys.platform != "win32", reason="Windows-specific fallback path"
-    )
+    @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific fallback path")
     def test_warning_emitted_once_on_windows(self, tmp_path):
         # Reset the module-level flag so the warning fires.
         import dendra.storage as st
@@ -393,7 +388,10 @@ class TestBatchedFileStorage:
     def test_batch_size_triggers_early_flush(self, tmp_path):
         """Hitting batch_size sets the flush_event even before the timer."""
         storage = FileStorage(
-            tmp_path, batching=True, batch_size=3, flush_interval_ms=5000,
+            tmp_path,
+            batching=True,
+            batch_size=3,
+            flush_interval_ms=5000,
         )
         try:
             for label in ("a", "b", "c"):

@@ -35,7 +35,6 @@ from dendra import (
     ModelPrediction,
     Phase,
     SwitchConfig,
-    Verdict,
     ml_switch,
 )
 
@@ -219,7 +218,9 @@ class TestSafetyCriticalCap:
                 name="output_gate",
                 rule=_output_rule,
                 author="@safety:output-gate",
-                config=SwitchConfig(auto_record=False, phase=Phase.ML_PRIMARY, safety_critical=True),
+                config=SwitchConfig(
+                    auto_record=False, phase=Phase.ML_PRIMARY, safety_critical=True
+                ),
             )
 
     def test_ml_with_fallback_is_the_cap(self):

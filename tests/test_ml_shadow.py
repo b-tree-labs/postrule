@@ -16,7 +16,6 @@ from dendra import (
     ModelPrediction,
     Phase,
     SwitchConfig,
-    Verdict,
 )
 
 
@@ -77,7 +76,9 @@ class TestMLShadowRouting:
             author="alice",
             model=model_stub,
             ml_head=ml,
-            config=SwitchConfig(auto_record=False, phase=Phase.ML_SHADOW, confidence_threshold=0.85),
+            config=SwitchConfig(
+                auto_record=False, phase=Phase.ML_SHADOW, confidence_threshold=0.85
+            ),
         )
         # ML disagrees loudly; shadow mode must NOT let it influence the answer.
         # The primary path at Phase 3 is MODEL_PRIMARY semantics — LLM decides.

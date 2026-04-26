@@ -102,8 +102,7 @@ if __name__ == "__main__":
         print()
         print("Programmatic fallback (the caller chose this):")
         print(
-            f"  would have retried label={outcome.label!r} out-of-band, "
-            "but not today — skipping."
+            f"  would have retried label={outcome.label!r} out-of-band, but not today — skipping."
         )
 
     print()

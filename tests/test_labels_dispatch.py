@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import Label, LearnedSwitch, Verdict
+from dendra import Label, LearnedSwitch
 
 
 def _rule(ticket):

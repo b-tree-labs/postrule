@@ -266,8 +266,6 @@ class TestValidation:
         primary = _FlappingStorage()
         primary.fail = True
         custom_fallback = BoundedInMemoryStorage(max_records=5)
-        r = ResilientStorage(
-            primary, fallback=custom_fallback, recovery_probe_every=100_000
-        )
+        r = ResilientStorage(primary, fallback=custom_fallback, recovery_probe_every=100_000)
         r.append_record("s", _rec("a"))
         assert [x.label for x in custom_fallback.load_records("s")] == ["a"]

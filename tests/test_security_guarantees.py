@@ -162,17 +162,13 @@ class TestBreakerPersistence:
             # from the persisted state, so this never gets called.
             ml_head=_HealthyMLHead(),
         )
-        assert sw2._circuit_tripped, (
-            "breaker state should have been rehydrated from disk"
-        )
+        assert sw2._circuit_tripped, "breaker state should have been rehydrated from disk"
 
         # And classify still falls through to the rule.
         r2 = sw2.classify("y")
         assert r2.source == "rule_fallback"
 
-    def test_reset_circuit_breaker_clears_persisted_state(
-        self, tmp_path, monkeypatch
-    ):
+    def test_reset_circuit_breaker_clears_persisted_state(self, tmp_path, monkeypatch):
         """Operator reset clears the breaker on disk, not just in memory."""
         monkeypatch.chdir(tmp_path)
 
@@ -218,6 +214,7 @@ class TestBreakerPersistence:
         initiated control-flow signals — swallowing them leaves the
         user unable to interrupt their own process.
         """
+
         class _KBInterruptingMLHead:
             def fit(self, records):
                 pass

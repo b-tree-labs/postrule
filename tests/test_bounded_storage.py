@@ -69,8 +69,11 @@ class TestDefaultStorageWiring:
 
         monkeypatch.chdir(tmp_path)
         s = LearnedSwitch(
-            name="triage", rule=lambda _: "bug", author="alice",
-            persist=True, auto_record=False,
+            name="triage",
+            rule=lambda _: "bug",
+            author="alice",
+            persist=True,
+            auto_record=False,
         )
         assert isinstance(s.storage, ResilientStorage)
         assert isinstance(s.storage.primary, FileStorage)
@@ -99,7 +102,5 @@ class TestDefaultStorageWiring:
 
     def test_explicit_storage_wins(self):
         storage = BoundedInMemoryStorage(max_records=5)
-        s = LearnedSwitch(
-            name="triage", rule=lambda _: "bug", author="alice", storage=storage
-        )
+        s = LearnedSwitch(name="triage", rule=lambda _: "bug", author="alice", storage=storage)
         assert s.storage is storage

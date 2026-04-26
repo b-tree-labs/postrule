@@ -34,8 +34,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from dendra import MLPrediction, ModelPrediction, Verdict
-
+from dendra import MLPrediction, ModelPrediction
 
 # ---------------------------------------------------------------------------
 # language-model adapters — fake "ModelClassifier" implementations

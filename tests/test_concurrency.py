@@ -50,7 +50,6 @@ from dendra import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     LearnedSwitch,
-    MLPrediction,
     Phase,
     ResilientStorage,
     StorageBase,
@@ -91,8 +90,6 @@ class _EchoModel:
             label=f"shadow-{input}",
             confidence=0.5 + (hash(input) % 100) / 1000.0,
         )
-
-
 
 
 class _FlakyMLHead:
@@ -170,10 +167,7 @@ class TestShadowStashIntegrity:
 
         records = sw.storage.load_records(sw.name)
         # Every record must have its OWN shadow attached.
-        contaminated = [
-            r for r in records
-            if r.model_output != f"shadow-{r.input}"
-        ]
+        contaminated = [r for r in records if r.model_output != f"shadow-{r.input}"]
         assert not contaminated, (
             f"{len(contaminated)}/{len(records)} records have shadow_output "
             f"that does not match their own input. Example: "
@@ -320,8 +314,7 @@ class TestResilientStoragePartialDrain:
         )
         # And must be in append order, no dupes.
         assert labels == [f"r{i}" for i in range(10)], (
-            f"Expected labels r0..r9; got {labels} — duplicate records "
-            f"from the partial-drain race."
+            f"Expected labels r0..r9; got {labels} — duplicate records from the partial-drain race."
         )
 
     def test_silent_fallback_eviction_is_surfaced(self):
@@ -353,9 +346,8 @@ class TestResilientStoragePartialDrain:
         # reports 7 evictions, OR degraded_writes must equal the
         # 3 surviving records. Today neither is true.
         evicted_attr = getattr(r, "degraded_evictions", None)
-        assert (
-            r.degraded_writes == surviving
-            or (evicted_attr is not None and evicted_attr == 10 - surviving)
+        assert r.degraded_writes == surviving or (
+            evicted_attr is not None and evicted_attr == 10 - surviving
         ), (
             f"Audit-chain lie detected. degraded_writes={r.degraded_writes}, "
             f"surviving in fallback={surviving}, "

@@ -146,8 +146,10 @@ def main() -> None:
             or (rule_pick == "escalate" and ctx.http_status in (401, 403))
             or (rule_pick == "fallback" and ctx.exception_type == "TimeoutError")
             or (rule_pick == "drop" and ctx.exception_type == "ValueError")
-            or (rule_pick == "escalate" and ctx.exception_type in
-                ("RuntimeError", "KeyError", "AttributeError"))
+            or (
+                rule_pick == "escalate"
+                and ctx.exception_type in ("RuntimeError", "KeyError", "AttributeError")
+            )
         )
         sw.record_verdict(
             input=ctx,
