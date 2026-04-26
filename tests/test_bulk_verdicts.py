@@ -315,6 +315,10 @@ class TestHumanReviewerSource:
 
 
 class TestWebhookVerdictSource:
+    @pytest.fixture(autouse=True)
+    def _require_httpx(self):
+        pytest.importorskip("httpx")
+
     def test_construction_requires_httpx(self):
         pytest.importorskip("httpx")
 
