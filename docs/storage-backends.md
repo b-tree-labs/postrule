@@ -42,6 +42,32 @@ safe option.
 - Oldest records age out silently when the cap is hit; no
   callback, no warning.
 
+### ⚠️ Low-verdict-rate footgun
+
+`BoundedInMemoryStorage` evicts FIFO regardless of verdict
+status. With `auto_record=True` (the default), every classify
+appends an `UNKNOWN` row, and only a fraction of those get
+upgraded to `CORRECT`/`INCORRECT` later via
+`record_verdict` / a `verifier=`.
+
+**If your verdict rate is low (under ~2%), the cap rolls past
+your verdict-bearing rows before they accumulate, and the gate
+starves silently.** It just sees `UNKNOWN`, never advances, and
+never errors — the classifier looks fine but never graduates.
+
+Two fixes:
+
+- **Best:** `persist=True` (or `storage=SqliteStorage(...)`).
+  Durable backends keep history and rotate large logs without
+  losing verdicts.
+- **OK if you really want in-mem:** raise `max_records` so the
+  retention window comfortably covers `gate.min_paired / verdict_rate`.
+  At a 1% verdict rate and `min_paired=200`, that's ~20,000 records,
+  not the default 10,000.
+
+The same warning applies in [`getting-started.md`](getting-started.md);
+if you skip durable storage in production, set the cap deliberately.
+
 ### When to use
 - Dev / tests.
 - Short-lived CLI tools that classify and exit.
