@@ -12,6 +12,7 @@ import pytest
 from dendra import (
     LearnedSwitch,
     MLPrediction,
+    ModelPrediction,
     Phase,
     SwitchConfig,
 )
@@ -35,6 +36,20 @@ class FakeMLHead:
 
     def model_version(self):
         return self.version
+
+
+@dataclass
+class FakeModel:
+    label: str = "bug"
+    confidence: float = 0.95
+    raises: bool = False
+    classify_calls: int = 0
+
+    def classify(self, input, labels):
+        self.classify_calls += 1
+        if self.raises:
+            raise RuntimeError("model classifier went down")
+        return ModelPrediction(label=self.label, confidence=self.confidence)
 
 
 def _rule(ticket: dict) -> str:
@@ -62,7 +77,9 @@ class TestMLWithFallback:
         assert r.source == "ml"
         assert r.confidence == pytest.approx(0.97)
 
-    def test_rule_fallback_on_low_confidence(self):
+    def test_rule_fallback_on_low_confidence_no_model(self):
+        # No model classifier wired up: cascade collapses to H -> R,
+        # preserving v1.0 behavior.
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
@@ -74,7 +91,58 @@ class TestMLWithFallback:
         assert r.label == "bug"
         assert r.source == "rule_fallback"
 
-    def test_rule_fallback_on_ml_error(self):
+    def test_cascades_to_model_on_low_confidence_h(self):
+        # Predecessor-cascade: low-confidence H falls to MODEL_PRIMARY logic
+        # (M then R), not directly to R. The model classifier is the next
+        # tier down the cascade.
+        ml = FakeMLHead(label="feature_request", confidence=0.30)
+        model = FakeModel(label="bug", confidence=0.97)
+        s = LearnedSwitch(
+            name="triage",
+            rule=_rule,
+            author="alice",
+            ml_head=ml,
+            model=model,
+            config=SwitchConfig(phase=Phase.ML_WITH_FALLBACK, confidence_threshold=0.85),
+        )
+        r = s.classify({"title": "Some unrelated text"})
+        assert r.label == "bug"
+        assert r.source == "model"
+        assert model.classify_calls == 1
+        # H prediction is preserved on the result for audit purposes.
+        assert r._ml_output == "feature_request"
+        assert r._ml_confidence == pytest.approx(0.30)
+
+    def test_cascades_to_rule_on_low_confidence_h_and_m(self):
+        # Both tiers below threshold: cascade reaches R.
+        s = LearnedSwitch(
+            name="triage",
+            rule=_rule,
+            author="alice",
+            ml_head=FakeMLHead(label="feature_request", confidence=0.30),
+            model=FakeModel(label="feature_request", confidence=0.40),
+            config=SwitchConfig(phase=Phase.ML_WITH_FALLBACK, confidence_threshold=0.85),
+        )
+        r = s.classify({"title": "App keeps crashing"})
+        assert r.label == "bug"
+        assert r.source == "rule_fallback"
+
+    def test_cascades_to_model_on_h_failure(self):
+        # H raises: cascade falls to MODEL_PRIMARY logic (M then R).
+        s = LearnedSwitch(
+            name="triage",
+            rule=_rule,
+            author="alice",
+            ml_head=FakeMLHead(raises=True),
+            model=FakeModel(label="feature_request", confidence=0.95),
+            config=SwitchConfig(phase=Phase.ML_WITH_FALLBACK),
+        )
+        r = s.classify({"title": "App keeps crashing"})
+        assert r.label == "feature_request"
+        assert r.source == "model"
+
+    def test_rule_fallback_on_ml_error_no_model(self):
+        # H raises and no model wired: cascade collapses to R.
         s = LearnedSwitch(
             name="triage",
             rule=_rule,
