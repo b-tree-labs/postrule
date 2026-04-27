@@ -62,19 +62,22 @@ def test_example_runs_without_error(example: Path):
         # etc.) are signaled by a stderr message naming the dep. Treat
         # those as skips, not failures.
         skip_signals = (
-            "requires fastapi", "Install with:", "ImportError",
-            "Ollama is not", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
-            "Llamafile binary", "needs the local model",
+            "requires fastapi",
+            "Install with:",
+            "ImportError",
+            "Ollama is not",
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "Llamafile binary",
+            "needs the local model",
         )
         combined = (result.stdout + result.stderr).lower()
         if any(s.lower() in combined for s in skip_signals):
             pytest.skip(
-                f"{example.name} requires an optional dep / env var: "
-                f"{result.stdout[:120].strip()}"
+                f"{example.name} requires an optional dep / env var: {result.stdout[:120].strip()}"
             )
         pytest.fail(
-            f"{example.name} exited {result.returncode}\n"
-            f"--- stderr ---\n{result.stderr[:1000]}"
+            f"{example.name} exited {result.returncode}\n--- stderr ---\n{result.stderr[:1000]}"
         )
 
 

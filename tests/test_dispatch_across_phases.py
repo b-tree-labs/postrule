@@ -186,9 +186,7 @@ class TestDispatchFiresAtRulePhase:
             labels=handlers,
             name="dispatch_rule_phase",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
         result = sw.dispatch(ctx)
 
         assert result.label == "retry"
@@ -223,9 +221,7 @@ class TestDispatchFiresAtModelPrimary:
             labels=handlers,
             name="dispatch_model_primary",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
         # Sanity: the rule alone would have returned 'retry'.
         assert handling_rule(ctx) == "retry"
 
@@ -259,9 +255,7 @@ class TestDispatchFiresAtMLPrimary:
             labels=handlers,
             name="dispatch_ml_primary",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
         assert handling_rule(ctx) == "retry"
 
         result = sw.dispatch(ctx)
@@ -297,9 +291,7 @@ class TestDispatchAtMLWithFallbackCascade:
             confidence_threshold=0.7,
             name="dispatch_ml_with_fallback",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
         result = sw.dispatch(ctx)
 
         # Cascade landed at the model's pick (escalate), not the ML head's pick (drop).
@@ -329,9 +321,7 @@ class TestDispatchAtMLWithFallbackCascade:
             confidence_threshold=0.7,
             name="dispatch_ml_with_fallback_rule",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
         result = sw.dispatch(ctx)
 
         assert result.label == "retry"  # rule's pick
@@ -367,9 +357,7 @@ class TestInputIdentityAcrossPhases:
             labels=handlers,
             name=f"dispatch_identity_{phase.value.lower()}",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
         result = sw.dispatch(ctx)
 
         assert result.label == "retry"
@@ -410,9 +398,7 @@ class TestActionExceptionCaptureAcrossPhases:
             labels=labels,
             name=f"dispatch_exception_{phase.value.lower()}",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
 
         # Must not propagate — even at non-rule phases.
         result = sw.dispatch(ctx)
@@ -460,9 +446,7 @@ class TestClassifyDoesNotFireOnAnyPhase:
             labels=handlers,
             name=f"classify_pure_{phase.value.lower()}",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
 
         result = sw.classify(ctx)
 
@@ -504,9 +488,7 @@ class TestAsyncAdispatchParityAcrossPhases:
             labels=handlers,
             name="adispatch_model_primary",
         )
-        ctx = FailureContext(
-            "HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1
-        )
+        ctx = FailureContext("HTTPError", http_status=503, endpoint="/api/v1/users", attempt=1)
 
         result = asyncio.run(sw.adispatch(ctx))
 

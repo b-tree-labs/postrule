@@ -98,7 +98,10 @@ def f(x):
 """
         with pytest.raises(LiftRefused) as exc_info:
             lift_branches(src, "f")
-        assert "computed" in exc_info.value.reason.lower() or "literal" in exc_info.value.reason.lower()
+        assert (
+            "computed" in exc_info.value.reason.lower()
+            or "literal" in exc_info.value.reason.lower()
+        )
         assert exc_info.value.line > 0
 
 
@@ -155,7 +158,9 @@ def f(x):
 """
         with pytest.raises(LiftRefused) as exc_info:
             lift_branches(src, "f")
-        assert "getattr" in exc_info.value.reason.lower() or "dynamic" in exc_info.value.reason.lower()
+        assert (
+            "getattr" in exc_info.value.reason.lower() or "dynamic" in exc_info.value.reason.lower()
+        )
 
     def test_refuses_eval(self):
         src = """
@@ -181,7 +186,9 @@ def f():
 """
         with pytest.raises(LiftRefused) as exc_info:
             lift_branches(src, "f")
-        assert "zero" in exc_info.value.reason.lower() or "argument" in exc_info.value.reason.lower()
+        assert (
+            "zero" in exc_info.value.reason.lower() or "argument" in exc_info.value.reason.lower()
+        )
 
 
 class TestRefuseFunctionNotFound:
@@ -191,7 +198,10 @@ class TestRefuseFunctionNotFound:
         src = "def other(x):\n    return 'a'\n"
         with pytest.raises(LiftRefused) as exc_info:
             lift_branches(src, "missing")
-        assert "missing" in exc_info.value.reason.lower() or "not found" in exc_info.value.reason.lower()
+        assert (
+            "missing" in exc_info.value.reason.lower()
+            or "not found" in exc_info.value.reason.lower()
+        )
 
 
 # ----------------------------------------------------------------------
@@ -202,12 +212,15 @@ class TestRefuseFunctionNotFound:
 class TestOutputIsParseableAndImportable:
     """Sanity: every snapshot test's output must parse cleanly."""
 
-    @pytest.mark.parametrize("input_name,func_name", [
-        ("simple_if_elif.input.py", "triage"),
-        ("multi_side_effects.input.py", "route"),
-        ("match_statement.input.py", "classify"),
-        ("multi_arg.input.py", "route_request"),
-    ])
+    @pytest.mark.parametrize(
+        "input_name,func_name",
+        [
+            ("simple_if_elif.input.py", "triage"),
+            ("multi_side_effects.input.py", "route"),
+            ("match_statement.input.py", "classify"),
+            ("multi_arg.input.py", "route_request"),
+        ],
+    )
     def test_output_parses(self, input_name, func_name):
         src = _read(input_name)
         result = lift_branches(src, func_name)

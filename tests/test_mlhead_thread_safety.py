@@ -17,6 +17,7 @@ C. ``refit()`` is serialized against ``persist_head()`` /
    ``advance()``-driven saves via a per-head lock so concurrent
    training and serialization cannot tear the pickled blob.
 """
+
 from __future__ import annotations
 
 import threading
@@ -304,6 +305,5 @@ class TestRefitAndPersistAreSerialized:
 
         # No state_bytes call observed the torn -1 sentinel.
         assert -1 not in head.state_bytes_observations, (
-            f"persist_head observed a torn pipeline mid-fit: "
-            f"{head.state_bytes_observations}"
+            f"persist_head observed a torn pipeline mid-fit: {head.state_bytes_observations}"
         )

@@ -9,6 +9,7 @@ ATIS in nearly every published comparison. Adding it gives the paper
 a second Regime A data point so the "narrow-domain rule baseline"
 claim doesn't rest on n=1.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -33,9 +34,7 @@ class TestSnipsLoader:
         try:
             from dendra.benchmarks.loaders import load_snips
         except ImportError:
-            pytest.fail(
-                "dendra.benchmarks.loaders.load_snips is not implemented yet"
-            )
+            pytest.fail("dendra.benchmarks.loaders.load_snips is not implemented yet")
         assert callable(load_snips)
 
     def test_loader_returns_benchmark_dataset(self):
@@ -63,9 +62,7 @@ class TestSnipsLoader:
         ds = load_snips()
         for text, label in (ds.train + ds.test)[:50]:
             assert isinstance(text, str) and text, "text must be a non-empty string"
-            assert label in SNIPS_INTENTS, (
-                f"label {label!r} not in canonical Snips intent set"
-            )
+            assert label in SNIPS_INTENTS, f"label {label!r} not in canonical Snips intent set"
 
 
 @pytest.mark.benchmark

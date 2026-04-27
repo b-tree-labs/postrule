@@ -34,8 +34,10 @@ def _make_router_class():
     class RouteUser(Switch):
         # Evidence: each method's return-type hint becomes a dataclass field
         def _evidence_user_tier(self, text: str) -> str:
-            return "vip" if text.endswith("_vip") else (
-                "free" if text.endswith("_free") else "regular"
+            return (
+                "vip"
+                if text.endswith("_vip")
+                else ("free" if text.endswith("_free") else "regular")
             )
 
         def _evidence_fast_lane(self, text: str) -> bool:
@@ -86,10 +88,7 @@ class TestEvidenceDataclassConstruction:
     def test_evidence_field_types_match_return_annotations(self):
         RouteUser, _ = _make_router_class()
         switch = RouteUser()
-        types = {
-            f.name: f.type
-            for f in switch._evidence_class.__dataclass_fields__.values()
-        }
+        types = {f.name: f.type for f in switch._evidence_class.__dataclass_fields__.values()}
         assert types == {"user_tier": str, "fast_lane": bool}
 
 
@@ -197,8 +196,11 @@ class TestWhenStyleAlternativeToRule:
             class Meta:
                 default_label = "neither"
 
-            def _on_first(self, x): pass
-            def _on_second(self, x): pass
+            def _on_first(self, x):
+                pass
+
+            def _on_second(self, x):
+                pass
 
         switch = AmbiguousSwitch()
         assert switch.classify(5).label == "first"
@@ -210,13 +212,16 @@ class TestStructuralValidation:
 
     def test_neither_rule_nor_when_methods_raises(self):
         with pytest.raises(TypeError, match=r"_rule.*_when_"):
+
             class BrokenSwitch(Switch):
                 def _evidence_x(self, x: int) -> int:
                     return x
+
                 # No _rule, no _when_*
 
     def test_both_rule_and_when_methods_raises(self):
         with pytest.raises(TypeError, match=r"both.*_rule.*_when_"):
+
             class BrokenSwitch(Switch):
                 def _evidence_x(self, x: int) -> int:
                     return x
@@ -229,6 +234,7 @@ class TestStructuralValidation:
 
     def test_evidence_method_without_return_annotation_raises(self):
         with pytest.raises(TypeError, match=r"return.*annotation"):
+
             class BrokenSwitch(Switch):
                 def _evidence_x(self, x):  # no return annotation
                     return x
@@ -236,11 +242,13 @@ class TestStructuralValidation:
                 def _rule(self, evidence) -> str:
                     return "a"
 
-                def _on_a(self, x): pass
+                def _on_a(self, x):
+                    pass
 
     def test_orphaned_on_handler_raises(self):
         """An _on_<label> with no corresponding label in _when_'s set."""
         with pytest.raises(TypeError, match=r"_on_orphaned"):
+
             class BrokenSwitch(Switch):
                 def _evidence_x(self, x: int) -> int:
                     return x
@@ -251,8 +259,11 @@ class TestStructuralValidation:
                 class Meta:
                     default_label = "default"
 
-                def _on_a(self, x): pass
-                def _on_orphaned(self, x): pass  # no _when_orphaned
+                def _on_a(self, x):
+                    pass
+
+                def _on_orphaned(self, x):
+                    pass  # no _when_orphaned
 
 
 class TestProxiedLearnedSwitchAPI:

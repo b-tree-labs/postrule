@@ -14,6 +14,7 @@ don't:
   shaped text); tests whether the transition curve generalizes to
   longer, paragraph-scale text.
 """
+
 from __future__ import annotations
 
 import pytest

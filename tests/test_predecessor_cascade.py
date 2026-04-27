@@ -19,6 +19,7 @@ Concretely:
 This test asserts the full cascade depth at each gated phase. Drift
 between paper and code must break this test before reaching main.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -15,6 +15,7 @@ B. The MLHead registry (``register_ml_head``, ``make_ml_head``,
    by name. Built-in heads are pre-registered. Custom strategies
    can refer to heads by name without importing the class.
 """
+
 from __future__ import annotations
 
 import pytest
