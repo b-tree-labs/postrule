@@ -108,6 +108,8 @@ The paired McNemar test rejects "$A$ and $B$ have equal accuracy" at significanc
 
 The minimum-pair condition $n_{\min}$ (we use $n_{\min} = 200$) prevents a runaway low-volume rejection. The directional condition $b > c$ ensures the test only advances when the candidate is *the better* classifier, not merely when the two differ.
 
+**What this means in practice.** The guard counts only the rows where the two classifiers disagree, then asks: are the disagreements lopsided enough toward the candidate to be unlikely by chance? Three knobs control how strict the answer must be. The significance level $\alpha$ caps the chance of a wrong promotion at the rate the operator picks (we default to 1%). The minimum-pair threshold $n_{\min}$ keeps the gate from firing on too few disagreements to be reliable. The directional condition rules out ties: the gate stays put if the two classifiers are equally good. Together these three are the contract that turns "should we replace this rule" from an intuitive call into a reproducible, auditable decision.
+
 ### 3.3 Safety theorem
 
 **Theorem 1 (per-transition safety).** Let $G$ be a paired McNemar gate at significance $\alpha$ with minimum-pair threshold $n_{\min}$. Let $A$ be the incumbent classifier and $B$ the candidate, both evaluated on a stream of paired-correctness rows from the same input distribution $\mathcal{X}$. If $B$ has true accuracy on $\mathcal{X}$ no greater than $A$, then the probability that $G$ advances is bounded above by $\alpha$.
