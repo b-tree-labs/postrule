@@ -83,9 +83,9 @@ We position the contribution against six adjacent literatures. The taxonomy foll
 
 ### 3.1 The graduated-autonomy lifecycle
 
-**In plain terms.** A learned switch is one object that holds three optional decision-makers (the rule, an LLM-style model, and a trained ML head) plus a phase counter that tracks which decision-maker is currently routing classifications. The phase counter steps forward, or back, as the gates introduced in §3.2 and §3.3 fire on accumulated outcome evidence; the routing logic at each phase is shown in Table 1 below. The formal tuple definition follows.
+A learned switch is one object that holds three optional decision-makers (the rule, an LLM-style model, and a trained ML head) plus a phase counter that tracks which decision-maker is currently routing classifications. The phase counter steps forward, or back, as the gates introduced in §3.2 and §3.3 fire on accumulated outcome evidence; the routing logic at each phase is shown in Table 1 below.
 
-We define a *learned switch* over a label set $\mathcal{L}$ as a tuple $S = (R, M, H, \phi)$ where $R: \mathcal{X} \to \mathcal{L}$ is the rule, $M: \mathcal{X} \to (\mathcal{L}, [0,1])$ is an optional model classifier returning a label and confidence, $H: \mathcal{X} \to (\mathcal{L}, [0,1])$ is an optional ML head, and $\phi \in \{P_0, \ldots, P_5\}$ is the lifecycle phase. The decision function is:
+Formally, we define a *learned switch* over a label set $\mathcal{L}$ as a tuple $S = (R, M, H, \phi)$ where $R: \mathcal{X} \to \mathcal{L}$ is the rule, $M: \mathcal{X} \to (\mathcal{L}, [0,1])$ is an optional model classifier returning a label and confidence, $H: \mathcal{X} \to (\mathcal{L}, [0,1])$ is an optional ML head, and $\phi \in \{P_0, \ldots, P_5\}$ is the lifecycle phase. The decision function is:
 
 | Phase | Decision rule | Rule role |
 |---|---|---|
@@ -100,9 +100,7 @@ We define a *learned switch* over a label set $\mathcal{L}$ as a tuple $S = (R, 
 
 ### 3.2 Transition guards
 
-Each gated transition $P_k \to P_{k+1}$ admits a guard $G_k(\mathcal{D})$ that returns `advance | hold` over an outcome dataset $\mathcal{D}$. The default guard is the paired McNemar test.
-
-**In plain terms.** The guard counts only the rows where the two classifiers disagree, then asks whether the disagreements are lopsided enough toward the candidate to be unlikely by chance. Three knobs control how strict the answer must be. The significance level $\alpha$ caps the chance of a wrong promotion at the rate the operator picks (we default to 1%). The minimum-pair threshold $n_{\min}$ keeps the gate from firing on too few disagreements to be reliable. The directional condition rules out ties: the gate stays put if the two classifiers are equally good. Together these three turn "should we replace this rule" from an intuitive call into a reproducible, auditable decision. The formal definition follows.
+Each gated transition $P_k \to P_{k+1}$ admits a guard $G_k(\mathcal{D})$ that returns `advance | hold` over an outcome dataset $\mathcal{D}$. The default guard is the paired McNemar test, which counts only the rows where the two classifiers disagree and asks whether the disagreements are lopsided enough toward the candidate to be unlikely by chance. Three knobs control how strict the answer must be: the significance level $\alpha$ caps the chance of a wrong promotion at the rate the operator picks (we default to 1%); the minimum-pair threshold $n_{\min}$ keeps the gate from firing on too few disagreements to be reliable; and the directional condition rules out ties, so the gate stays put if the two classifiers are equally good. Together these three turn "should we replace this rule" from an intuitive call into a reproducible, auditable decision.
 
 **Definition (paired McNemar gate).** Given two classifiers $A$ (incumbent) and $B$ (candidate) evaluated on the same $n$ rows with paired correctness $(a_i, b_i) \in \{0,1\}^2$, let:
 - $b = |\{i : a_i = 0, b_i = 1\}|$  (rows where $B$ is right and $A$ is wrong)
@@ -114,7 +112,7 @@ The minimum-pair condition $n_{\min}$ (we use $n_{\min} = 200$) prevents a runaw
 
 ### 3.3 Safety theorem
 
-**In plain terms.** This section's result is a pair of calibrated safety guarantees. If a candidate classifier is genuinely no better than the one it would replace, the gate has at most a 1% chance of wrongly promoting it on any single evaluation at $\alpha = 0.01$, by construction of the paired McNemar test's null distribution. Three such evaluations sit between the rule and full ML autonomy in our lifecycle; even in the worst case where every gate "rolls the dice" independently, the joint probability of any wrong promotion across the lifecycle stays under 3%, and the single most-consequential step (handing decisions fully to ML) stays at the per-evaluation 1%. That sits in the same range as the false-failure rate production teams already tolerate from CI regression tests, and the operator can drive it lower by tightening $\alpha$ at construction time. The formal statement and proof follow.
+The result of this section is a pair of calibrated safety guarantees. If a candidate classifier is genuinely no better than the one it would replace, the gate has at most a 1% chance of wrongly promoting it on any single evaluation at $\alpha = 0.01$, by construction of the paired McNemar test's null distribution. Three such evaluations sit between the rule and full ML autonomy in our lifecycle; even in the worst case where every gate "rolls the dice" independently, the joint probability of any wrong promotion across the lifecycle stays under 3%, and the single most-consequential step (handing decisions fully to ML) stays at the per-evaluation 1%. That sits in the same range as the false-failure rate production teams already tolerate from CI regression tests, and the operator can drive it lower by tightening $\alpha$ at construction time.
 
 **Theorem 1 (per-transition safety).** Let $G$ be a paired McNemar gate at significance $\alpha$ with minimum-pair threshold $n_{\min}$. Let $A$ be the incumbent classifier and $B$ the candidate, both evaluated on a stream of paired-correctness rows from the same input distribution $\mathcal{X}$. If $B$ has true accuracy on $\mathcal{X}$ no greater than $A$, then the probability that $G$ advances is bounded above by $\alpha$.
 
