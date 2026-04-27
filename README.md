@@ -469,14 +469,24 @@ US provisional patent (application pending, filed 2026-04-21).
 
 ## Status
 
-**v1.0.0** — public release.
+**v1.0.0** — public release (2026-05-13).
 Six lifecycle phases ✓ Head-to-head evidence gates ✓
 Native async API ✓ VerdictSource family ✓
 CandidateHarness for autoresearch loops ✓
-473 tests passing.
+Native `Switch` class authoring ✓ Multi-arg auto-packing ✓
+`dendra init --auto-lift` (branch + evidence lifters) ✓
+Drift detection (`dendra refresh` / `doctor`) ✓
+Prescriptive analyzer (Phase 5 hazard diagnostics) ✓
+Account system MVP + `dendra login` ✓
+MCP server (`dendra mcp`) ✓
+VS Code extension (early v1.1) ✓
+800+ tests passing.
 
-Hosted analyzer + dashboards (Wave 2) — Q3 2026, waitlist on
-[dendra.dev](https://dendra.dev).
+Wave 2 (cloud features + hosted analyzer + dashboards) — rolling
+through 2026; waitlist on [dendra.dev](https://dendra.dev).
+PyCharm plugin + benchmark/report harness + branch-lifter relaxation —
+v1.5 / v1.x. See [`docs/limitations.md`](docs/limitations.md) for the
+versioned roadmap.
 
 ## Dev setup
 

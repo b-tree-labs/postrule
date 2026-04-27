@@ -149,6 +149,58 @@ class TestEvidenceViaProbeSuccess:
         assert _normalize(result) == _normalize(expected)
 
 
+class TestEvidenceViaProbeTrailingAttr:
+    """When the probe expression already extracts an attribute (e.g.
+    ``api.charge_probe(req).ok``) and the rule body's reference accesses
+    the same attribute on the bind (``response.ok``), the rewriter must
+    drop the trailing ``.attr`` so the lifted body reads
+    ``evidence.<field>`` directly, not ``evidence.<field>.<attr>``.
+    """
+
+    def test_drops_trailing_attr_when_probe_extracts_it(self):
+        src = """
+@evidence_via_probe(charge_ok="api.charge_probe(req).ok")
+def maybe_charge(req):
+    response = api.charge(req)
+    if response.ok:
+        return "charged"
+    return "skipped"
+"""
+        result = lift_evidence(src, "maybe_charge")
+        # The rule body must use `evidence.charge_ok` (a bool), NOT
+        # `evidence.charge_ok.ok` (which would re-access .ok on the bool).
+        assert "evidence.charge_ok.ok" not in result
+        assert "if evidence.charge_ok:" in result
+
+    def test_drops_trailing_attr_for_payload_field(self):
+        src = """
+@evidence_via_probe(payload="api.fetch(req).body")
+def serve(req):
+    response = api.do(req)
+    if response.body == 'ready':
+        return "ready"
+    return "wait"
+"""
+        result = lift_evidence(src, "serve")
+        assert "evidence.payload.body" not in result
+        assert "if evidence.payload == 'ready':" in result
+
+    def test_refuses_when_probe_attr_mismatches_rule_attr(self):
+        src = """
+@evidence_via_probe(charge_ok="api.charge_probe(req).ok")
+def maybe_charge(req):
+    response = api.charge(req)
+    if response.error:
+        return "failed"
+    return "charged"
+"""
+        with pytest.raises(LiftRefused) as exc_info:
+            lift_evidence(src, "maybe_charge")
+        msg = exc_info.value.reason.lower()
+        # Mismatch between probe-extracted attr and rule-body attr.
+        assert "probe" in msg or "mismatch" in msg or "attr" in msg
+
+
 class TestEvidenceViaProbeMissingField:
     """``@evidence_via_probe`` with no kwargs, or a kwarg whose value is
     not a parseable expression, is a usage error: refuse.
