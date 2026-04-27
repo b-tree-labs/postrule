@@ -65,6 +65,99 @@ from drift, a data-pipeline outage, or adversarial input). The
 rule is cheap; having it means you always have somewhere to
 fall back to that you can reason about.
 
+## What's the difference between `ML_WITH_FALLBACK` and `ML_PRIMARY`?
+
+One thing changes: **the confidence threshold is removed.**
+
+| | `ML_WITH_FALLBACK` (P4) | `ML_PRIMARY` (P5) |
+|---|---|---|
+| Take ML head's prediction | only if `conf_H ≥ θ` | always |
+| On low confidence | cascade through language model, then rule | (this branch doesn't exist) |
+| Hard ML failure (exception, NaN, timeout) | fall to rule | trip circuit breaker, fall to rule |
+| Latency | mostly microseconds; uncertain rows can incur an LLM call | always microseconds |
+| Cost | per-row token cost on uncertain rows only | zero per-call token cost |
+
+Two distinct McNemar gates earn the two transitions:
+
+- **P3 → P4** asks: "is the ML head reliably better than the language model on the rows where the ML head is confident enough to commit?"
+- **P4 → P5** asks: "is the ML head reliably better than the language model on *every* row, including the long tail where the ML head reported low confidence?"
+
+Crossing the first does not entail crossing the second. A model can be excellent on its high-confidence majority and embarrassing on its low-confidence tail (Guo et al., 2017). The lifecycle separates these two trust statements so an operator can ship at P4 with the cascade catching uncertainty, and only commit to P5 once the long-tail evidence is in. P4 is the regulatory ceiling (`safety_critical=True` caps here). P5 is the latency / cost ceiling.
+
+## When the ML head is uncertain, why does it fall back through the language model first instead of straight to the rule?
+
+Because you already proved the language model beats the rule. Throwing that evidence away is wasteful.
+
+The lifecycle's load-bearing rule is **predecessor-cascade fallback**: each phase's low-confidence path is its predecessor's full routing, recursively.
+
+| Phase | Routing |
+|---|---|
+| P0 (RULE) | `R(x)` |
+| P2 (MODEL_PRIMARY) | `M(x) if conf_M ≥ θ else R(x)` |
+| P4 (ML_WITH_FALLBACK) | `H(x) if conf_H ≥ θ else (M(x) if conf_M ≥ θ else R(x))` |
+| P5 (ML_PRIMARY) | `H(x)` |
+
+Each promotion adds a tier *on top of* the existing cascade. P2 added M above R. P4 added H above M-then-R. The fallback from any phase walks down through every tier you earned, in the order you earned them.
+
+If you retire the language model (drop the `model=` slot on the switch), the cascade collapses gracefully: low-confidence H falls straight to R, identical to the v1.0 pre-cascade behavior. No surprises for installs that drop M to save cost.
+
+## Why isn't there a phase where the language model decides without a confidence threshold?
+
+Because the language model is a borrowed brain.
+
+The language model `M` (Phase 2's primary) is a generic LLM. You did not train it on your verdict log. You cannot improve its calibration by feeding it more outcomes. Its low-confidence outputs on long-tail inputs are inherently more dangerous than just "statistically uncertain" — they're hallucination / jailbreak territory. The confidence threshold on M is a permanent guardrail, not a transition state.
+
+The trained ML head `H` is yours. H trains on the verdict log Dendra collects. As outcomes accumulate, H's calibration improves *specifically on your distribution*. The McNemar gate at P4 → P5 fires when H is reliably better than M even on the rows where H itself reported low confidence. That gate has actual evidentiary content because verdict data tightens H's calibration. There's no analogous gate for M because no analogous evidence exists — verdicts don't change M.
+
+The deeper rule: **you can only remove a confidence threshold for a tier you own and can train.** The lifecycle never trusts a tier with no learning loop end-to-end.
+
+If you fine-tune a per-task language model on your verdict log, *that* object is structurally an `H`-shaped object (yours, trainable on outcomes), not an `M`-shaped object, and the lifecycle will treat it accordingly.
+
+## What is H, physically? What's actually stored and executing?
+
+In the v1 reference (`SklearnTextHead`), H is a scikit-learn `Pipeline` held in memory with two stages:
+
+1. **A `TfidfVectorizer`** — a learned vocabulary (token → integer ID) plus IDF (inverse document frequency) weights per token. Built from the rows in your verdict log where the outcome was correct. The vectorizer turns input text into a sparse feature vector by counting token occurrences and scaling each by its IDF (rare tokens count more than common ones).
+
+2. **A `LogisticRegression`** — a weight matrix of shape `(n_classes, n_vocab)`, one weight vector per output label, learned by L2-regularized maximum-likelihood. At inference, it produces a softmax probability over labels; the argmax is the prediction and the max probability is the confidence.
+
+Concretely:
+
+```
+input  →  serialize_input_for_features()    # dict → "title: foo | body: bar"
+       →  vectorizer.transform()            # text → sparse TF-IDF vector
+       →  lr.predict_proba()                # vector → softmax over labels
+       →  argmax + max                      # → (label, confidence)
+```
+
+Memory footprint scales with `n_classes × n_vocab` floats: ~1 MB for ATIS (26 labels), ~18 MB for CLINC150 (151 labels). Inference latency on commodity hardware: microseconds.
+
+What's persistent vs ephemeral:
+
+| | Persistent? |
+|---|---|
+| Verdict log (records, outcomes) | yes — in-memory rotator / file / sqlite / pluggable |
+| Lifecycle phase + circuit-breaker state | yes — audit chain |
+| The trained `Pipeline` itself | **no** in v1 — re-fit from the log on demand |
+
+The verdict log is the source of truth; H is a function of the log. On process restart, H is recomputed from the log. Cost: one fit pass at startup. Benefit: the model can never drift from the data because it *is* the data.
+
+The `MLHead` protocol is pluggable (`fit / predict / model_version`). When you outgrow TF-IDF + LR, plug in transformers, ONNX-exported models, XGBoost, anything that satisfies the protocol. Lifecycle, gates, audit chain, and cascade are unchanged.
+
+## Can the lifecycle go backward?
+
+Yes. The same paired-McNemar machinery that promotes a tier can also demote it.
+
+When `auto_demote=True` (the v1 default), every $N$ verdicts the switch evaluates the *reverse-direction* gate: "is the rule reliably better than the current decision-maker on the recent paired-correctness evidence?" If that gate fires, the lifecycle steps back **one phase**. Multi-step retreats accumulate across successive cycles if drift persists.
+
+This is how Dendra handles concept drift on the accuracy axis: not as a separate detector with its own thresholds, but as the same gate primitive called with the rule as the comparison target. Type-I error is bounded by the same α as the advancement direction.
+
+The rule R is always reachable, structurally, from any phase. There is no point in the lifecycle where the operator cannot return to "your code, deterministic" by demoting back to P0.
+
+Operators can also demote manually via `switch.demote(reason="...")` for ops-driven rollbacks (incident response, regulator request, etc.). The reason is required and lands in the audit chain.
+
+The paper's §10.5 (Future Work) flags empirical characterization of demotion timing under realistic drift profiles as the natural follow-on to the transition curves.
+
 ## How is this different from Vowpal Wabbit / online learning?
 
 Vowpal Wabbit is continuous adaptation with no rule floor and no
