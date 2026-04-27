@@ -361,6 +361,8 @@ Why not skip the decorator and inline the routing as `if "crash" in title: engin
 
 This is the entire user-facing API for the common case: one decorator wires classification, dispatch, and graduation; production code calls one function.
 
+The point: the body of `triage_rule` is the exact `if`/`else` you would have inlined. The decorator is the only addition. Everything else (outcome logging, gate evaluation, lifecycle migration, audit chain, circuit breaker) happens for free. **You write your rule once; Dendra makes it self-upgrading.**
+
 ### 9.2 Storage and durability
 
 The default storage is a bounded in-memory rotator (10,000 records FIFO). Production deployments pass `persist=True` to switch to a resilient file-backed store (`FileStorage`) wrapped in an in-memory fallback (`ResilientStorage`) that buffers on disk failure and drains on recovery. A `SqliteStorage` backend ships for concurrent multi-process write workloads. The storage layer is pluggable via the `Storage` protocol; users with existing audit infrastructure (Kafka, Redshift, Snowflake) can plug those in.
