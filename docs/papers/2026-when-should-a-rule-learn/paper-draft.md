@@ -355,7 +355,7 @@ def triage_rule(ticket: dict) -> str:
 triage_rule(ticket)  # classifies AND fires the matching handler
 ```
 
-Calling `triage_rule(ticket)` classifies the ticket and fires the matching handler in a single call: classification and routing are wired together at the decorator. Later, when downstream signals reveal whether the routing was right (a resolution code on the ticket, a CSAT score on the interaction, an A/B conversion), `triage_rule.switch.record_verdict(record_id, Verdict.CORRECT)` registers an outcome; the gate fires automatically every $N$ verdicts and graduates the underlying classifier when evidence justifies it. This is the entire user-facing API for the common case: one decorator wires classification, dispatch, and graduation; production code calls one function.
+Calling `triage_rule(ticket)` classifies the ticket and fires the matching handler in a single call: classification and routing are wired together at the decorator. Later, when downstream signals reveal whether the routing was right (a resolution code on the ticket, a CSAT score on the interaction, an A/B conversion), `triage_rule.switch.record_verdict(record_id, Verdict.CORRECT)` registers an outcome; the gate fires automatically every $N$ verdicts and graduates the underlying classifier when evidence justifies it. In practice that means the same `triage_rule(ticket)` call routes via the keyword `if`/`else` on day one and via a trained ML head a few weeks later, with no code change at the call site or in the handlers. This is the entire user-facing API for the common case: one decorator wires classification, dispatch, and graduation; production code calls one function.
 
 ### 9.2 Storage and durability
 
