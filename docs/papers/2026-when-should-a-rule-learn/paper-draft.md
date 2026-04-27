@@ -331,35 +331,36 @@ The reference implementation realizes the lifecycle as a Python library (`pip in
 
 ### 9.1 The `@ml_switch` decorator
 
-How do you wire classification, dispatch, and the eventual rule-to-ML migration through a single call site, so the same `triage_rule(ticket)` invocation is what production code calls on day one and on day thirty? The simplest invocation is a decorator over the rule function:
+How do you wire classification, dispatch, and the eventual rule-to-ML migration through a single call site, so the same `classify_content(post)` invocation is what production code calls on day one and on day thirty? The simplest invocation is a decorator over the rule function:
 
 ```python
 from dendra import ml_switch
-from myapp.queues import engineering, product, support
+from myapp.moderation import publish, queue_for_review, block_and_notify
 
-# Each label is paired with the system action it routes to. Classify
-# and dispatch happen in one call.
+# Content moderation: each label is paired with a downstream system
+# action whose miscost is immediate (target harm, censorship complaint,
+# or a moderator drowned in spillover).
 @ml_switch(labels={
-    "bug":             engineering.add,
-    "feature_request": product.add,
-    "question":        support.notify,
+    "publish": publish,
+    "review":  queue_for_review,
+    "block":   block_and_notify,
 })
-def triage_rule(ticket: dict) -> str:
-    title = (ticket.get("title") or "").lower()
-    if "crash" in title or "error" in title:
-        return "bug"
-    if title.endswith("?"):
-        return "question"
-    return "feature_request"
+def classify_content(post: dict) -> str:
+    text = (post.get("body") or "").lower()
+    if any(term in text for term in BANNED_TERMS):
+        return "block"
+    if post.get("reporter_count", 0) >= 3:
+        return "review"
+    return "publish"
 
-triage_rule(ticket)  # classifies AND fires the matching handler
+classify_content(post)  # classifies AND fires the matching handler
 ```
 
-Calling `triage_rule(ticket)` classifies the ticket and fires the matching handler in a single call: classification and routing are wired together at the decorator. Later, when downstream signals reveal whether the routing was right (a resolution code on the ticket, a CSAT score on the interaction, an A/B conversion), `triage_rule.switch.record_verdict(record_id, Verdict.CORRECT)` registers an outcome; the gate fires automatically every $N$ verdicts and graduates the underlying classifier when evidence justifies it. What §1 named as the typical cost of replacing a rule by hand (outcome plumbing, feature pipelines, training, deployment, shadow evaluation, monitoring, rollback) is what the gate handles internally, once and uniformly across every site that uses the decorator.
+Calling `classify_content(post)` classifies the post and fires the matching handler in a single call: classification and routing are wired together at the decorator. Later, when downstream signals reveal whether the routing was right (a successful user appeal, a moderator override on the review queue, an external takedown notice, a regulator inquiry), `classify_content.switch.record_verdict(record_id, Verdict.CORRECT)` registers an outcome; the gate fires automatically every $N$ verdicts and graduates the underlying classifier when evidence justifies it. What §1 named as the typical cost of replacing a rule by hand (outcome plumbing, feature pipelines, training, deployment, shadow evaluation, monitoring, rollback) is what the gate handles internally, once and uniformly across every site that uses the decorator.
 
-The `triage_rule` example is small for code clarity. In practice the rule fails in predictable ways: "the system keeps freezing" is a bug with no keyword match; "Why don't you support SAML?" ends with "?" and gets routed to the question queue; "segfalut" is a typo that misses every keyword. Each miss is a misrouted ticket. Engineering on-call paged for a feature request. Product backlog cluttered with bugs. Support drowning in spillover. At 10,000 tickets/day, the §5 accuracy lift (70.0% → 88.7%) reclaims roughly 1,800 correctly-routed decisions every day. In regulated domains where the same primitive applies (content moderation, fraud triage, clinical coding) the per-decision cost compounds into regulatory fines, customer churn, and denied claims. The decorator is the difference between a rule that decays and a rule that improves.
+The keyword rule fails in predictable, expensive ways. A slur with a deliberate typo or zero-width character evades the banned-terms list and publishes; a coordinated brigade of three reports flags a legitimate post into the review queue; an emerging coded epithet sails through every keyword. False *publishes* harm targets, attract regulatory attention, and compound into brand events; false *blocks* are censorship complaints from creators with platforms; false *reviews* drown the moderation team. At a platform processing millions of posts a day, the §5 accuracy lift on a structurally similar task (≈70% rule → ≈88% trained ML head) is the difference between tens of thousands of correctly-routed decisions per day and tens of thousands of harm or grievance events. In regulated jurisdictions (DSA, COPPA, NetzDG) per-decision miscost compounds into fines and audit obligations. The decorator is the difference between a moderation rule that decays as language shifts and one that improves with every new outcome.
 
-The body of `triage_rule` is the exact `if`/`else` you would have inlined; the decorator is the only addition. Everything else (outcome logging, gate evaluation, lifecycle migration, audit chain, circuit breaker) happens for free. **You write your rule once; Dendra upgrades it from a hand-written keyword check to a trained ML head, in production, with no rewrite.** On the §5 benchmarks, that upgrade is a 70.0% → 88.7% lift on ATIS and a 0.5–1.8% → 81.9–87.7% lift on the high-cardinality regime. Other dimensions ride along: latency drops from LLM-seconds to ML-microseconds once the lifecycle reaches Phase 5; per-call token cost goes to zero once the ML head decides; drift detection ships in the same primitive (the gate fires in reverse when the rule reclaims the lead); and the call site itself is permanent. Production code calls `triage_rule(ticket)` on day one, on day thirty, and ten years from now. The function on the inside is what evolves.
+The body of `classify_content` is the exact `if`/`else` you would have inlined; the decorator is the only addition. Everything else (outcome logging, gate evaluation, lifecycle migration, audit chain, circuit breaker) happens for free. **You write your rule once; Dendra upgrades it from a hand-written keyword check to a trained ML head, in production, with no rewrite.** On the §5 benchmarks, that upgrade is a 70.0% → 88.7% lift on ATIS and a 0.5–1.8% → 81.9–87.7% lift on the high-cardinality regime. Other dimensions ride along: latency drops from LLM-seconds to ML-microseconds once the lifecycle reaches Phase 5; per-call token cost goes to zero once the ML head decides; drift detection ships in the same primitive (the gate fires in reverse when the rule reclaims the lead); and the call site itself is permanent. Production code calls `classify_content(post)` on day one, on day thirty, and ten years from now. The function on the inside is what evolves.
 
 ### 9.2 Storage and durability
 
