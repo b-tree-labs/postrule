@@ -83,6 +83,8 @@ We position the contribution against six adjacent literatures. The taxonomy foll
 
 ### 3.1 The graduated-autonomy lifecycle
 
+**In plain terms.** A learned switch is one object that holds three optional decision-makers (the rule, an LLM-style model, and a trained ML head) plus a phase counter that tracks which decision-maker is currently routing classifications. The phase counter steps forward, or back, as the gates introduced in §3.2 and §3.3 fire on accumulated outcome evidence; the routing logic at each phase is shown in Table 1 below. The formal tuple definition follows.
+
 We define a *learned switch* over a label set $\mathcal{L}$ as a tuple $S = (R, M, H, \phi)$ where $R: \mathcal{X} \to \mathcal{L}$ is the rule, $M: \mathcal{X} \to (\mathcal{L}, [0,1])$ is an optional model classifier returning a label and confidence, $H: \mathcal{X} \to (\mathcal{L}, [0,1])$ is an optional ML head, and $\phi \in \{P_0, \ldots, P_5\}$ is the lifecycle phase. The decision function is:
 
 | Phase | Decision rule | Rule role |
