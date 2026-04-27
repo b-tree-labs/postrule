@@ -61,6 +61,16 @@ Same decorator, same graduation story; the caller handles the
 action. Useful when the action is someone else's job — a queue
 consumer, a downstream pipeline, a UI.
 
+### Constraints
+
+The `@ml_switch` decorator imposes three structural constraints on the wrapped function:
+
+- **Single positional input** at the v1.0 baseline. Multi-arg signatures lift via `auto_pack=True` (v1): the decorator inspects `inspect.signature(...)`, synthesizes a packed input dataclass, and unpacks at the call site. Type hints on every parameter are required for the LLM/ML head schema.
+- **Rule must return a known label name (string), statically determinable** from the function body. The labels passed to `labels=` (or the keys of the dict-form) are the only allowed return values. Returning a value not in the label set is a runtime error caught by the dispatcher.
+- **Rule purity** (input only, no side effects). Side effects belong in label-keyed handlers (`Label(on=...)`, dict-labels, or `_on_<label>` methods on a `dendra.Switch` subclass), not in the rule body. Auto-lift (Phases 2-3) extracts side effects mechanically; until then, the user does the extraction.
+
+The full list of structural and semantic limitations, including hidden-state extraction, exception semantics, and dynamic-dispatch refusals, lives in [`limitations.md`](./limitations.md).
+
 ## Required per classify
 
 Exactly one of these, per input:

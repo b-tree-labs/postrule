@@ -53,6 +53,18 @@ gating earns its keep.
 [^nrf]: National Retail Federation 2023 Consumer Returns Report.
 [^cbp]: U.S. Customs & Border Protection annual trade statistics.
 
+## Anti-scenarios: these look like classification but aren't
+
+Code that resembles a classifier but won't fit cleanly under `@ml_switch` (or its v1 native peer, `dendra.Switch`):
+
+- **Tests and fixtures.** A pytest function (`def test_routes_correctly(client): ...`) returns assertions, not labels. The analyzer filters these out; do not wrap them.
+- **Validators.** A function that returns `True` / `False` (or raises on invalid) is a binary predicate, not a multi-class classifier. If the predicate is one branch of a real classification problem (allow / deny / escalate), wrap the surrounding decision instead.
+- **Output is a tuple, dict, dataclass, or computed scalar.** A function that returns `(price, currency, jurisdiction)` is computing a value, not picking a label. The classifier should pick the strategy; the strategy returns the value.
+- **Decisions that need hidden out-of-process state we can't expose.** If the rule's branch depends on a remote service whose response cannot be packed into evidence, the LLM/ML head will never see what the rule saw. Auto-lift refuses with a specific diagnostic (see [`limitations.md`](./limitations.md) section 3).
+- **Order-dependent / state-machine functions.** If `f(x)` at time T depends on what `f(...)` returned at T-1, the function is a state machine. Per-input independence is load-bearing for paired-correctness math; lifting a state machine breaks the gate's evidentiary content.
+
+For the full enumeration with version tags and the path forward for each category, see [`limitations.md`](./limitations.md).
+
 ## False-promotion rate, bounded by `alpha`
 
 > *Example 19 claim: a loop that promotes any candidate with

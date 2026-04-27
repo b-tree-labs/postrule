@@ -39,6 +39,18 @@ We mean it. Dendra is opinionated about being a primitive for
 production-grade classification — not a general-purpose
 dispatcher.
 
+## What can't I Dendrify?
+
+Some shapes of code look like classification but aren't, or have constraints that block lifting cleanly. The concrete list:
+
+- **pytest tests, fixtures, validators, setup code.** No labels, no production routing decision. The analyzer filters these out by default.
+- **Async generators** (`async def f(): yield ...`). The classifier protocol expects a label return, not a stream. Async coroutines that return a label work via the async API peers (`aclassify`, `adispatch`).
+- **Classes used as callables** (`MyClass(input)` where `__call__` runs classification). Wrap the `__call__` body in a `@ml_switch` function, or migrate to the native `dendra.Switch` class authoring pattern (v1).
+- **Multi-positional + `**kwargs` without clean signatures.** Multi-arg auto-packing (v1) requires `inspect.signature(...)` to recover parameter names and types. Functions assembled dynamically (`functools.partial` chains, `*args` only with no type hints) need an explicit signature before they can lift.
+- **Decisions that need hidden out-of-process state we can't see.** If the rule consults a remote service or database state, that state has to be exposed as evidence (auto-lift, or `@evidence_inputs`). If the state can't be exposed, the LLM/ML head can never see what the rule saw, and Dendra refuses with a specific diagnostic.
+
+The full list, with version tags and the path forward for each item, is in [`limitations.md`](./limitations.md).
+
 ## Why not just use shadow mode / A-B testing / a feature flag?
 
 Shadow mode says "run both, log both." Dendra says "run both,

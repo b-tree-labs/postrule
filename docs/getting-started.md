@@ -30,6 +30,17 @@ the hood); `AccuracyMarginGate`, `CompositeGate`,
 
 You keep the rule. Dendra learns around it.
 
+## Limitations & when not to use Dendra
+
+Dendra is a primitive for production-grade classification, not a general-purpose dispatcher. Before reading further, check the constraints:
+
+- The classifier function returns a label name (string), not a computed value (tuple, dict, dataclass, scalar).
+- The decision is per-input, not order-dependent across calls. State machines are not classifiers.
+- Test functions, fixtures, validators, and any function whose output is a structured value rather than a label are not classification sites.
+- Hidden state (globals, `self.attr`, mid-function I/O, closures) is auto-liftable in v1; dynamic dispatch (`getattr` with runtime keys) requires an explicit `@evidence_inputs` annotation; `eval` / `exec` is refused.
+
+The full list, with version tags and the path forward for each item, lives in [`limitations.md`](./limitations.md). Read it first if you're unsure whether your decision site is the right fit.
+
 ## The mental model
 
 Three things happen around a switch, in this order:
