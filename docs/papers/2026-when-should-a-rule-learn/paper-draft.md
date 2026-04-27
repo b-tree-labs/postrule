@@ -212,12 +212,12 @@ The benchmarks split cleanly into two regimes (Figure 1, transition-curve panels
 
 **Regime A — Low cardinality, narrow domain (ATIS).** With 26 labels and a single domain (flight booking), a 100-example keyword rule achieves 70.0% test-set accuracy from day one. The rule is *usable* — a triage system could ship with this baseline. ML crosses the rule at 250 outcomes (paired $p = 1.6 \times 10^{-3}$) with a 6-point margin (75.6% vs 69.5% on the seed=500 finer-grained run), and reaches 88.7% by training-set exhaustion. The interesting question for Regime A users is *when to graduate* — the rule is good enough that the team has the luxury of waiting.
 
-**Regime B — High cardinality, broad domain (HWU64, Banking77, CLINC150).** With 64–151 labels, a 100-example seed cannot possibly cover the label space; the day-zero rule is essentially non-functional (0.5–1.8% accuracy). ML climbs from single digits at 1k outcomes to the low 80s at full training. The "transition depth" metric loses its narrative force here — the rule was never a viable baseline. The interesting question is not *when* but *how the system shipped at all without an outcome-logging layer underneath the rule that allowed the ML migration to begin*.
+**Regime B — High cardinality, broad domain (HWU64, Banking77, CLINC150).** With 64–151 labels, a 100-example seed cannot possibly cover the label space; the day-zero rule is essentially non-functional (0.5–1.8% accuracy, at or below chance for a 77+ label space). ML climbs from single digits at 1k outcomes to the low 80s at full training. The "transition depth" metric loses its narrative force here: the rule was never a viable baseline, and no team could have shipped a 1%-accurate keyword classifier as the user-visible decision in the first place. High-cardinality workloads in production start at Phase 2 with an off-the-shelf zero-shot LLM, or wait on hand-labeled training data before launching at all. Dendra's role in this regime is therefore not graduation but cold-start substrate: outcome-logging from day one regardless of which decision-maker is in front, with an explicit migration path to a trained ML head once enough data accumulates.
 
 The two regimes correspond to different product conversations:
 
 - **Regime A user:** "Our rule works; should we replace it?" → "Yes, here is the statistical evidence; the McNemar gate would advance you at 250 outcomes."
-- **Regime B user:** "Our rule is a fig leaf; we shipped it because we had to." → "The graduation primitive lets you start anyway; the outcome log it generates is the training-data source for the ML classifier that replaces the rule."
+- **Regime B user:** "We need a 77-way intent classifier and we don't have training data yet." → "Start at Phase 2 with a zero-shot LLM in front of Dendra's outcome-logging layer; the log it generates is the training-data source for the eventual ML head."
 
 ### 5.3 Seed-size sensitivity
 
