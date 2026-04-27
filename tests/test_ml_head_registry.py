@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # A: Public TfidfHeadBase
 # ---------------------------------------------------------------------------
@@ -86,10 +85,10 @@ class TestMLHeadRegistry:
         pytest.importorskip("sklearn")
         from dendra import (
             MLHead,
+            TfidfHeadBase,
             available_ml_heads,
             make_ml_head,
             register_ml_head,
-            TfidfHeadBase,
         )
 
         class CustomHead(TfidfHeadBase):

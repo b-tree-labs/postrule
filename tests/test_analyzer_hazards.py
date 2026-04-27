@@ -1,3 +1,6 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 """Phase 5: prescriptive analyzer hazard detection.
 
 The analyzer doesn't just score sites by fit; it also tells the user
@@ -14,9 +17,6 @@ lifter.
 from __future__ import annotations
 
 import textwrap
-from pathlib import Path
-
-import pytest
 
 from dendra.analyzer import Hazard, LiftStatus, analyze_function_source
 

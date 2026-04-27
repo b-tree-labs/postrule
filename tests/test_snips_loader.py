@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import pytest
 
-
 SNIPS_INTENTS = {
     "AddToPlaylist",
     "BookRestaurant",

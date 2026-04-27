@@ -1,5 +1,10 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 from dataclasses import dataclass
+
 from dendra import Switch
+
 
 @dataclass
 class _RouteRequestArgs:

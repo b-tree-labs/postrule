@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import threading
 import time
-from pathlib import Path
 
 import pytest
 
@@ -224,7 +223,7 @@ class TestLazyLoadDoesNotBlockConstruction:
             def fit(self, r):
                 pass
 
-            def predict(self, i, l):
+            def predict(self, i, lbl):
                 return MLPrediction(label="x", confidence=0.5)
 
             def model_version(self):

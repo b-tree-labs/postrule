@@ -1,3 +1,6 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 """Native authoring pattern: ``dendra.Switch`` class convention.
 
 TDD spec for the foundational v1 feature. The class lets users author a
@@ -18,7 +21,6 @@ import pytest
 
 from dendra import Phase
 from dendra.switch_class import Switch
-
 
 # ------------------------------------------------------------------
 # Test fixtures: a realistic single-arg switch with three labels.
@@ -129,7 +131,7 @@ class TestDispatchFiresMatchingHandler:
     def test_dispatch_fires_on_basic(self):
         RouteUser, tape = _make_router_class()
         switch = RouteUser()
-        result = switch.dispatch("user_free")
+        switch.dispatch("user_free")
         assert tape == [("basic", "user_free")]
 
     def test_dispatch_no_action_for_standard_label(self):

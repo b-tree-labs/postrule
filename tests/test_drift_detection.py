@@ -1,3 +1,6 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 """Drift detection for generated files in ``__dendra_generated__/``.
 
 When the user runs ``dendra init --auto-lift`` against a function, Dendra
@@ -13,24 +16,17 @@ This file specifies the contracts. TDD-first, implementation in
 
 from __future__ import annotations
 
-import ast
-import os
-import textwrap
-from pathlib import Path
-
 import pytest
-
 
 # Module under test — created next.
 from dendra.refresh import (
+    DriftStatus,
     GeneratedHeader,
     ast_hash,
     detect_drift,
-    DriftStatus,
-    write_generated_file,
     parse_generated_header,
+    write_generated_file,
 )
-
 
 # ----------------------------------------------------------------------
 # AST hash — must be stable under cosmetic changes, sensitive to logic.

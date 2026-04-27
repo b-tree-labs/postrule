@@ -27,10 +27,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from dendra import LearnedSwitch, MLPrediction, Phase, SwitchConfig
-from dendra.gates import GateDecision
 from dendra.ml import MLHead
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

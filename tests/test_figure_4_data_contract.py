@@ -13,6 +13,7 @@ If this contract holds, the chart will land. If it doesn't, the
 prose around the figure is wrong and we'd rather know now than at
 review time.
 """
+
 from __future__ import annotations
 
 import json

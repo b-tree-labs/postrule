@@ -27,7 +27,6 @@ from dataclasses import dataclass
 import numpy as np
 import pytest
 
-
 CIFAR10_LABELS = {
     "airplane", "automobile", "bird", "cat", "deer",
     "dog", "frog", "horse", "ship", "truck",
@@ -38,7 +37,7 @@ CIFAR10_LABELS = {
 class TestCifar10Loader:
     def test_loader_is_importable(self):
         try:
-            from dendra.benchmarks.loaders import load_cifar10
+            from dendra.benchmarks.loaders import load_cifar10  # noqa: F401
         except ImportError:
             pytest.fail("dendra.benchmarks.loaders.load_cifar10 not implemented yet")
 

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 """Native Switch class authoring — the v1 idiomatic way to write a Dendra
 classifier from scratch.
 
@@ -28,7 +31,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from dendra import Phase, Switch
-
 
 # ---------------------------------------------------------------------------
 # Domain: an internal helpdesk router.
@@ -186,8 +188,16 @@ def main() -> None:
         print(f"Routing: {ticket.title!r}")
         result_a = router_a.dispatch(ticket)
         result_b = router_b.dispatch(ticket)
-        print(f"  Style 1 ({type(router_a).__name__}): label={result_a.label!r}  action_result={result_a.action_result!r}")
-        print(f"  Style 2 ({type(router_b).__name__}): label={result_b.label!r}  action_result={result_b.action_result!r}")
+        name_a = type(router_a).__name__
+        name_b = type(router_b).__name__
+        print(
+            f"  Style 1 ({name_a}): label={result_a.label!r}  "
+            f"action_result={result_a.action_result!r}"
+        )
+        print(
+            f"  Style 2 ({name_b}): label={result_b.label!r}  "
+            f"action_result={result_b.action_result!r}"
+        )
         assert result_a.label == result_b.label, (
             f"the two styles disagreed on {ticket.title!r}: "
             f"{result_a.label!r} vs {result_b.label!r}"

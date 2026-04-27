@@ -1,3 +1,6 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 """Drift detection round-trip — what `dendra refresh` and `dendra
 doctor` actually do.
 
@@ -32,7 +35,6 @@ from dendra.refresh import (
     parse_generated_header,
     write_generated_file,
 )
-
 
 SOURCE_V1 = textwrap.dedent(
     """\

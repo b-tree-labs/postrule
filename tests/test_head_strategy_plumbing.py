@@ -29,7 +29,6 @@ import pytest
 from dendra import (
     FixedMLHeadStrategy,
     LearnedSwitch,
-    MLHeadStrategy,
     MLPrediction,
     Phase,
     SwitchConfig,

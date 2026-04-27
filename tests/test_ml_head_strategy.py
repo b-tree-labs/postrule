@@ -51,19 +51,19 @@ def _records_with_n_labels(n_labels: int, samples_per_class: int = 100) -> list[
 class TestMLHeadStrategyProtocol:
     def test_protocol_is_importable(self):
         try:
-            from dendra.ml_strategy import MLHeadStrategy
+            from dendra.ml_strategy import MLHeadStrategy  # noqa: F401
         except ImportError:
             pytest.fail("dendra.ml_strategy.MLHeadStrategy not implemented yet")
 
     def test_default_strategy_is_importable(self):
         try:
-            from dendra.ml_strategy import CardinalityMLHeadStrategy
+            from dendra.ml_strategy import CardinalityMLHeadStrategy  # noqa: F401
         except ImportError:
             pytest.fail("dendra.ml_strategy.CardinalityMLHeadStrategy not implemented yet")
 
     def test_fixed_strategy_is_importable(self):
         try:
-            from dendra.ml_strategy import FixedMLHeadStrategy
+            from dendra.ml_strategy import FixedMLHeadStrategy  # noqa: F401
         except ImportError:
             pytest.fail("dendra.ml_strategy.FixedMLHeadStrategy not implemented yet")
 
