@@ -1,3 +1,6 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 """When `dendra init --auto-lift` refuses, and how to fix the source.
 
 Phase 5 of Dendra's analyzer is prescriptive: for each candidate site,
@@ -17,8 +20,7 @@ from __future__ import annotations
 
 import textwrap
 
-from dendra.analyzer import LiftStatus, analyze_function_source
-
+from dendra.analyzer import analyze_function_source
 
 CASES = [
     (

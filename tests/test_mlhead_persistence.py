@@ -13,8 +13,6 @@ rehydrates from disk at construction.
 """
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from dendra import LearnedSwitch, Phase, SwitchConfig

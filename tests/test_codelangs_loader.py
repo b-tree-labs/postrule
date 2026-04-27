@@ -14,7 +14,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data" / "codelangs"
 
@@ -45,8 +44,8 @@ class TestCodelangsLoader:
 
     def test_data_directory_present(self):
         assert DATA_DIR.exists(), (
-            f"data/codelangs/ does not exist; run scripts/fetch_codelangs.py "
-            f"to populate it before running the benchmark"
+            "data/codelangs/ does not exist; run scripts/fetch_codelangs.py "
+            "to populate it before running the benchmark"
         )
         sources_doc = DATA_DIR / "SOURCES.md"
         assert sources_doc.exists(), (
@@ -78,7 +77,7 @@ class TestCodelangsLoader:
         from dendra.benchmarks.loaders import load_codelangs
 
         ds = load_codelangs()
-        fortran_samples = [t for t, l in (ds.train + ds.test) if l == "fortran"]
+        fortran_samples = [t for t, lbl in (ds.train + ds.test) if lbl == "fortran"]
         assert fortran_samples, "no FORTRAN samples found"
         joined = "\n".join(fortran_samples).upper()
         fortran_tokens = ["PROGRAM", "SUBROUTINE", "MODULE", "IMPLICIT", "FUNCTION"]

@@ -35,7 +35,6 @@ import pytest
 from dendra.lifters import LiftRefused, evidence_inputs, evidence_via_probe
 from dendra.lifters.evidence import lift_evidence
 
-
 FIXTURE_DIR = Path(__file__).parent / "lifter_fixtures" / "evidence_v1_1"
 
 
@@ -282,7 +281,8 @@ class TestDecoratorRuntime:
         }
 
     def test_inputs_attaches_metadata(self):
-        gather = lambda self, text, kind: 1
+        def gather(self, text, kind):
+            return 1
 
         @evidence_inputs(handler_priority=gather)
         def route(self, text, kind):

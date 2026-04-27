@@ -1,3 +1,6 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 """Permutation regression: every example file in ``examples/`` still
 imports cleanly under the new v1 surface (Switch class + multi-arg
 packing + drift detection + Phase 5 hazards), and a representative
@@ -12,11 +15,9 @@ that nothing we just shipped broke the existing example corpus.
 from __future__ import annotations
 
 import ast
-import importlib.util
 from pathlib import Path
 
 import pytest
-
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES_DIR = REPO_ROOT / "examples"
@@ -88,7 +89,7 @@ class TestBranchLifterOnRealExample:
     in a stable, well-diagnosed way."""
 
     def test_triage_rule_lifts_or_refuses_with_specific_diagnostic(self):
-        from dendra.lifters.branch import lift_branches, LiftRefused
+        from dendra.lifters.branch import LiftRefused, lift_branches
 
         source = (EXAMPLES_DIR / "01_hello_world.py").read_text()
         try:

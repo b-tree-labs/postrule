@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import pytest
 
-
 TREC6_LABELS = {"DESC", "ENTY", "ABBR", "HUM", "NUM", "LOC"}
 AG_NEWS_LABELS = {"World", "Sports", "Business", "Sci/Tech"}
 

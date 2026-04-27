@@ -21,7 +21,6 @@ import pytest
 
 from dendra import Switch, ml_switch
 
-
 # ----------------------------------------------------------------------
 # Decorator path: @ml_switch on multi-arg functions.
 # ----------------------------------------------------------------------

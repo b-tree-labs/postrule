@@ -1,3 +1,6 @@
+# Copyright (c) 2026 B-Tree Ventures, LLC
+# SPDX-License-Identifier: Apache-2.0
+
 """Side-effect-bearing evidence with `@evidence_via_probe`.
 
 The motivating shape:
@@ -28,7 +31,6 @@ from __future__ import annotations
 import textwrap
 
 from dendra.lifters.evidence import lift_evidence
-
 
 SOURCE = textwrap.dedent(
     """\

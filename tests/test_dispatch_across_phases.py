@@ -28,7 +28,6 @@ from dendra import (
     Phase,
 )
 
-
 # ---------------------------------------------------------------------------
 # Realistic running classifier — lifted shape from examples/17_exception_handling.py.
 # ---------------------------------------------------------------------------

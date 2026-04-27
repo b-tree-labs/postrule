@@ -39,11 +39,30 @@ jobs:
           is_bsl_allowed() {
             case "$1" in
               src/dendra/analyzer.py|\
+              src/dendra/auth.py|\
+              src/dendra/benchmarks/harness.py|\
               src/dendra/cli.py|\
+              src/dendra/cloud/__init__.py|\
+              src/dendra/cloud/registry.py|\
+              src/dendra/cloud/sync.py|\
+              src/dendra/cloud/team_corpus.py|\
+              src/dendra/lifters/__init__.py|\
+              src/dendra/lifters/branch.py|\
+              src/dendra/lifters/evidence.py|\
+              src/dendra/mcp_server.py|\
               src/dendra/research.py|\
               src/dendra/roi.py|\
+              scripts/sizing_study.py|\
               tests/test_analyzer.py|\
+              tests/test_auth.py|\
+              tests/test_benchmarks.py|\
               tests/test_cli.py|\
+              tests/test_cloud_sync.py|\
+              tests/test_enrich_landing_corpus.py|\
+              tests/test_lifter_branch.py|\
+              tests/test_lifter_evidence.py|\
+              tests/test_lifter_evidence_v1_1.py|\
+              tests/test_mcp_server.py|\
               tests/test_research.py|\
               tests/test_roi.py)
                 return 0 ;;
