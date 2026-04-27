@@ -120,14 +120,14 @@ class TestMcNemarGateInsufficientData:
     def test_refuses_on_empty_log(self):
         gate = McNemarGate()
         decision = gate.evaluate([], Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert decision.advance is False
+        assert decision.target_better is False
         assert "insufficient" in decision.rationale
 
     def test_refuses_below_min_paired(self):
         gate = McNemarGate(min_paired=200)
         records = [_rec(label="bug", rule_output="bug", model_output="bug") for _ in range(10)]
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert decision.advance is False
+        assert decision.target_better is False
         assert decision.paired_sample_size == 10
 
 
@@ -156,7 +156,7 @@ class TestMcNemarGateAdvances:
             )
 
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert decision.advance is True
+        assert decision.target_better is True
         assert decision.p_value is not None
         assert decision.p_value < 0.01
         assert decision.paired_sample_size == 300
@@ -169,7 +169,7 @@ class TestMcNemarGateAdvances:
         gate = McNemarGate(alpha=0.01, min_paired=100)
         records = [_rec(label="bug", rule_output="bug", model_output="bug") for _ in range(200)]
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert decision.advance is False
+        assert decision.target_better is False
 
     def test_refuses_when_current_beats_target(self):
         """Rule outperforms model → p >> alpha → refuse."""
@@ -186,7 +186,7 @@ class TestMcNemarGateAdvances:
                 )
             )
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert decision.advance is False
+        assert decision.target_better is False
 
 
 class TestMcNemarGateIgnoresIncorrectOutcomes:
@@ -204,7 +204,7 @@ class TestMcNemarGateIgnoresIncorrectOutcomes:
             for _ in range(500)
         ]
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert decision.advance is False
+        assert decision.target_better is False
         assert decision.paired_sample_size == 0
 
 
@@ -217,7 +217,7 @@ class TestManualGate:
     def test_always_refuses(self):
         gate = ManualGate()
         decision = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
-        assert decision.advance is False
+        assert decision.target_better is False
         assert "operator" in decision.rationale.lower()
 
     def test_conforms_to_protocol(self):
@@ -245,7 +245,7 @@ class TestAccuracyMarginGate:
                 )
             )
         d = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert d.advance is True
+        assert d.target_better is True
         assert d.current_accuracy == pytest.approx(0.40)
         assert d.target_accuracy == pytest.approx(0.80)
 
@@ -263,13 +263,13 @@ class TestAccuracyMarginGate:
                 )
             )
         d = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert d.advance is False
+        assert d.target_better is False
 
     def test_refuses_below_min_paired(self):
         gate = AccuracyMarginGate(margin=0.05, min_paired=500)
         records = [_rec(label="bug", rule_output="bug", model_output="bug") for _ in range(50)]
         d = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
-        assert d.advance is False
+        assert d.target_better is False
         assert "insufficient" in d.rationale
 
     def test_rejects_invalid_margin(self):
@@ -288,23 +288,23 @@ class TestMinVolumeGate:
     def test_refuses_below_volume_threshold(self):
         class _AlwaysYes:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=True, rationale="y")
+                return GateDecision(target_better=True, rationale="y")
 
         gate = MinVolumeGate(_AlwaysYes(), min_records=100)
         records = [_rec(label="bug") for _ in range(50)]
         d = gate.evaluate(records, Phase.RULE, Phase.MODEL_SHADOW)
-        assert d.advance is False
+        assert d.target_better is False
         assert "50 records" in d.rationale
 
     def test_delegates_once_volume_threshold_met(self):
         class _AlwaysYes:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=True, rationale="inner yes")
+                return GateDecision(target_better=True, rationale="inner yes")
 
         gate = MinVolumeGate(_AlwaysYes(), min_records=10)
         records = [_rec(label="bug") for _ in range(20)]
         d = gate.evaluate(records, Phase.RULE, Phase.MODEL_SHADOW)
-        assert d.advance is True
+        assert d.target_better is True
         assert d.rationale == "inner yes"
 
     def test_rejects_non_positive_min(self):
@@ -321,47 +321,47 @@ class TestCompositeGate:
     def test_all_of_advances_when_every_sub_advances(self):
         class _Yes:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=True, rationale="yes")
+                return GateDecision(target_better=True, rationale="yes")
 
         gate = CompositeGate.all_of([_Yes(), _Yes(), _Yes()])
         d = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
-        assert d.advance is True
+        assert d.target_better is True
 
     def test_all_of_refuses_when_any_sub_refuses(self):
         class _Yes:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=True, rationale="yes")
+                return GateDecision(target_better=True, rationale="yes")
 
         class _No:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=False, rationale="no")
+                return GateDecision(target_better=False, rationale="no")
 
         gate = CompositeGate.all_of([_Yes(), _No(), _Yes()])
         d = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
-        assert d.advance is False
+        assert d.target_better is False
         assert "✗" in d.rationale
 
     def test_any_of_advances_when_any_sub_advances(self):
         class _Yes:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=True, rationale="yes")
+                return GateDecision(target_better=True, rationale="yes")
 
         class _No:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=False, rationale="no")
+                return GateDecision(target_better=False, rationale="no")
 
         gate = CompositeGate.any_of([_No(), _Yes(), _No()])
         d = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
-        assert d.advance is True
+        assert d.target_better is True
 
     def test_any_of_refuses_when_all_sub_refuse(self):
         class _No:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=False, rationale="no")
+                return GateDecision(target_better=False, rationale="no")
 
         gate = CompositeGate.any_of([_No(), _No()])
         d = gate.evaluate([], Phase.RULE, Phase.MODEL_SHADOW)
-        assert d.advance is False
+        assert d.target_better is False
 
     def test_rejects_empty_gates(self):
         with pytest.raises(ValueError, match="at least one"):
@@ -385,7 +385,7 @@ class TestAdvance:
     def test_refuses_at_terminal_phase(self):
         s = LearnedSwitch(rule=_rule, starting_phase=Phase.ML_PRIMARY)
         decision = s.advance()
-        assert decision.advance is False
+        assert decision.target_better is False
         assert "terminal" in decision.rationale
 
     def test_refuses_when_target_exceeds_phase_limit(self):
@@ -395,7 +395,7 @@ class TestAdvance:
             phase_limit=Phase.MODEL_SHADOW,
         )
         decision = s.advance()
-        assert decision.advance is False
+        assert decision.target_better is False
         assert "phase_limit" in decision.rationale
 
     def test_safety_critical_refuses_ml_primary_even_if_gate_passes(self):
@@ -409,13 +409,13 @@ class TestAdvance:
         # if someone mutated it back, advance's own check catches it.
         s.config.phase_limit = Phase.ML_PRIMARY
         decision = s.advance()
-        assert decision.advance is False
+        assert decision.target_better is False
         assert "safety_critical" in decision.rationale.lower()
 
     def test_advances_when_gate_returns_true(self):
         class _AlwaysYesGate:
             def evaluate(self, _records, _current, _target):
-                return GateDecision(advance=True, rationale="test gate says go")
+                return GateDecision(target_better=True, rationale="test gate says go")
 
         s = LearnedSwitch(
             rule=_rule,
@@ -423,7 +423,7 @@ class TestAdvance:
             gate=_AlwaysYesGate(),
         )
         decision = s.advance()
-        assert decision.advance is True
+        assert decision.target_better is True
         assert s.phase() is Phase.MODEL_SHADOW
 
     def test_does_not_advance_when_gate_refuses(self):
@@ -433,7 +433,7 @@ class TestAdvance:
             gate=ManualGate(),
         )
         decision = s.advance()
-        assert decision.advance is False
+        assert decision.target_better is False
         assert s.phase() is Phase.RULE
 
     def test_advance_emits_telemetry(self):
@@ -444,7 +444,7 @@ class TestAdvance:
         class _AlwaysYesGate:
             def evaluate(self, _records, _current, _target):
                 return GateDecision(
-                    advance=True,
+                    target_better=True,
                     rationale="test",
                     p_value=0.001,
                     paired_sample_size=300,
@@ -474,7 +474,7 @@ class TestAdvance:
 
             def evaluate(self, _records, _current, _target):
                 self.calls += 1
-                return GateDecision(advance=True, rationale="yes")
+                return GateDecision(target_better=True, rationale="yes")
 
         gate = _YesGate()
         s = LearnedSwitch(
@@ -499,7 +499,7 @@ class TestAdvance:
     def test_auto_advance_disabled(self):
         class _YesGate:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=True, rationale="yes")
+                return GateDecision(target_better=True, rationale="yes")
 
         s = LearnedSwitch(
             rule=_rule,
@@ -518,7 +518,7 @@ class TestAdvance:
 
         class _YesGate:
             def evaluate(self, _r, _c, _t):
-                return GateDecision(advance=True, rationale="yes")
+                return GateDecision(target_better=True, rationale="yes")
 
         s = LearnedSwitch(
             rule=_rule,
@@ -546,7 +546,7 @@ class TestAdvance:
 
             def evaluate(self, _r, _c, _t):
                 self.calls += 1
-                return GateDecision(advance=True, rationale="yes")
+                return GateDecision(target_better=True, rationale="yes")
 
         gate = _YesGate()
         s = LearnedSwitch(
@@ -596,7 +596,7 @@ class TestAdvance:
                 ),
             )
         decision = s.advance()
-        assert decision.advance is True
+        assert decision.target_better is True
         assert s.phase() is Phase.MODEL_PRIMARY
         assert decision.p_value is not None
         assert decision.p_value < 0.01
