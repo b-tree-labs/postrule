@@ -245,9 +245,25 @@ Under the unpaired two-proportion z-test on the same data:
 
 **Table 5.** *Paired vs unpaired McNemar transition depth.* The paired test is uniformly tighter, as Dietterich (1998) predicts — the unpaired test discards per-example correlation and is conservative when the same test rows are scored by two classifiers. The paired result is both methodologically correct (it is the right test for the data structure we have) and operationally meaningful (production teams pay for the wait in calendar time at low verdict rates).
 
-### 5.5 An LLM-shadow probe
+### 5.5 LLM-shadow capability curve
 
-A Phase 1 (`MODEL_SHADOW`) probe on ATIS with a locally-hosted `llama3.2:1b` zero-shot classifier returned 0.0% test-set accuracy across a 100-row sample. On a reduced 4-label subset, the same model scored 10% (vs 25% random). This is a useful negative: a commodity 1B parameter model is not a viable zero-shot shadow labeler on a 26-way compound-label task. The Phase 1 → Phase 2 transition cannot rely on the smallest local LLMs; replication with a larger open model (Mistral, Qwen-7B, Llama-70B) or a frontier API is the natural follow-up. The reference implementation's adapter layer (`OllamaAdapter`, `AnthropicAdapter`, `OpenAIAdapter`, llama-cpp-python) is wired and ready; only the model choice changes.
+Phase 1 (`MODEL_SHADOW`) lets a language model run alongside the rule with zero risk: the model's prediction is logged but the rule still decides. Whether that model can subsequently graduate to Phase 2, where it becomes the primary decision-maker, depends on its zero-shot accuracy on the target task. We probed three locally-hosted models on ATIS (26 labels) and one on Banking77 (77 labels), 100-row samples, single default prompt.
+
+| Model | Params | ATIS (rule = 70.0%) | Banking77 (rule = 1.3%) |
+|---|---:|---:|---:|
+| `llama3.2:1b` | 1B | 0.0% | n/a |
+| `gemma2:2b` | 2B | 42.0% | n/a |
+| `qwen2.5:7b` | 7B | **59.0%** | **52.0%** |
+
+**Table 6.** *Zero-shot Phase-1 accuracy across model size and benchmark cardinality.* 100-row test sample per cell, default prompt, locally-hosted via Ollama.
+
+The picture is regime-dependent.
+
+**Regime A (ATIS, 26 labels, rule = 70%).** No model in our local-hosted bench beats the rule zero-shot. qwen2.5:7b's 59% is the closest, an 11-point gap. The Phase 1 → Phase 2 transition on ATIS-shaped workloads requires a larger model (Llama-70B class), per-model prompt tuning, or a frontier API. The smallest probe (llama3.2:1b at 0.0%) is a useful negative result: a commodity 1B parameter model is not a viable zero-shot shadow labeler on a 26-way compound-label task.
+
+**Regime B (Banking77, 77 labels, rule = 1.3%).** qwen2.5:7b's 52% dominates both the rule (1.3%) and the cold ML head (2.6% at the 250-outcome checkpoint). High-cardinality workloads can start at Phase 2 with a 7B-class local LLM and accumulate outcome data via Dendra's logging substrate while the trained ML head warms up. This is the empirical anchor for the §5.2 claim that Regime B is not a graduation problem but a cold-start substrate problem.
+
+Two caveats. First, our probes use a single default prompt; per-model prompt tuning would shift the rankings. Second, 100 rows is a small sample, reported as the entry-level capability measurement rather than the final word. The reference implementation's adapter layer (`OllamaAdapter`, `AnthropicAdapter`, `OpenAIAdapter`, `LlamafileAdapter`) is wired and ready; extending the curve to Llama-70B / Mistral-Large / frontier APIs is one method call away.
 
 ---
 
