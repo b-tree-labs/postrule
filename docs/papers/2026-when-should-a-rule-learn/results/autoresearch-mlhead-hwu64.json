@@ -1,0 +1,46 @@
+{
+  "alpha": 0.01,
+  "benchmark": "hwu64",
+  "n_test": 1076,
+  "n_train": 8954,
+  "rationale": "TfidfLinearSVC cleared paired-McNemar at alpha=0.01 vs TfidfLogReg and had the highest accuracy among cleared challengers",
+  "reports": {
+    "TfidfGradientBoosting": {
+      "accuracy": 0.7611524163568774,
+      "correct_count": 819,
+      "discordant_b": 43,
+      "discordant_c": 123,
+      "mcnemar_p": 3.983187935376495e-10,
+      "n_test": 1076,
+      "name": "TfidfGradientBoosting"
+    },
+    "TfidfLinearSVC": {
+      "accuracy": 0.8745353159851301,
+      "correct_count": 941,
+      "discordant_b": 56,
+      "discordant_c": 14,
+      "mcnemar_p": 4.3028401315359276e-07,
+      "n_test": 1076,
+      "name": "TfidfLinearSVC"
+    },
+    "TfidfLogReg": {
+      "accuracy": 0.8355018587360595,
+      "correct_count": 899,
+      "discordant_b": 0,
+      "discordant_c": 0,
+      "mcnemar_p": 1.0,
+      "n_test": 1076,
+      "name": "TfidfLogReg"
+    },
+    "TfidfMultinomialNB": {
+      "accuracy": 0.7890334572490706,
+      "correct_count": 849,
+      "discordant_b": 35,
+      "discordant_c": 85,
+      "mcnemar_p": 5.732969902850976e-06,
+      "n_test": 1076,
+      "name": "TfidfMultinomialNB"
+    }
+  },
+  "winner": "TfidfLinearSVC"
+}

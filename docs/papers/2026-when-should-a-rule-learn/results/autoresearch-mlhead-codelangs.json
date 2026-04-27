@@ -1,0 +1,46 @@
+{
+  "alpha": 0.01,
+  "benchmark": "codelangs",
+  "n_test": 139,
+  "n_train": 553,
+  "rationale": "no challenger cleared paired-McNemar at alpha=0.01 vs TfidfLogReg; incumbent retained",
+  "reports": {
+    "TfidfGradientBoosting": {
+      "accuracy": 0.9784172661870504,
+      "correct_count": 136,
+      "discordant_b": 2,
+      "discordant_c": 2,
+      "mcnemar_p": 1.0,
+      "n_test": 139,
+      "name": "TfidfGradientBoosting"
+    },
+    "TfidfLinearSVC": {
+      "accuracy": 0.9856115107913669,
+      "correct_count": 137,
+      "discordant_b": 1,
+      "discordant_c": 0,
+      "mcnemar_p": 1.0,
+      "n_test": 139,
+      "name": "TfidfLinearSVC"
+    },
+    "TfidfLogReg": {
+      "accuracy": 0.9784172661870504,
+      "correct_count": 136,
+      "discordant_b": 0,
+      "discordant_c": 0,
+      "mcnemar_p": 1.0,
+      "n_test": 139,
+      "name": "TfidfLogReg"
+    },
+    "TfidfMultinomialNB": {
+      "accuracy": 0.9568345323741008,
+      "correct_count": 133,
+      "discordant_b": 1,
+      "discordant_c": 4,
+      "mcnemar_p": 0.375,
+      "n_test": 139,
+      "name": "TfidfMultinomialNB"
+    }
+  },
+  "winner": "TfidfLogReg"
+}
