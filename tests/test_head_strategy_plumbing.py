@@ -19,6 +19,7 @@ C. Passing both ``ml_head`` and ``head_strategy`` raises so the user
 D. Once the strategy has selected a head, the switch caches it; the
    strategy is not consulted again on subsequent classifies.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -181,6 +182,5 @@ class TestHeadStrategyCachesPick:
         for _ in range(5):
             sw.classify("call")
         assert strat.calls == 1, (
-            f"strategy must cache its pick after first use; "
-            f"called {strat.calls} times"
+            f"strategy must cache its pick after first use; called {strat.calls} times"
         )

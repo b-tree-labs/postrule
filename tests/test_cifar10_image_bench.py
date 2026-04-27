@@ -20,6 +20,7 @@ C. An ``ImagePixelLogRegHead`` trains on (image, label) records and
    beats the color-centroid rule by a paired-McNemar-significant
    margin on the test split.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -28,8 +29,16 @@ import numpy as np
 import pytest
 
 CIFAR10_LABELS = {
-    "airplane", "automobile", "bird", "cat", "deer",
-    "dog", "frog", "horse", "ship", "truck",
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck",
 }
 
 
@@ -48,9 +57,7 @@ class TestCifar10Loader:
         assert ds.name == "cifar10"
         assert ds.train and ds.test
         labels = set(ds.labels)
-        assert labels == CIFAR10_LABELS, (
-            f"unexpected CIFAR-10 labels — got {labels}"
-        )
+        assert labels == CIFAR10_LABELS, f"unexpected CIFAR-10 labels — got {labels}"
 
     def test_pairs_are_image_label_pairs(self):
         from dendra.benchmarks.loaders import load_cifar10

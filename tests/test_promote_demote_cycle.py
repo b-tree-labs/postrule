@@ -16,6 +16,7 @@ Two cycles are tested:
 2. Auto-fired path (verdict streams that flip): exercises the gate
    in both directions on the same switch instance.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -227,7 +228,7 @@ class TestCycleAuditTrail:
         assert any(n in ("phase_change", "advance") for n in names[:demote_idx]), (
             "expected an advance-side event before demote"
         )
-        assert any(n in ("phase_change", "advance") for n in names[demote_idx + 1:]), (
+        assert any(n in ("phase_change", "advance") for n in names[demote_idx + 1 :]), (
             "expected an advance-side event after demote"
         )
 

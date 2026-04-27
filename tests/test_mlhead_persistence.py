@@ -11,6 +11,7 @@ implements them; ``LearnedSwitch`` writes the sidecar after every
 advance / demote and on user-invoked ``persist_head`` calls, and
 rehydrates from disk at construction.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -52,10 +53,9 @@ def _train_head(records=None) -> SklearnTextHead:
             self.outcome = "correct"
 
     if records is None:
-        records = (
-            [FakeRec(f"the app keeps crashing example {i}", "bug") for i in range(30)]
-            + [FakeRec(f"please add new feature request number {i}", "feature") for i in range(30)]
-        )
+        records = [FakeRec(f"the app keeps crashing example {i}", "bug") for i in range(30)] + [
+            FakeRec(f"please add new feature request number {i}", "feature") for i in range(30)
+        ]
     head = SklearnTextHead(min_outcomes=10)
     head.fit(records)
     assert head._pipeline is not None, "head should have trained on the corpus"

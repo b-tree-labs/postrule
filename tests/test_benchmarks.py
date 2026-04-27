@@ -38,9 +38,7 @@ import pytest
 class TestGenerateBenchmarkModule:
     """The codegen path called from ``dendra init --with-benchmarks``."""
 
-    def test_writes_parseable_file_with_three_pytest_functions(
-        self, tmp_path: Path
-    ) -> None:
+    def test_writes_parseable_file_with_three_pytest_functions(self, tmp_path: Path) -> None:
         from dendra.benchmarks import generate_benchmark_module
 
         out_path = tmp_path / "__dendra_generated__" / "triage__triage_bench.py"
@@ -62,9 +60,7 @@ class TestGenerateBenchmarkModule:
         assert "Content hash:" in text
         # Parses cleanly.
         tree = ast.parse(text)
-        function_names = {
-            node.name for node in tree.body if isinstance(node, ast.FunctionDef)
-        }
+        function_names = {node.name for node in tree.body if isinstance(node, ast.FunctionDef)}
         assert "test_label_parity_across_phases" in function_names
         assert "test_latency_baseline" in function_names
         assert "test_cost_estimate_per_call" in function_names
@@ -202,29 +198,36 @@ class TestAggregateReport:
     deltas, surface a structured report.
     """
 
-    def test_identifies_graduation_event_and_cost_delta(
-        self, tmp_path: Path
-    ) -> None:
+    def test_identifies_graduation_event_and_cost_delta(self, tmp_path: Path) -> None:
         from dendra.benchmarks import aggregate_report
 
         runtime_root = tmp_path / "runtime"
         # triage_ticket: graduates from RULE -> MODEL_PRIMARY between
         # day 1 and day 5; cost drops from $0.0042 to $0.00031.
         _write_bench_line(
-            runtime_root, "triage_ticket",
+            runtime_root,
+            "triage_ticket",
             timestamp="2026-05-01T00:00:00+00:00",
-            phase="RULE", cost_low=0.0042, cost_high=0.0042,
+            phase="RULE",
+            cost_low=0.0042,
+            cost_high=0.0042,
         )
         _write_bench_line(
-            runtime_root, "triage_ticket",
+            runtime_root,
+            "triage_ticket",
             timestamp="2026-05-04T00:00:00+00:00",
-            phase="MODEL_PRIMARY", cost_low=0.00031, cost_high=0.00031,
+            phase="MODEL_PRIMARY",
+            cost_low=0.00031,
+            cost_high=0.00031,
         )
         # route_intent: stays at RULE.
         _write_bench_line(
-            runtime_root, "route_intent",
+            runtime_root,
+            "route_intent",
             timestamp="2026-05-01T00:00:00+00:00",
-            phase="RULE", cost_low=0.0058, cost_high=0.0058,
+            phase="RULE",
+            cost_low=0.0058,
+            cost_high=0.0058,
         )
 
         report = aggregate_report(runtime_root)
@@ -262,19 +265,28 @@ class TestFormatReport:
 
         runtime_root = tmp_path / "runtime"
         _write_bench_line(
-            runtime_root, "triage_ticket",
+            runtime_root,
+            "triage_ticket",
             timestamp="2026-05-01T00:00:00+00:00",
-            phase="RULE", cost_low=0.0042, cost_high=0.0042,
+            phase="RULE",
+            cost_low=0.0042,
+            cost_high=0.0042,
         )
         _write_bench_line(
-            runtime_root, "triage_ticket",
+            runtime_root,
+            "triage_ticket",
             timestamp="2026-05-04T00:00:00+00:00",
-            phase="MODEL_PRIMARY", cost_low=0.00031, cost_high=0.00031,
+            phase="MODEL_PRIMARY",
+            cost_low=0.00031,
+            cost_high=0.00031,
         )
         _write_bench_line(
-            runtime_root, "route_intent",
+            runtime_root,
+            "route_intent",
             timestamp="2026-05-01T00:00:00+00:00",
-            phase="RULE", cost_low=0.0058, cost_high=0.0058,
+            phase="RULE",
+            cost_low=0.0058,
+            cost_high=0.0058,
         )
 
         report = aggregate_report(runtime_root)
@@ -304,9 +316,7 @@ class TestInitWithBenchmarksFlag:
     stub alongside the lifted Switch module.
     """
 
-    def test_init_with_benchmarks_emits_bench_stub(
-        self, tmp_path: Path
-    ) -> None:
+    def test_init_with_benchmarks_emits_bench_stub(self, tmp_path: Path) -> None:
         from dendra.cli import main
 
         # A simple liftable function.
@@ -317,13 +327,16 @@ class TestInitWithBenchmarksFlag:
             "        return 'high'\n"
             "    return 'low'\n"
         )
-        rc = main([
-            "init",
-            f"{target}:triage",
-            "--author", "@bench-test:local",
-            "--auto-lift",
-            "--with-benchmarks",
-        ])
+        rc = main(
+            [
+                "init",
+                f"{target}:triage",
+                "--author",
+                "@bench-test:local",
+                "--auto-lift",
+                "--with-benchmarks",
+            ]
+        )
         assert rc == 0
         gen_dir = tmp_path / "__dendra_generated__"
         assert (gen_dir / "triage__triage.py").exists()

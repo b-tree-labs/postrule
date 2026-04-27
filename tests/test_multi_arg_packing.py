@@ -119,6 +119,7 @@ class TestMlSwitchDecoratorMultiArg:
 
     def test_missing_annotation_with_multi_arg_raises(self):
         with pytest.raises(TypeError, match=r"annotation"):
+
             @ml_switch(labels=["a", "b"], author="alice")
             def f(method, path: str) -> str:  # missing annotation on method
                 return "a"
@@ -161,9 +162,7 @@ class TestSwitchClassMultiArg:
             def _evidence_method(self, method: str, path: str, headers: dict) -> str:
                 return method
 
-            def _evidence_path_prefix(
-                self, method: str, path: str, headers: dict
-            ) -> str:
+            def _evidence_path_prefix(self, method: str, path: str, headers: dict) -> str:
                 return path.split("/")[1] if "/" in path else ""
 
             def _rule(self, evidence) -> str:
@@ -212,7 +211,8 @@ class TestSwitchClassMultiArg:
                 def _rule(self, evidence) -> str:
                     return "a"
 
-                def _on_a(self, x, y): pass
+                def _on_a(self, x, y):
+                    pass
 
                 class Meta:
                     no_action = ("a",)
@@ -231,7 +231,8 @@ class TestSwitchClassMultiArg:
                 def _rule(self, evidence) -> str:
                     return "a"
 
-                def _on_a(self, method, path): pass
+                def _on_a(self, method, path):
+                    pass
 
                 class Meta:
                     no_action = ("a",)
@@ -246,8 +247,11 @@ class TestSwitchClassMultiArg:
             def _rule(self, evidence) -> str:
                 return "a" if evidence.x else "b"
 
-            def _on_a(self, text): pass
-            def _on_b(self, text): pass
+            def _on_a(self, text):
+                pass
+
+            def _on_b(self, text):
+                pass
 
         s = Single()
         assert s.classify("hello").label == "a"

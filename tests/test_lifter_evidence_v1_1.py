@@ -276,9 +276,7 @@ class TestDecoratorRuntime:
 
         assert maybe_charge("anything") == "ok"
         assert hasattr(maybe_charge, "_dendra_evidence_probes")
-        assert maybe_charge._dendra_evidence_probes == {
-            "charge_status": "api.charge_probe(req)"
-        }
+        assert maybe_charge._dendra_evidence_probes == {"charge_status": "api.charge_probe(req)"}
 
     def test_inputs_attaches_metadata(self):
         def gather(self, text, kind):

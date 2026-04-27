@@ -21,6 +21,7 @@ D. The thresholds on ``CardinalityMLHeadStrategy`` are overridable so
    organizations with different empirical findings can configure
    their own crossover points.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -108,8 +109,7 @@ class TestCardinalityStrategyDefaults:
         records = _records_with_n_labels(7, samples_per_class=200)
         head = CardinalityMLHeadStrategy().select(records)
         assert isinstance(head, SklearnTextHead), (
-            f"low-cardinality should pick LogReg (SklearnTextHead); "
-            f"got {type(head).__name__}"
+            f"low-cardinality should pick LogReg (SklearnTextHead); got {type(head).__name__}"
         )
 
 

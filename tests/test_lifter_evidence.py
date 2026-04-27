@@ -118,7 +118,10 @@ def maybe_charge(req):
 """
         with pytest.raises(LiftRefused) as exc_info:
             lift_evidence(src, "maybe_charge")
-        assert "side_effect" in exc_info.value.reason.lower() or "side-effect" in exc_info.value.reason.lower()
+        assert (
+            "side_effect" in exc_info.value.reason.lower()
+            or "side-effect" in exc_info.value.reason.lower()
+        )
 
 
 class TestRefuseGetattr:
@@ -134,7 +137,9 @@ def f(x):
 """
         with pytest.raises(LiftRefused) as exc_info:
             lift_evidence(src, "f")
-        assert "getattr" in exc_info.value.reason.lower() or "dynamic" in exc_info.value.reason.lower()
+        assert (
+            "getattr" in exc_info.value.reason.lower() or "dynamic" in exc_info.value.reason.lower()
+        )
 
 
 class TestRefuseEval:

@@ -8,6 +8,7 @@ in ``data/codelangs/SOURCES.md``. Adds a benchmark that stresses
 the system on heavily structured non-English text — including
 legacy languages (FORTRAN) most ML pipelines ignore.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

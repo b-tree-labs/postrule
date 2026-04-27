@@ -21,6 +21,7 @@ C. The autoresearch driver in ``scripts/autoresearch_mlhead.py``
    runs the four candidates through ``CandidateHarness`` against a
    benchmark and reports a single empirically-justified winner.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -121,9 +122,7 @@ class TestAlternativeHeadPersistence:
 
         cls = getattr(ml_module, head_name, None)
         if cls is None:
-            pytest.fail(
-                f"dendra.ml.{head_name} not implemented; cannot round-trip persistence"
-            )
+            pytest.fail(f"dendra.ml.{head_name} not implemented; cannot round-trip persistence")
         h1 = cls(min_outcomes=10)
         h1.fit(_toy_corpus())
         blob = h1.state_bytes()
