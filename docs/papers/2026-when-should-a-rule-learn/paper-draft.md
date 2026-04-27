@@ -361,7 +361,7 @@ Why not skip the decorator and inline the routing as `if "crash" in title: engin
 
 This is the entire user-facing API for the common case: one decorator wires classification, dispatch, and graduation; production code calls one function.
 
-The point: the body of `triage_rule` is the exact `if`/`else` you would have inlined. The decorator is the only addition. Everything else (outcome logging, gate evaluation, lifecycle migration, audit chain, circuit breaker) happens for free. **You write your rule once; Dendra makes it self-upgrading.**
+The point: the body of `triage_rule` is the exact `if`/`else` you would have inlined. The decorator is the only addition. Everything else (outcome logging, gate evaluation, lifecycle migration, audit chain, circuit breaker) happens for free. **You write your rule once; Dendra upgrades it from a hand-written keyword check to a trained ML head, in production, with no rewrite.** On the four benchmarks of §5, that upgrade is the difference between 70.0% and 88.7% accuracy on ATIS, and between 0.5–1.8% and 81.9–87.7% accuracy across the high-cardinality regime. Production code calls `triage_rule(ticket)` on day one and on day thirty; the function on the inside is what changed.
 
 ### 9.2 Storage and durability
 
