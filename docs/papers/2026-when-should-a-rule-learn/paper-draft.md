@@ -319,8 +319,15 @@ The simplest invocation is a decorator over the rule function:
 
 ```python
 from dendra import ml_switch
+from myapp.queues import engineering, product, support
 
-@ml_switch(labels=["bug", "feature_request", "question"])
+# Each label is paired with the system action it routes to. Classify
+# and dispatch happen in one call.
+@ml_switch(labels={
+    "bug":             engineering.add,
+    "feature_request": product.add,
+    "question":        support.notify,
+})
 def triage_rule(ticket: dict) -> str:
     title = (ticket.get("title") or "").lower()
     if "crash" in title or "error" in title:
@@ -328,9 +335,11 @@ def triage_rule(ticket: dict) -> str:
     if title.endswith("?"):
         return "question"
     return "feature_request"
+
+triage_rule(ticket)  # classifies AND fires the matching handler
 ```
 
-Calling `triage_rule(ticket)` returns the classification; `triage_rule.switch.record_verdict(record_id, Verdict.CORRECT)` registers an outcome; the gate fires automatically every $N$ verdicts. This is the entire user-facing API for the common case.
+Calling `triage_rule(ticket)` classifies the ticket and fires the matching handler in a single call: classification and routing are wired together at the decorator. Later, when downstream signals reveal whether the routing was right (a resolution code on the ticket, a CSAT score on the interaction, an A/B conversion), `triage_rule.switch.record_verdict(record_id, Verdict.CORRECT)` registers an outcome; the gate fires automatically every $N$ verdicts and graduates the underlying classifier when evidence justifies it. This is the entire user-facing API for the common case: one decorator wires classification, dispatch, and graduation; production code calls one function.
 
 ### 9.2 Storage and durability
 
