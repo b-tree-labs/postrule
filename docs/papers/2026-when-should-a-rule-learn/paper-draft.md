@@ -331,7 +331,7 @@ The reference implementation realizes the lifecycle as a Python library (`pip in
 
 ### 9.1 The `@ml_switch` decorator
 
-The simplest invocation is a decorator over the rule function:
+How do you wire classification, dispatch, and the eventual rule-to-ML migration through a single call site, so the same `triage_rule(ticket)` invocation is what production code calls on day one and on day thirty? The simplest invocation is a decorator over the rule function:
 
 ```python
 from dendra import ml_switch
