@@ -40,7 +40,7 @@ class TestManualDemoteSteps:
         )
         decision = sw.demote(reason="manual ops verification")
 
-        assert decision.advance is True
+        assert decision.target_better is True
         assert sw.phase() is Phase.ML_WITH_FALLBACK
 
     def test_demote_from_ml_with_fallback_to_ml_shadow(self):
@@ -52,7 +52,7 @@ class TestManualDemoteSteps:
         )
         decision = sw.demote(reason="rule has drifted ahead per offline check")
 
-        assert decision.advance is True
+        assert decision.target_better is True
         assert sw.phase() is Phase.ML_SHADOW
 
     def test_demote_from_model_primary_to_model_shadow(self):
@@ -64,7 +64,7 @@ class TestManualDemoteSteps:
         )
         decision = sw.demote(reason="LLM provider behavior shifted")
 
-        assert decision.advance is True
+        assert decision.target_better is True
         assert sw.phase() is Phase.MODEL_SHADOW
 
 
@@ -85,7 +85,7 @@ class TestManualDemoteAtRule:
         )
         decision = sw.demote(reason="anything")
 
-        assert decision.advance is False
+        assert decision.target_better is False
         assert sw.phase() is Phase.RULE
         assert "RULE" in decision.rationale or "floor" in decision.rationale.lower()
 
@@ -148,7 +148,7 @@ class TestSafetyCriticalDoesNotBlockDemote:
         )
         decision = sw.demote(reason="conservative roll-back")
 
-        assert decision.advance is True
+        assert decision.target_better is True
         assert sw.phase() is Phase.ML_SHADOW
 
 

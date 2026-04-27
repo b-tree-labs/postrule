@@ -90,7 +90,7 @@ class TestBulkRecordVerdicts:
                 from dendra.gates import GateDecision
 
                 advance_calls.append(len(records))
-                return GateDecision(advance=False, rationale="never")
+                return GateDecision(target_better=False, rationale="never")
 
         sw = LearnedSwitch(
             rule=_rule,
@@ -122,7 +122,7 @@ class TestBulkRecordVerdicts:
                 from dendra.gates import GateDecision
 
                 advance_calls.append(len(records))
-                return GateDecision(advance=False, rationale="never")
+                return GateDecision(target_better=False, rationale="never")
 
         sw = LearnedSwitch(
             rule=_rule,
