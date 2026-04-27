@@ -89,6 +89,12 @@ bundled = [
     # platforms; falls back to compile-from-source on edge cases.
     "llama-cpp-python>=0.3",
 ]
+mcp = [
+    # Model Context Protocol server for `dendra mcp` — exposes the CLI
+    # surface (analyze, init, refresh, doctor) as MCP tools so Claude
+    # Code and other MCP-aware agents can drive Dendra in-process.
+    "mcp>=1.0.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",

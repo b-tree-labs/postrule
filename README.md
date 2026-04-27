@@ -51,6 +51,10 @@ swappable), the rule retained as a safety floor with a circuit
 breaker, and an autonomous-verification default so the gate has
 evidence to evaluate without you wiring a reviewer queue.
 
+## Status & limitations
+
+v1.0 ships the full decorator path (`@ml_switch`), the native `dendra.Switch` class authoring pattern, multi-arg signatures via auto-packing, full auto-lift across globals / `self.attr` / mid-function I/O / closures, drift detection, the prescriptive analyzer, the account system, the `propagate_action_exceptions` knob, and the MCP server. The classifier function returns a label name (string), not a structured value; tests, fixtures, validators, and order-dependent state machines are not classification sites; dynamic dispatch (`getattr` with runtime keys) requires explicit `@evidence_inputs` annotation; `eval` / `exec` is refused. Deep IDE plugins, A2A integration, and runtime AST mode are out of v1. The full list, version-tagged with the path forward for each item, lives in [`docs/limitations.md`](docs/limitations.md).
+
 ## Install
 
 Three ways in. Pick whichever matches what you have on hand.
