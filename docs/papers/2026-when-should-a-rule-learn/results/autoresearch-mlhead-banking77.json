@@ -1,0 +1,46 @@
+{
+  "alpha": 0.01,
+  "benchmark": "banking77",
+  "n_test": 3080,
+  "n_train": 10003,
+  "rationale": "TfidfLinearSVC cleared paired-McNemar at alpha=0.01 vs TfidfLogReg and had the highest accuracy among cleared challengers",
+  "reports": {
+    "TfidfGradientBoosting": {
+      "accuracy": 0.7564935064935064,
+      "correct_count": 2330,
+      "discordant_b": 83,
+      "discordant_c": 454,
+      "mcnemar_p": 6.634690060590002e-63,
+      "n_test": 3080,
+      "name": "TfidfGradientBoosting"
+    },
+    "TfidfLinearSVC": {
+      "accuracy": 0.8951298701298701,
+      "correct_count": 2757,
+      "discordant_b": 110,
+      "discordant_c": 54,
+      "mcnemar_p": 1.4609835149368574e-05,
+      "n_test": 3080,
+      "name": "TfidfLinearSVC"
+    },
+    "TfidfLogReg": {
+      "accuracy": 0.8769480519480519,
+      "correct_count": 2701,
+      "discordant_b": 0,
+      "discordant_c": 0,
+      "mcnemar_p": 1.0,
+      "n_test": 3080,
+      "name": "TfidfLogReg"
+    },
+    "TfidfMultinomialNB": {
+      "accuracy": 0.7886363636363637,
+      "correct_count": 2429,
+      "discordant_b": 58,
+      "discordant_c": 330,
+      "mcnemar_p": 2.6101535321640134e-47,
+      "n_test": 3080,
+      "name": "TfidfMultinomialNB"
+    }
+  },
+  "winner": "TfidfLinearSVC"
+}
