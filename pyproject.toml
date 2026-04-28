@@ -98,6 +98,9 @@ mcp = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "pytest-mock>=3.10",
+    "pytest-timeout>=2.1",
+    "freezegun>=1.2",
     "ruff>=0.4",
 ]
 
@@ -122,10 +125,14 @@ packages = ["src/dendra"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-q --strict-markers -m 'not benchmark'"
+addopts = "-q --strict-markers -m 'not benchmark and not perf'"
 markers = [
     "benchmark: opt-in latency / throughput benchmarks (run with -m benchmark)",
     "concurrency: red-bar tests for thread-safety bugs (run with -m concurrency)",
+    "redteam: adversarial / security tests (run with -m redteam). Enabled by default; opt-out with -m 'not redteam'",
+    "chaos: failure-injection / pre-launch chaos tests (run by default; opt out with -m 'not chaos'). Surface every kill-us-in-prod failure mode.",
+    "slow: tests that take >5s (combine with chaos marker for slow chaos tests)",
+    "perf: v1 perf-regression suite under tests/perf/ — baselines committed at tests/perf/baselines/. Run explicitly with -m perf; refresh with --update-baselines.",
 ]
 filterwarnings = [
     "error",
