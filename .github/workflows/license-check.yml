@@ -60,6 +60,7 @@ jobs:
               tests/test_cloud_sync.py|\
               tests/test_enrich_landing_corpus.py|\
               tests/test_lifter_branch.py|\
+              tests/test_lifter_branch_v1_5.py|\
               tests/test_lifter_evidence.py|\
               tests/test_lifter_evidence_v1_1.py|\
               tests/test_mcp_server.py|\

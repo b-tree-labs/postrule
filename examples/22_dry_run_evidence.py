@@ -58,9 +58,11 @@ def main() -> None:
     for line in lifted.rstrip().split("\n"):
         print(f"  {line}")
     print()
-    print("The generated _gather() calls api.charge_probe(req) (no side effect),")
-    print("and the real api.charge(req) lifts into the on_charged handler so it")
-    print("only fires when the chosen label is 'charged'.")
+    print("The generated _evidence_charge_ok() calls api.charge_probe(req)")
+    print("instead of api.charge(req), so the dry-run probe runs on every")
+    print("dispatch but the real charge does NOT. Wire your own _on_charged")
+    print("handler (or use the dispatch form labels={'charged': real_charge})")
+    print("to fire api.charge(req) only when the chosen label is 'charged'.")
 
 
 if __name__ == "__main__":
