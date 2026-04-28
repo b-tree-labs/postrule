@@ -85,8 +85,13 @@ def test_lift_evidence_100_line(perf_record):
     p95 = float(samples[int(len(samples) * 0.95) - 1])
     perf_record(
         "lift_evidence_100_line",
-        {"median": median, "p95": p95, "min": float(samples[0]),
-         "max": float(samples[-1]), "n": float(len(samples))},
+        {
+            "median": median,
+            "p95": p95,
+            "min": float(samples[0]),
+            "max": float(samples[-1]),
+            "n": float(len(samples)),
+        },
         target=50_000_000.0,  # 50ms
     )
     assert median < 50_000_000, (
@@ -110,8 +115,13 @@ def test_lift_evidence_1000_line(perf_record):
     p95 = float(samples[-1])
     perf_record(
         "lift_evidence_1000_line",
-        {"median": median, "p95": p95, "min": float(samples[0]),
-         "max": float(samples[-1]), "n": float(len(samples))},
+        {
+            "median": median,
+            "p95": p95,
+            "min": float(samples[0]),
+            "max": float(samples[-1]),
+            "n": float(len(samples)),
+        },
         target=500_000_000.0,  # 500ms
     )
     assert median < 500_000_000, (
@@ -139,8 +149,13 @@ def test_lift_branches_100_line(perf_record):
     p95 = float(samples[int(len(samples) * 0.95) - 1])
     perf_record(
         "lift_branches_100_line",
-        {"median": median, "p95": p95, "min": float(samples[0]),
-         "max": float(samples[-1]), "n": float(len(samples))},
+        {
+            "median": median,
+            "p95": p95,
+            "min": float(samples[0]),
+            "max": float(samples[-1]),
+            "n": float(len(samples)),
+        },
         target=50_000_000.0,
     )
     assert median < 50_000_000, (
@@ -164,8 +179,13 @@ def test_lift_branches_1000_line(perf_record):
     p95 = float(samples[-1])
     perf_record(
         "lift_branches_1000_line",
-        {"median": median, "p95": p95, "min": float(samples[0]),
-         "max": float(samples[-1]), "n": float(len(samples))},
+        {
+            "median": median,
+            "p95": p95,
+            "min": float(samples[0]),
+            "max": float(samples[-1]),
+            "n": float(len(samples)),
+        },
         target=500_000_000.0,
     )
     assert median < 500_000_000, (
@@ -194,13 +214,17 @@ def test_analyze_function_source_1000_line(perf_record):
     p95 = float(samples[-1])
     perf_record(
         "analyze_function_source_1000_line",
-        {"median": median, "p95": p95, "min": float(samples[0]),
-         "max": float(samples[-1]), "n": float(len(samples))},
+        {
+            "median": median,
+            "p95": p95,
+            "min": float(samples[0]),
+            "max": float(samples[-1]),
+            "n": float(len(samples)),
+        },
         target=100_000_000.0,  # 100ms
     )
     assert median < 100_000_000, (
-        f"analyze_function_source 1000-line median {median / 1e6:.1f}ms "
-        "exceeds 100ms target."
+        f"analyze_function_source 1000-line median {median / 1e6:.1f}ms exceeds 100ms target."
     )
 
 

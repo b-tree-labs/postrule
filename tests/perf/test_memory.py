@@ -94,8 +94,7 @@ def test_memory_10k_dispatches_bounded(perf_record):
         target=5 * 1024 * 1024.0,  # 5MB
     )
     assert growth <= 5 * 1024 * 1024, (
-        f"10k dispatches grew tracemalloc peak by {growth / 1024 / 1024:.2f}MB; "
-        "ceiling 5MB."
+        f"10k dispatches grew tracemalloc peak by {growth / 1024 / 1024:.2f}MB; ceiling 5MB."
     )
 
 
@@ -147,8 +146,7 @@ def test_memory_100k_dispatches_bounded(perf_record):
         target=50 * 1024 * 1024.0,
     )
     assert growth <= 50 * 1024 * 1024, (
-        f"100k dispatches grew tracemalloc peak by {growth / 1024 / 1024:.2f}MB; "
-        "ceiling 50MB."
+        f"100k dispatches grew tracemalloc peak by {growth / 1024 / 1024:.2f}MB; ceiling 50MB."
     )
 
 

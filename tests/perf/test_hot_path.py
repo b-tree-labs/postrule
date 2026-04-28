@@ -117,9 +117,7 @@ def test_dispatch_phase_rule(perf_record):
     assert stats["median"] < 50_000, (
         f"dispatch.RULE median {stats['median']:.0f}ns exceeds 50µs target."
     )
-    assert stats["p95"] < 200_000, (
-        f"dispatch.RULE p95 {stats['p95']:.0f}ns exceeds 200µs target."
-    )
+    assert stats["p95"] < 200_000, f"dispatch.RULE p95 {stats['p95']:.0f}ns exceeds 200µs target."
 
 
 # ---------------------------------------------------------------------------
@@ -149,9 +147,7 @@ def test_classify_phase_rule(perf_record):
     assert stats["median"] < 50_000, (
         f"classify.RULE median {stats['median']:.0f}ns exceeds 50µs target."
     )
-    assert stats["p95"] < 200_000, (
-        f"classify.RULE p95 {stats['p95']:.0f}ns exceeds 200µs target."
-    )
+    assert stats["p95"] < 200_000, f"classify.RULE p95 {stats['p95']:.0f}ns exceeds 200µs target."
 
 
 # ---------------------------------------------------------------------------
