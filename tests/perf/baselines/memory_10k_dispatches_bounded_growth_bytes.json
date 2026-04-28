@@ -1,0 +1,8 @@
+{
+  "baseline_bytes": 226200.0,
+  "current_bytes": 225400.0,
+  "median": 984.0,
+  "n": 10000.0,
+  "p95": 984.0,
+  "peak_bytes": 227184.0
+}
