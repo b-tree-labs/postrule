@@ -209,6 +209,4 @@ def test_throughput_adispatch_100_coroutines(perf_record):
         target=5_000.0,
         unit="ops/s",
     )
-    assert rate > 5_000, (
-        f"adispatch 100-coroutine throughput {rate:.0f} ops/s; target >5k."
-    )
+    assert rate > 5_000, f"adispatch 100-coroutine throughput {rate:.0f} ops/s; target >5k."

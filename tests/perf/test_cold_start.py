@@ -60,13 +60,16 @@ def test_import_dendra_cold(perf_record):
     p95 = float(samples_ns[int(len(samples_ns) * 0.95) - 1])
     perf_record(
         "import_dendra_cold",
-        {"median": median, "p95": p95, "min": float(samples_ns[0]),
-         "max": float(samples_ns[-1]), "n": float(len(samples_ns))},
+        {
+            "median": median,
+            "p95": p95,
+            "min": float(samples_ns[0]),
+            "max": float(samples_ns[-1]),
+            "n": float(len(samples_ns)),
+        },
         target=200_000_000.0,  # 200ms in ns
     )
-    assert median < 200_000_000, (
-        f"import dendra median {median / 1e6:.1f}ms exceeds 200ms target."
-    )
+    assert median < 200_000_000, f"import dendra median {median / 1e6:.1f}ms exceeds 200ms target."
 
 
 # ---------------------------------------------------------------------------
@@ -74,18 +77,12 @@ def test_import_dendra_cold(perf_record):
 # ---------------------------------------------------------------------------
 
 
-_DECORATOR_HEAVY_MODULE = (
-    'from dendra import ml_switch\n'
-    + ''.join(
-        f'\n@ml_switch(labels=["a", "b"])\ndef fn_{i}(x):\n    return "a" if x else "b"\n'
-        for i in range(100)
-    )
-)
-
-_BARE_MODULE = ''.join(
-    f'\ndef fn_{i}(x):\n    return "a" if x else "b"\n'
+_DECORATOR_HEAVY_MODULE = "from dendra import ml_switch\n" + "".join(
+    f'\n@ml_switch(labels=["a", "b"])\ndef fn_{i}(x):\n    return "a" if x else "b"\n'
     for i in range(100)
 )
+
+_BARE_MODULE = "".join(f'\ndef fn_{i}(x):\n    return "a" if x else "b"\n' for i in range(100))
 
 
 @perf_test(tolerance=0.30)
