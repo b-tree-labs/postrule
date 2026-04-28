@@ -106,13 +106,21 @@ def f(x):
 
 
 class TestRefuseSharedMidFunctionState:
-    """Variable defined before the if/elif and read in multiple branches
-    is shared mid-function state — hazardous to duplicate, so refuse."""
+    """Mid-function state hazardous to duplicate: a leading assignment
+    whose RHS reads from ``self.<attr>`` or a module global is evidence-
+    lifter territory, not branch-lifter territory. The v1.5 relaxations
+    accept arg-only leading binds; everything else still refuses.
+
+    (Pre-v1.5 this test used a pure ``title = x.lower()`` bind, which
+    v1.5 now lifts cleanly — see ``tests/test_lifter_branch_v1_5.py``
+    for the new contract. The shared-state refusal still applies to
+    binds reading hidden state.)
+    """
 
     def test_refuses_shared_state(self):
         src = """
-def f(x):
-    title = x.lower()
+def f(self, x):
+    title = self.cache.get(x)
     if 'crash' in title:
         return 'bug'
     if title.endswith('?'):
