@@ -1,0 +1,101 @@
+FileStorage(batching=False), N=4 threads, 10000 ops/thread
+Total ops: 40000; elapsed: 2.16s; rate: 18495 ops/s
+
+         6163191 function calls (5242869 primitive calls) in 2.163 seconds
+
+   Ordered by: cumulative time
+   List reduced from 153 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+160016/73414    0.053    0.000    2.621    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:564(_switch_dir)
+40000/7970    0.158    0.000    2.193    0.000 {built-in method posix.write}
+40000/593    0.076    0.000    2.171    0.004 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:783(_append_sync)
+        4    0.000    0.000    2.163    0.541 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/threading.py:1059(join)
+        1    0.000    0.000    2.163    2.163 /Users/ben/Projects/UT_Computational_NE/dendra/scripts/profile_filestorage_4thread.py:39(run_workload)
+        4    0.000    0.000    2.163    0.541 {method 'join' of '_thread._ThreadHandle' objects}
+      4/1    0.000    0.000    2.163    2.163 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/threading.py:1001(_bootstrap)
+      4/1    0.001    0.000    2.163    2.163 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/threading.py:1028(_bootstrap_inner)
+      4/1    0.000    0.000    2.163    2.163 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/threading.py:984(run)
+      4/1    0.000    0.000    2.163    2.163 /Users/ben/Projects/UT_Computational_NE/dendra/scripts/profile_filestorage_4thread.py:44(worker)
+ 40000/23    0.055    0.000    2.163    0.094 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:756(append_record)
+    40000    0.013    0.000    0.516    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:732(_serialize_line)
+    40000    0.019    0.000    0.499    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:166(serialize_record)
+80004/48991    0.024    0.000    0.420    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:510(stat)
+40000/39766    0.012    0.000    0.419    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_abc.py:442(exists)
+    40000    0.014    0.000    0.346    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/dataclasses.py:1338(asdict)
+600000/40000    0.178    0.000    0.319    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/dataclasses.py:1362(_asdict_inner)
+    80032    0.016    0.000    0.317    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:166(__fspath__)
+   200064    0.052    0.000    0.308    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:227(__str__)
+80004/48991    0.182    0.000    0.302    0.000 {built-in method posix.stat}
+40000/21368    0.069    0.000    0.243    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:312(__exit__)
+    40060    0.029    0.000    0.236    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:289(drive)
+39996/18299    0.047    0.000    0.228    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:624(_verify_cached_dir)
+    40000    0.028    0.000    0.134    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py:185(dumps)
+    40040    0.075    0.000    0.129    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:257(_parse_path)
+    40004    0.014    0.000    0.122    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:663(_active_path)
+    40000    0.058    0.000    0.101    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/dataclasses.py:1308(fields)
+80000/42234    0.186    0.000    0.101    0.000 {built-in method fcntl.flock}
+    40000    0.022    0.000    0.100    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:185(encode)
+    40016    0.008    0.000    0.098    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:148(__truediv__)
+    40052    0.017    0.000    0.091    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_abc.py:130(with_segments)
+    40040    0.019    0.000    0.079    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:277(_raw_path)
+40000/39994    0.007    0.000    0.077    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:677(_exclusive_lock)
+40152/18379    0.153    0.000    0.072    0.000 {built-in method posix.lstat}
+40000/39973    0.013    0.000    0.071    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:295(__enter__)
+40000/39994    0.018    0.000    0.069    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:687(_cached_flock)
+    40000    0.068    0.000    0.068    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:207(iterencode)
+40000/39996    0.023    0.000    0.063    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:837(_get_append_fd)
+    40060    0.014    0.000    0.063    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:498(__init__)
+    80000    0.027    0.000    0.054    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:828(_cache_key)
+
+
+
+--- by tottime ---
+         6163191 function calls (5242869 primitive calls) in 2.163 seconds
+
+   Ordered by: internal time
+   List reduced from 153 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+80000/42234    0.186    0.000    0.101    0.000 {built-in method fcntl.flock}
+80004/48991    0.182    0.000    0.302    0.000 {built-in method posix.stat}
+600000/40000    0.178    0.000    0.319    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/dataclasses.py:1362(_asdict_inner)
+40000/7970    0.158    0.000    2.193    0.000 {built-in method posix.write}
+40152/18379    0.153    0.000    0.072    0.000 {built-in method posix.lstat}
+40000/593    0.076    0.000    2.171    0.004 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:783(_append_sync)
+    40040    0.075    0.000    0.129    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:257(_parse_path)
+40000/21368    0.069    0.000    0.243    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:312(__exit__)
+    40000    0.068    0.000    0.068    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:207(iterencode)
+    40000    0.058    0.000    0.101    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/dataclasses.py:1308(fields)
+ 40000/23    0.055    0.000    2.163    0.094 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:756(append_record)
+160016/73414    0.053    0.000    2.621    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:564(_switch_dir)
+   200064    0.052    0.000    0.308    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:227(__str__)
+39996/18299    0.047    0.000    0.228    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:624(_verify_cached_dir)
+   600004    0.040    0.000    0.040    0.000 {built-in method builtins.getattr}
+   400288    0.037    0.000    0.037    0.000 {built-in method sys.intern}
+   600000    0.036    0.000    0.036    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/dataclasses.py:1323(<genexpr>)
+    40016    0.032    0.000    0.054    0.000 <frozen posixpath>:72(join)
+    40060    0.030    0.000    0.049    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:117(__init__)
+    40060    0.029    0.000    0.236    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:289(drive)
+    40000    0.028    0.000    0.134    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py:185(dumps)
+   280024    0.028    0.000    0.028    0.000 {method 'get' of 'dict' objects}
+    80000    0.027    0.000    0.054    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:828(_cache_key)
+80004/48991    0.024    0.000    0.420    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:510(stat)
+40000/39996    0.023    0.000    0.063    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:837(_get_append_fd)
+    40000    0.022    0.000    0.100    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:185(encode)
+    40000    0.019    0.000    0.499    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:166(serialize_record)
+    40040    0.019    0.000    0.079    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:277(_raw_path)
+40000/39994    0.018    0.000    0.048    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:707(_get_lock_fd)
+40000/39994    0.018    0.000    0.069    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:687(_cached_flock)
+   240200    0.017    0.000    0.017    0.000 {built-in method builtins.isinstance}
+    40052    0.017    0.000    0.091    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_abc.py:130(with_segments)
+    80032    0.016    0.000    0.317    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:166(__fspath__)
+    40000    0.014    0.000    0.346    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/dataclasses.py:1338(asdict)
+    40060    0.014    0.000    0.063    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:498(__init__)
+    40004    0.014    0.000    0.122    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:663(_active_path)
+40000/39973    0.013    0.000    0.071    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:295(__enter__)
+    40000    0.013    0.000    0.516    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:732(_serialize_line)
+40000/39766    0.012    0.000    0.419    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_abc.py:442(exists)
+    40001    0.011    0.000    0.022    0.000 {built-in method builtins.sum}
+
+

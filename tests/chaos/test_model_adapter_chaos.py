@@ -139,24 +139,15 @@ class TestAdapterMalformedOutputs:
         """An adapter returning label='' must not be selected as the decision.
 
         Contract: the empty string is not a valid label; the rule
-        fallback must take over (regardless of confidence).
+        fallback must take over (regardless of confidence). Issue #138.
         """
-        # Empty string with HIGH confidence , bug shape would be the
-        # switch happily emitting "" as the decision.
+        # Empty string with HIGH confidence , bug shape was the switch
+        # happily emitting "" as the decision. Fixed in v1.1.
         model = _BadModel(returns=ModelPrediction(label="", confidence=0.99))
         sw = _make_switch(model)
         result = sw.classify("input")
-        # We accept either: (a) the switch fell back to rule, or
-        # (b) the switch emitted "" with source!='rule' (the bug).
-        # The bug shape is option (b) with source='model'.
-        if result.source == "model":
-            pytest.xfail(
-                "bug: adapter empty-label is accepted as decision "
-                "when confidence ≥ threshold; should fall back. "
-                "Triage: v1.1 hardening (decoded as empty-string label "
-                "is unlikely from real adapters but unsafe contract)."
-            )
-        assert result.source in ("rule", "rule_fallback")
+        assert result.source == "rule_fallback"
+        assert result.label == "rule"
 
     def test_none_confidence_treated_as_no_decision(self):
         """An adapter returning confidence=None must not crash."""
