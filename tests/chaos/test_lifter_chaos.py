@@ -26,16 +26,6 @@ from dendra.lifters.evidence import lift_evidence
 
 class TestManyBranches:
     @pytest.mark.slow
-    @pytest.mark.xfail(
-        strict=False,
-        reason=(
-            "BUG: lifter._copy_if recurses on the orelse chain instead of "
-            "iterating, so deep elif/elif/elif chains hit Python's recursion "
-            "limit. Triage: launch-blocker for users who feed long match-style "
-            "rules to the lifter; v1.1 fix is to iterate the orelse chain in "
-            "_copy_if and _collapse_if_chain."
-        ),
-    )
     def test_one_thousand_branches_lifts_or_refuses_in_time(self):
         """A function with 1000 elif branches: lifter must handle in <5s.
 
