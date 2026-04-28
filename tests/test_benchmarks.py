@@ -311,6 +311,168 @@ class TestFormatReport:
 # ----------------------------------------------------------------------
 
 
+# ----------------------------------------------------------------------
+# 5. Real-cost adapter integration (v1.1, --measure-real-cost path)
+# ----------------------------------------------------------------------
+
+
+class TestRealCostMeasurement:
+    """When ``measure_real_cost=True``, the harness sums per-call
+    ``cost_usd`` reported by the model adapter (via the prediction
+    return value) and surfaces ``real_cost_per_call`` on the record.
+
+    Adapters that don't report cost (``cost_usd`` is None on every
+    prediction) cause the harness to fall back to the estimate and
+    print a one-line warning naming the adapter class.
+    """
+
+    def test_prediction_dataclasses_carry_optional_cost_fields(self) -> None:
+        from dendra.ml import MLPrediction
+        from dendra.models import ModelPrediction
+
+        # Default: all three optional fields are None. Existing call
+        # sites (no kwargs) keep working byte-for-byte.
+        mp = ModelPrediction(label="a", confidence=0.9)
+        assert mp.tokens_in is None
+        assert mp.tokens_out is None
+        assert mp.cost_usd is None
+
+        ml = MLPrediction(label="a", confidence=0.9)
+        assert ml.tokens_in is None
+        assert ml.tokens_out is None
+        assert ml.cost_usd is None
+
+        # Populated case: the test stub adapter style.
+        mp2 = ModelPrediction(
+            label="a", confidence=0.9, tokens_in=10, tokens_out=20, cost_usd=0.0001
+        )
+        assert mp2.tokens_in == 10
+        assert mp2.tokens_out == 20
+        assert mp2.cost_usd == pytest.approx(0.0001)
+
+    def test_real_cost_path_records_sum_from_stub_adapter(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from dendra.benchmarks import run_benchmark
+
+        # A switch whose backing inner switch has a stub model adapter
+        # so MODEL_PRIMARY phase can be entered. The stub adapter
+        # returns a fixed cost_usd per call.
+        pkg_dir = tmp_path / "realcost_pkg"
+        pkg_dir.mkdir()
+        (pkg_dir / "__init__.py").write_text("")
+        (pkg_dir / "synth_switch.py").write_text(
+            "from dendra import Switch, Phase\n"
+            "from dendra.models import ModelPrediction\n"
+            "\n"
+            "class StubModel:\n"
+            "    def classify(self, input, labels, /):\n"
+            "        return ModelPrediction(\n"
+            "            label='a', confidence=0.99,\n"
+            "            tokens_in=10, tokens_out=20, cost_usd=0.0001,\n"
+            "        )\n"
+            "\n"
+            "class CostSwitch(Switch):\n"
+            "    def __init__(self):\n"
+            "        super().__init__(\n"
+            "            model=StubModel(),\n"
+            "            confidence_threshold=0.0,\n"
+            "            starting_phase=Phase.MODEL_PRIMARY,\n"
+            "        )\n"
+            "    def _evidence_text(self, text: str) -> str:\n"
+            "        return text\n"
+            "    def _rule(self, evidence) -> str:\n"
+            "        return 'a'\n"
+            "    def _on_a(self, text):\n"
+            "        return None\n"
+        )
+
+        runtime_root = tmp_path / "runtime"
+        monkeypatch.syspath_prepend(str(tmp_path))
+
+        result = run_benchmark(
+            switch_name="cost_switch",
+            switch_module="realcost_pkg.synth_switch",
+            switch_class_name="CostSwitch",
+            inputs=["alpha", "beta", "apex"],
+            runtime_dir=runtime_root,
+            measure_real_cost=True,
+        )
+
+        # estimated flips False when measure_real_cost=True.
+        assert result["estimated"] is False
+        # Real-cost field present and equals the sum of stub adapter
+        # calls. The harness drives at least one classify call per
+        # input under MODEL_PRIMARY when reachable; we assert >0 and
+        # equal to (n_calls * 0.0001) within tolerance.
+        assert "real_cost_per_call" in result
+        # At minimum we expect 3 inputs * 0.0001 = 0.0003 across the
+        # MODEL_PRIMARY pass (parity loop); the harness may also call
+        # at other points, but real_cost_per_call is the sum / n_calls
+        # so it equals 0.0001 on average.
+        assert result["real_cost_per_call"] == pytest.approx(0.0001, rel=1e-6)
+
+    def test_no_cost_adapter_falls_back_to_estimate_and_warns(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Adapter that returns predictions with ``cost_usd=None``: the
+        harness leaves estimated cost in place and prints a one-line
+        warning naming the adapter class.
+        """
+        from dendra.benchmarks import run_benchmark
+
+        pkg_dir = tmp_path / "nocost_pkg"
+        pkg_dir.mkdir()
+        (pkg_dir / "__init__.py").write_text("")
+        (pkg_dir / "synth_switch.py").write_text(
+            "from dendra import Switch, Phase\n"
+            "from dendra.models import ModelPrediction\n"
+            "\n"
+            "class NoCostModel:\n"
+            "    def classify(self, input, labels, /):\n"
+            "        return ModelPrediction(label='a', confidence=0.99)\n"
+            "\n"
+            "class NoCostSwitch(Switch):\n"
+            "    def __init__(self):\n"
+            "        super().__init__(\n"
+            "            model=NoCostModel(),\n"
+            "            confidence_threshold=0.0,\n"
+            "            starting_phase=Phase.MODEL_PRIMARY,\n"
+            "        )\n"
+            "    def _evidence_text(self, text: str) -> str:\n"
+            "        return text\n"
+            "    def _rule(self, evidence) -> str:\n"
+            "        return 'a'\n"
+            "    def _on_a(self, text):\n"
+            "        return None\n"
+        )
+
+        runtime_root = tmp_path / "runtime"
+        monkeypatch.syspath_prepend(str(tmp_path))
+
+        result = run_benchmark(
+            switch_name="nocost_switch",
+            switch_module="nocost_pkg.synth_switch",
+            switch_class_name="NoCostSwitch",
+            inputs=["alpha", "beta", "apex"],
+            runtime_dir=runtime_root,
+            measure_real_cost=True,
+        )
+
+        # Fallback: real_cost_per_call is None (cost_usd was None on
+        # every call), and a warning was printed naming the adapter.
+        assert result.get("real_cost_per_call") is None
+        captured = capsys.readouterr()
+        # Warning mentions the adapter class name so the operator
+        # knows which adapter to upgrade.
+        assert "NoCostModel" in captured.out or "NoCostModel" in captured.err
+
+
+# ----------------------------------------------------------------------
+# 6. CLI integration: --with-benchmarks emits the bench stub
+# ----------------------------------------------------------------------
+
+
 class TestInitWithBenchmarksFlag:
     """``dendra init --auto-lift --with-benchmarks`` writes the bench
     stub alongside the lifted Switch module.
