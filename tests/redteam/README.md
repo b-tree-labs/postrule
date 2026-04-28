@@ -135,15 +135,27 @@ variants), `test_safe_probe_still_accepted` (regression guard).
 | Storage record format | JSON-lines, never pickle | `test_pickle_dump_records_do_not_re_unpickle` |
 | Label dispatch | dict lookup by name, never `getattr`/eval | `test_label_method_collision_no_execution`, `test_label_with_callable_does_not_eval_name` |
 
-## Defense-in-depth gaps queued for v1.1
+## Defense-in-depth gaps: v1.1 status
 
-| Category | Gap | Proposed fix |
+Five gaps were queued from the v1 round. Three landed in v1.1
+(`tests/redteam/test_v1_1_did_gaps.py`); two were re-queued for v1.2
+with `xfail(strict=True)` markers that will turn into XPASSes the
+moment their underlying surface lands.
+
+### Landed in v1.1
+
+| Category | Gap | Fix |
 |---|---|---|
-| Header version handling | `parse_generated_header` accepts any blake2b-128 (32-hex-char) hash. A future `dendra refresh` upgrade could ship a longer hash; old client/new file would silently mishandle it. | Pin a min/max hash length range in the regex; emit explicit "unsupported version" on mismatch. |
-| `dendra refresh` walk | `Path.rglob` still follows symlinks for *intermediate* directory traversal (e.g. project/foo -> outside, where foo contains a real `__dendra_generated__/`). Currently the resolved-under-root check catches this. Tighten by passing `follow_symlinks=False` (Python 3.13+) to `glob` and `iterdir`. | Once Python 3.13 is min version, swap to `follow_symlinks=False` for finer-grained control. |
-| `whoami` truncation | A key with embedded ANSI escape sequences would render terminal-control chars when printed. Currently print() with default stream just emits them. | Strip non-printable + ESC bytes from the truncated key before display. |
-| Dispatch input pickling | If a custom storage backend chose to pickle records, attacker-controlled input could persist a pickle payload that future readers deserialize. We currently audit our own storage; user-supplied storage is on the user. | Add a `Storage` ABC docstring stating "MUST NOT use pickle". |
-| Cloud SSL pinning | We rely on the system CA bundle. A compromised CA could MITM. | v1.2 hardening: optionally pin `app.dendra.ai` cert SPKI hash. |
+| Header version handling | `parse_generated_header` accepted any blake2b hash length; a longer hash from a newer Dendra would otherwise raise a generic "malformed hash" error. | `refresh.py` now pins `_HASH_MIN_LEN` / `_HASH_MAX_LEN` (both 32 in v1) and emits a distinct "unsupported Dendra version" error when a hash exceeds the max, naming the version so operators upgrade Dendra rather than chasing a corrupt-file ghost. |
+| `whoami` truncation | A key with embedded ANSI ESC / BEL / BS / DEL bytes rendered terminal-control chars when printed. | `cli.py` adds `_strip_unsafe_chars`; `_truncate_key` runs through it so non-printable bytes never reach stdout. The stored credential is unchanged. |
+
+### Queued for v1.2 (xfail strict)
+
+| Category | Gap | Reason for deferral |
+|---|---|---|
+| `dendra refresh` walk | `Path.rglob` follows symlinks for intermediate dir traversal. The resolved-under-root check already catches the escape case. | `follow_symlinks=False` requires Python 3.13; `requires-python` is `>=3.10`. Will swap once min Python bumps. |
+| Dispatch input pickling | A custom storage backend could pickle records, turning attacker-controlled input into a deserialization sink. | Docstring landing collides with a peer change-stream rewriting `storage.py` (concurrency / lock refactor); will batch with that work. |
+| Cloud SSL pinning | We rely on the system CA bundle; a compromised CA could MITM. | Needs a config surface (env var or credentials field), a cert-rotation story, and an opt-out for users behind corporate MITM proxies. v1 round pins `verify=True` + https-only via `test_tls_and_cloud.py`. |
 
 ## Sandbox dependency
 
