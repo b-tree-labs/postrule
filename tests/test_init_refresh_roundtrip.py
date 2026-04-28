@@ -1,16 +1,5 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
-# SPDX-License-Identifier: LicenseRef-BSL-1.1
-#
-# Licensed under the Business Source License 1.1 (the "License").
-# You may not use this file except in compliance with the License.
-# You may obtain a copy of the License at LICENSE-BSL in the
-# repository root, or at https://mariadb.com/bsl11/.
-#
-# Change Date:    2030-05-01
-# Change License: Apache License, Version 2.0
-#
-# Additional Use Grant: see LICENSE-BSL. Production use is
-# permitted; offering a competing hosted service is not.
+# SPDX-License-Identifier: Apache-2.0
 
 """Round-trip contract: ``dendra init --auto-lift`` followed by
 ``dendra refresh --check`` must report no drift on the freshly-lifted
