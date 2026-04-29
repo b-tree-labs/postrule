@@ -6,6 +6,40 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Added
+
+- **Dendra Insights — opt-in cohort flywheel.** New
+  ``dendra.insights`` package + CLI verbs ``dendra insights
+  enroll`` / ``leave`` / ``status``. The OSS classification path
+  remains telemetry-free by default; users explicitly opt in by
+  running ``dendra insights enroll``, after which one anonymized
+  shape-only event is queued per ``dendra analyze`` run and
+  flushed best-effort on the next CLI invocation. What we capture:
+  run-level histograms (pattern, regime, lift_status, hazard
+  category) plus files_scanned / total_sites /
+  already_dendrified_count. What we never capture: source code,
+  function names, label values, prompt content, IP, machine ID,
+  paths beyond a non-reversible repo-shape hash.
+
+  The fetch side is on by default (no enrollment required):
+  every install pulls
+  ``https://dendra.dev/insights/tuned-defaults.json`` once per
+  day, caches at ``~/.dendra/tuned-defaults.json``, and falls
+  back to baked-in defaults silently on any failure. The cohort
+  defaults block carries cohort-size and timestamp so
+  ``dendra insights status`` shows "tuned from N deployments as
+  of Y." Receiving cohort wisdom does NOT require sharing data —
+  asymmetry by design.
+
+  Phase A (this release) ships the client-side wire +
+  enrollment flow + analyze hook. Collector endpoint, nightly
+  aggregator, EU residency, Stripe coupon wiring, and dashboard
+  settings page are Phase B (v1.1, ~5 weeks post-launch). See
+  ``docs/working/telemetry-value-engine-2026-04-29.md`` for the
+  full upgrade plan and
+  ``docs/working/telemetry-program-design-2026-04-28.md`` for
+  the underlying privacy posture (unchanged).
+
 ### Changed
 
 - **Company DBA renamed Axiom Labs → B-Tree Labs.** The "Axiom
