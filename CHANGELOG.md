@@ -6,6 +6,44 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Analyzer self-host correctness** (per the 2026-04-28 dogfood
+  report). `dendra analyze` previously recommended re-graduating
+  code that was already wrapped, recursed into its own generated
+  companion modules, and double-counted sites through nested git
+  worktrees. The full punch list:
+  - Functions decorated with `@ml_switch` / `@dendra.ml_switch`
+    are now flagged as `already_dendrified` and surfaced in a new
+    `report.already_dendrified` field instead of being recommended
+    for graduation. The same path applies in
+    `analyze_function_source`, which now returns
+    `LiftStatus.ALREADY_DENDRIFIED` for decorated functions.
+  - Methods of classes that subclass `Switch` (or `dendra.Switch`)
+    are skipped entirely — the analyzer cannot tell `_rule` apart
+    from `_evidence_*` / `_when_*` / `_on_*` helpers without
+    semantic understanding of the Switch contract.
+  - `__dendra_generated__/` and `.claude/` are now in the default
+    ignore list.
+  - Directories containing a `.git` *file* (the marker for nested
+    git worktrees) are skipped, eliminating the double-count from
+    parallel worktrees.
+  - Project self-blacklist: when scanning a directory whose
+    `pyproject.toml` declares `name = "dendra"` (or
+    `name = "dendra-*"`), `src/dendra/` is skipped so the
+    analyzer's own infrastructure (analyzer/gates/models adapter
+    plumbing) is not flagged.
+- **Pattern P4 widened.** A new "argmax over a per-label scoring
+  loop" sub-detector recovers `ReferenceRule.classify` and similar
+  dict-driven keyword scanners whose returns are dynamic
+  (`return best_label`) rather than literal-string. The original
+  `if kw in text: return LABEL` shape is unchanged.
+
+Net effect on a fresh self-scan of the repo: 113 sites → 62, with
+35 already-dendrified surfaced and only the two genuine runtime-
+wrapped rules in `examples/17` and `examples/18` remaining as
+auto-liftable.
+
 ### Changed
 
 - **`build_reference_rule` now shuffles the training stream by default**
