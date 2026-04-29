@@ -4,6 +4,24 @@ All notable changes to Dendra are documented in this file. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Version numbers follow [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Changed
+
+- **`build_reference_rule` now shuffles the training stream by default**
+  (`shuffle=True`, deterministic `shuffle_seed=0`) before slicing the
+  seed window. The HuggingFace train splits for Banking77, HWU64,
+  CLINC150, and Snips are sorted by label, so the previous behavior
+  collapsed the auto-rule to a single class (predict-the-modal-class
+  at chance accuracy). Under the new default the Banking77 rule jumps
+  from 1.30 % to a median of ≈ 24 % across shuffle seeds, and Snips
+  jumps from 14.3 % to ≈ 75 % — see
+  `docs/working/banking77-validation-report-2026-04-28.md` for the
+  full evidence. The `dendra bench` CLI gains `--no-shuffle` and
+  `--shuffle-seed` flags. Migration: pass `shuffle=False` to
+  `build_reference_rule` (or `--no-shuffle` to `dendra bench`) to
+  reproduce the v0.x paper-as-shipped numbers.
+
 ## [1.0.0] — 2026-05-13
 
 The first public release. Ships alongside the companion paper
