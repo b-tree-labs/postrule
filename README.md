@@ -93,7 +93,7 @@ same on macOS / Linux / Windows. Model picks are
 benchmark-justified — see
 [`docs/benchmarks/slm-verifier-results.md`](docs/benchmarks/slm-verifier-results.md).
 
-### C. Axiom node (shared local LM runtime for other tools)
+### C. Axiom OS (shared local LM runtime for other tools)
 
 ```bash
 pip install axi-platform
@@ -105,7 +105,7 @@ from dendra import LearnedSwitch, JudgeSource, LlamafileAdapter
 verifier = JudgeSource(LlamafileAdapter())   # talks to the running axi node
 ```
 
-If you already run an [Axiom](https://github.com/axiom-labs-os/axiom)
+If you already run an [Axiom](https://github.com/b-tree-labs/axiom-os)
 node — or you'd like other tools on this machine to share one
 local-LM runtime — Path C wires Dendra's verifier through it.
 
@@ -491,7 +491,7 @@ versioned roadmap.
 ## Dev setup
 
 ```bash
-git clone https://github.com/axiom-labs-os/dendra.git
+git clone https://github.com/b-tree-labs/dendra.git
 cd dendra
 python -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev,train,bench,viz]'
@@ -500,17 +500,17 @@ pytest tests/
 
 ## Contact
 
-- GitHub: <https://github.com/axiom-labs-os/dendra>
+- GitHub: <https://github.com/b-tree-labs/dendra>
 - Maintainer: Benjamin Booth — `ben@b-treeventures.com`
-- Axiom Labs: the commercial vehicle behind Dendra (a B-Tree
+- B-Tree Labs: the commercial vehicle behind Dendra (a B-Tree
   Ventures, LLC DBA).
 
 ---
 
-_Copyright © 2026 B-Tree Ventures, LLC (dba Axiom Labs).
+_Copyright © 2026 B-Tree Ventures, LLC (dba B-Tree Labs).
 Split-licensed — Apache 2.0 on the client SDK, BSL 1.1 on
 Dendra-operated components; see [`LICENSE.md`](LICENSE.md).
-Dendra, Transition Curves, and Axiom Labs are trademarks of
+Dendra and B-Tree Labs are trademarks (or pending trademarks) of
 B-Tree Ventures, LLC. Neither the Apache 2.0 license nor the
 BSL 1.1 license grants any right to use these marks — see
 [`TRADEMARKS.md`](TRADEMARKS.md) for the project's fair-use

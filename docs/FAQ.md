@@ -468,7 +468,7 @@ code is still there for the community.
 ## Who's behind Dendra?
 
 Benjamin Booth, sole inventor and sole operator of B-Tree
-Ventures, LLC (dba Axiom Labs). Clean B-Tree Ventures work, no
+Ventures, LLC (dba B-Tree Labs). Clean B-Tree Ventures work, no
 academic or institutional co-ownership.
 
 ## How do I try it?

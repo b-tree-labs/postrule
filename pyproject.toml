@@ -105,9 +105,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/axiom-labs-os/dendra"
-Documentation = "https://github.com/axiom-labs-os/dendra#readme"
-Issues = "https://github.com/axiom-labs-os/dendra/issues"
+Homepage = "https://github.com/b-tree-labs/dendra"
+Documentation = "https://github.com/b-tree-labs/dendra#readme"
+Issues = "https://github.com/b-tree-labs/dendra/issues"
 
 [project.scripts]
 dendra = "dendra.cli:main"

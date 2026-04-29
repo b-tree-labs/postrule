@@ -8,7 +8,7 @@ pull requests, issues, and discussion.
 ## Quick start for contributors
 
 ```bash
-git clone https://github.com/axiom-labs-os/dendra.git
+git clone https://github.com/b-tree-labs/dendra.git
 cd dendra
 python -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev,train,bench,viz]'
@@ -162,7 +162,7 @@ the copyright holder) via the DCO sign-off.
 
 ## Trademarks
 
-DENDRA, TRANSITION CURVES, and AXIOM LABS are trademarks of
+DENDRA and B-TREE LABS are trademarks (or pending trademarks) of
 B-Tree Ventures, LLC. Contributions may reference these names
 descriptively (e.g., "improves the Dendra CLI's error handling")
 but may not use them in a way that implies endorsement or
@@ -171,5 +171,5 @@ affiliation without explicit permission. See
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC (dba Axiom Labs).
+_Copyright (c) 2026 B-Tree Ventures, LLC (dba B-Tree Labs).
 Split-licensed — see `LICENSE.md`._

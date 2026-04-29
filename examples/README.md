@@ -5,7 +5,7 @@ services, no API keys — and targets a single conceptual piece of
 the Dendra primitive.
 
 ```bash
-pip install git+https://github.com/axiom-labs-os/dendra
+pip install git+https://github.com/b-tree-labs/dendra
 python examples/01_hello_world.py
 ```
 

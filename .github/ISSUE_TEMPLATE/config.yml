@@ -3,13 +3,13 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security disclosure (private)
-    url: https://github.com/axiom-labs-os/dendra/security/advisories/new
+    url: https://github.com/b-tree-labs/dendra/security/advisories/new
     about: >-
       Report a security vulnerability privately via GitHub's security
       advisory flow. Do NOT file security issues publicly. See
       SECURITY.md for the disclosure policy.
   - name: Question or discussion
-    url: https://github.com/axiom-labs-os/dendra/discussions
+    url: https://github.com/b-tree-labs/dendra/discussions
     about: >-
       For usage questions, design discussions, or sharing patterns —
       GitHub Discussions is a better fit than an issue.

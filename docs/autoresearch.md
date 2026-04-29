@@ -164,7 +164,7 @@ interesting integrations — Anthropic Claude agents,
 LangGraph / LlamaIndex flows, custom proposal-eval loops in
 research labs — to wire `CandidateHarness` as their evals
 substrate. If you're shipping one, [we'd like to hear about it
-on GitHub](https://github.com/axiom-labs-os/dendra/issues).
+on GitHub](https://github.com/b-tree-labs/dendra/issues).
 
 ## See also
 
