@@ -210,6 +210,81 @@ class TestTunedDefaults:
         # Pin the canonical URL so a typo on launch day doesn't slip.
         assert TUNED_DEFAULTS_URL == "https://dendra.dev/insights/tuned-defaults.json"
 
+    def test_get_tuned_defaults_url_honors_env_override(self, monkeypatch):
+        from dendra.insights.tuned_defaults import (
+            DEFAULT_TUNED_DEFAULTS_URL,
+            get_tuned_defaults_url,
+        )
+
+        monkeypatch.delenv("DENDRA_INSIGHTS_URL", raising=False)
+        assert get_tuned_defaults_url() == DEFAULT_TUNED_DEFAULTS_URL
+
+        monkeypatch.setenv("DENDRA_INSIGHTS_URL", "https://staging.example/foo.json")
+        assert get_tuned_defaults_url() == "https://staging.example/foo.json"
+
+    def test_fetch_uses_env_override_url_when_passed_none(self, monkeypatch):
+        from dendra.insights.tuned_defaults import fetch_tuned_defaults
+
+        monkeypatch.setenv("DENDRA_INSIGHTS_URL", "https://override.example/x.json")
+        captured: dict[str, str] = {}
+
+        def fake_urlopen(req, timeout):
+            captured["url"] = req.full_url
+            mock_resp = MagicMock()
+            mock_resp.read.return_value = b'{"version": 1}'
+            mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+            mock_resp.__exit__ = MagicMock(return_value=False)
+            return mock_resp
+
+        with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+            d = fetch_tuned_defaults()  # url=None falls back to env
+        assert captured["url"] == "https://override.example/x.json"
+        assert d is not None
+        assert d.version == 1
+
+    def test_refresh_if_stale_writes_cache_on_success(self):
+        from dendra.insights.tuned_defaults import refresh_if_stale
+
+        payload = {
+            "version": 99,
+            "cohort_size": 7,
+            "defaults": {"median_outcomes_to_graduation": {"narrow": 222}},
+        }
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps(payload).encode("utf-8")
+        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
+        mock_resp.__exit__ = MagicMock(return_value=False)
+        with patch("urllib.request.urlopen", return_value=mock_resp):
+            refreshed = refresh_if_stale()
+        assert refreshed is not None
+        assert refreshed.version == 99
+        # Cache reflects the fetched values.
+        from dendra.insights import load_cached_or_baked_in
+
+        cached = load_cached_or_baked_in()
+        assert cached.version == 99
+        assert cached.cohort_size == 7
+        assert cached.median_outcomes_to_graduation["narrow"] == 222
+
+    def test_refresh_if_stale_skips_when_cache_is_fresh(self):
+        from dendra.insights.tuned_defaults import refresh_if_stale, write_cache
+
+        # Pre-warm a fresh cache.
+        write_cache(TunedDefaults(version=42, cohort_size=3))
+        # Fetch must NOT be called when cache is fresh.
+        with patch("urllib.request.urlopen", side_effect=AssertionError("fetch must not be called")):
+            result = refresh_if_stale()
+        assert result is None  # signal: skipped, not fetched
+
+    def test_refresh_if_stale_handles_fetch_failure_silently(self):
+        import urllib.error
+
+        from dendra.insights.tuned_defaults import refresh_if_stale
+
+        with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("boom")):
+            result = refresh_if_stale()
+        assert result is None  # silent; no exception, no cache write
+
 
 # ---------------------------------------------------------------------------
 # Event queue
