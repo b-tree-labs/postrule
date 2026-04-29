@@ -3,7 +3,7 @@
 
 [project]
 name = "dendra"
-version = "0.2.0"
+version = "1.0.0rc1"
 description = "Graduated-autonomy classification primitive — start as a rule, graduate to ML when evidence justifies it."
 readme = "README.md"
 # Split license (PEP 639 SPDX expression). See LICENSE.md in the
@@ -121,6 +121,16 @@ packages = ["src/dendra"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/dendra/py.typed" = "dendra/py.typed"
+# Bundle the runnable examples so `dendra quickstart` works offline and
+# doesn't depend on the public GitHub repo being reachable. Only the
+# .py files needed for the five quickstart presets ship in the wheel;
+# the full examples/ tree (with markdown walkthroughs) lives in the repo.
+"examples/01_hello_world.py" = "dendra/_examples/01_hello_world.py"
+"examples/17_exception_handling.py" = "dendra/_examples/17_exception_handling.py"
+"examples/19_autoresearch_loop.py" = "dendra/_examples/19_autoresearch_loop.py"
+"examples/20_verifier_default.py" = "dendra/_examples/20_verifier_default.py"
+"examples/21_tournament.py" = "dendra/_examples/21_tournament.py"
+"examples/_stubs.py" = "dendra/_examples/_stubs.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

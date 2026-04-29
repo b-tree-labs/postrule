@@ -35,7 +35,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install Dendra
-        run: pip install "dendra>=0.2.0"
+        run: pip install "dendra>=1.0.0"
 
       - name: Run analyzer (full repo)
         run: |
