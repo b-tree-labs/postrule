@@ -3,7 +3,7 @@
 **Author.** Benjamin Booth, B-Tree Ventures LLC.
 **Status.** Draft v0.1, 2026-04-26.
 **Target.** arXiv (cs.LG / cs.SE), 2026-05-13.
-**Code + data.** `https://github.com/axiom-labs-os/dendra`. Apache 2.0.
+**Code + data.** `https://github.com/b-tree-labs/dendra`. Apache 2.0.
 **Patent.** Patent pending. U.S. Provisional Patent Application No. 64/045,809, filed 2026-04-21.
 
 ---
@@ -282,7 +282,7 @@ This produces the *transition curve* (outcome volume against accuracy and agains
 
 ### 4.6 Reproducibility
 
-All code is at `https://github.com/axiom-labs-os/dendra` (Apache 2.0). All fixed seeds are documented in the benchmark JSONL output. The transition-curve dataset is released as `dendra-transition-curves-2026.jsonl` accompanying this paper. The benchmark harness ships in `src/dendra/research.py::run_benchmark_experiment` and the McNemar computation in `src/dendra/gates.py::McNemarGate`.
+All code is at `https://github.com/b-tree-labs/dendra` (Apache 2.0). All fixed seeds are documented in the benchmark JSONL output. The transition-curve dataset is released as `dendra-transition-curves-2026.jsonl` accompanying this paper. The benchmark harness ships in `src/dendra/research.py::run_benchmark_experiment` and the McNemar computation in `src/dendra/gates.py::McNemarGate`.
 
 ---
 

@@ -6,6 +6,23 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Changed
+
+- **Company DBA renamed Axiom Labs → B-Tree Labs.** The "Axiom
+  Labs" name conflicted with another company; the registered DBA
+  under B-Tree Ventures, LLC is now **B-Tree Labs**. The GitHub
+  org slug moves from `axiom-labs-os/dendra` to
+  `b-tree-labs/dendra`; the social handle from `@axiom_labs` to
+  `@btreelabs`. The separate Axiom product (the local-LM runtime
+  formerly described as "Axiom node") is unaffected by the parent-
+  company rename and continues as **Axiom OS** at
+  `b-tree-labs/axiom-os`.
+- **Trademark posture revised.** TRANSITION CURVES is removed
+  from the trademark queue (descriptive mark in a crowded prior-
+  art field; more valuable as freely-citable category vocabulary
+  than as a registered mark). DENDRA remains the only P0 mark
+  filed for B-Tree Labs (the company DBA) deferred to year 2.
+
 ### Fixed
 
 - **Analyzer self-host correctness** (per the 2026-04-28 dogfood
@@ -204,9 +221,9 @@ work that landed during the pre-launch period:
   identity. Selected through a three-round design process (21
   concept marks + 3 AI design-critic assessments; full record
   in `landing/assets/concepts/` and `notes/critic-assessments.md`).
-  Inherits the Axiom Labs palette + typography; adds Dendra-
+  Inherits the B-Tree Labs palette + typography; adds Dendra-
   specific usage rules. Structure mirrors
-  `axiom-labs-os/.github/brand/` at the parent org.
+  `b-tree-labs/.github/brand/` at the parent org.
   - `brand/logo/` — 12 SVG masters (mark / mark-color /
     mark-dark / mark-mono-light / mark-mono-dark /
     wordmark-horizontal{-dark} / wordmark-stacked{-dark} /
@@ -230,8 +247,8 @@ work that landed during the pre-launch period:
   variants based on viewer color scheme.
 - **Landing page scaffold** in `landing/`. Static single-page
   site built from the existing `landing-page-copy.md` deck,
-  applying the Axiom Labs brand system (palette, type, usage)
-  from `axiom-labs-os/.github/brand/`. No build step — drop
+  applying the B-Tree Labs brand system (palette, type, usage)
+  from `b-tree-labs/.github/brand/`. No build step — drop
   the directory on Cloudflare Pages / Vercel / Netlify. Design
   patterns explicitly borrowed from Modal, Temporal, Clerk,
   Stripe, Honeycomb, Resend, Linear, Tailscale; anti-patterns
@@ -275,8 +292,8 @@ work that landed during the pre-launch period:
 - **`LICENSE-APACHE`, `LICENSE-BSL`, `LICENSE.md`,
   `LICENSING.md`.** Split license text + the developer-facing
   "can I use this?" guide.
-- **`TRADEMARKS.md`.** Repo-level trademark policy for DENDRA,
-  TRANSITION CURVES, and AXIOM LABS. Describes descriptive /
+- **`TRADEMARKS.md`.** Repo-level trademark policy for DENDRA
+  and B-TREE LABS. Describes descriptive /
   nominative fair use vs commercial uses that need a license.
 - **`CODEOWNERS`.** Single-owner policy; IP, CI, and
   product-surface paths call out explicit ownership for future
@@ -294,8 +311,7 @@ work that landed during the pre-launch period:
   the BSL Change Date mechanics.
 - `LICENSING.md` added as the developer-facing "can I use this?"
   guide covering the Apache vs BSL boundary.
-- `TRADEMARKS.md` added covering the DENDRA / TRANSITION CURVES /
-  AXIOM LABS marks.
+- `TRADEMARKS.md` added covering the DENDRA and B-TREE LABS marks.
 
 ## [0.2.0] — 2026-04-21
 

@@ -5,7 +5,7 @@ on what you need.
 
 ## Bugs, feature requests, questions
 
-Open an issue on GitHub: https://github.com/axiom-labs-os/dendra/issues.
+Open an issue on GitHub: https://github.com/b-tree-labs/dendra/issues.
 
 Pick the template that matches:
 
@@ -41,7 +41,7 @@ agreement.
 
 ## Trademark questions
 
-DENDRA, TRANSITION CURVES, and AXIOM LABS are trademarks of
+DENDRA and B-TREE LABS are trademarks (or pending trademarks) of
 B-Tree Ventures, LLC. Most uses you'd want are covered by
 nominative fair use — see [`TRADEMARKS.md`](./TRADEMARKS.md).
 For anything beyond that, email `trademarks@b-treeventures.com`.
@@ -58,10 +58,10 @@ and (c) your timeline.
 
 ## Community
 
-- **GitHub Discussions:** https://github.com/axiom-labs-os/dendra/discussions
+- **GitHub Discussions:** https://github.com/b-tree-labs/dendra/discussions
   — for longer-form conversations (design proposals, pattern
   sharing, war stories) that don't fit as issues.
-- **Social:** follow `@axiom_labs` on X / Bluesky for release
+- **Social:** follow `@btreelabs` on X / Bluesky for release
   notes and launch updates.
 
 ## Paid support
@@ -74,4 +74,4 @@ commercial-support engagements are handled ad hoc — email
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC (dba Axiom Labs)._
+_Copyright (c) 2026 B-Tree Ventures, LLC (dba B-Tree Labs)._

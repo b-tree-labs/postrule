@@ -12,7 +12,7 @@ on:
 
 jobs:
   release:
-    uses: axiom-labs-os/.github/.github/workflows/python-release.yml@v1
+    uses: b-tree-labs/.github/.github/workflows/python-release.yml@v1
     with:
       package-name: dendra
       pypi-project: dendra
