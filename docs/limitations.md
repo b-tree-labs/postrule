@@ -24,7 +24,7 @@ Status tags appear inline next to each item:
 
 ## 3. Hidden state, how to make it visible
 
-The auto-lift design (`docs/working/auto-lift-design-2026-04-27.md`) makes implicit dependencies explicit. v1 ships with full auto-lift across the categories below.
+The auto-lift mechanism makes implicit dependencies explicit. v1 ships with full auto-lift across the categories below.
 
 - **Globals** (`FEATURE_FLAGS["x"]`, module-level config): auto-liftable [v1]. The lifter generates a `_gather` that reads the global at dispatch time and packs the value into the evidence dataclass.
 - **`self.attr`** (instance state on a method): auto-liftable [v1]. Same mechanism; `self.<name>` reads land in `_gather`.

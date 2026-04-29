@@ -35,6 +35,7 @@ exists** that the team is afraid to ML-replace. Concretely:
 | **Adtech brand-safety classification** | Allow / block ad-creative / inventory | RTB: 100B+ auctions/day [^iab] | Advertiser pull-back on misclassification |
 | **Returns-fraud triage** at large e-com | Refund / hold / investigate | 100k+ returns/day per top-50 retailer | $101B/yr US returns fraud, 2023 [^nrf] |
 | **Customs HTS classification** | Assign tariff code on shipments | ~30M US import lines/yr [^cbp] | Duty mis-classification penalties; CBP audits |
+| **LLM-broker library deployments** at enterprise scale | Token-routing / decision sites inside framework code (LangChain, LlamaIndex, Haystack, AutoGen, CrewAI, DSPy, LiteLLM, Instructor) | Klarna's LangChain-powered assistant: ~2.3M customer chats/month [^klarna]; 919 classification sites surfaced across 10,889 files in the eight largest OSS broker libraries (analyzer scan, this repo) | OpenAI / Anthropic spend as a COGS line item; 7- to 8-figure annual at top deployers |
 
 Each row maps onto one or more of the per-benefit scenarios
 below. The pattern is the same in every case: a static rule is
@@ -52,6 +53,7 @@ gating earns its keep.
 [^iab]: IAB programmatic-ad market sizing; OpenRTB auction volume.
 [^nrf]: National Retail Federation 2023 Consumer Returns Report.
 [^cbp]: U.S. Customs & Border Protection annual trade statistics.
+[^klarna]: Klarna corporate announcements, February 2024: "AI assistant handles two-thirds of customer service chats."
 
 ## Anti-scenarios: these look like classification but aren't
 
@@ -135,9 +137,10 @@ noise.
 > benchmark; independent-samples testing on the same data
 > needs 500–1,500.*
 
-Status: **Demonstrated** on four NLU benchmarks (ATIS,
-HWU64, Banking77, CLINC150) shipped with this repo. Raw
-numbers in `docs/benchmarks/` and the paper's results dir.
+Status: **Demonstrated** on the eight-benchmark suite (ATIS,
+HWU64, Banking77, CLINC150, Snips, TREC-6, AG News, codelangs)
+shipped with this repo. Raw numbers in `docs/benchmarks/` and
+the paper's results dir.
 
 ### Where it pays off
 
@@ -369,8 +372,8 @@ The bigger the label space, the bigger the rule-vs-ML gap:
 |---|---|
 | ≤ 10 | small (rule can plausibly compete) |
 | 10–30 | moderate (~10–20 pp typical) |
-| 30–100 | large (~50–80 pp on our benchmarks) |
-| 100+ | rule was never a viable baseline; lift is the rule's gap to literacy |
+| 30–100 | large; depends on rule construction. A 100-example keyword auto-build can collapse to predict-modal under sorted training splits; a hand-coded keyword rule with deliberate coverage typically reaches 15–25%; ML reaches 80–87% |
+| 100+ | a 100-example keyword auto-build cannot cover the label space; serious rule constructions (hand-keyword plus embedding-cosine fallback, or zero-shot LLM) reach 30–60%; ML reaches the asymptote. The gate fires within 250–500 outcomes regardless of starting point |
 
 **Scenario A — intent routing with growing intent catalog.**
 Your day-zero rule covers 10 intents. Product expands to 50.
@@ -390,9 +393,12 @@ hand-written rules cover the obvious top-level categories
 while ML reaches into the long tail. Each percentage point of
 brand-safety accuracy moves real ad revenue (advertisers pay a
 premium for narrow targeting; misclassification triggers
-opt-out). At adtech volumes, the lift implied by Dendra's
-benchmark numbers (rule accuracy ~1–2% at 77 labels;
-ML accuracy ~88%) is a direct revenue lever.
+opt-out). At adtech volumes, the rule-to-ML lift on a
+1,000-node taxonomy is a direct revenue lever. Per the
+eight-benchmark suite, ML head accuracy asymptotes between 81%
+and 92% on high-cardinality intent and topic problems; the
+gate ensures the lift is statistically earned before adoption,
+not assumed from a few-day A/B.
 
 **Scenario D (industrial) — customs HTS code classification.**
 US Customs imports declare ~30M lines/yr [^cbp] across the

@@ -1,6 +1,6 @@
 # Dendra FAQ
 
-Answers to the questions people ask first. Updated 2026-04-22.
+Answers to the questions people ask first. Updated 2026-04-28.
 
 ## What is Dendra, in one sentence?
 
@@ -50,6 +50,43 @@ Some shapes of code look like classification but aren't, or have constraints tha
 - **Decisions that need hidden out-of-process state we can't see.** If the rule consults a remote service or database state, that state has to be exposed as evidence (auto-lift, or `@evidence_inputs`). If the state can't be exposed, the LLM/ML head can never see what the rule saw, and Dendra refuses with a specific diagnostic.
 
 The full list, with version tags and the path forward for each item, is in [`limitations.md`](./limitations.md).
+
+## Does it work with LangChain agents (and the other broker frameworks)?
+
+Yes. The classification sites that Dendra wraps live inside the
+framework code, not your code. We've already run the v1 analyzer
+against the eight largest LLM-broker libraries (LangChain,
+LlamaIndex, Haystack, AutoGen, CrewAI, DSPy, LiteLLM, Instructor)
+and surfaced 919 classification sites across 10,889 Python files.
+Most of the high-fit sites sit on class methods, which the v1.5
+lifters reach.
+
+You don't replace the framework. You point Dendra at your
+project's import surface or at the framework you depend on; the
+wrapping is opt-in and per-site. To see the breakdown for any of
+these libraries on your machine, clone the repo and run
+`dendra analyze .` against it.
+
+## Will `dendra init --auto-lift` break my agent graph?
+
+No, by construction. `--auto-lift` writes opt-in lifters that
+live alongside the original function and apply via decorator.
+The original control flow still runs underneath; the gate
+simply routes the call once a candidate has earned it on real
+traffic.
+
+If a candidate site looks unsafe to lift (hidden state, side
+effects inside a branch, non-pure rule), the analyzer refuses
+with a specific diagnostic instead of silently lifting. The
+drift detector (`dendra refresh --check`) tells you if the
+underlying function changed since the lift was written, and
+`dendra doctor` reports any site whose AST hash no longer
+matches.
+
+The first thing to do after `--auto-lift` runs is your existing
+test suite. The lifters preserve return shape and exception
+behavior; if anything regresses, the diff is small enough to
+read in one sitting.
 
 ## Why not just use shadow mode / A-B testing / a feature flag?
 
@@ -221,6 +258,23 @@ gates their deployment.
 See [`docs/autoresearch.md`](autoresearch.md) and
 [`examples/19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py)
 for the full picture.
+
+## How is this different from FrugalGPT, model routing, or LLM-cost cascades?
+
+Routing picks which LLM to call for a given request. Every
+routed call is still a remote LLM call; the savings come from
+sending cheaper or smaller calls when the input allows it.
+
+Dendra graduates the *site* off LLMs entirely once a small
+in-process head has earned it. Once the paired-McNemar gate
+fires for that site, the call drops from "LLM round-trip" to
+"sub-millisecond local inference," and the per-call cost line
+goes from cents-or-fractions-of-cents to electricity.
+
+The two compose. Route to a cheaper LLM while you're
+accumulating evidence; graduate to in-process inference once
+the gate clears. Routing reduces the unit cost of a remote
+call. Graduation removes the unit.
 
 ## How does this relate to Karpathy's "autoresearch" loop pattern?
 
@@ -426,7 +480,7 @@ dendra analyze /path/to/your/python/code
 
 Gallery of runnable examples in
 [`examples/`](../examples/). Start with
-`01_hello_world.py`. No accounts, no API keys, no phone-home.
+`01_hello_world.py`.
 
 ## How do I get help?
 
