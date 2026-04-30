@@ -51,6 +51,25 @@ swappable), the rule retained as a safety floor with a circuit
 breaker, and an autonomous-verification default so the gate has
 evidence to evaluate without you wiring a reviewer queue.
 
+## The bet
+
+If your AI bill is more than $1M/yr and Dendra is in your stack,
+that bill will be 30% smaller in 12 months. Public benchmark, or
+you get every dollar of consulting back.
+
+## Why I built this
+
+I'm Ben Booth — solo founder, sole inventor. CEO of SoilMetrix
+(my own company, AI-using software in production) and Research
+Scientist in Nuclear Engineering at UT. Both roles put me in the
+"I am the customer" seat: I run LLM-classified decision sites in
+production, and I needed a primitive that would let me graduate
+those sites off LLMs once a smaller in-process head had earned
+it on real traffic. Dendra is what I wrote because nothing on the
+shelf did this — and the formal grounding (paired-McNemar, the
+companion paper, the eight-benchmark suite) is what I needed
+before I'd trust it on my own systems.
+
 ## Status & limitations
 
 v1.0 ships the full decorator path (`@ml_switch`), the native `dendra.Switch` class authoring pattern, multi-arg signatures via auto-packing, full auto-lift across globals / `self.attr` / mid-function I/O / closures, drift detection, the prescriptive analyzer, the account system, the `propagate_action_exceptions` knob, and the MCP server. The classifier function returns a label name (string), not a structured value; tests, fixtures, validators, and order-dependent state machines are not classification sites; dynamic dispatch (`getattr` with runtime keys) requires explicit `@evidence_inputs` annotation; `eval` / `exec` is refused. Deep IDE plugins, A2A integration, and runtime AST mode are out of v1. The full list, version-tagged with the path forward for each item, lives in [`docs/limitations.md`](docs/limitations.md).
