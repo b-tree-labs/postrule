@@ -298,3 +298,52 @@ class TestRenderSwitchCard:
         gate_outcome = m.gate_fire_outcome
         assert gate_outcome is not None
         assert f"| **{gate_outcome}** |" in out
+
+
+# ---------------------------------------------------------------------------
+# Charts (matplotlib is an optional extra; skip when not installed)
+# ---------------------------------------------------------------------------
+
+
+_HAVE_MPL = True
+try:
+    import matplotlib  # noqa: F401
+except ImportError:  # pragma: no cover
+    _HAVE_MPL = False
+
+
+@pytest.mark.skipif(not _HAVE_MPL, reason="dendra[viz] not installed")
+class TestCharts:
+    def test_transition_curve_writes_png(self, graduated_storage, tmp_path):
+        from dendra.cloud.report import charts
+
+        m = aggregate_switch(graduated_storage, "test_switch", min_paired=10, alpha=0.05)
+        out = tmp_path / "test_switch.transition.png"
+        result = charts.transition_curve(m, out)
+        assert result.exists()
+        assert result.stat().st_size > 1000  # PNG is non-trivial in size
+
+    def test_pvalue_trajectory_writes_png(self, graduated_storage, tmp_path):
+        from dendra.cloud.report import charts
+
+        m = aggregate_switch(graduated_storage, "test_switch", min_paired=10, alpha=0.05)
+        out = tmp_path / "test_switch.pvalue.png"
+        result = charts.pvalue_trajectory(m, out, alpha=0.05)
+        assert result.exists()
+        assert result.stat().st_size > 1000
+
+    def test_cost_trajectory_writes_png(self, graduated_storage, tmp_path):
+        from dendra.cloud.report import charts
+
+        m = aggregate_switch(graduated_storage, "test_switch", min_paired=10, alpha=0.05)
+        out = tmp_path / "test_switch.cost.png"
+        result = charts.cost_trajectory(m, out, cost_per_call=0.0042)
+        assert result.exists()
+        assert result.stat().st_size > 1000
+
+    def test_chart_raises_on_no_checkpoints(self, empty_storage, tmp_path):
+        from dendra.cloud.report import charts
+
+        m = aggregate_switch(empty_storage, "x")
+        with pytest.raises(ValueError, match="checkpoint"):
+            charts.transition_curve(m, tmp_path / "x.png")
