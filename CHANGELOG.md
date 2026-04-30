@@ -23,7 +23,7 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
   The fetch side is on by default (no enrollment required):
   every install pulls
-  ``https://dendra.dev/insights/tuned-defaults.json`` once per
+  ``https://dendra.run/insights/tuned-defaults.json`` once per
   day, caches at ``~/.dendra/tuned-defaults.json``, and falls
   back to baked-in defaults silently on any failure. The cohort
   defaults block carries cohort-size and timestamp so

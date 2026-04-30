@@ -483,7 +483,7 @@ VS Code extension (early v1.1) ✓
 800+ tests passing.
 
 Wave 2 (cloud features + hosted analyzer + dashboards) — rolling
-through 2026; waitlist on [dendra.dev](https://dendra.dev).
+through 2026; waitlist on [dendra.run](https://dendra.run).
 PyCharm plugin + benchmark/report harness + branch-lifter relaxation —
 v1.5 / v1.x. See [`docs/limitations.md`](docs/limitations.md) for the
 versioned roadmap.
