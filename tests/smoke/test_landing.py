@@ -13,7 +13,9 @@ pytestmark = pytest.mark.smoke
 
 
 def test_landing_root_returns_200(smoke_target: str) -> None:
-    req = urllib.request.Request(smoke_target + "/")
+    req = urllib.request.Request(
+        smoke_target + "/", headers={"User-Agent": "dendra-smoke-test/1.0"}
+    )
     with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310 — HTTPS
         assert resp.status == 200
         body = resp.read().decode("utf-8")
@@ -38,7 +40,10 @@ def test_tuned_defaults_endpoint_serves_valid_json(smoke_target: str) -> None:
     """
     import json
 
-    req = urllib.request.Request(smoke_target + "/insights/tuned-defaults.json")
+    req = urllib.request.Request(
+        smoke_target + "/insights/tuned-defaults.json",
+        headers={"User-Agent": "dendra-smoke-test/1.0"},
+    )
     with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
         assert resp.status == 200
         ctype = resp.headers.get("content-type", "")

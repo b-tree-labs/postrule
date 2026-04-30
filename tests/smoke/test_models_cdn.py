@@ -21,7 +21,9 @@ _EXPECTED_OBJECTS = [
 
 
 def _head(url: str) -> dict:
-    req = urllib.request.Request(url, method="HEAD")
+    req = urllib.request.Request(
+        url, method="HEAD", headers={"User-Agent": "dendra-smoke-test/1.0"}
+    )
     with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310 — HTTPS
         return {
             "status": resp.status,

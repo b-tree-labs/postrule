@@ -10,6 +10,17 @@ import os
 import pytest
 
 
+# Smoke tests need real network. The repo conftest.py installs an
+# autouse outbound-network blocker that's the right behavior for the
+# rest of the suite. Smoke tests opt out by requesting the
+# ``network_enabled`` fixture; we autouse it here so every test under
+# tests/smoke/ implicitly gets network access without per-test boilerplate.
+@pytest.fixture(autouse=True)
+def _allow_outbound_network_for_smoke(network_enabled):
+    """Bypass the repo's outbound-network sandbox for smoke tests."""
+    yield
+
+
 @pytest.fixture(scope="session")
 def smoke_target() -> str:
     """Resolved base URL for smoke tests.

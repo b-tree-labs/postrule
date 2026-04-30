@@ -16,7 +16,10 @@ pytestmark = pytest.mark.smoke
 
 
 def test_collector_health_returns_200(smoke_collector_target: str) -> None:
-    req = urllib.request.Request(smoke_collector_target + "/health")
+    req = urllib.request.Request(
+        smoke_collector_target + "/health",
+        headers={"User-Agent": "dendra-smoke-test/1.0"},
+    )
     with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310 — HTTPS
         assert resp.status == 200
         data = json.loads(resp.read().decode("utf-8"))
@@ -26,7 +29,10 @@ def test_collector_health_returns_200(smoke_collector_target: str) -> None:
 
 
 def test_collector_returns_404_for_unknown_routes(smoke_collector_target: str) -> None:
-    req = urllib.request.Request(smoke_collector_target + "/unknown-route")
+    req = urllib.request.Request(
+        smoke_collector_target + "/unknown-route",
+        headers={"User-Agent": "dendra-smoke-test/1.0"},
+    )
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
             status = resp.status
