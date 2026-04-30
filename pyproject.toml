@@ -135,7 +135,7 @@ packages = ["src/dendra"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-q --strict-markers -m 'not benchmark and not perf'"
+addopts = "-q --strict-markers -m 'not benchmark and not perf and not smoke'"
 markers = [
     "benchmark: opt-in latency / throughput benchmarks (run with -m benchmark)",
     "concurrency: red-bar tests for thread-safety bugs (run with -m concurrency)",
@@ -143,6 +143,7 @@ markers = [
     "chaos: failure-injection / pre-launch chaos tests (run by default; opt out with -m 'not chaos'). Surface every kill-us-in-prod failure mode.",
     "slow: tests that take >5s (combine with chaos marker for slow chaos tests)",
     "perf: v1 perf-regression suite under tests/perf/ — baselines committed at tests/perf/baselines/. Run explicitly with -m perf; refresh with --update-baselines.",
+    "smoke: post-deploy smoke tests against running deployments (run with -m smoke + DENDRA_SMOKE_BASE_URL).",
 ]
 filterwarnings = [
     "error",
