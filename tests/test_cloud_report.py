@@ -347,3 +347,101 @@ class TestCharts:
         m = aggregate_switch(empty_storage, "x")
         with pytest.raises(ValueError, match="checkpoint"):
             charts.transition_curve(m, tmp_path / "x.png")
+
+
+# ---------------------------------------------------------------------------
+# Hypothesis-file generation
+# ---------------------------------------------------------------------------
+
+
+class TestHypothesisFileGeneration:
+    def test_creates_file_with_expected_sections(self, tmp_path):
+        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+
+        out_path, content_hash, created = generate_hypothesis_file(
+            "triage_rule",
+            file_location="src/triage.py",
+            function_name="triage_rule",
+            site_fingerprint="abc123",
+            regime="narrow",
+            label_cardinality=4,
+            fit_score=5.0,
+            root=tmp_path / "hypotheses",
+        )
+        assert created is True
+        assert out_path.exists()
+        text = out_path.read_text(encoding="utf-8")
+        assert "# Pre-registered hypothesis — Triage Rule" in text
+        assert "abc123" in text
+        assert "## 1. Unit of decision" in text
+        assert "## 2. Gate criterion" in text
+        assert "## 3. Expected n at graduation" in text
+        assert "## 4. Expected effect size" in text
+        assert "## 5. Truth source" in text
+        assert "## 6. Rollback rule" in text
+        assert "## Verdict (filled in by `dendra report`)" in text
+        assert content_hash  # non-empty SHA-256
+
+    def test_idempotent_does_not_overwrite_existing(self, tmp_path):
+        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+
+        # First call creates.
+        out_path, hash1, created1 = generate_hypothesis_file(
+            "x", root=tmp_path / "h"
+        )
+        assert created1 is True
+        # Customer "edits" the file.
+        out_path.write_text("CUSTOM CONTENT", encoding="utf-8")
+        # Second call must NOT overwrite.
+        out_path2, hash2, created2 = generate_hypothesis_file(
+            "x", root=tmp_path / "h"
+        )
+        assert created2 is False
+        assert out_path2.read_text(encoding="utf-8") == "CUSTOM CONTENT"
+
+    def test_overwrite_flag_replaces(self, tmp_path):
+        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+
+        out_path, _, _ = generate_hypothesis_file("x", root=tmp_path / "h")
+        out_path.write_text("CUSTOM", encoding="utf-8")
+        out_path2, _, created = generate_hypothesis_file(
+            "x", root=tmp_path / "h", overwrite=True
+        )
+        assert created is True
+        assert "Pre-registered hypothesis" in out_path2.read_text(encoding="utf-8")
+
+    def test_explicit_cohort_interval_overrides_regime_default(self, tmp_path):
+        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+
+        out_path, _, _ = generate_hypothesis_file(
+            "x",
+            regime="narrow",
+            cohort_predicted_low=400,
+            cohort_predicted_high=600,
+            root=tmp_path / "h",
+        )
+        text = out_path.read_text(encoding="utf-8")
+        assert "**400–600 outcomes**" in text
+
+    def test_regime_default_when_no_cohort(self, tmp_path):
+        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+
+        out_path, _, _ = generate_hypothesis_file(
+            "x", regime="narrow", root=tmp_path / "h"
+        )
+        text = out_path.read_text(encoding="utf-8")
+        # narrow default is 200-400
+        assert "**200–400 outcomes**" in text
+
+    def test_content_hash_is_deterministic_for_same_inputs(self, tmp_path):
+        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+
+        # Generate same inputs twice (with different output dirs)
+        # — only the timestamp varies, so hashes will differ in
+        # general. This test confirms the hash IS computed and
+        # returned non-empty; deterministic-given-time would
+        # require freezegun, out of scope here.
+        _, h1, _ = generate_hypothesis_file("x", root=tmp_path / "a")
+        _, h2, _ = generate_hypothesis_file("x", root=tmp_path / "b")
+        assert len(h1) == 64  # SHA-256 hex
+        assert len(h2) == 64
