@@ -9,6 +9,21 @@ it graduate from rule → model-shadow → language model → ML-shadow → ML �
 with a paired-proportion statistical gate at every transition
 and the original rule retained as the safety floor.
 
+## How does Dendra know when a switch is ready to graduate?
+
+Every gate evaluation is a paired-McNemar test on accumulated
+correctness data. When the ML head's correct-vs-rule margin
+clears α (default 0.01) on at least 30 paired samples, the gate
+fires and the switch advances a phase. The full statistical
+framework — including the regime taxonomy, the
+sequential-testing posture, and the eight-benchmark validation —
+is in the [companion paper](papers/2026-when-should-a-rule-learn/paper-draft.md)
+and the [Test-Driven Product Development methodology
+reference](methodology/test-driven-product-development.md).
+The short version: every graduation is a pre-registered, paired,
+statistically-defensible decision. Not vibes; not a hand-coded
+threshold. The gate fires *because evidence justified it*.
+
 ## Do I actually need this? Can't I just use if/else?
 
 For some classifiers, yes — and we'll say so directly.
