@@ -139,7 +139,7 @@ class TestEnsureModelDownload:
 class TestCdnBase:
     def test_default_is_dendra_dev(self, monkeypatch):
         monkeypatch.delenv("DENDRA_BUNDLED_CDN_BASE", raising=False)
-        assert cdn_base() == "https://models.dendra.dev"
+        assert cdn_base() == "https://models.dendra.run"
 
     def test_env_override(self, monkeypatch):
         monkeypatch.setenv("DENDRA_BUNDLED_CDN_BASE", "https://my-mirror.internal")

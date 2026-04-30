@@ -206,9 +206,9 @@ class TestTunedDefaults:
         os.utime(path, (old_time, old_time))
         assert cache_is_fresh() is False
 
-    def test_default_url_is_dendra_dev(self):
+    def test_default_url_is_dendra_run(self):
         # Pin the canonical URL so a typo on launch day doesn't slip.
-        assert TUNED_DEFAULTS_URL == "https://dendra.dev/insights/tuned-defaults.json"
+        assert TUNED_DEFAULTS_URL == "https://dendra.run/insights/tuned-defaults.json"
 
     def test_get_tuned_defaults_url_honors_env_override(self, monkeypatch):
         from dendra.insights.tuned_defaults import (
