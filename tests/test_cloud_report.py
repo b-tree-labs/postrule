@@ -518,3 +518,171 @@ class TestProjectSummary:
         assert "[`test_switch`](test_switch.md)" in out
         # No drift events on this fixture
         assert "No drift events detected" in out
+
+
+# ---------------------------------------------------------------------------
+# Discovery report — initial analysis
+# ---------------------------------------------------------------------------
+
+
+class TestDiscoveryReport:
+    def _build_analyzer_report(self, sites_data):
+        """Tiny stub that mimics AnalyzerReport's shape for the renderer."""
+        from dataclasses import dataclass, field
+
+        @dataclass
+        class _StubHazard:
+            category: str
+
+        @dataclass
+        class _StubSite:
+            file_path: str
+            function_name: str
+            line_start: int = 1
+            pattern: str = "P1"
+            regime: str = "narrow"
+            label_cardinality: int = 4
+            fit_score: float = 5.0
+            lift_status: str = "auto_liftable"
+            hazards: list = field(default_factory=list)
+
+        @dataclass
+        class _StubReport:
+            root: str = "/some/path"
+            files_scanned: int = 100
+            sites: list = field(default_factory=list)
+            already_dendrified: list = field(default_factory=list)
+
+        report = _StubReport()
+        for d in sites_data:
+            d = dict(d)  # don't mutate caller's dict
+            hazards = [
+                _StubHazard(category=h) for h in d.pop("hazard_categories", [])
+            ]
+            report.sites.append(_StubSite(**d, hazards=hazards))
+        return report
+
+    def test_renders_empty_codebase(self):
+        from dendra.cloud.report import render_discovery_report
+
+        report = self._build_analyzer_report([])
+        out = render_discovery_report(report)
+        assert "# Initial Analysis" in out
+        assert "No classification sites discovered" in out
+
+    def test_renders_with_auto_liftable_sites(self):
+        from dendra.cloud.report import render_discovery_report
+
+        sites = [
+            {
+                "file_path": "src/triage.py",
+                "function_name": "triage_rule",
+                "line_start": 43,
+                "pattern": "P1",
+                "regime": "narrow",
+                "label_cardinality": 4,
+                "fit_score": 5.0,
+                "lift_status": "auto_liftable",
+            },
+            {
+                "file_path": "src/router.py",
+                "function_name": "ticket_router",
+                "line_start": 88,
+                "pattern": "P3",
+                "regime": "narrow",
+                "label_cardinality": 5,
+                "fit_score": 5.0,
+                "lift_status": "auto_liftable",
+            },
+        ]
+        report = self._build_analyzer_report(sites)
+        out = render_discovery_report(report, cost_per_call=0.0042)
+        assert "2 classification sites discovered" in out
+        assert "2 auto-liftable today" in out
+        assert "## Top opportunities (ranked)" in out
+        assert "triage_rule" in out
+        assert "## Recommended sequence (meta-experiment design)" in out
+        assert "Estimated annual LLM cost reduction" in out
+
+    def test_refused_sites_show_remediation(self):
+        from dendra.cloud.report import render_discovery_report
+
+        sites = [
+            {
+                "file_path": "src/x.py",
+                "function_name": "f",
+                "line_start": 10,
+                "pattern": "P1",
+                "regime": "narrow",
+                "label_cardinality": 3,
+                "fit_score": 4.0,
+                "lift_status": "refused",
+                "hazard_categories": ["side_effect_evidence"],
+            },
+        ]
+        report = self._build_analyzer_report(sites)
+        out = render_discovery_report(report)
+        assert "## Refused — why and how to fix" in out
+        assert "side_effect_evidence" in out
+        assert "Refactor to make state-mutation explicit" in out
+
+    def test_cohort_comparison_appears_when_cohort_size_present(self):
+        from dendra.cloud.report import render_discovery_report
+
+        sites = [
+            {
+                "file_path": "src/x.py",
+                "function_name": "f",
+                "line_start": 10,
+                "pattern": "P1",
+                "regime": "narrow",
+                "label_cardinality": 3,
+                "fit_score": 5.0,
+                "lift_status": "auto_liftable",
+            },
+        ]
+        report = self._build_analyzer_report(sites)
+        out_with = render_discovery_report(report, cohort_size=47)
+        assert "## Cohort comparison" in out_with
+        out_without = render_discovery_report(report, cohort_size=0)
+        assert "## Cohort comparison" not in out_without
+
+    def test_recommended_sequence_only_with_2plus_sites(self):
+        from dendra.cloud.report import render_discovery_report
+
+        single = [
+            {
+                "file_path": "src/x.py",
+                "function_name": "f",
+                "line_start": 1,
+                "pattern": "P1",
+                "regime": "narrow",
+                "label_cardinality": 3,
+                "fit_score": 5.0,
+                "lift_status": "auto_liftable",
+            },
+        ]
+        out_single = render_discovery_report(self._build_analyzer_report(single))
+        assert "## Recommended sequence" not in out_single
+
+        many = single + [
+            {
+                "file_path": "src/y.py",
+                "function_name": "g",
+                "line_start": 1,
+                "pattern": "P1",
+                "regime": "narrow",
+                "label_cardinality": 3,
+                "fit_score": 5.0,
+                "lift_status": "auto_liftable",
+            },
+        ]
+        out_many = render_discovery_report(self._build_analyzer_report(many))
+        assert "## Recommended sequence" in out_many
+
+    def test_methodology_link_in_footer(self):
+        from dendra.cloud.report import render_discovery_report
+
+        report = self._build_analyzer_report([])
+        out = render_discovery_report(report)
+        assert "Test-Driven Product Development" in out
