@@ -445,3 +445,76 @@ class TestHypothesisFileGeneration:
         _, h2, _ = generate_hypothesis_file("x", root=tmp_path / "b")
         assert len(h1) == 64  # SHA-256 hex
         assert len(h2) == 64
+
+
+# ---------------------------------------------------------------------------
+# Project summary
+# ---------------------------------------------------------------------------
+
+
+class TestProjectSummary:
+    def test_aggregate_project_with_explicit_switch_list(self, graduated_storage):
+        from dendra.cloud.report import aggregate_project
+
+        # Add a second switch with no records
+        s = graduated_storage
+        # graduated_storage already has "test_switch" with 100 records
+        result = aggregate_project(
+            s, switch_names=["test_switch", "missing_switch"], alpha=0.05
+        )
+        assert len(result.switches) == 2
+        assert result.total_outcomes == 100
+        assert result.graduated_count == 1  # test_switch graduated
+        assert result.pre_graduation_count == 0  # missing_switch has 0 outcomes
+        # missing_switch is wrapped-but-no-data, neither graduated nor pre-grad
+
+    def test_aggregate_project_falls_back_to_switch_names_method(self, tmp_path):
+        from dendra.cloud.report import aggregate_project
+        from dendra.storage import FileStorage
+
+        s = FileStorage(tmp_path)
+        # FileStorage has switch_names() method (returns []
+        # when nothing's been written yet)
+        result = aggregate_project(s, alpha=0.01)
+        assert result.switches == []
+        assert result.total_outcomes == 0
+
+    def test_aggregate_project_raises_when_no_switch_names_method(
+        self, empty_storage
+    ):
+        from dendra.cloud.report import aggregate_project
+
+        # InMemoryStorage doesn't have switch_names()
+        with pytest.raises(AttributeError, match="switch_names"):
+            aggregate_project(empty_storage)
+
+    def test_render_project_summary_empty(self):
+        from dendra.cloud.report import ProjectSummary, render_project_summary
+
+        summary = ProjectSummary()
+        out = render_project_summary(summary, project_name="empty_project")
+        assert "Project Switches — Status Summary" in out
+        assert "**No switches wrapped yet.**" in out
+        assert "`empty_project`" in out
+
+    def test_render_project_summary_with_switches(self, graduated_storage):
+        from dendra.cloud.report import (
+            aggregate_project,
+            render_project_summary,
+        )
+
+        summary = aggregate_project(
+            graduated_storage,
+            switch_names=["test_switch"],
+            alpha=0.05,
+        )
+        out = render_project_summary(summary, project_name="demo_project")
+        assert "1 switch in flight" in out
+        assert "**1** graduated to ML" in out
+        assert "## Phase distribution" in out
+        assert "## Per-switch status" in out
+        assert "## Hypothesis-vs-observed roll-up" in out
+        assert "test_switch" in out
+        assert "[`test_switch`](test_switch.md)" in out
+        # No drift events on this fixture
+        assert "No drift events detected" in out
