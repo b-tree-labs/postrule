@@ -161,3 +161,66 @@ def test_collector_rejects_unknown_event_type(
                 assert data.get("rejected") == 1
     except urllib.error.HTTPError as e:
         assert e.code == 400
+
+
+def test_collector_leads_post_synthetic(
+    smoke_collector_target: str, is_production: bool
+) -> None:
+    """POST /v1/leads with a valid email — staging only.
+
+    Skipped against production: smoke tests must not write to the
+    real leads table.
+    """
+    if is_production:
+        pytest.skip("read-only smoke against production")
+
+    payload = {
+        "email": "smoke-test@example.com",
+        "teammate_email": None,
+        "site_count": 3,
+        "top_priority_score": 4.50,
+        "top_pattern": "P1",
+        "high_priority_count": 1,
+    }
+    req = urllib.request.Request(
+        smoke_collector_target + "/v1/leads",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "content-type": "application/json",
+            "user-agent": "dendra-smoke-test/1.0",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
+        assert resp.status == 200
+        data = json.loads(resp.read().decode("utf-8"))
+    assert data.get("status") == "ok"
+    assert data.get("forwarded_to_teammate") is False
+
+
+def test_collector_leads_rejects_bad_email(
+    smoke_collector_target: str, is_production: bool
+) -> None:
+    """Malformed email → 400. Staging only."""
+    if is_production:
+        pytest.skip("read-only smoke against production")
+
+    payload = {"email": "not-an-email"}
+    req = urllib.request.Request(
+        smoke_collector_target + "/v1/leads",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "content-type": "application/json",
+            "user-agent": "dendra-smoke-test/1.0",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
+            status = resp.status
+            body = resp.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        status = e.code
+        body = e.read().decode("utf-8")
+    assert status == 400, f"expected 400, got {status}: {body}"
+    assert "invalid_email" in body
