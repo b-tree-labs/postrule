@@ -341,7 +341,7 @@ class TestEventQueue:
                 "labels": ["internal_label_a", "internal_label_b"],
                 "source_code": "def thing(): return 'leaked'",
                 "pattern": "P1",  # per-site key — not in analyze schema anymore
-                "fit_score": 5.0,  # also per-site
+                "priority_score": 5.0,  # also per-site
             },
         )
         assert ev is not None
@@ -352,7 +352,7 @@ class TestEventQueue:
         assert "labels" not in ev.payload
         assert "source_code" not in ev.payload
         assert "pattern" not in ev.payload  # moved to init_attempt
-        assert "fit_score" not in ev.payload
+        assert "priority_score" not in ev.payload
 
     def test_queue_corrupt_lines_are_skipped(self):
         # Pre-seed a queue file with one good line + one corrupt line.

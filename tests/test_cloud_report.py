@@ -365,7 +365,7 @@ class TestHypothesisFileGeneration:
             site_fingerprint="abc123",
             regime="narrow",
             label_cardinality=4,
-            fit_score=5.0,
+            priority_score=5.0,
             root=tmp_path / "hypotheses",
         )
         assert created is True
@@ -542,7 +542,8 @@ class TestDiscoveryReport:
             pattern: str = "P1"
             regime: str = "narrow"
             label_cardinality: int = 4
-            fit_score: float = 5.0
+            priority_score: float = 5.0
+            volume_estimate: str = "warm"
             lift_status: str = "auto_liftable"
             hazards: list = field(default_factory=list)
 
@@ -581,7 +582,7 @@ class TestDiscoveryReport:
                 "pattern": "P1",
                 "regime": "narrow",
                 "label_cardinality": 4,
-                "fit_score": 5.0,
+                "priority_score": 5.0,
                 "lift_status": "auto_liftable",
             },
             {
@@ -591,7 +592,7 @@ class TestDiscoveryReport:
                 "pattern": "P3",
                 "regime": "narrow",
                 "label_cardinality": 5,
-                "fit_score": 5.0,
+                "priority_score": 5.0,
                 "lift_status": "auto_liftable",
             },
         ]
@@ -615,7 +616,7 @@ class TestDiscoveryReport:
                 "pattern": "P1",
                 "regime": "narrow",
                 "label_cardinality": 3,
-                "fit_score": 4.0,
+                "priority_score": 4.0,
                 "lift_status": "refused",
                 "hazard_categories": ["side_effect_evidence"],
             },
@@ -637,7 +638,7 @@ class TestDiscoveryReport:
                 "pattern": "P1",
                 "regime": "narrow",
                 "label_cardinality": 3,
-                "fit_score": 5.0,
+                "priority_score": 5.0,
                 "lift_status": "auto_liftable",
             },
         ]
@@ -658,7 +659,7 @@ class TestDiscoveryReport:
                 "pattern": "P1",
                 "regime": "narrow",
                 "label_cardinality": 3,
-                "fit_score": 5.0,
+                "priority_score": 5.0,
                 "lift_status": "auto_liftable",
             },
         ]
@@ -673,7 +674,7 @@ class TestDiscoveryReport:
                 "pattern": "P1",
                 "regime": "narrow",
                 "label_cardinality": 3,
-                "fit_score": 5.0,
+                "priority_score": 5.0,
                 "lift_status": "auto_liftable",
             },
         ]
