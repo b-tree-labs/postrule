@@ -24,6 +24,58 @@ The short version: every graduation is a pre-registered, paired,
 statistically-defensible decision. Not vibes; not a hand-coded
 threshold. The gate fires *because evidence justified it*.
 
+## What does the report card show me?
+
+When a wrapped switch graduates (or hits a drift event), Dendra
+writes a markdown report card at `dendra/results/<switch>.md`. It
+captures everything the gate saw and decided:
+
+- **Phase + graduation timestamp** — which lifecycle phase the
+  switch is in, when it last advanced, after how many outcomes
+- **Gate evidence** — the configured gate (default `McNemarGate`),
+  the α it cleared, the p-value at fire, the effect size in
+  percentage points
+- **Transition curve** — rule accuracy vs ML accuracy over outcomes,
+  rendered as a PNG. The crossover point + the gate-fire point are
+  both labelled.
+- **p-value trajectory** — gate p-value over outcomes (log scale).
+  The dashed α line + the fire-point are labelled. A monotone-
+  strict-decreasing trajectory after the fire is the signal we look
+  for to confirm the graduation isn't a sampling fluke.
+- **Phase timeline** — Mermaid Gantt chart showing the lifecycle
+  history (RULE → MODEL_SHADOW → ... → ML_PRIMARY) with timestamps
+- **Cost trajectory** — per-call cost over time, with a table
+  showing pre/post-graduation reduction in $ and latency
+- **What-if** — re-run the cost numbers under a different LLM with
+  `dendra report <switch> --model claude-haiku-4.5` etc.
+- **Drift posture** — whether the drift detector is currently green,
+  what the last check measured, and what would trigger a demotion
+
+Three commands produce the evidence trilogy:
+
+| Command | Card |
+|---|---|
+| `dendra analyze --report` | initial-analysis discovery card — which sites are candidates for graduation |
+| `dendra report <switch>` | per-switch graduation card — what the gate saw and when it fired |
+| `dendra report --summary` | project rollup — cockpit view across every wrapped switch |
+
+Sample cards are committed in [`docs/sample-reports/`](sample-reports/)
+so reviewers can see the full evidence shape before installing.
+
+## When does the report card update?
+
+After every gate evaluation. Default config evaluates on every 50th
+outcome, so on a switch seeing 1,000 verdicts/day the card updates
+~20 times per day. The card is always current with the most recent
+audit-chain state — re-run `dendra report <switch>` any time, or
+let CI re-render it on a schedule (the `aggregator.yml` workflow
+template does this nightly).
+
+If the drift detector trips, the card re-renders immediately with
+the drift event highlighted at the top and a `**Action required**`
+callout. That's the version that should land in the on-call
+notification.
+
 ## Do I actually need this? Can't I just use if/else?
 
 For some classifiers, yes — and we'll say so directly.

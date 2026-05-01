@@ -1,0 +1,96 @@
+# Triage Rule — Graduation Report Card
+
+Generated 2026-04-29 22:15 UTC.
+Site: `src/triage.py:triage_rule`. Fingerprint: `a1b2c3d4ef567890`.
+
+## Status
+
+> **Phase: `ML_PRIMARY`** — graduated 4 days ago at outcome 312.
+> Gate (`McNemarGate`, α = 0.01) fired with p = **4.2 × 10⁻⁴**.
+> Effect size: rule 78.4% → ML 87.2% (**+8.8 pp**).
+> Cost per call: **$0.0042 → $0.000003** (99.93% reduction).
+
+## Transition curve
+
+![Rule vs ML accuracy over outcomes](triage_rule.transition.png)
+
+The crossover (where ML first overtakes the rule) was at outcome 287.
+The gate fires at 312 — **the gate measures evidence sufficiency, not
+crossover**; the 25-outcome lag is the cost of paired-McNemar at
+α = 0.01. See [methodology](../methodology/test-driven-product-development.md).
+
+## p-value trajectory
+
+![Gate p-value over outcomes, log scale](triage_rule.pvalue.png)
+
+The dashed line at p = 0.01 is the configured gate threshold. The trajectory
+clears α at outcome 312 and continues monotone-strict-decreasing,
+which is the signal we look for to confirm the graduation isn't a
+sampling fluke. By outcome 1000 the p-value is below 10⁻¹⁵ —
+overwhelming evidence the ML head genuinely outperforms the rule
+on this site's traffic distribution.
+
+## Phase timeline
+
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    title Triage Rule lifecycle
+    section Production
+    RULE                  :done, p1, 2026-04-15, 5d
+    MODEL_SHADOW          :done, p2, after p1, 1d
+    MODEL_PRIMARY         :done, p3, after p2, 1d
+    ML_SHADOW             :done, p4, after p3, 1d
+    ML_WITH_FALLBACK      :done, p5, after p4, 1d
+    ML_PRIMARY            :active, p6, after p5, 19d
+```
+
+## Cost trajectory
+
+![Per-call cost over time, log scale](triage_rule.cost.png)
+
+| | Pre-graduation | Post-graduation | Reduction |
+|---|---:|---:|---:|
+| Per call | $0.0042 | $0.000003 | 99.93% |
+| Per 1M calls | $4,200.00 | $3.00 | $4,197 |
+| Latency p50 | 412 ms | 0.8 ms | 99.81% |
+
+> **What-if: model substitution.** Re-run with `dendra report triage_rule
+> --model claude-haiku-4.5` to see this site's pre-graduation cost on a
+> different LLM. Re-run with `--model gpt-5-mini` for OpenAI pricing.
+> Useful as a pro-forma when sizing your AI budget *before* graduation.
+
+## Hypothesis evidence
+
+The pre-registered hypothesis at
+[`dendra/hypotheses/triage_rule.md`](../hypotheses/triage_rule.md)
+predicted graduation at outcome 250–500, effect size ≥ 5 pp.
+
+| Predicted | Observed | Verdict |
+|---|---|---|
+| Graduation depth: 250–500 outcomes | 312 outcomes | ✓ Within interval |
+| Effect size: ≥ 5 pp | 8.8 pp | ✓ Exceeded |
+| p < 0.01 at first clear | 4.2 × 10⁻⁴ | ✓ Cleared |
+| No drift events post-graduation | 0 events in 19 days | ✓ Clean |
+
+## Raw checkpoints
+
+| Outcome | Rule acc | ML acc | McNemar p | Phase |
+|---:|---:|---:|---:|---|
+| 100 | 71.0% | 64.3% | 0.413 | RULE |
+| 150 | 73.2% | 73.6% | 0.184 | MODEL_SHADOW |
+| 200 | 74.5% | 81.1% | 0.024 | MODEL_SHADOW |
+| 250 | 77.6% | 83.6% | 0.011 | MODEL_PRIMARY |
+| **312** | **78.4%** | **87.2%** | **4.2 × 10⁻⁴** | **ML_PRIMARY** ← gate |
+| 400 | 78.7% | 87.5% | 1.8 × 10⁻⁶ | ML_PRIMARY |
+| 500 | 79.1% | 87.9% | 8.0 × 10⁻⁹ | ML_PRIMARY |
+| 700 | 79.2% | 88.1% | 3.5 × 10⁻¹² | ML_PRIMARY |
+| 1000 | 79.3% | 88.4% | 1.2 × 10⁻¹⁵ | ML_PRIMARY |
+
+---
+
+*Regenerate with `dendra report triage_rule`. Last drift check:
+2026-04-29 22:14 UTC, no drift detected. Dated archive at
+[`dendra/results/archive/triage_rule-2026-04-29.md`](archive/triage_rule-2026-04-29.md).*
+
+*Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*

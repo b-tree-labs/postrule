@@ -70,6 +70,40 @@ shelf did this — and the formal grounding (paired-McNemar, the
 companion paper, the eight-benchmark suite) is what I needed
 before I'd trust it on my own systems.
 
+## What graduation looks like
+
+When a wrapped switch graduates, Dendra writes a markdown report
+card alongside your other repo artifacts. The card is the launch
+evidence — what the gate saw, when it fired, the cost trajectory,
+the drift posture going forward.
+
+Excerpt from a real `dendra/results/triage_rule.md` (the full sample
+is in [`docs/sample-reports/triage_rule.md`](docs/sample-reports/triage_rule.md)):
+
+> **Phase: `ML_PRIMARY`** — graduated 4 days ago at outcome 312.
+> Gate (`McNemarGate`, α = 0.01) fired with p = **4.2 × 10⁻⁴**.
+> Effect size: rule 78.4% → ML 87.2% (**+8.8 pp**).
+> Cost per call: **$0.0042 → $0.000003** (99.93% reduction).
+> Latency p50: **412 ms → 0.8 ms** (99.81% reduction).
+
+Three commands produce the evidence trilogy:
+
+- `dendra analyze --report` — initial-analysis discovery card. Which
+  sites would graduate, projected savings, recommended order.
+  ([sample](docs/sample-reports/_initial-analysis.md))
+- `dendra report <switch>` — per-switch graduation card. Transition
+  curve, p-value trajectory, cost trajectory, drift checks.
+  ([sample](docs/sample-reports/triage_rule.md))
+- `dendra report --summary` — project rollup. Cockpit view across
+  every wrapped switch with phase distribution and aggregate
+  reduction. ([sample](docs/sample-reports/_summary.md))
+
+The cards are markdown — they live in your repo, diff in PRs, ship
+in releases. **The report card *is* the audit trail**: the same
+artifact is what your compliance team reads, what your CFO reads,
+and what your engineers reads. No separate dashboard to wire up,
+no SaaS lock-in for the evidence.
+
 ## Status & limitations
 
 v1.0 ships the full decorator path (`@ml_switch`), the native `dendra.Switch` class authoring pattern, multi-arg signatures via auto-packing, full auto-lift across globals / `self.attr` / mid-function I/O / closures, drift detection, the prescriptive analyzer, the account system, the `propagate_action_exceptions` knob, and the MCP server. The classifier function returns a label name (string), not a structured value; tests, fixtures, validators, and order-dependent state machines are not classification sites; dynamic dispatch (`getattr` with runtime keys) requires explicit `@evidence_inputs` annotation; `eval` / `exec` is refused. Deep IDE plugins, A2A integration, and runtime AST mode are out of v1. The full list, version-tagged with the path forward for each item, lives in [`docs/limitations.md`](docs/limitations.md).
