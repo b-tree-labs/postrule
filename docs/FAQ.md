@@ -403,19 +403,25 @@ McNemar at every step.
 
 ## What's the latency overhead?
 
-At Phase.RULE with `auto_record=False`, **0.50 µs p50** over the
-bare rule call. With the default `auto_record=True` it's 1.67 µs
-p50 (writes an UNKNOWN outcome record each call). Measured in
-`tests/test_latency_pinned.py` on Apple M5 / Python 3.13.
+At Phase.RULE: `classify` is 0.96 µs p50 / 1.04 µs p95; `dispatch`
+(classify + invoke matched action) is 1.00 µs p50 / 1.08 µs p95.
+~24× a bare Python call (42 ns) in relative terms; ~1 µs in
+absolute terms.
 
-At Phase.ML_WITH_FALLBACK with a TF-IDF + logistic head, ~105 µs
-p50 — well inside typical web-request budgets. At MODEL_PRIMARY
-with the shipped local default (`qwen2.5:7b` via Ollama), ~481 ms
-p50 (dominated by the language model, not Dendra). `persist=True`
-(batched FileStorage) adds 33 µs p50;
-per-call fsync durability is an explicit 195 µs opt-in for
-regulated workloads. See `docs/benchmarks/v1-audit-benchmarks.md`
-for the full matrix.
+At Phase.MODEL_PRIMARY (model verifier stubbed): 1.46 µs p50.
+At Phase.ML_PRIMARY (ML head stubbed): 1.50 µs p50. Real-LLM and
+real-ML latency is dominated by the model, not by Dendra — for
+the shipped local default `qwen2.5:7b` via Ollama, ~481 ms p50.
+
+Storage: `BoundedInMemoryStorage` (default for ephemeral state)
+sustains 12M writes/sec. `FileStorage` with batching (production-
+recommended) sustains 245K writes/sec at 4.1 µs per write with a
+~50 ms crash window. `FileStorage` unbatched per-call fsync is the
+explicit opt-in for regulated workloads at 28K writes/sec (4
+threads concurrent).
+
+Full methodology + reproduce instructions in
+[`docs/benchmarks/perf-baselines-2026-05-01.md`](benchmarks/perf-baselines-2026-05-01.md).
 
 ## What's the cost overhead?
 

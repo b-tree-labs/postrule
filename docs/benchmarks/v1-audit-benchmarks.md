@@ -1,4 +1,9 @@
-# Benchmark refresh — v1 baseline
+# Benchmark refresh — v1 baseline (superseded)
+
+> ⚠️ **Superseded by [`perf-baselines-2026-05-01.md`](perf-baselines-2026-05-01.md).**
+> Keeping this file for the historical context of the
+> 2026-04-24 measurement (Dendra 0.2.0); the launch-cited
+> numbers live in the successor doc.
 
 Run date: **2026-04-24**
 Measured by: `scripts/run_v1_benchmarks.py` (perf_counter_ns, 10k iter / cell, 1k warmup)

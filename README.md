@@ -306,21 +306,32 @@ at the **first** checkpoint of 250 labeled outcomes. Two days of
 moderate production traffic, not six months. Reproducible:
 `dendra bench atis` regenerates Figure 1 in seconds.
 
-Measured latency (Apple M5 / Python 3.13 / macOS 26):
+Measured latency (Apple M5 / Python 3.13 / macOS 26 — full
+methodology + reproduce instructions in
+[`docs/benchmarks/perf-baselines-2026-05-01.md`](docs/benchmarks/perf-baselines-2026-05-01.md)):
 
-- **Phase 0 classify, default config:** 1.67 µs p50 / 2.42 µs p99
-  (573k ops/sec). Auto-logs an UNKNOWN outcome record.
-- Phase 0 classify, `auto_record=False`: 0.50 µs p50 / 0.67 µs p99
-  (1.9M ops/sec). Pure routing.
-- **`persist=True` classify (batched FileStorage, the production
-  recommendation):** 33.8 µs p50 / 390 µs p99 (~30k ops/sec).
-  Durable outcome log with a 50 ms crash window.
-- `persist=True` classify (per-call fsync — explicit opt-in for
-  regulated workloads): 195 µs p50 / 260 µs p99.
-- Real ML head (TF-IDF + LR on ATIS): 105 µs p50.
-- Local SLM (shipped default `qwen2.5:7b` via Ollama or
-  bundled llama-cpp-python): ~481 ms p50 — see
+- **`classify` at Phase.RULE:** 0.96 µs p50 / 1.04 µs p95.
+- **`dispatch` at Phase.RULE:** 1.00 µs p50 / 1.08 µs p95.
+- `dispatch` at Phase.MODEL_PRIMARY (LM verifier stubbed):
+  1.46 µs p50 / 1.54 µs p95.
+- `dispatch` at Phase.ML_PRIMARY (ML head stubbed):
+  1.50 µs p50 / 1.58 µs p95.
+- **Storage: `BoundedInMemoryStorage` (default for ephemeral state):**
+  12M writes/sec sustained.
+- **Storage: `FileStorage` batched (production-recommended):**
+  245K writes/sec sustained; 4.1 µs per write; ~50 ms crash window.
+- Storage: `FileStorage` concurrent 4 threads (batched):
+  181K writes/sec sustained.
+- Storage: `FileStorage` unbatched per-call fsync (regulated
+  workloads): 28K writes/sec, ~36 µs per write.
+- Local SLM verifier (shipped default `qwen2.5:7b` via Ollama):
+  ~481 ms p50 — see
   [`docs/benchmarks/slm-verifier-results.md`](docs/benchmarks/slm-verifier-results.md).
+
+**Framework tax** at Phase.RULE: ~24× a bare Python call
+(42 ns → 1 µs). In absolute terms ~1 µs is fast enough that any
+production hot path is dominated by the caller's own logic and
+(when later phases engage) by the model's inference, not by Dendra.
 
 Raw numbers + JSONL benchmark data:
 [`docs/benchmarks/v1-audit-benchmarks.md`](docs/benchmarks/v1-audit-benchmarks.md).
