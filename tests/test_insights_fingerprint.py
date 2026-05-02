@@ -28,11 +28,7 @@ class TestFingerprintFunction:
 
     def test_renamed_variables_produce_same_fingerprint(self):
         # The fingerprint must NOT depend on identifier names.
-        src_a = (
-            "def classify(text):\n"
-            "    if 'a' in text: return 'alpha'\n"
-            "    return 'other'\n"
-        )
+        src_a = "def classify(text):\n    if 'a' in text: return 'alpha'\n    return 'other'\n"
         src_b = (
             "def my_function(input_str):\n"
             "    if 'a' in input_str: return 'alpha'\n"
@@ -47,39 +43,22 @@ class TestFingerprintFunction:
         # Label values are content. Two functions returning different
         # labels but with the same control-flow shape must fingerprint
         # the same (content-leak protection).
-        src_a = (
-            "def f(t):\n"
-            "    if 'a' in t: return 'alpha'\n"
-            "    return 'beta'\n"
-        )
+        src_a = "def f(t):\n    if 'a' in t: return 'alpha'\n    return 'beta'\n"
         src_b = (
-            "def f(t):\n"
-            "    if 'urgent' in t: return 'priority_high'\n"
-            "    return 'priority_low'\n"
+            "def f(t):\n    if 'urgent' in t: return 'priority_high'\n    return 'priority_low'\n"
         )
         assert fingerprint_function(src_a) == fingerprint_function(src_b)
 
     def test_different_control_flow_produces_different_fingerprint(self):
-        src_a = (
-            "def f(t):\n"
-            "    if 'a' in t: return 'x'\n"
-            "    return 'y'\n"
-        )
+        src_a = "def f(t):\n    if 'a' in t: return 'x'\n    return 'y'\n"
         # Different shape: two ifs instead of one + fallthrough.
         src_b = (
-            "def f(t):\n"
-            "    if 'a' in t: return 'x'\n"
-            "    if 'b' in t: return 'y'\n"
-            "    return 'z'\n"
+            "def f(t):\n    if 'a' in t: return 'x'\n    if 'b' in t: return 'y'\n    return 'z'\n"
         )
         assert fingerprint_function(src_a) != fingerprint_function(src_b)
 
     def test_async_function_is_supported(self):
-        src = (
-            "async def aclassify(text):\n"
-            "    if 'a' in text: return 'alpha'\n"
-            "    return 'other'\n"
-        )
+        src = "async def aclassify(text):\n    if 'a' in text: return 'alpha'\n    return 'other'\n"
         fp = fingerprint_function(src)
         assert len(fp) == 32
 
@@ -94,16 +73,8 @@ class TestFingerprintFunction:
     def test_numeric_literals_dont_leak(self):
         # Two functions identical except for numeric thresholds —
         # must fingerprint the same since numbers are content.
-        src_a = (
-            "def f(x):\n"
-            "    if x > 10: return 'big'\n"
-            "    return 'small'\n"
-        )
-        src_b = (
-            "def f(x):\n"
-            "    if x > 99999: return 'big'\n"
-            "    return 'small'\n"
-        )
+        src_a = "def f(x):\n    if x > 10: return 'big'\n    return 'small'\n"
+        src_b = "def f(x):\n    if x > 99999: return 'big'\n    return 'small'\n"
         assert fingerprint_function(src_a) == fingerprint_function(src_b)
 
 

@@ -78,10 +78,7 @@ if __name__ == "__main__":
         print(f"  {classify_ticket(t):>16s}  ←  {t}")
     print()
     status = classify_ticket.status()
-    print(
-        f"Switch '{status.name}' phase={status.phase} "
-        f"outcomes={status.outcomes_total}"
-    )
+    print(f"Switch '{status.name}' phase={status.phase} outcomes={status.outcomes_total}")
     print()
     print(
         "Cost trajectory at 1M tickets/mo on claude-haiku-4-5 ($0.0005/call):\n"

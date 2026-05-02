@@ -42,8 +42,7 @@ def test_model_object_serves_with_correct_size(
     info = _head(url)
     assert info["status"] == 200, f"{url} returned {info['status']}"
     assert info["content_length"] == expected_size, (
-        f"{filename}: expected {expected_size} bytes, got "
-        f"{info['content_length']}"
+        f"{filename}: expected {expected_size} bytes, got {info['content_length']}"
     )
 
 

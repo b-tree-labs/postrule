@@ -44,9 +44,7 @@ def test_collector_returns_404_for_unknown_routes(smoke_collector_target: str) -
     assert "not_found" in body
 
 
-def test_collector_post_synthetic_event(
-    smoke_collector_target: str, is_production: bool
-) -> None:
+def test_collector_post_synthetic_event(smoke_collector_target: str, is_production: bool) -> None:
     """POST a synthetic event to the collector — staging only.
 
     Skipped against production: smoke tests must NOT write to the
@@ -73,7 +71,7 @@ def test_collector_post_synthetic_event(
                     "lift_status_histogram": {"auto_liftable": 8},
                     "hazard_category_histogram": {},
                     # This unknown key MUST be stripped server-side
-                    "secret_business_label": "should-not-persist",
+                    "secret_business_label": "should-not-persist",  # pragma: allowlist secret
                 },
             }
         ],
@@ -163,9 +161,7 @@ def test_collector_rejects_unknown_event_type(
         assert e.code == 400
 
 
-def test_collector_leads_post_synthetic(
-    smoke_collector_target: str, is_production: bool
-) -> None:
+def test_collector_leads_post_synthetic(smoke_collector_target: str, is_production: bool) -> None:
     """POST /v1/leads with a valid email — staging only.
 
     Skipped against production: smoke tests must not write to the

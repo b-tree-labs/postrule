@@ -91,10 +91,7 @@ if __name__ == "__main__":
         print(f"  {safety_check(r):>13s}  ←  {r[:60]}")
     print()
     status = safety_check.status()
-    print(
-        f"Switch '{status.name}' phase={status.phase} "
-        f"outcomes={status.outcomes_total}"
-    )
+    print(f"Switch '{status.name}' phase={status.phase} outcomes={status.outcomes_total}")
     print()
     print(
         "Path C — single shared local-LM node serves Dendra + everything\n"

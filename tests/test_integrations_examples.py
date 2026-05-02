@@ -30,9 +30,7 @@ _INTEGRATIONS_DIR = Path(__file__).resolve().parent.parent / "examples" / "integ
 
 def _load(name: str):
     path = _INTEGRATIONS_DIR / name
-    spec = importlib.util.spec_from_file_location(
-        f"_integration_example_{path.stem}", path
-    )
+    spec = importlib.util.spec_from_file_location(f"_integration_example_{path.stem}", path)
     assert spec and spec.loader, f"failed to spec module for {path}"
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -94,6 +92,5 @@ def test_integration_example(filename, wrapped_attr, sample_input, expected_labe
     # Calling the wrapped function returns a declared label.
     label = fn(*sample_input)
     assert label in expected_labels, (
-        f"{wrapped_attr}({sample_input!r}) → {label!r}; "
-        f"expected one of {sorted(expected_labels)}"
+        f"{wrapped_attr}({sample_input!r}) → {label!r}; expected one of {sorted(expected_labels)}"
     )

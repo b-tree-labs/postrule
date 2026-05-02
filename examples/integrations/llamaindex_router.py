@@ -91,10 +91,7 @@ if __name__ == "__main__":
         print(f"  {select_strategy(q):>8s}  ←  {q[:60]}")
     print()
     status = select_strategy.status()
-    print(
-        f"Switch '{status.name}' phase={status.phase} "
-        f"outcomes={status.outcomes_total}"
-    )
+    print(f"Switch '{status.name}' phase={status.phase} outcomes={status.outcomes_total}")
     print()
     print(
         "Once the gate fires, the strategy picker is in-process: <1 ms\n"

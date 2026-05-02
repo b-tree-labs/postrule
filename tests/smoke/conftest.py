@@ -27,9 +27,7 @@ def smoke_target() -> str:
 
     Defaults to https://staging.dendra.run; overridable via env.
     """
-    return os.environ.get("DENDRA_SMOKE_BASE_URL", "https://staging.dendra.run").rstrip(
-        "/"
-    )
+    return os.environ.get("DENDRA_SMOKE_BASE_URL", "https://staging.dendra.run").rstrip("/")
 
 
 @pytest.fixture(scope="session")

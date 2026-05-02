@@ -23,7 +23,6 @@ from dendra.cloud.report.aggregator import _is_correct
 from dendra.core import ClassificationRecord, Phase
 from dendra.storage import InMemoryStorage
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -79,9 +78,7 @@ def graduated_storage():
     base_ts = time.time() - 86400  # 1 day ago
     # Pattern: 60 concordant-correct, 30 ML-favored, 10 rule-favored
     # → 30 vs 10 discordant. McNemar two-sided exact p ≈ 1.5e-3.
-    config: list[tuple[str, str]] = (
-        [("A", "A")] * 60 + [("B", "A")] * 30 + [("A", "B")] * 10
-    )
+    config: list[tuple[str, str]] = [("A", "A")] * 60 + [("B", "A")] * 30 + [("A", "B")] * 10
     for i, (rule_out, ml_out) in enumerate(config):
         s.append_record(
             "test_switch",
@@ -133,9 +130,7 @@ class TestAggregator:
         assert m.ml_accuracy_final is None
 
     def test_day_zero_with_explicit_phase(self, empty_storage):
-        m = aggregate_switch(
-            empty_storage, "no_such_switch", current_phase=Phase.MODEL_SHADOW
-        )
+        m = aggregate_switch(empty_storage, "no_such_switch", current_phase=Phase.MODEL_SHADOW)
         assert m.current_phase == Phase.MODEL_SHADOW
 
     def test_gate_fires_on_clear_signal(self, graduated_storage):
@@ -157,7 +152,7 @@ class TestAggregator:
         """When total isn't a multiple of step, the final partial window
         gets its own checkpoint so the table includes the latest state."""
         s = InMemoryStorage()
-        for i in range(123):
+        for _i in range(123):
             s.append_record(
                 "x",
                 _record(label="A", outcome="correct", rule_output="A", ml_output="A"),
@@ -223,9 +218,7 @@ class TestRenderSwitchCard:
         assert "Chart rendering pending" in out
 
     def test_graduated_card_shows_gate_fire(self, graduated_storage):
-        m = aggregate_switch(
-            graduated_storage, "test_switch", min_paired=10, alpha=0.05
-        )
+        m = aggregate_switch(graduated_storage, "test_switch", min_paired=10, alpha=0.05)
         out = render_switch_card(m, alpha=0.05)
         assert "graduated at outcome" in out
         assert "← gate" in out  # the gate-fire row is bolded in checkpoint table
@@ -238,9 +231,7 @@ class TestRenderSwitchCard:
 
     def test_includes_site_location_when_supplied(self, empty_storage):
         m = aggregate_switch(empty_storage, "x")
-        out = render_switch_card(
-            m, file_location="src/triage.py", site_function="triage_rule"
-        )
+        out = render_switch_card(m, file_location="src/triage.py", site_function="triage_rule")
         assert "Site: `src/triage.py:triage_rule`." in out
 
     def test_includes_fingerprint_when_supplied(self, empty_storage):
@@ -386,16 +377,12 @@ class TestHypothesisFileGeneration:
         from dendra.cloud.report.hypotheses import generate_hypothesis_file
 
         # First call creates.
-        out_path, hash1, created1 = generate_hypothesis_file(
-            "x", root=tmp_path / "h"
-        )
+        out_path, hash1, created1 = generate_hypothesis_file("x", root=tmp_path / "h")
         assert created1 is True
         # Customer "edits" the file.
         out_path.write_text("CUSTOM CONTENT", encoding="utf-8")
         # Second call must NOT overwrite.
-        out_path2, hash2, created2 = generate_hypothesis_file(
-            "x", root=tmp_path / "h"
-        )
+        out_path2, hash2, created2 = generate_hypothesis_file("x", root=tmp_path / "h")
         assert created2 is False
         assert out_path2.read_text(encoding="utf-8") == "CUSTOM CONTENT"
 
@@ -404,9 +391,7 @@ class TestHypothesisFileGeneration:
 
         out_path, _, _ = generate_hypothesis_file("x", root=tmp_path / "h")
         out_path.write_text("CUSTOM", encoding="utf-8")
-        out_path2, _, created = generate_hypothesis_file(
-            "x", root=tmp_path / "h", overwrite=True
-        )
+        out_path2, _, created = generate_hypothesis_file("x", root=tmp_path / "h", overwrite=True)
         assert created is True
         assert "Pre-registered hypothesis" in out_path2.read_text(encoding="utf-8")
 
@@ -426,9 +411,7 @@ class TestHypothesisFileGeneration:
     def test_regime_default_when_no_cohort(self, tmp_path):
         from dendra.cloud.report.hypotheses import generate_hypothesis_file
 
-        out_path, _, _ = generate_hypothesis_file(
-            "x", regime="narrow", root=tmp_path / "h"
-        )
+        out_path, _, _ = generate_hypothesis_file("x", regime="narrow", root=tmp_path / "h")
         text = out_path.read_text(encoding="utf-8")
         # narrow default is 200-400
         assert "**200–400 outcomes**" in text
@@ -459,9 +442,7 @@ class TestProjectSummary:
         # Add a second switch with no records
         s = graduated_storage
         # graduated_storage already has "test_switch" with 100 records
-        result = aggregate_project(
-            s, switch_names=["test_switch", "missing_switch"], alpha=0.05
-        )
+        result = aggregate_project(s, switch_names=["test_switch", "missing_switch"], alpha=0.05)
         assert len(result.switches) == 2
         assert result.total_outcomes == 100
         assert result.graduated_count == 1  # test_switch graduated
@@ -479,9 +460,7 @@ class TestProjectSummary:
         assert result.switches == []
         assert result.total_outcomes == 0
 
-    def test_aggregate_project_raises_when_no_switch_names_method(
-        self, empty_storage
-    ):
+    def test_aggregate_project_raises_when_no_switch_names_method(self, empty_storage):
         from dendra.cloud.report import aggregate_project
 
         # InMemoryStorage doesn't have switch_names()
@@ -557,9 +536,7 @@ class TestDiscoveryReport:
         report = _StubReport()
         for d in sites_data:
             d = dict(d)  # don't mutate caller's dict
-            hazards = [
-                _StubHazard(category=h) for h in d.pop("hazard_categories", [])
-            ]
+            hazards = [_StubHazard(category=h) for h in d.pop("hazard_categories", [])]
             report.sites.append(_StubSite(**d, hazards=hazards))
         return report
 

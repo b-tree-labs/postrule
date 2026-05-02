@@ -111,10 +111,7 @@ if __name__ == "__main__":
         print(f"  {route_query(q):>10s}  ←  {q}")
     print()
     status = route_query.status()
-    print(
-        f"Switch '{status.name}' phase={status.phase} "
-        f"outcomes={status.outcomes_total}"
-    )
+    print(f"Switch '{status.name}' phase={status.phase} outcomes={status.outcomes_total}")
     print()
     print(
         "After ~250 outcomes the gate fires; sklearn head replaces the LLM\n"
