@@ -43,11 +43,11 @@ them is projected to remove an additional ~$4,300/month from the bill.
 | Switch | Phase | Outcomes | Gate p | $ saved /mo | Drift | Report |
 |---|---|---:|---:|---:|---|---|
 | `triage_rule` | `ML_PRIMARY` | 1,247 | < 1e-15 | **$4,197** | clean | [→](triage_rule.md) |
-| `ticket_router` | `ML_PRIMARY` | 38,400 | < 1e-15 | **$1,798** | clean | [→](ticket_router.md) |
-| `intent_classifier` | `MODEL_PRIMARY` | 720 | 0.024 | (climbing) | clean | [→](intent_classifier.md) |
+| `ticket_router` | `ML_PRIMARY` | 38,400 | < 1e-15 | **$1,798** | clean | (per-switch card omitted) |
+| `intent_classifier` | `MODEL_PRIMARY` | 720 | 0.024 | (climbing) | clean | (per-switch card omitted) |
 | `severity_classifier` | `MODEL_SHADOW` | 145 | 0.087 | (pre-grad) | clean | [→](severity_classifier.md) |
 | `output_safety_rule` | `MODEL_PRIMARY` (rollback) | 1,023 | — | (lost; re-graduating) | **DRIFT** | [→](output_safety_rule.md) |
-| `input_validator` | (not lifted) | — | — | — | n/a | [→](input_validator.md) |
+| `input_validator` | (not lifted) | — | — | — | n/a | (per-switch card omitted) |
 
 ## Hypothesis-vs-observed roll-up
 
@@ -98,10 +98,9 @@ Other switches: clean.
 ---
 
 *Regenerate with `dendra report --summary`. Per-switch deep-dives live
-alongside this file in `dendra/results/`. Dated archive at
-[`dendra/results/archive/_summary-2026-04-29.md`](archive/_summary-2026-04-29.md);
-each `--summary` regeneration writes both the canonical `_summary.md`
-and a dated copy in `archive/` so historical snapshots are preserved
+alongside this file in `dendra/results/`. Each `--summary`
+regeneration writes both the canonical `_summary.md` and a dated copy
+under `dendra/results/archive/` so historical snapshots are preserved
 for compliance.*
 
 *Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*
