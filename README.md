@@ -3,6 +3,8 @@
   <img src="brand/logo/dendra-wordmark-horizontal.svg" alt="Dendra" width="420">
 </picture>
 
+# Software that's smarter every month than the day you shipped it.
+
 **Drop a rule. Drop a verifier. Watch your classifier get smarter automatically.**
 
 ```python
@@ -10,7 +12,7 @@ from dendra import ml_switch, default_verifier
 
 @ml_switch(
     labels=["bug", "feature_request", "question"],
-    verifier=default_verifier(),  # local Ollama (qwen2.5:7b) by default; see Install for other paths
+    verifier=default_verifier(),  # autonomous mode — see "What default_verifier does" below
 )
 def triage(ticket: dict) -> str:
     title = (ticket.get("title") or "").lower()
@@ -31,6 +33,14 @@ failure.
 **No reviewer queues. No labeled-data prerequisite. No manual
 `mark_correct()` calls scattered through your code.** Drop the
 verifier and Dendra's autonomous mode does the rest.
+
+> **What `default_verifier()` does on first call.** Lazy-downloads
+> `qwen2.5:7b` (~4.7 GB) into your Ollama cache, then runs locally
+> for every verdict — no API key, no per-call cost, nothing leaves
+> the box. Three lighter paths in [Install](#install) if you'd
+> rather skip the download: a smaller local model, a hosted
+> provider via `JudgeSource(AnthropicAdapter())`, or omit the
+> kwarg entirely and call `record_verdict()` yourself.
 
 ## What this replaces
 
