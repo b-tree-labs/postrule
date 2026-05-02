@@ -5,7 +5,7 @@ Site: `src/triage.py:triage_rule`. Fingerprint: `a1b2c3d4ef567890`.
 
 ## Status
 
-> **Phase: `ML_PRIMARY`** — graduated 4 days ago at outcome 312.
+> **Phase: `ML_PRIMARY`** — graduated 2026-04-25 at outcome 312.
 > Gate (`McNemarGate`, α = 0.01) fired with p = **4.2 × 10⁻⁴**.
 > Effect size: rule 78.4% → ML 87.2% (**+8.8 pp**).
 > Cost per call: **$0.0042 → $0.000003** (99.93% reduction).
