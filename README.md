@@ -87,10 +87,11 @@ card alongside your other repo artifacts. The card is the launch
 evidence — what the gate saw, when it fired, the cost trajectory,
 the drift posture going forward.
 
-Excerpt from a real `dendra/results/triage_rule.md` (the full sample
-is in [`docs/sample-reports/triage_rule.md`](docs/sample-reports/triage_rule.md)):
+Excerpt from `dendra/results/triage_rule.md` — a sample card
+generated 2026-04-29 (full sample in
+[`docs/sample-reports/triage_rule.md`](docs/sample-reports/triage_rule.md)):
 
-> **Phase: `ML_PRIMARY`** — graduated 4 days ago at outcome 312.
+> **Phase: `ML_PRIMARY`** — graduated 2026-04-25 at outcome 312.
 > Gate (`McNemarGate`, α = 0.01) fired with p = **4.2 × 10⁻⁴**.
 > Effect size: rule 78.4% → ML 87.2% (**+8.8 pp**).
 > Cost per call: **$0.0042 → $0.000003** (99.93% reduction).
