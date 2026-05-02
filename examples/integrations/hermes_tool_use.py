@@ -109,17 +109,17 @@ if __name__ == "__main__":
         ("Read the config at /etc/dendra/cohort.yaml", []),
         ("Query the events table for yesterday's signups", []),
         ("Notify @oncall that drift was detected", []),
-        ("Continue from previous step", ["search_web", "read_file", "run_sql", "ask_user", "ask_user"]),
+        (
+            "Continue from previous step",
+            ["search_web", "read_file", "run_sql", "ask_user", "ask_user"],
+        ),
     ]
     print("Tool selections (Phase.RULE — Hermes still primary):")
     for task, history in scenarios:
         print(f"  {pick_next_tool(task, history):>11s}  ←  {task[:54]}")
     print()
     status = pick_next_tool.status()
-    print(
-        f"Switch '{status.name}' phase={status.phase} "
-        f"outcomes={status.outcomes_total}"
-    )
+    print(f"Switch '{status.name}' phase={status.phase} outcomes={status.outcomes_total}")
     print()
     print(
         "Latency at Phase.RULE (Hermes 70B local):  ~150 ms p50.\n"

@@ -13,7 +13,6 @@ import pytest
 
 from dendra.insights import (
     BAKED_IN_DEFAULTS,
-    EnrollmentState,
     InsightsEvent,
     TunedDefaults,
     fetch_tuned_defaults,
@@ -34,7 +33,6 @@ from dendra.insights._paths import (
 from dendra.insights.tuned_defaults import (
     TUNED_DEFAULTS_URL,
     cache_is_fresh,
-    read_cache,
     write_cache,
 )
 
@@ -272,7 +270,9 @@ class TestTunedDefaults:
         # Pre-warm a fresh cache.
         write_cache(TunedDefaults(version=42, cohort_size=3))
         # Fetch must NOT be called when cache is fresh.
-        with patch("urllib.request.urlopen", side_effect=AssertionError("fetch must not be called")):
+        with patch(
+            "urllib.request.urlopen", side_effect=AssertionError("fetch must not be called")
+        ):
             result = refresh_if_stale()
         assert result is None  # signal: skipped, not fetched
 
@@ -411,7 +411,7 @@ class TestEventQueue:
         assert len(read_queue()) == 1
 
     def test_flush_batch_size_partial_drain(self):
-        for i in range(5):
+        for _i in range(5):
             queue_event("analyze", payload={"pattern": "P1"})
         mock_resp = MagicMock()
         mock_resp.status = 200
