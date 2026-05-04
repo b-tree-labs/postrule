@@ -1,4 +1,4 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
+# Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
 [project]
@@ -25,7 +25,7 @@ license-files = [
     "NOTICE",
 ]
 authors = [
-    { name = "B-Tree Ventures, LLC" },
+    { name = "B-Tree Labs" },
 ]
 maintainers = [
     { name = "Benjamin Booth", email = "ben@b-treeventures.com" },
@@ -61,6 +61,11 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+license = [
+    # Ed25519 verification for offline Business-tier license tokens.
+    # See src/dendra/license.py.
+    "cryptography>=42",
+]
 train = [
     "scikit-learn>=1.3",
 ]
