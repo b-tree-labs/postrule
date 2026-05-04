@@ -2,7 +2,7 @@
 
 ## Transition Curves for Safe Rule-to-ML Graduation
 
-**Authors:** Benjamin Booth (B-Tree Ventures)
+**Authors:** Benjamin Booth (B-Tree Labs)
 **Status:** Working outline — v0.1
 **Target venue:** NeurIPS main track (primary) / ICML (secondary) / ICLR ML4Code workshop (fallback)
 **Date:** 2026-04-20
@@ -379,4 +379,4 @@ learn?*
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC. Apache-2.0 licensed._
+_Copyright (c) 2026 B-Tree Labs. Apache-2.0 licensed._
