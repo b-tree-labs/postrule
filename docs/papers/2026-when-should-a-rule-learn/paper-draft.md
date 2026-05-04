@@ -1,6 +1,6 @@
 # When Should a Rule Learn? Transition Curves for Safe Rule-to-ML Graduation
 
-**Author.** Benjamin Booth, B-Tree Ventures LLC.
+**Author.** Benjamin Booth, B-Tree Labs.
 **Status.** Draft v0.1, 2026-04-26.
 **Target.** arXiv (cs.LG / cs.SE), 2026-05-13.
 **Code + data.** `https://github.com/b-tree-labs/dendra`. Apache 2.0.
@@ -842,4 +842,4 @@ Key implementation references:
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC. Apache-2.0 licensed._
+_Copyright (c) 2026 B-Tree Labs. Apache-2.0 licensed._
