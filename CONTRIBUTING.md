@@ -163,7 +163,7 @@ the copyright holder) via the DCO sign-off.
 ## Trademarks
 
 DENDRA and B-TREE LABS are trademarks (or pending trademarks) of
-B-Tree Ventures, LLC. Contributions may reference these names
+B-Tree Labs. Contributions may reference these names
 descriptively (e.g., "improves the Dendra CLI's error handling")
 but may not use them in a way that implies endorsement or
 affiliation without explicit permission. See
@@ -171,5 +171,5 @@ affiliation without explicit permission. See
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC (dba B-Tree Labs).
+_Copyright (c) 2026 B-Tree Labs (dba B-Tree Labs).
 Split-licensed — see `LICENSE.md`._

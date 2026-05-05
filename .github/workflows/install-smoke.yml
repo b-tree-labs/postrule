@@ -2,7 +2,7 @@ name: install-smoke
 # Cross-OS install smoke test — complements python-ci.yml. Also runs
 # weekly so wheel-build / dependency regressions surface within the
 # week even in the absence of repo activity.
-# Copyright (c) 2026 B-Tree Ventures, LLC. SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 B-Tree Labs. SPDX-License-Identifier: Apache-2.0
 
 on:
   push:

@@ -1,6 +1,6 @@
 name: dco
 # Enforces DCO sign-off on every commit in a PR (see CONTRIBUTING.md).
-# Bots are exempted by convention. Copyright (c) 2026 B-Tree Ventures, LLC.
+# Bots are exempted by convention. Copyright (c) 2026 B-Tree Labs.
 # SPDX-License-Identifier: Apache-2.0
 
 on:
