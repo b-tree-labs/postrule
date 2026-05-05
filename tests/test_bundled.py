@@ -68,14 +68,38 @@ class TestIsCached:
         assert is_cached("judge") is False
         assert is_cached("classifier") is False
 
-    def test_returns_true_when_file_present(self, isolated_cache):
-        # Drop a stub GGUF in place; is_cached should accept it
-        # because we're using placeholder size_bytes (=0 means
-        # "any non-empty file"). Real CDN-published sizes will
-        # tighten this once we go live.
+    def test_returns_true_when_file_present(self, isolated_cache, monkeypatch):
+        # Drop a stub GGUF in place; with size_bytes=0 in the registry
+        # is_cached accepts any non-empty file. (The real registry has
+        # real CDN-published sizes; this test pins the placeholder
+        # semantics for any future addition that ships before its
+        # GGUF is uploaded.)
+        from dendra import bundled
+
+        monkeypatch.setitem(bundled._REGISTRY["judge"], "size_bytes", 0)
         target = cache_path("judge")
         target.write_bytes(b"FAKE GGUF CONTENTS")
         assert is_cached("judge") is True
+
+    def test_returns_true_when_file_size_matches_registry(self, isolated_cache, monkeypatch):
+        # With a real registered size, is_cached requires the cached
+        # file's byte count to match exactly — the integrity check that
+        # protects against partial / corrupt downloads.
+        from dendra import bundled
+
+        # Use a small fake size so the test doesn't actually allocate GB.
+        monkeypatch.setitem(bundled._REGISTRY["judge"], "size_bytes", 18)
+        target = cache_path("judge")
+        target.write_bytes(b"FAKE GGUF CONTENTS")  # 18 bytes
+        assert is_cached("judge") is True
+
+    def test_returns_false_when_file_size_mismatches_registry(self, isolated_cache, monkeypatch):
+        from dendra import bundled
+
+        monkeypatch.setitem(bundled._REGISTRY["judge"], "size_bytes", 100)
+        target = cache_path("judge")
+        target.write_bytes(b"FAKE GGUF CONTENTS")  # 18 bytes, not 100
+        assert is_cached("judge") is False
 
     def test_returns_false_for_empty_file(self, isolated_cache):
         target = cache_path("judge")
@@ -90,9 +114,14 @@ class TestEnsureModelOffline:
             ensure_model("judge")
 
     def test_offline_env_returns_cached_path(self, isolated_cache, monkeypatch):
+        from dendra import bundled
+
         monkeypatch.setenv("DENDRA_BUNDLED_OFFLINE", "1")
+        # Patch registry size to match our fake stub; real GGUF is
+        # multi-GB and impractical to fabricate in a unit test.
         target = cache_path("judge")
-        target.write_bytes(b"FAKE GGUF")
+        target.write_bytes(b"FAKE GGUF")  # 9 bytes
+        monkeypatch.setitem(bundled._REGISTRY["judge"], "size_bytes", 9)
         # Cached → no network even with OFFLINE=1
         assert ensure_model("judge") == target
 
@@ -139,7 +168,7 @@ class TestEnsureModelDownload:
 class TestCdnBase:
     def test_default_is_dendra_dev(self, monkeypatch):
         monkeypatch.delenv("DENDRA_BUNDLED_CDN_BASE", raising=False)
-        assert cdn_base() == "https://models.dendra.dev"
+        assert cdn_base() == "https://models.dendra.run"
 
     def test_env_override(self, monkeypatch):
         monkeypatch.setenv("DENDRA_BUNDLED_CDN_BASE", "https://my-mirror.internal")

@@ -4,6 +4,250 @@ All notable changes to Dendra are documented in this file. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Version numbers follow [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+## [1.0.0rc1] — 2026-05-13 (target)
+
+Pre-launch release candidate. Captures the public-surface +
+launch-infrastructure work from the 2026-05-01/02 launch sweep on
+top of the v0.2.0 → v1.0.0 feature work that landed earlier.
+
+### Added
+
+- **Pricing primitive on the landing page.** ``landing/data/pricing-
+  tiers.json`` is the single source of truth for tier data; the table
+  + the new "find your tier · estimate your savings" calculator both
+  render from JSON. ``landing/data/llm-prices.json`` is the single
+  source of truth for provider rates and is auto-refreshed weekly
+  from BerriAI/litellm's ``model_prices_and_context_window.json``
+  via ``scripts/update_llm_prices.py`` + the
+  ``refresh-llm-prices`` GitHub Action; the curated provider list
+  covers the current 2026 frontier (Claude Opus 4.7 / Sonnet 4.6 /
+  Haiku 4.5; GPT-5.5 / 5.4-mini; Gemini 3.1 Pro / 3 Flash; Grok
+  4.20 reasoning; DeepSeek V3.2; Ollama local).
+- **Paste-your-code Pyodide analyzer on the landing page.** ``#paste``
+  section runs the bundled analyzer in WASM in the visitor's
+  browser; pasted source never crosses the wire. Path to first
+  personalized signal cut from ~5 minutes (visit → install → run)
+  to ~10 seconds (visit → paste → results). Email/share capture
+  via ``POST /v1/leads`` to the collector Worker — a new D1
+  ``leads`` table (migration 0002) records email + result-shape
+  signals without persisting source code. Per-origin CORS, no
+  wildcard.
+- **``priority_score`` + ``volume_estimate`` on every detected
+  site.** The analyzer's old ``fit_score`` (graduation-fitness
+  alone) is gone; replaced with ``priority_score`` — a composite
+  of gate-fit × volume-factor × lift-factor (0–5) — and
+  ``volume_estimate`` (cold/warm/hot derived from AST signals:
+  route decorators → hot, cli.py / migrations / scripts → cold).
+  ``dendra analyze`` gains ``--sort {priority,location,pattern,
+  regime,lift}`` (default ``priority``) + ``--reverse``. Cohort-
+  comparison line auto-emits in ``render_text`` when cohort_size
+  ≥ 10 and the median field is populated; suppresses silently
+  before that.
+- **Dendra-on-Dendra dogfood (Risk-1 mitigation).** The analyzer's
+  own pattern-dispatch and lift-status decisions are now
+  ``@ml_switch``-wrapped at ``Phase.RULE``. Both surface in
+  ``already_dendrified`` when the analyzer scans the dendra repo;
+  hypothesis files committed at ``dendra/hypotheses/_classify_
+  pattern.md`` + ``_classify_lift_status.md``.
+- **Agent-harness integration examples.** Five self-contained
+  examples in ``examples/integrations/`` covering LangChain
+  (routing decision), LlamaIndex (retrieval-strategy selection),
+  LiteLLM (classifier call site), NousResearch Hermes (tool-
+  selection in agent loops), and Axiom OS (local-LM via ``axi
+  serve``). Each runs offline with a deterministic stub fallback;
+  parametrised contract test verifies the ``@ml_switch`` wrap +
+  declared label set on each.
+- **Report-card-as-evidence narrative across surfaces.** Three
+  canonical sample report cards committed to
+  ``docs/sample-reports/`` (per-switch graduation card, project
+  summary rollup, initial-analysis discovery card) + the
+  refused-and-recovering and pre-graduation samples. README +
+  FAQ + landing ``#prove`` section all cite the new public
+  samples and excerpt the same gate-evidence block (Phase:
+  ML_PRIMARY, p = 4.2 × 10⁻⁴, +8.8 pp, $0.0042 → $0.000003 per
+  call, 412 ms → 0.8 ms p50).
+- **Cloudflare collector Worker + D1 events warehouse.** New
+  ``cloud/collector/`` module: TypeScript Worker accepting
+  ``POST /v1/events`` and ``POST /v1/leads``, payload-key
+  whitelist enforced server-side, D1 batch insert for events,
+  abuse-triage edge metadata stored on a 30-day TTL. Aggregator
+  GitHub Action reads D1 nightly and republishes
+  ``tuned-defaults.json`` for the cohort-defaults pull pipe.
+- **Three-environment CI/CD.** New workflows: ``deploy-staging.yml``
+  (push to main → tests → Pages + collector → smoke),
+  ``deploy-production.yml`` (release tag → production with
+  auto-rollback on smoke failure), ``aggregator.yml`` (03:00 UTC
+  cohort aggregation), ``refresh-llm-prices.yml`` (Mondays 14:00
+  UTC). Smoke tests at ``tests/smoke/`` exercise landing,
+  collector, models CDN; bypass sandbox network guard via
+  ``conftest.py`` autouse fixture.
+
+### Changed
+
+- **Closer #9 promoted to canonical primary tagline:** "Software
+  that's smarter every month than the day you shipped it."
+  Replaces "The classification primitive every production
+  codebase is missing." across landing hero, README H1, ``<title>``,
+  ``og:title``, ``twitter:title``, social-card alt text, and
+  ``brand/messaging.md``. The displaced primary is documented as
+  the "category descriptor" secondary tagline and survives in
+  the landing footer + 2-minute pitch.
+- **Performance baselines locked to a single source of truth.**
+  ``docs/benchmarks/perf-baselines-2026-05-01.md`` is now the
+  authoritative perf doc; README, FAQ, ``brand/messaging.md``,
+  ``brand/voice.md``, and ``docs/limitations.md`` all cite it.
+  Three previously-divergent claims (0.62 µs / 1.67 µs /
+  0.50 µs) reconciled to current measurements: Phase.RULE
+  classify 0.96 µs p50 / 1.04 µs p95; dispatch 1.00 µs p50 /
+  1.08 µs p95; framework tax ~24× a bare Python call; FileStorage
+  batched 245K writes/sec sustained.
+- **Trademark posture softened to honesty before USPTO filing.**
+  Landing footer's ``DENDRA™ and B-TREE LABS™ are trademarks
+  of...`` claim corrected to ``DENDRA and B-TREE LABS are
+  trademarks (or pending trademarks) of...`` — matches the
+  wording already in LICENSING.md / SUPPORT.md / CONTRIBUTING.md
+  / brand/usage.md. ™ symbols return after USPTO confirms
+  registration.
+- **Enterprise tiers reframed as design-partner pricing.** The
+  four industry rows (Financial Services / Healthcare / SOC /
+  Government) had compliance artifacts (FINRA, FDA SaMD, BAA,
+  SOC 2 Type II, FedRAMP) and hard prices ($50K-$100K/yr) that
+  a solo founder pre-launch can't deliver. Reframed: rows now
+  read "Industry-tuned configuration; design-partner pricing"
+  with "Custom" prices and "Apply to design-partner program"
+  CTAs; design-partner explainer added under the table. The
+  delivery work tracks in two roadmap entries (foundation
+  prerequisites + industry-specific layers).
+- **Domain rename completed.** Every reference to
+  ``dendra.dev`` swept to ``dendra.run``; CDN at
+  ``models.dendra.run`` provisioned with custom domain in front
+  of R2.
+- **DBA rename completed.** Every reference to ``Axiom Labs``
+  swept to ``B-Tree Labs``; LaTeX preamble template path
+  updated; CHANGELOG, brand docs, all surfaces consistent.
+
+### Fixed
+
+- ``X days ago`` time-relative phrases that go stale instantly in
+  static documentation replaced with absolute ``YYYY-MM-DD``
+  dates (README excerpt, landing prove section, sample card
+  source). Saved as a feedback-memory rule so future writing
+  doesn't repeat.
+- Sample-card cross-references that pointed at non-public
+  artifacts (``../hypotheses/<switch>.md``,
+  ``archive/<switch>-<date>.md``) de-linked since those are
+  per-deployment local artifacts, not part of the docs tree.
+- Stale fit-score / Dendra-fit residue across landing JS, HTML,
+  + 12 OSS-corpus JSON fixtures — all regenerated from current
+  source via ``scripts/enrich_landing_corpus.py``.
+
+### Added
+
+- **Dendra Insights — opt-in cohort flywheel.** New
+  ``dendra.insights`` package + CLI verbs ``dendra insights
+  enroll`` / ``leave`` / ``status``. The OSS classification path
+  remains telemetry-free by default; users explicitly opt in by
+  running ``dendra insights enroll``, after which one anonymized
+  shape-only event is queued per ``dendra analyze`` run and
+  flushed best-effort on the next CLI invocation. What we capture:
+  run-level histograms (pattern, regime, lift_status, hazard
+  category) plus files_scanned / total_sites /
+  already_dendrified_count. What we never capture: source code,
+  function names, label values, prompt content, IP, machine ID,
+  paths beyond a non-reversible repo-shape hash.
+
+  The fetch side is on by default (no enrollment required):
+  every install pulls
+  ``https://dendra.run/insights/tuned-defaults.json`` once per
+  day, caches at ``~/.dendra/tuned-defaults.json``, and falls
+  back to baked-in defaults silently on any failure. The cohort
+  defaults block carries cohort-size and timestamp so
+  ``dendra insights status`` shows "tuned from N deployments as
+  of Y." Receiving cohort wisdom does NOT require sharing data —
+  asymmetry by design.
+
+  Phase A (this release) ships the client-side wire +
+  enrollment flow + analyze hook. Collector endpoint, nightly
+  aggregator, EU residency, Stripe coupon wiring, and dashboard
+  settings page are Phase B (v1.1, ~5 weeks post-launch). See
+  ``docs/working/telemetry-value-engine-2026-04-29.md`` for the
+  full upgrade plan and
+  ``docs/working/telemetry-program-design-2026-04-28.md`` for
+  the underlying privacy posture (unchanged).
+
+### Changed
+
+- **Company DBA renamed Axiom Labs → B-Tree Labs.** The "Axiom
+  Labs" name conflicted with another company; the registered DBA
+  under B-Tree Ventures, LLC is now **B-Tree Labs**. The GitHub
+  org slug moves from `axiom-labs-os/dendra` to
+  `b-tree-labs/dendra`; the social handle from `@axiom_labs` to
+  `@btreelabs`. The separate Axiom product (the local-LM runtime
+  formerly described as "Axiom node") is unaffected by the parent-
+  company rename and continues as **Axiom OS** at
+  `b-tree-labs/axiom-os`.
+- **Trademark posture revised.** TRANSITION CURVES is removed
+  from the trademark queue (descriptive mark in a crowded prior-
+  art field; more valuable as freely-citable category vocabulary
+  than as a registered mark). DENDRA remains the only P0 mark
+  filed for B-Tree Labs (the company DBA) deferred to year 2.
+
+### Fixed
+
+- **Analyzer self-host correctness** (per the 2026-04-28 dogfood
+  report). `dendra analyze` previously recommended re-graduating
+  code that was already wrapped, recursed into its own generated
+  companion modules, and double-counted sites through nested git
+  worktrees. The full punch list:
+  - Functions decorated with `@ml_switch` / `@dendra.ml_switch`
+    are now flagged as `already_dendrified` and surfaced in a new
+    `report.already_dendrified` field instead of being recommended
+    for graduation. The same path applies in
+    `analyze_function_source`, which now returns
+    `LiftStatus.ALREADY_DENDRIFIED` for decorated functions.
+  - Methods of classes that subclass `Switch` (or `dendra.Switch`)
+    are skipped entirely — the analyzer cannot tell `_rule` apart
+    from `_evidence_*` / `_when_*` / `_on_*` helpers without
+    semantic understanding of the Switch contract.
+  - `__dendra_generated__/` and `.claude/` are now in the default
+    ignore list.
+  - Directories containing a `.git` *file* (the marker for nested
+    git worktrees) are skipped, eliminating the double-count from
+    parallel worktrees.
+  - Project self-blacklist: when scanning a directory whose
+    `pyproject.toml` declares `name = "dendra"` (or
+    `name = "dendra-*"`), `src/dendra/` is skipped so the
+    analyzer's own infrastructure (analyzer/gates/models adapter
+    plumbing) is not flagged.
+- **Pattern P4 widened.** A new "argmax over a per-label scoring
+  loop" sub-detector recovers `ReferenceRule.classify` and similar
+  dict-driven keyword scanners whose returns are dynamic
+  (`return best_label`) rather than literal-string. The original
+  `if kw in text: return LABEL` shape is unchanged.
+
+Net effect on a fresh self-scan of the repo: 113 sites → 62, with
+35 already-dendrified surfaced and only the two genuine runtime-
+wrapped rules in `examples/17` and `examples/18` remaining as
+auto-liftable.
+
+### Changed
+
+- **`build_reference_rule` now shuffles the training stream by default**
+  (`shuffle=True`, deterministic `shuffle_seed=0`) before slicing the
+  seed window. The HuggingFace train splits for Banking77, HWU64,
+  CLINC150, and Snips are sorted by label, so the previous behavior
+  collapsed the auto-rule to a single class (predict-the-modal-class
+  at chance accuracy). Under the new default the Banking77 rule jumps
+  from 1.30 % to a median of ≈ 24 % across shuffle seeds, and Snips
+  jumps from 14.3 % to ≈ 75 % — see
+  `docs/working/banking77-validation-report-2026-04-28.md` for the
+  full evidence. The `dendra bench` CLI gains `--no-shuffle` and
+  `--shuffle-seed` flags. Migration: pass `shuffle=False` to
+  `build_reference_rule` (or `--no-shuffle` to `dendra bench`) to
+  reproduce the v0.x paper-as-shipped numbers.
+
 ## [1.0.0] — 2026-05-13
 
 The first public release. Ships alongside the companion paper
@@ -148,9 +392,9 @@ work that landed during the pre-launch period:
   identity. Selected through a three-round design process (21
   concept marks + 3 AI design-critic assessments; full record
   in `landing/assets/concepts/` and `notes/critic-assessments.md`).
-  Inherits the Axiom Labs palette + typography; adds Dendra-
+  Inherits the B-Tree Labs palette + typography; adds Dendra-
   specific usage rules. Structure mirrors
-  `axiom-labs-os/.github/brand/` at the parent org.
+  `b-tree-labs/.github/brand/` at the parent org.
   - `brand/logo/` — 12 SVG masters (mark / mark-color /
     mark-dark / mark-mono-light / mark-mono-dark /
     wordmark-horizontal{-dark} / wordmark-stacked{-dark} /
@@ -174,8 +418,8 @@ work that landed during the pre-launch period:
   variants based on viewer color scheme.
 - **Landing page scaffold** in `landing/`. Static single-page
   site built from the existing `landing-page-copy.md` deck,
-  applying the Axiom Labs brand system (palette, type, usage)
-  from `axiom-labs-os/.github/brand/`. No build step — drop
+  applying the B-Tree Labs brand system (palette, type, usage)
+  from `b-tree-labs/.github/brand/`. No build step — drop
   the directory on Cloudflare Pages / Vercel / Netlify. Design
   patterns explicitly borrowed from Modal, Temporal, Clerk,
   Stripe, Honeycomb, Resend, Linear, Tailscale; anti-patterns
@@ -219,8 +463,8 @@ work that landed during the pre-launch period:
 - **`LICENSE-APACHE`, `LICENSE-BSL`, `LICENSE.md`,
   `LICENSING.md`.** Split license text + the developer-facing
   "can I use this?" guide.
-- **`TRADEMARKS.md`.** Repo-level trademark policy for DENDRA,
-  TRANSITION CURVES, and AXIOM LABS. Describes descriptive /
+- **`TRADEMARKS.md`.** Repo-level trademark policy for DENDRA
+  and B-TREE LABS. Describes descriptive /
   nominative fair use vs commercial uses that need a license.
 - **`CODEOWNERS`.** Single-owner policy; IP, CI, and
   product-surface paths call out explicit ownership for future
@@ -238,8 +482,7 @@ work that landed during the pre-launch period:
   the BSL Change Date mechanics.
 - `LICENSING.md` added as the developer-facing "can I use this?"
   guide covering the Apache vs BSL boundary.
-- `TRADEMARKS.md` added covering the DENDRA / TRANSITION CURVES /
-  AXIOM LABS marks.
+- `TRADEMARKS.md` added covering the DENDRA and B-TREE LABS marks.
 
 ## [0.2.0] — 2026-04-21
 

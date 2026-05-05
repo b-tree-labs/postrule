@@ -1,20 +1,110 @@
 # Copyright (c) 2026 B-Tree Ventures, LLC
 # SPDX-License-Identifier: Apache-2.0
 #
-# Triggered by a tag push. Requires PyPI trusted-publisher configured for
-# the `dendra` project at https://pypi.org/manage/project/dendra/settings/publishing/
-# with workflow `release.yml`, environment `pypi`.
+# Triggered by a tag push matching ``v*``. Builds a wheel + sdist and
+# publishes to PyPI via the trusted-publisher (OIDC) binding.
+#
+# Setup (one-time, on PyPI):
+#   1. https://pypi.org/manage/account/publishing/
+#   2. Add a new pending publisher with:
+#        Project name:      dendra
+#        Owner:             b-tree-labs
+#        Repository name:   dendra
+#        Workflow filename: release.yml          ← matches THIS file
+#        Environment name:  pypi
+#
+# After the binding is active, ``git tag v1.0.0rc1 && git push origin
+# v1.0.0rc1`` triggers a publish. No PYPI_API_TOKEN secret is required;
+# OIDC-issued short-lived tokens authenticate the upload.
+#
+# Self-contained on purpose — no dependency on a reusable workflow
+# in a sibling org repo. If b-tree-labs gains multiple Python
+# packages later, refactor to a reusable workflow then; not now.
 name: release
 
 on:
   push:
     tags: ['v*']
 
+permissions:
+  contents: read
+
 jobs:
-  release:
-    uses: axiom-labs-os/.github/.github/workflows/python-release.yml@v1
-    with:
-      package-name: dendra
-      pypi-project: dendra
-      pypi-environment: pypi
-    secrets: inherit
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade build
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      - name: Show artifact contents
+        run: ls -la dist/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+          retention-days: 7
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # `pypi` matches the environment name in the trusted-publisher
+    # binding above. The environment also gates on any branch /
+    # protection rules you choose to add at github.com/b-tree-labs/
+    # dendra/settings/environments/pypi.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/dendra
+    permissions:
+      # Required for OIDC-based PyPI auth. Do NOT add `contents: write`
+      # or `actions: write` here — publish should not touch the repo.
+      id-token: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+
+      - name: Publish via trusted publisher
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # No password / token kwarg — OIDC handles auth.
+          # Verbose so the workflow log is auditable.
+          verbose: true
+          print-hash: true
+
+  github-release:
+    name: Create GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}

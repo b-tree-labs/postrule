@@ -3,6 +3,8 @@
   <img src="brand/logo/dendra-wordmark-horizontal.svg" alt="Dendra" width="420">
 </picture>
 
+# Software that's smarter every month than the day you shipped it.
+
 **Drop a rule. Drop a verifier. Watch your classifier get smarter automatically.**
 
 ```python
@@ -10,7 +12,7 @@ from dendra import ml_switch, default_verifier
 
 @ml_switch(
     labels=["bug", "feature_request", "question"],
-    verifier=default_verifier(),  # local Ollama (qwen2.5:7b) by default; see Install for other paths
+    verifier=default_verifier(),  # autonomous mode — see "What default_verifier does" below
 )
 def triage(ticket: dict) -> str:
     title = (ticket.get("title") or "").lower()
@@ -32,6 +34,14 @@ failure.
 `mark_correct()` calls scattered through your code.** Drop the
 verifier and Dendra's autonomous mode does the rest.
 
+> **What `default_verifier()` does on first call.** Lazy-downloads
+> `qwen2.5:7b` (~4.7 GB) into your Ollama cache, then runs locally
+> for every verdict — no API key, no per-call cost, nothing leaves
+> the box. Three lighter paths in [Install](#install) if you'd
+> rather skip the download: a smaller local model, a hosted
+> provider via `JudgeSource(AnthropicAdapter())`, or omit the
+> kwarg entirely and call `record_verdict()` yourself.
+
 ## What this replaces
 
 Every production system has classification decisions — routing
@@ -50,6 +60,60 @@ gate at every transition (McNemar's exact test under the hood —
 swappable), the rule retained as a safety floor with a circuit
 breaker, and an autonomous-verification default so the gate has
 evidence to evaluate without you wiring a reviewer queue.
+
+## The bet
+
+If your AI bill is more than $1M/yr and Dendra is in your stack,
+that bill will be 30% smaller in 12 months. Public benchmark, or
+you get every dollar of consulting back.
+
+## Why I built this
+
+I'm Ben Booth — solo founder, sole inventor. CEO of SoilMetrix
+(my own company, AI-using software in production) and Research
+Scientist in Nuclear Engineering at UT. Both roles put me in the
+"I am the customer" seat: I run LLM-classified decision sites in
+production, and I needed a primitive that would let me graduate
+those sites off LLMs once a smaller in-process head had earned
+it on real traffic. Dendra is what I wrote because nothing on the
+shelf did this — and the formal grounding (paired-McNemar, the
+companion paper, the eight-benchmark suite) is what I needed
+before I'd trust it on my own systems.
+
+## What graduation looks like
+
+When a wrapped switch graduates, Dendra writes a markdown report
+card alongside your other repo artifacts. The card is the launch
+evidence — what the gate saw, when it fired, the cost trajectory,
+the drift posture going forward.
+
+Excerpt from `dendra/results/triage_rule.md` — a sample card
+generated 2026-04-29 (full sample in
+[`docs/sample-reports/triage_rule.md`](docs/sample-reports/triage_rule.md)):
+
+> **Phase: `ML_PRIMARY`** — graduated 2026-04-25 at outcome 312.
+> Gate (`McNemarGate`, α = 0.01) fired with p = **4.2 × 10⁻⁴**.
+> Effect size: rule 78.4% → ML 87.2% (**+8.8 pp**).
+> Cost per call: **$0.0042 → $0.000003** (99.93% reduction).
+> Latency p50: **412 ms → 0.8 ms** (99.81% reduction).
+
+Three commands produce the evidence trilogy:
+
+- `dendra analyze --report` — initial-analysis discovery card. Which
+  sites would graduate, projected savings, recommended order.
+  ([sample](docs/sample-reports/_initial-analysis.md))
+- `dendra report <switch>` — per-switch graduation card. Transition
+  curve, p-value trajectory, cost trajectory, drift checks.
+  ([sample](docs/sample-reports/triage_rule.md))
+- `dendra report --summary` — project rollup. Cockpit view across
+  every wrapped switch with phase distribution and aggregate
+  reduction. ([sample](docs/sample-reports/_summary.md))
+
+The cards are markdown — they live in your repo, diff in PRs, ship
+in releases. **The report card *is* the audit trail**: the same
+artifact is what your compliance team reads, what your CFO reads,
+and what your engineers reads. No separate dashboard to wire up,
+no SaaS lock-in for the evidence.
 
 ## Status & limitations
 
@@ -93,7 +157,7 @@ same on macOS / Linux / Windows. Model picks are
 benchmark-justified — see
 [`docs/benchmarks/slm-verifier-results.md`](docs/benchmarks/slm-verifier-results.md).
 
-### C. Axiom node (shared local LM runtime for other tools)
+### C. Axiom OS (shared local LM runtime for other tools)
 
 ```bash
 pip install axi-platform
@@ -105,7 +169,7 @@ from dendra import LearnedSwitch, JudgeSource, LlamafileAdapter
 verifier = JudgeSource(LlamafileAdapter())   # talks to the running axi node
 ```
 
-If you already run an [Axiom](https://github.com/axiom-labs-os/axiom)
+If you already run an [Axiom](https://github.com/b-tree-labs/axiom-os)
 node — or you'd like other tools on this machine to share one
 local-LM runtime — Path C wires Dendra's verifier through it.
 
@@ -242,21 +306,32 @@ at the **first** checkpoint of 250 labeled outcomes. Two days of
 moderate production traffic, not six months. Reproducible:
 `dendra bench atis` regenerates Figure 1 in seconds.
 
-Measured latency (Apple M5 / Python 3.13 / macOS 26):
+Measured latency (Apple M5 / Python 3.13 / macOS 26 — full
+methodology + reproduce instructions in
+[`docs/benchmarks/perf-baselines-2026-05-01.md`](docs/benchmarks/perf-baselines-2026-05-01.md)):
 
-- **Phase 0 classify, default config:** 1.67 µs p50 / 2.42 µs p99
-  (573k ops/sec). Auto-logs an UNKNOWN outcome record.
-- Phase 0 classify, `auto_record=False`: 0.50 µs p50 / 0.67 µs p99
-  (1.9M ops/sec). Pure routing.
-- **`persist=True` classify (batched FileStorage, the production
-  recommendation):** 33.8 µs p50 / 390 µs p99 (~30k ops/sec).
-  Durable outcome log with a 50 ms crash window.
-- `persist=True` classify (per-call fsync — explicit opt-in for
-  regulated workloads): 195 µs p50 / 260 µs p99.
-- Real ML head (TF-IDF + LR on ATIS): 105 µs p50.
-- Local SLM (shipped default `qwen2.5:7b` via Ollama or
-  bundled llama-cpp-python): ~481 ms p50 — see
+- **`classify` at Phase.RULE:** 0.96 µs p50 / 1.04 µs p95.
+- **`dispatch` at Phase.RULE:** 1.00 µs p50 / 1.08 µs p95.
+- `dispatch` at Phase.MODEL_PRIMARY (LM verifier stubbed):
+  1.46 µs p50 / 1.54 µs p95.
+- `dispatch` at Phase.ML_PRIMARY (ML head stubbed):
+  1.50 µs p50 / 1.58 µs p95.
+- **Storage: `BoundedInMemoryStorage` (default for ephemeral state):**
+  12M writes/sec sustained.
+- **Storage: `FileStorage` batched (production-recommended):**
+  245K writes/sec sustained; 4.1 µs per write; ~50 ms crash window.
+- Storage: `FileStorage` concurrent 4 threads (batched):
+  181K writes/sec sustained.
+- Storage: `FileStorage` unbatched per-call fsync (regulated
+  workloads): 28K writes/sec, ~36 µs per write.
+- Local SLM verifier (shipped default `qwen2.5:7b` via Ollama):
+  ~481 ms p50 — see
   [`docs/benchmarks/slm-verifier-results.md`](docs/benchmarks/slm-verifier-results.md).
+
+**Framework tax** at Phase.RULE: ~24× a bare Python call
+(42 ns → 1 µs). In absolute terms ~1 µs is fast enough that any
+production hot path is dominated by the caller's own logic and
+(when later phases engage) by the model's inference, not by Dendra.
 
 Raw numbers + JSONL benchmark data:
 [`docs/benchmarks/v1-audit-benchmarks.md`](docs/benchmarks/v1-audit-benchmarks.md).
@@ -483,7 +558,7 @@ VS Code extension (early v1.1) ✓
 800+ tests passing.
 
 Wave 2 (cloud features + hosted analyzer + dashboards) — rolling
-through 2026; waitlist on [dendra.dev](https://dendra.dev).
+through 2026; waitlist on [dendra.run](https://dendra.run).
 PyCharm plugin + benchmark/report harness + branch-lifter relaxation —
 v1.5 / v1.x. See [`docs/limitations.md`](docs/limitations.md) for the
 versioned roadmap.
@@ -491,7 +566,7 @@ versioned roadmap.
 ## Dev setup
 
 ```bash
-git clone https://github.com/axiom-labs-os/dendra.git
+git clone https://github.com/b-tree-labs/dendra.git
 cd dendra
 python -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev,train,bench,viz]'
@@ -500,17 +575,17 @@ pytest tests/
 
 ## Contact
 
-- GitHub: <https://github.com/axiom-labs-os/dendra>
+- GitHub: <https://github.com/b-tree-labs/dendra>
 - Maintainer: Benjamin Booth — `ben@b-treeventures.com`
-- Axiom Labs: the commercial vehicle behind Dendra (a B-Tree
+- B-Tree Labs: the commercial vehicle behind Dendra (a B-Tree
   Ventures, LLC DBA).
 
 ---
 
-_Copyright © 2026 B-Tree Ventures, LLC (dba Axiom Labs).
+_Copyright © 2026 B-Tree Ventures, LLC (dba B-Tree Labs).
 Split-licensed — Apache 2.0 on the client SDK, BSL 1.1 on
 Dendra-operated components; see [`LICENSE.md`](LICENSE.md).
-Dendra, Transition Curves, and Axiom Labs are trademarks of
+Dendra and B-Tree Labs are trademarks (or pending trademarks) of
 B-Tree Ventures, LLC. Neither the Apache 2.0 license nor the
 BSL 1.1 license grants any right to use these marks — see
 [`TRADEMARKS.md`](TRADEMARKS.md) for the project's fair-use

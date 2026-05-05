@@ -46,17 +46,27 @@ jobs:
               src/dendra/cloud/registry.py|\
               src/dendra/cloud/sync.py|\
               src/dendra/cloud/team_corpus.py|\
+              src/dendra/cloud/report/__init__.py|\
+              src/dendra/cloud/report/aggregator.py|\
+              src/dendra/cloud/report/charts.py|\
+              src/dendra/cloud/report/discovery.py|\
+              src/dendra/cloud/report/hypotheses.py|\
+              src/dendra/cloud/report/render_markdown.py|\
+              src/dendra/cloud/report/summary.py|\
               src/dendra/lifters/__init__.py|\
               src/dendra/lifters/branch.py|\
               src/dendra/lifters/evidence.py|\
               src/dendra/mcp_server.py|\
               src/dendra/research.py|\
               src/dendra/roi.py|\
+              cloud/aggregator/run.py|\
+              landing/wasm/dendra_analyzer.py|\
               scripts/sizing_study.py|\
               tests/test_analyzer.py|\
               tests/test_auth.py|\
               tests/test_benchmarks.py|\
               tests/test_cli.py|\
+              tests/test_cloud_report.py|\
               tests/test_cloud_sync.py|\
               tests/test_enrich_landing_corpus.py|\
               tests/test_lifter_branch.py|\

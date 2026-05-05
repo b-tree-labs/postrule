@@ -213,6 +213,13 @@ def _sandbox_home(request, tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / ".cache"))
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / ".local" / "share"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    # Disable the cohort-defaults async refresh during tests.
+    # The fetch fires when `dendra analyze` runs; without this guard
+    # the daemon thread tries to reach dendra.run, the sandbox blocks
+    # the connect, and the unraised exception leaks into pytest as
+    # a PytestUnraisableExceptionWarning. The CLI smoke tests don't
+    # care about cohort defaults; opt out unconditionally.
+    monkeypatch.setenv("DENDRA_NO_INSIGHTS_FETCH", "1")
 
 
 @pytest.fixture(autouse=True, scope="session")

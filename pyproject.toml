@@ -1,9 +1,9 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
+# Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
 [project]
 name = "dendra"
-version = "0.2.0"
+version = "1.0.0rc1"
 description = "Graduated-autonomy classification primitive — start as a rule, graduate to ML when evidence justifies it."
 readme = "README.md"
 # Split license (PEP 639 SPDX expression). See LICENSE.md in the
@@ -25,13 +25,18 @@ license-files = [
     "NOTICE",
 ]
 authors = [
-    { name = "B-Tree Ventures, LLC" },
+    { name = "B-Tree Labs" },
 ]
 maintainers = [
     { name = "Benjamin Booth", email = "ben@b-treeventures.com" },
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    # `dendra.cloud.{sync,registry,team_corpus}` make HTTP calls to the
+    # account/registry endpoints with `requests`. Hard dep because
+    # `import dendra.cloud.*` would otherwise fail at import time.
+    "requests>=2.28",
+]
 keywords = [
     "classification",
     "machine-learning",
@@ -61,6 +66,11 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+license = [
+    # Ed25519 verification for offline Business-tier license tokens.
+    # See src/dendra/license.py.
+    "cryptography>=42",
+]
 train = [
     "scikit-learn>=1.3",
 ]
@@ -105,9 +115,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/axiom-labs-os/dendra"
-Documentation = "https://github.com/axiom-labs-os/dendra#readme"
-Issues = "https://github.com/axiom-labs-os/dendra/issues"
+Homepage = "https://github.com/b-tree-labs/dendra"
+Documentation = "https://github.com/b-tree-labs/dendra#readme"
+Issues = "https://github.com/b-tree-labs/dendra/issues"
 
 [project.scripts]
 dendra = "dendra.cli:main"
@@ -121,11 +131,21 @@ packages = ["src/dendra"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/dendra/py.typed" = "dendra/py.typed"
+# Bundle the runnable examples so `dendra quickstart` works offline and
+# doesn't depend on the public GitHub repo being reachable. Only the
+# .py files needed for the five quickstart presets ship in the wheel;
+# the full examples/ tree (with markdown walkthroughs) lives in the repo.
+"examples/01_hello_world.py" = "dendra/_examples/01_hello_world.py"
+"examples/17_exception_handling.py" = "dendra/_examples/17_exception_handling.py"
+"examples/19_autoresearch_loop.py" = "dendra/_examples/19_autoresearch_loop.py"
+"examples/20_verifier_default.py" = "dendra/_examples/20_verifier_default.py"
+"examples/21_tournament.py" = "dendra/_examples/21_tournament.py"
+"examples/_stubs.py" = "dendra/_examples/_stubs.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-q --strict-markers -m 'not benchmark and not perf'"
+addopts = "-q --strict-markers -m 'not benchmark and not perf and not smoke'"
 markers = [
     "benchmark: opt-in latency / throughput benchmarks (run with -m benchmark)",
     "concurrency: red-bar tests for thread-safety bugs (run with -m concurrency)",
@@ -133,6 +153,7 @@ markers = [
     "chaos: failure-injection / pre-launch chaos tests (run by default; opt out with -m 'not chaos'). Surface every kill-us-in-prod failure mode.",
     "slow: tests that take >5s (combine with chaos marker for slow chaos tests)",
     "perf: v1 perf-regression suite under tests/perf/ — baselines committed at tests/perf/baselines/. Run explicitly with -m perf; refresh with --update-baselines.",
+    "smoke: post-deploy smoke tests against running deployments (run with -m smoke + DENDRA_SMOKE_BASE_URL).",
 ]
 filterwarnings = [
     "error",

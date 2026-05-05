@@ -1,26 +1,20 @@
 # When Should a Rule Learn? Transition Curves for Safe Rule-to-ML Graduation
 
-**Author.** Benjamin Booth, B-Tree Ventures LLC.
+**Author.** Benjamin Booth, B-Tree Labs.
 **Status.** Draft v0.1, 2026-04-26.
 **Target.** arXiv (cs.LG / cs.SE), 2026-05-13.
-**Code + data.** `https://github.com/axiom-labs-os/dendra`. Apache 2.0.
+**Code + data.** `https://github.com/b-tree-labs/dendra`. Apache 2.0.
 **Patent.** Patent pending. U.S. Provisional Patent Application No. 64/045,809, filed 2026-04-21.
 
 ---
 
 ## Abstract
 
-Production classification systems overwhelmingly start as hand-written rules: an `if "crash" in title: return "bug"` for ticket triage, a lookup table for intent routing, a threshold over a heuristic score for content moderation. Training data does not yet exist on day one. Over time, outcome data accumulates, yet the rules stay frozen: replacing a rule with a machine-learned classifier requires custom migration engineering at every decision point, and there is no shared statistical criterion for when the migration is justified.
+Production classification sites cross a paired-McNemar gate at α = 0.01 within 250 to 2,000 recorded outcomes on eight public benchmarks, even when the day-zero rule is a 100-example keyword auto-build at chance accuracy. We formalize the rule-to-ML migration as a *graduated-autonomy lifecycle* (`RULE` → `MODEL_SHADOW` → `MODEL_PRIMARY` → `ML_SHADOW` → `ML_WITH_FALLBACK` → `ML_PRIMARY`), prove a per-step Type-I bound (the marginal probability of a worse-than-rule transition is bounded above by α), and measure outcomes-to-graduate on eight benchmarks across four domains: intent classification (ATIS, HWU64, Banking77, CLINC150, Snips), question categorization (TREC-6), news topic classification (AG News), and programming-language detection (codelangs).
 
-We formalize this migration as a *graduated-autonomy lifecycle* with six phases (`RULE` → `MODEL_SHADOW` → `MODEL_PRIMARY` → `ML_SHADOW` → `ML_WITH_FALLBACK` → `ML_PRIMARY`) in which the rule remains a structural safety floor at every stage. We prove that, when transitions are gated by a paired McNemar test at significance level $\alpha$, the marginal probability of a worse-than-rule transition is bounded above by $\alpha$ per gated step. We measure how many recorded outcomes a learned classifier needs before it convincingly beats the rule (paired McNemar $p < 0.01$). We call this curve the *transition curve* and report it on eight public benchmarks across four domains: intent classification (ATIS, HWU64, Banking77, CLINC150, Snips), question categorization (TREC-6), news topic classification (AG News), and programming-language detection (codelangs, including FORTRAN sourced from NJOY2016 nuclear-data processing code).
+We report transition curves under three rule constructions on Banking77, the most-cited intent benchmark in the suite. A 100-example keyword auto-rule is sensitive to training-stream order: on the as-shipped HuggingFace split it reduces to predict-modal at 1.3% (chance), and under random shuffles of the training stream recovers to a median of 24.4% (range 21 to 30 across 10 seeds). A hand-written keyword regex of ~35 patterns reaches 14.6%. A locally-served 22M-parameter embedding-cosine baseline reaches 62.2%. Each of these graduates to the same ML asymptote at 87.7% by training-corpus exhaustion; the McNemar gate fires within 250 to 500 outcomes regardless of starting point, with effect size dominating the gate decision.
 
-Three regimes emerge from the eight-benchmark suite. Low cardinality with strong rule-keyword affinity gives a *rule-near-optimum* corner (codelangs at 87.8% rule baseline, ML edges past at ~10 points). Mid-cardinality with stable keyword signals gives *rule usable* (ATIS at 70.0%, TREC-6 at 43.0%). The broad case is *rule at floor* — driven either by high cardinality (HWU64, Banking77, CLINC150 at 0.5–1.8%) or by weak rule-keyword affinity (Snips at 14.3% on 7 labels; AG News at 25.9% on 4 balanced classes). Transition depths in the extended suite range from 250 outcomes (TREC-6, ATIS, HWU64, Banking77, CLINC150) to 1000 (AG News at its 1k-resolution checkpoint) to 2000 (Snips, where the rule beats the ML head at the first 250-outcome checkpoint and the advance gate fires only once ML overtakes). We release the reference implementation (the Dendra library), the full transition-curve dataset, and the benchmark harness that reproduces the result.
-
-We also apply Dendra's own ``CandidateHarness`` to the question of which `MLHead` to ship: four candidate sklearn estimators competing under the same paired-McNemar gate. The empirical winner depends on data shape — `LinearSVC` on mid-cardinality, `MultinomialNB` at the highest cardinality, the `LogisticRegression` incumbent held on tight-margin low-cardinality. The reference implementation exposes this as a configurable strategy.
-
-A second graduation rides along with the accuracy one: when the gate clears the $P_4 \to P_5$ transition, the lifecycle moves from LLM-class inference (hundreds of milliseconds to seconds per call, $10^{-4}$ to $10^{-2}$ dollars per call at typical API tiers) to in-process ML-head inference (sub-millisecond, essentially zero per-call cost). At production scales of $10^4$–$10^8$ classifications per day, the same gate that bounds Type-I error also entitles the operator to skip the LLM tier permanently. §10.3 lays out the cost-and-latency extrapolation.
-
-The gate primitive itself is direction-agnostic: the same paired-test machinery that justifies advancement also justifies demotion when accumulated evidence shows the rule has reclaimed the lead, and extends naturally to additional safety axes (latency, cost, coverage) under a union-bound joint guarantee. We discuss this generalization in §10.
+We release the reference implementation (the Dendra library), the full transition-curve dataset, the benchmark harness, and an `MLHead` candidate-selection harness that picks among sklearn estimators under the same gate.
 
 **Keywords.** classification, graduated autonomy, rule-to-ML migration, paired McNemar test, production ML, LLM cascading, statistical gating, MLOps.
 
@@ -60,7 +54,7 @@ We make four contributions:
 
 2. **A safety theorem** (Theorem 1, §3) bounding the per-transition probability of worse-than-rule behavior by the Type-I error of a paired McNemar test on the gated transition. The paired test is the methodologically correct choice when two classifiers are evaluated on the same row stream (Dietterich, 1998), and the bound is tighter than the unpaired alternative.
 
-3. **Empirical transition curves on eight public benchmarks across four text domains** (intent classification, question categorization, news topics, programming-language detection) plus one image bench (CIFAR-10, §5.7) demonstrating the lifecycle generalizes beyond text. Three regimes emerge — *rule near-optimum*, *rule usable*, *rule at floor* — driven by cardinality and rule-keyword affinity. Under the paired McNemar gate at $\alpha = 0.01$, transition depths in the suite range from 250 outcomes to 2000. §5 reports the curves; §6 lays out the regime taxonomy.
+3. **Empirical transition curves on eight public benchmarks across four text domains** (intent classification, question categorization, news topics, programming-language detection) plus one image bench (CIFAR-10, §5.7) demonstrating the lifecycle generalizes beyond text. Three regimes emerge: *rule near-optimum* (codelangs), *rule usable* (ATIS, TREC-6), *rule modal-fallback under sorted splits* (Banking77, HWU64, CLINC150, Snips). The third regime is partially a property of HuggingFace split ordering rather than benchmark intrinsics; we report shuffle-sensitivity in §5.3 (Table 4b). Under the paired McNemar gate at $\alpha = 0.01$, transition depths in the suite range from 250 outcomes to 2000. §5 reports the curves; §6 lays out the regime taxonomy.
 
 4. **An open-source reference implementation** (the Dendra Python library) with the transition-curve dataset, the benchmark harness, and signed Apache 2.0 licensing on the client SDK so practitioners can adopt the primitive in commercial workloads.
 
@@ -112,6 +106,19 @@ The same paired-test machinery we use for advancement reverses cleanly for demot
 
 Empirical characterization of the demotion-curve analog of the transition curves we report (how much drift accumulates before the gate fires) is follow-on research; here we establish that the primitive is direction-agnostic and the safety theorem (§3.3, Remark) applies symmetrically.
 
+**Head-to-head comparison.** Against the four named alternatives a practitioner is most likely to weigh against Dendra:
+
+| Property (on a Banking77-shape site) | Dendra (this work) | FrugalGPT (Chen et al. 2024) | RouteLLM (Ong et al. 2024) | Raw ML-from-day-one | Ad-hoc thresholding |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Needs labels at day 1? | no | no | yes (preference data) | yes | no |
+| Statistical guarantee on transitions? | yes (paired McNemar, $\alpha$-bounded) | no | no (learned router) | n/a | no |
+| Eventually graduates off LLM? | yes ($P_4 \to P_5$) | no (cascade is permanent) | no (router is permanent) | n/a (no LLM) | no |
+| Rule safety floor? | yes (structural, $P_0$ through $P_4$) | no | no | no | partial (manual) |
+| Sub-millisecond final state? | yes (in-process sklearn at $P_5$) | no (LLM in critical path) | no (LLM in critical path) | yes | depends |
+| Per-site lifetime decision? | yes (one decorator per site) | per-call routing | per-call routing | per-site training run | per-site tuning |
+
+**Table.** *Head-to-head feature comparison.* Cascade routing (FrugalGPT) and learned routing (RouteLLM) optimize inference-time selection among an already-trained model pool; both keep the LLM tier permanently in the critical path. Raw ML-from-day-one bypasses the cold-start problem only when day-one labels exist. Ad-hoc thresholding is what most production code defaults to without a primitive. Dendra is the only entry that combines a day-zero rule floor, a Type-I-bounded statistical gate, and an explicit graduation off the LLM tier.
+
 ---
 
 ## 3. Formal Framework
@@ -150,6 +157,47 @@ Three knobs control how strict the answer must be: the significance level $\alph
 The paired McNemar test rejects "$A$ and $B$ have equal accuracy" at significance level $\alpha$ when the two-sided exact binomial $p$-value of $\min(b, c)$ under the null $\text{Binomial}(b + c, 0.5)$ is below $\alpha$. The gate $G(\mathcal{D}) = $ `advance` iff $b > c$ and $p < \alpha$ and $b + c \ge n_{\min}$.
 
 The minimum-pair condition $n_{\min}$ (we use $n_{\min} = 200$) prevents a runaway low-volume rejection. The directional condition $b > c$ ensures the test only advances when the candidate is *the better* classifier, not merely when the two differ.
+
+```
+Algorithm 1: paired-McNemar gate
+Input:  rule_correct[1..n], ml_correct[1..n]   # paired 0/1 arrays
+        alpha                                  # significance level
+        n_min                                  # minimum paired count
+Output: (decision, p, b, c)                    # decision in {advance, hold}
+
+  b = count(i : rule_correct[i] = 0 and ml_correct[i] = 1)   # ml right, rule wrong
+  c = count(i : rule_correct[i] = 1 and ml_correct[i] = 0)   # rule right, ml wrong
+  n_paired = b + c
+  if n_paired < n_min:
+      return (hold, 1.0, b, c)
+  k = min(b, c)
+  p = 2 * BinomialCDF(k; n_paired, 0.5)        # two-sided exact binomial
+  if b > c and p < alpha:
+      return (advance, p, b, c)
+  return (hold, p, b, c)
+```
+
+Algorithm 1 is the gate, evaluated once per checkpoint on the most-recent paired-correctness window. Algorithm 2 wraps it in the lifecycle's per-phase advance / hold / demote logic:
+
+```
+Algorithm 2: lifecycle phase advance
+Input:  phase                                   # current lifecycle phase
+        rule_correct[1..n], ml_correct[1..n]    # paired 0/1 arrays
+        alpha, n_min
+Output: next_phase
+
+  (advance_decision, p_adv, b, c) = Algorithm1(rule_correct, ml_correct, alpha, n_min)
+  # demotion: same gate with the candidate's role inverted
+  (demote_decision,  p_dem, _, _) = Algorithm1(ml_correct,  rule_correct, alpha, n_min)
+
+  if phase is gated-advance-eligible and advance_decision = advance:
+      return phase + 1
+  if phase > P0 and demote_decision = advance:
+      return phase - 1                          # rule has reclaimed the lead
+  return phase                                  # hold
+```
+
+Both algorithms call the same exact-binomial primitive; demotion is a sign-flip of the candidate-versus-incumbent assignment, not a separate test. The gate is symmetric by construction (Theorem 1 below); this is the symmetry made operational.
 
 ### 3.3 Safety theorem
 
@@ -212,7 +260,7 @@ This construction is reproducible and *deliberately not cleverly-tuned*: we want
 
 The ML head for the §5.1 headline experiment is `dendra.ml.SklearnTextHead`: TF-IDF features with sublinear term-frequency, plus an L2-regularized logistic regression. Deliberately simple: a transformer would produce higher absolute accuracy but would conflate the *transition-curve shape* (the contribution) with the *ML ceiling* (well-studied elsewhere). Replication with a transformer is left to follow-on work.
 
-The reference implementation ships three additional sklearn-based text heads (`TfidfLinearSVCHead`, `TfidfMultinomialNBHead`, `TfidfGradientBoostingHead`) and one non-text head (`ImagePixelLogRegHead`, used for the §5.7 CIFAR-10 bench). §5.6 reports the autoresearch result that the empirical winner is data-shape-dependent: LinearSVC on mid-cardinality, MultinomialNB on the highest-cardinality, the LogReg incumbent held on tight-margin low-cardinality benchmarks. The transition-curve *shape* is consistent across choices in our suite — rule baseline flat, ML head rising, gate clearing within a known number of outcomes — but the absolute ML ceiling varies with head.
+The reference implementation ships three additional sklearn-based text heads (`TfidfLinearSVCHead`, `TfidfMultinomialNBHead`, `TfidfGradientBoostingHead`) and one non-text head (`ImagePixelLogRegHead`, used for the §5.7 CIFAR-10 bench). §5.6 reports the autoresearch result that the empirical winner is data-shape-dependent: LinearSVC on mid-cardinality, MultinomialNB on the highest-cardinality, the LogReg incumbent held on tight-margin low-cardinality benchmarks. The transition-curve *shape* is consistent across choices in our suite (rule baseline flat, ML head rising, gate clearing within a known number of outcomes), but the absolute ML ceiling varies with head.
 
 ### 4.4 Verdict simulation
 
@@ -234,7 +282,7 @@ This produces the *transition curve* (outcome volume against accuracy and agains
 
 ### 4.6 Reproducibility
 
-All code is at `https://github.com/axiom-labs-os/dendra` (Apache 2.0). All fixed seeds are documented in the benchmark JSONL output. The transition-curve dataset is released as `dendra-transition-curves-2026.jsonl` accompanying this paper. The benchmark harness ships in `src/dendra/research.py::run_benchmark_experiment` and the McNemar computation in `src/dendra/gates.py::McNemarGate`.
+All code is at `https://github.com/b-tree-labs/dendra` (Apache 2.0). All fixed seeds are documented in the benchmark JSONL output. The transition-curve dataset is released as `dendra-transition-curves-2026.jsonl` accompanying this paper. The benchmark harness ships in `src/dendra/research.py::run_benchmark_experiment` and the McNemar computation in `src/dendra/gates.py::McNemarGate`.
 
 ---
 
@@ -244,47 +292,47 @@ All code is at `https://github.com/axiom-labs-os/dendra` (Apache 2.0). All fixed
 
 We measure transition curves on eight public text benchmarks spanning four domains (intent classification, question categorization, news topics, programming-language detection) plus one image bench (CIFAR-10) reported separately in §5.7. Table 3 reports the headline numbers.
 
-| Benchmark | Domain | Labels | Rule acc | ML final | $b$ | $c$ | McNemar $p$ (final) | First clear ($p < 0.01$) |
+| Benchmark | Domain | Labels | Rule acc (seed=100, no shuffle) | ML @ first clear | ML @ 1k | ML final (full train) | First clear ($p < 0.01$) | Total outcomes to ML final |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| **codelangs** (Dendra 2026) | code | 12 | 87.8% | **97.8%** | 16 | 2 | $1.3 \times 10^{-3}$ | **400** |
-| **ATIS** (Hemphill et al. 1990) | flight booking | 26 | 70.0% | **88.7%** | 191 | 24 | $1.8 \times 10^{-33}$ | **250** ($p = 1.6 \times 10^{-3}$) |
-| **TREC-6** (Li & Roth 2002) | question type | 6 | 43.0% | **85.2%** | 216 | 5 | $2.6 \times 10^{-57}$ | **250** ($p = 1.1 \times 10^{-16}$) |
-| **AG News** (Zhang et al. 2015) | news topics | 4 | 25.9% | **91.8%** | 5,234 | 229 | $\approx 0$ | **1,000** ($p \approx 10^{-127}$) |
-| **Snips** (Coucke et al. 2018) | voice assistant | 7 | 14.3% | **98.2%** | 1,175 | 0 | $\approx 0$ | **2,000** |
-| **HWU64** (Liu et al. 2019) | multi-domain assistant | 64 | 1.8% | **83.6%** | 881 | 1 | $< 10^{-260}$ | **250** ($p = 2.0 \times 10^{-3}$) |
-| **Banking77** (Casanueva et al. 2020) | banking | 77 | 1.3% | **87.7%** | 2,665 | 4 | $\approx 0$ | **250** ($p = 3.8 \times 10^{-11}$) |
-| **CLINC150** (Larson et al. 2019) | multi-domain + OOS | 151 | 0.5% | **81.9%** | 4,478 | 6 | $\approx 0$ | **250** ($p = 6.9 \times 10^{-18}$) |
+| **codelangs** (Dendra 2026) | code | 12 | 87.8% | 97.1% | *(extract)* | **97.8%** | **400** | 553 |
+| **ATIS** (Hemphill et al. 1990) | flight booking | 26 | 70.0% | 75.6% | 81.9% | **88.7%** | **250** | 4,978 |
+| **TREC-6** (Li & Roth 2002) | question type | 6 | 43.0% | 60.6% | 70.8% | **85.2%** | **250** | 5,452 |
+| **AG News** (Zhang et al. 2015) | news topics | 4 | 25.9% | 46.9% | 46.9% | **91.8%** | **1,000** | 120,000 |
+| **Snips** (Coucke et al. 2018) | voice assistant | 7 | 14.3% | 27.4% | 0.0% | **98.2%** | **2,000** | 13,084 |
+| **HWU64** (Liu et al. 2019) | multi-domain assistant | 64 | 1.8% | 2.7% | 10.5% | **83.6%** | **250** | 8,954 |
+| **Banking77** (Casanueva et al. 2020) | banking | 77 | 1.3% | 2.6% | 8.8% | **87.7%** | **250** | 10,003 |
+| **CLINC150** (Larson et al. 2019) | multi-domain + OOS | 151 | 0.5% | 1.6% | 5.2% | **81.9%** | **250** | 15,250 |
 
-**Table 3.** *Headline transition-curve results across the eight-benchmark suite.* Sorted by descending rule baseline. Every benchmark crosses paired-McNemar significance at $\alpha = 0.01$, with first-clear transition depths ranging from 250 outcomes (six of eight benchmarks at their respective checkpoint resolutions) to 2,000 (Snips, where the rule's 14.3% accuracy beats the ML head at the 250-outcome checkpoint and the advance gate fires only after ML overtakes). The discordant-pair counts ($b$ vs $c$) reveal the magnitude of each win: on CLINC150's final checkpoint ML is right and rule wrong on 4,478 of 4,484 discordant rows.
+**Table 3.** *Headline transition-curve results across the eight-benchmark suite.* Sorted by descending rule baseline. Every benchmark crosses paired-McNemar significance at $\alpha = 0.01$. The "ML @ first clear" column reports the ML head's test accuracy at the gate-fire moment (separately from the asymptote at training-set exhaustion); "ML final (full train)" is the asymptote after the entire training corpus is consumed. Banking77, HWU64, CLINC150, and Snips at seed=100 with the as-shipped HuggingFace split produce single-label (modal-fallback) rules. Their `Rule acc` column equals chance (1/k). Under random shuffling of the training stream the rule recovers to 17 to 75 percent depending on benchmark (Table 4b). The chance-accuracy floor on these four rows is therefore a property of stream ordering at seed=100, not of the benchmark itself. Snips is the one outlier on first-clear depth: the as-shipped rule's 14.3% accuracy beats the ML head at the 250-outcome checkpoint, and the advance gate fires only at 2,000 outcomes after ML overtakes.
 
 Two views of the data are useful and pull complementary signals.
 
-![Figure 1. Transition curves on the four headline benchmarks (ATIS, HWU64, Banking77, CLINC150). Rule accuracy (grey, flat) and ML-head accuracy (blue, rising) on a log x-axis; the dashed red vertical marks the first paired-McNemar gate fire at p < 0.01. The four extended benchmarks (codelangs, TREC-6, AG News, Snips) are reported in §5.2 by regime.](results/figure-1-transition-curves.svg)
+![Figure 1. Transition curves across the eight-benchmark suite, sorted by descending rule baseline. Top row (rule has fighting chance): codelangs, ATIS, TREC-6, AG News. Bottom row (rule at the modal-fallback floor under the as-shipped HuggingFace ordering): Snips, HWU64, Banking77, CLINC150. Rule accuracy (grey, flat) and ML-head accuracy (blue, rising) on a log x-axis; the dashed red vertical marks the first paired-McNemar gate fire at p < 0.01. Shuffle-sensitivity for the bottom-row rules is reported in Table 4b.](results/figure-1-transition-curves.svg)
 
 ![Figure 2. Paired McNemar p-value trajectories per benchmark, log-scale y-axis. The dashed red horizontal at alpha = 0.01 is the gate threshold. Every trajectory crosses it; the rate of descent reveals the relative effect size per benchmark.](results/figure-2-pvalue-trajectories.svg)
 
 ### 5.2 Three regimes by cardinality and rule-keyword affinity
 
-Reading Table 3 by rule baseline alone separates the suite into three operationally meaningful regimes that are governed by *two* axes — label cardinality, and how cleanly the label boundary admits stable lexical signals (rule-keyword affinity, reported relative to chance accuracy $1/k$).
+Reading Table 3 by rule baseline alone separates the suite into three operationally meaningful regimes that are governed by *two* axes: label cardinality, and how cleanly the label boundary admits stable lexical signals (rule-keyword affinity, reported relative to chance accuracy $1/k$).
 
-**Regime I — *rule near optimum* (codelangs).** With 12 programming-language labels and rigid syntactic keywords (`def`, `function`, `module`, `subroutine`, `package`), the auto-rule lands at 87.8% — within ten points of the ML ceiling at 97.8%. At the first checkpoint (100 outcomes) rule and ML differ by only 1.4 pp; the McNemar gate does not clear until 400 outcomes. The practitioner question shifts from *"when should the rule graduate?"* to *"is graduation worth the engineering at all?"* The lifecycle still helps — audit chain, structural fallback, drift-detection symmetry — but the *transition curve* claim collapses to "ML edges past the rule asymptotically" rather than "ML decisively replaces the rule."
+**Regime I, *rule near optimum* (codelangs).** With 12 programming-language labels and rigid syntactic keywords (`def`, `function`, `module`, `subroutine`, `package`), the auto-rule lands at 87.8%, within ten points of the ML ceiling at 97.8%. At the first checkpoint (100 outcomes) rule and ML differ by only 1.4 pp; the McNemar gate does not clear until 400 outcomes. The practitioner question shifts from *"when should the rule graduate?"* to *"is graduation worth the engineering at all?"* The lifecycle still helps (audit chain, structural fallback, drift-detection symmetry), but the *transition curve* claim collapses to "ML edges past the rule asymptotically" rather than "ML decisively replaces the rule."
 
-**Regime II — *rule usable* (ATIS, TREC-6).** Mid-cardinality (6–26 labels) with strong-to-moderate keyword affinity. ATIS at 70.0% rule has 18× chance accuracy; TREC-6 at 43.0% has 2.6× chance. The rule is shippable. ML decisively wins (88.7% on ATIS, 85.2% on TREC-6) and the McNemar gate clears at the very first checkpoint with extreme p-values ($p \approx 10^{-33}$ on ATIS at end-of-training, $\approx 10^{-16}$ at the first 250-outcome checkpoint on TREC-6). This is the canonical "rule today, gated graduation tomorrow" case the lifecycle was designed for.
+**Regime II, *rule usable* (ATIS, TREC-6).** Mid-cardinality (6 to 26 labels) with strong-to-moderate keyword affinity. ATIS at 70.0% rule has 18× chance accuracy; TREC-6 at 43.0% has 2.6× chance. The rule is shippable. ML decisively wins (88.7% on ATIS, 85.2% on TREC-6) and the McNemar gate clears at the very first checkpoint with extreme p-values ($p \approx 10^{-33}$ on ATIS at end-of-training, $\approx 10^{-16}$ at the first 250-outcome checkpoint on TREC-6). This is the canonical "rule today, gated graduation tomorrow" case the lifecycle was designed for.
 
-**Regime III — *rule at floor* (Snips, AG News, HWU64, Banking77, CLINC150).** The rule is at-or-near chance from day one. Two distinct paths get a benchmark into this regime:
+**Regime III, *rule starts at the modal-class floor* (HWU64, Banking77, CLINC150 at high cardinality; Snips, AG News, when the as-shipped split is sorted by label).** At seed=100 with these splits the auto-rule's seed window is captured by a single class and the rule reduces to predict-modal. With shuffled training streams the rule recovers; on Snips, the recovery is dramatic (75 percent on the test set, vs 14 percent under the as-shipped order). The lifecycle handles both cases the same way: the rule is the audit floor regardless of its accuracy. Practitioners deciding whether to ship a rule on day one should not infer "this benchmark is hopeless for keyword rules" from the as-shipped baseline alone. Two distinct paths get a benchmark into this regime:
 
-- *High cardinality.* HWU64 (64 labels), Banking77 (77 labels), CLINC150 (151 labels) — the auto-rule's modal-fallback is non-modal under uniform class distribution, and a 100-example seed cannot possibly cover the label space. ML climbs from single-digit-to-low-double-digit accuracy at 1k outcomes (5.2% on CLINC150, 8.8% on Banking77, 10.5% on HWU64) to 81.9–87.7% at training-set exhaustion.
-- *Weak rule-keyword affinity*, even at low cardinality. Snips has only 7 labels — lower than ATIS — but the rule sits at 14.3%, exactly chance. Snips intents like *AddToPlaylist*, *BookRestaurant*, *RateBook* lack a single distinguishing word the auto-rule's TF-IDF keyword pass can reach for. AG News at 4 labels and 25.9% rule (chance = 25%) is the same shape: the rule barely exceeds always-predict-the-modal-class. Cardinality alone does not determine the regime; keyword affinity is an independent axis.
+- *High cardinality.* HWU64 (64 labels), Banking77 (77 labels), CLINC150 (151 labels). The auto-rule's modal-fallback is non-modal under uniform class distribution, and a 100-example seed cannot possibly cover the label space. ML climbs from single-digit-to-low-double-digit accuracy at 1k outcomes (5.2% on CLINC150, 8.8% on Banking77, 10.5% on HWU64) to 81.9 to 87.7% at training-set exhaustion.
+- *Weak rule-keyword affinity at the as-shipped order*, even at low cardinality. Snips has only 7 labels (lower than ATIS) but the rule sits at 14.3%, exactly chance, on the as-shipped split. Snips intents like *AddToPlaylist*, *BookRestaurant*, *RateBook* lack a single distinguishing word the auto-rule's TF-IDF keyword pass can reach for in the seed window. AG News at 4 labels and 25.9% rule (chance = 25%) is the same shape: the rule barely exceeds always-predict-the-modal-class. Under random shuffles of the training stream the Snips rule recovers to 75% (Table 4b); the as-shipped floor is an artifact, not an intrinsic of the benchmark.
 
 The "transition depth" metric loses its narrative force in Regime III: the rule was never a viable baseline, and no team could have shipped a 1%-accurate (or chance-accuracy) keyword classifier as the user-visible decision in the first place. High-cardinality or low-affinity workloads in production start at Phase 2 with an off-the-shelf zero-shot LLM, or wait on hand-labeled training data before launching. Dendra's role here is cold-start substrate, not graduation: outcome logging from day one regardless of which decision-maker is in front, with an explicit migration path to a trained ML head once enough data accumulates.
 
-![Figure 3. Day-zero rule baseline (grey) vs final ML-head accuracy (blue), all eight benchmarks, sorted by rule baseline. Background tinting hints at absolute thresholds (green ≥ 50%, olive 20–50%, pink < 20%); the §6 taxonomy refines this with chance-relative classification — AG News at 25.9% is barely above its 25% chance baseline and belongs in Regime III alongside Snips and the high-cardinality benchmarks.](results/figure-3b-extended-regimes.svg)
+![Figure 3. Day-zero rule baseline (grey) vs final ML-head accuracy (blue), all eight benchmarks, sorted by rule baseline. Background tinting hints at absolute thresholds (green ≥ 50%, olive 20–50%, pink < 20%); the §6 taxonomy refines this with chance-relative classification. AG News at 25.9% is barely above its 25% chance baseline and belongs in Regime III alongside Snips and the high-cardinality benchmarks.](results/figure-3b-extended-regimes.svg)
 
 The three regimes correspond to different product conversations:
 
 - **Regime II user:** "Our rule works; should we replace it?" → "Yes, here is the statistical evidence; the McNemar gate would advance you within the first 250 outcomes."
 - **Regime III user (high cardinality or weak affinity):** "We need an N-way classifier and we don't have training data yet." → "Start at Phase 2 with a zero-shot LLM in front of Dendra's outcome-logging layer; the log it generates is the training-data source for the eventual ML head."
-- **Regime I user:** "Our rule works very well; is graduation even worth the engineering?" → "The McNemar gate eventually clears, but the lifecycle's value here is in audit, structural fallback, and drift symmetry — not in raw accuracy lift. Decide based on per-decision miscost."
+- **Regime I user:** "Our rule works very well; is graduation even worth the engineering?" → "The McNemar gate eventually clears, but the lifecycle's value here is in audit, structural fallback, and drift symmetry, not in raw accuracy lift. Decide based on per-decision miscost."
 
 ### 5.3 Seed-size sensitivity
 
@@ -297,7 +345,20 @@ The Regime III (rule at floor) story rests on a 100-example seed feeding `build_
 | Banking77 | 77 | 1.3% | 6.8% | +5.5 pp |
 | CLINC150 | 151 | 0.5% | 5.0% | +4.5 pp |
 
-**Table 4.** *Rule sensitivity to seed size.* Even with 10× more examples to inspect, the high-cardinality rules remain 75–85 percentage points below the ML ceiling. *Label cardinality*, not engineer effort, is the dominant variable for the high-cardinality cell of Regime III. (The Snips and AG News cases — Regime III by *weak keyword affinity* rather than cardinality — would not be helped by more examples either; the issue is that the label boundary doesn't reduce to lexical signals at all.)
+**Table 4.** *Rule sensitivity to seed size.* Even with 10× more examples to inspect, the high-cardinality rules remain 75 to 85 percentage points below the ML ceiling. *Label cardinality*, not engineer effort, is the dominant variable for the high-cardinality cell of Regime III. (The Snips and AG News cases, Regime III by *weak keyword affinity* rather than cardinality, would not be helped by more examples either: the issue is that the label boundary doesn't reduce to lexical signals at all in the as-shipped order.)
+
+A second sensitivity axis applies to the same rule construction. The auto-rule's seed window is the first 100 (text, label) pairs in the training stream, so its content depends on training-stream order. On HuggingFace splits sorted by label, the seed window is captured by a single class. Re-shuffling the training stream redraws the window from across the label space and changes the rule:
+
+| Benchmark | Labels | Paper rule (no shuffle) | Shuffle median | min | max | Δ |
+|---|---:|---:|---:|---:|---:|---:|
+| HWU64 | 64 | 1.8% | 27.1% | 23.2% | 31.9% | +25.4 pp |
+| Banking77 | 77 | 1.3% | 24.4% | 21.0% | 29.6% | +23.1 pp |
+| CLINC150 | 151 | 0.5% | 16.6% | 15.4% | 23.8% | +16.1 pp |
+| Snips | 7 | 14.3% | **75.3%** | 68.8% | 77.3% | **+61.0 pp** |
+| AG News | 4 | 25.9% | 40.0% | 37.0% | 46.1% | +14.1 pp |
+| TREC-6 | 6 | 43.0% | 38.6% | 17.6% | 48.2% | -4.4 pp |
+
+**Table 4b.** *Rule sensitivity to training-stream order.* Ten random shuffles per benchmark, seed=100. Five of six benchmarks where the as-shipped rule was at chance recover meaningfully under shuffling; Snips recovers from 14.3% to 75.3%. TREC-6 is noisier under shuffle (range 17.6% to 48.2%) because TREC-6's natural ordering happens to be favorable. The as-shipped paper rule is not the only rule a practitioner would build; it is the rule that the canonical 100-example seed produces under the canonical HuggingFace download order. Practitioners with control over the seed should expect substantially higher rule baselines on the high-cardinality cluster.
 
 ### 5.4 Paired vs unpaired test
 
@@ -318,7 +379,7 @@ The methodological reason to prefer the paired test still stands. Dietterich (19
 
 ### 5.5 Phase-1 LLM-shadow capability
 
-The headline of §5.1 is the rule-to-ML transition that drives the curve. Two follow-on questions branch off from there. The first (this section) is *which language model can serve as the model-classifier slot* — the Phase 1 / Phase 2 cell of the lifecycle, which is unrelated to the §5.1 transition curve but answers the practitioner question "what should I shadow alongside the rule on day one?" The second (§5.6) is *which ML head should the trained-classifier slot be filled with?* — the head-choice problem we addressed via autoresearch.
+The headline of §5.1 is the rule-to-ML transition that drives the curve. Two follow-on questions branch off from there. The first (this section) is *which language model can serve as the model-classifier slot*: the Phase 1 / Phase 2 cell of the lifecycle, which is unrelated to the §5.1 transition curve but answers the practitioner question "what should I shadow alongside the rule on day one?" The second (§5.6) is *which ML head should the trained-classifier slot be filled with?*: the head-choice problem we addressed via autoresearch.
 
 Phase 1 (`MODEL_SHADOW`) lets a language model run alongside the rule with zero risk: the model's prediction is logged but the rule still decides. Whether that model can subsequently graduate to Phase 2, where it becomes the primary decision-maker, depends on its zero-shot accuracy on the target task. We probed three locally-hosted models on ATIS (26 labels) and one on Banking77 (77 labels), 100-row samples, single default prompt.
 
@@ -340,7 +401,7 @@ Two caveats. First, our probes use a single default prompt; per-model prompt tun
 
 ### 5.6 Autoresearch on MLHead choice (dogfood)
 
-The §9.5 `CandidateHarness` exists for the autoresearch use case — agents, AutoML pipelines, or research workflows that propose candidate classifiers and want a statistically-grounded gate to pick winners. We applied it to a problem we had ourselves: *which MLHead should the reference implementation pick for a given dataset?*
+The §9.5 `CandidateHarness` exists for the autoresearch use case: agents, AutoML pipelines, or research workflows that propose candidate classifiers and want a statistically-grounded gate to pick winners. We applied it to a problem we had ourselves: *which MLHead should the reference implementation pick for a given dataset?*
 
 We registered four candidates (TF-IDF features in common, varying classifier estimator): `TfidfLogReg` (the §4.3 incumbent), `TfidfLinearSVC`, `TfidfMultinomialNB`, `TfidfGradientBoosting`. The harness ran each on the train split, evaluated on the test split, and applied the same paired-McNemar gate at $\alpha = 0.01$ that gates the lifecycle's phase transitions. The winner per benchmark is the accuracy-leading challenger that clears the gate against the incumbent; otherwise the incumbent is held.
 
@@ -357,7 +418,7 @@ We registered four candidates (TF-IDF features in common, varying classifier est
 
 **Table 7.** *Autoresearch winners by benchmark.* Three patterns emerge. First, mid-cardinality benchmarks (26 ≤ k ≤ 100) consistently favor `TfidfLinearSVC`. Second, the highest-cardinality benchmark favors `TfidfMultinomialNB` (the Bayesian prior helps when each class has fewer training examples). Third, low-cardinality benchmarks fail to clear the gate against the incumbent: codelangs because the top three candidates (LogReg, LinearSVC, GradientBoosting) cluster within ~0.7 pp on a small test set (139 rows) leaving few discordant pairs; Snips and AG News because no challenger separates from the incumbent at $\alpha = 0.01$; TREC-6's LinearSVC was empirically +2.6 pp better but at $p = 0.019$ above $\alpha$.
 
-![Figure 6. Autoresearch picks shape-dependent MLHead winners across benchmarks. Cardinality on the x-axis (log), winning-candidate accuracy on the y. Marker shape encodes which head won — different shapes for different cardinality regimes.](results/figure-6-autoresearch-winners.svg)
+![Figure 6. Autoresearch picks shape-dependent MLHead winners across benchmarks. Cardinality on the x-axis (log), winning-candidate accuracy on the y. Marker shape encodes which head won, with different shapes for different cardinality regimes.](results/figure-6-autoresearch-winners.svg)
 
 The finding is structural: **there is no universally best MLHead for paired-correctness intent classification.** The right choice is a function of data shape (cardinality, samples-per-class density, class-balance skew). The reference implementation exposes this as a configurable strategy: `dendra.MLHeadStrategy` is a Protocol, `CardinalityMLHeadStrategy` is the shipped default with thresholds informed by Table 7, and `head_strategy=` plumbs into `LearnedSwitch` so the strategy is consulted lazily on first ML-head access. The strategy is itself a Dendra rule applied to Dendra: a hand-coded threshold rule today, with a clear graduation path (gate-driven head-selection learned over the autoresearch trajectory) as the v1.x story.
 
@@ -368,7 +429,7 @@ All eight benchmarks above are text-shaped. The lifecycle, gates, and theorem ar
 The CIFAR-10 setup uses two pieces shipped in v1.0:
 
 - **Rule:** ``dendra.image_rules.build_color_centroid_rule`` (companion to ``dendra.benchmarks.rules.build_reference_rule`` for text). For each class in the seed window, computes the mean RGB triple; predicts an unseen image by L2-nearest centroid. Cheap, deterministic, no training; the image analog of a keyword rule.
-- **ML head:** ``dendra.ml.ImagePixelLogRegHead``. Flattens the 32×32×3 uint8 image to a 3072-dim float vector (normalized to [0, 1]), fits a multinomial logistic regression. sklearn-only — no torch dependency on the v1.0 install path.
+- **ML head:** ``dendra.ml.ImagePixelLogRegHead``. Flattens the 32×32×3 uint8 image to a 3072-dim float vector (normalized to [0, 1]), fits a multinomial logistic regression. sklearn-only, no torch dependency on the v1.0 install path.
 
 Both objects satisfy the same protocols the text path uses; no lifecycle or gate code knows it is operating on images. The bench (1000 train rows + 200 test rows, deterministic seed) reports:
 
@@ -386,7 +447,7 @@ Both objects satisfy the same protocols the text path uses; no lifecycle or gate
 
 ![Figure 7. CIFAR-10 transition curve. Panel (a): rule flat at 16.2%, ML head rising from 19.4% to 28.2% as outcomes accumulate. Vertical dashed line marks the first checkpoint at which the paired McNemar gate fires at p < 0.01. Panel (b): paired McNemar p-value trajectory on log scale, crossing alpha = 0.01 at 250 outcomes.](results/figure-7-cifar10-transition.svg)
 
-The structural take-away: *the lifecycle generalizes without library-side changes.* Adding a new modality is a matter of plugging in a modality-appropriate rule and head — and both are public extension points (``register_ml_head``, ``TfidfHeadBase`` for text variants, plain duck-typed objects for everything else). Audio and video classification — and pretrained-embedding heads on images — are the natural follow-ons; we defer them to a companion paper.
+The structural take-away: *the lifecycle generalizes without library-side changes.* Adding a new modality is a matter of plugging in a modality-appropriate rule and head, and both are public extension points (``register_ml_head``, ``TfidfHeadBase`` for text variants, plain duck-typed objects for everything else). Audio and video classification, and pretrained-embedding heads on images, are the natural follow-ons; we defer them to a companion paper.
 
 ---
 
@@ -412,9 +473,9 @@ A fitted regression on the eight-benchmark sample is still under-powered, and we
 
 **Three regimes that fall out of this matrix:**
 
-- **Regime A — Rule has fighting chance** (strong-or-moderate keyword affinity). ATIS, codelangs, TREC-6. The interesting question is *when* graduation is justified. The McNemar gate fires fast when keyword affinity is moderate (TREC-6, $p \approx 10^{-16}$ at the first 250-outcome checkpoint) and slowly when keyword affinity is near-optimal (codelangs, where rule at 87.8% and ML at ~98% leave few discordant pairs and the gate clears at 400 outcomes).
-- **Regime A++ — Rule near optimum** (strong keyword affinity, low cardinality). codelangs only in our suite. The rule is competitive with ML throughout. Graduation produces a ~10pp lift; whether that lift justifies the engineering depends on per-decision cost. The lifecycle still helps — audit chain, structural fallback, drift-detection symmetry — but the *transition curve* claim collapses to "ML edges past the rule asymptotically" rather than "ML decisively replaces the rule."
-- **Regime B — Rule at floor** (weak keyword affinity OR high cardinality). HWU64, Banking77, CLINC150 (high cardinality drives the rule below chance because the auto-rule's modal-fallback is non-modal under uniform class distribution); Snips and AG News (low cardinality but the intent boundary doesn't reduce to keyword matches the auto-rule can extract). The rule is at-or-near chance from day one. Dendra's role here is cold-start substrate, not graduation: outcome logging while a higher-capacity decider (zero-shot LLM, trained ML head) runs in front, with a clear migration path. Snips is the canonical surprise: 7 labels, but cardinality alone does not save you when the underlying domain lacks stable lexical keywords.
+- **Regime A, Rule has fighting chance** (strong-or-moderate keyword affinity). ATIS, codelangs, TREC-6. The interesting question is *when* graduation is justified. The McNemar gate fires fast when keyword affinity is moderate (TREC-6, $p \approx 10^{-16}$ at the first 250-outcome checkpoint) and slowly when keyword affinity is near-optimal (codelangs, where rule at 87.8% and ML at ~98% leave few discordant pairs and the gate clears at 400 outcomes).
+- **Regime A++, Rule near optimum** (strong keyword affinity, low cardinality). codelangs only in our suite. The rule is competitive with ML throughout. Graduation produces a ~10pp lift; whether that lift justifies the engineering depends on per-decision cost. The lifecycle still helps (audit chain, structural fallback, drift-detection symmetry), but the *transition curve* claim collapses to "ML edges past the rule asymptotically" rather than "ML decisively replaces the rule."
+- **Regime B, Rule at floor** (weak keyword affinity OR high cardinality). HWU64, Banking77, CLINC150 (high cardinality drives the rule below chance because the auto-rule's modal-fallback is non-modal under uniform class distribution); Snips and AG News (low cardinality but the intent boundary doesn't reduce to keyword matches the auto-rule can extract). The rule is at-or-near chance from day one. Dendra's role here is cold-start substrate, not graduation: outcome logging while a higher-capacity decider (zero-shot LLM, trained ML head) runs in front, with a clear migration path. Snips is the canonical surprise: 7 labels, but cardinality alone does not save you when the underlying domain lacks stable lexical keywords.
 
 Operationally:
 
@@ -465,7 +526,7 @@ We list the limitations that reviewers should weigh.
 
 6. **The McNemar gate's safety guarantee is per-step.** The lifecycle's union-bound corollary gives $3\alpha$ across the three gated transitions per switch. At fleet scale (thousands of switches), a per-switch FPR at $0.01$ is a calibration knob the operator should set explicitly; we do not provide a fleet-aggregated guarantee.
 
-7. **One production case study; external customer deployments still pending.** §5.6's autoresearch on Dendra's own MLHead choice is a real application of the framework: the `CandidateHarness` (§9.5) ran on actual data, with real paired-McNemar evidence, producing a verifiable promotion decision (`TfidfLinearSVC` for mid-cardinality, `TfidfMultinomialNB` for the highest-cardinality benchmark, `TfidfLogReg` held elsewhere) that the reference implementation now ships as the default `CardinalityMLHeadStrategy`. That is dogfooded production use within the project itself. What we do *not* yet have is an external-customer case study — a third-party classification site with their own outcome plumbing and downstream signal. That is the natural follow-on.
+7. **One production case study; external customer deployments still pending.** §5.6's autoresearch on Dendra's own MLHead choice is a real application of the framework: the `CandidateHarness` (§9.5) ran on actual data, with real paired-McNemar evidence, producing a verifiable promotion decision (`TfidfLinearSVC` for mid-cardinality, `TfidfMultinomialNB` for the highest-cardinality benchmark, `TfidfLogReg` held elsewhere) that the reference implementation now ships as the default `CardinalityMLHeadStrategy`. That is dogfooded production use within the project itself. What we do *not* yet have is an external-customer case study: a third-party classification site with their own outcome plumbing and downstream signal. That is the natural follow-on.
 
 ---
 
@@ -502,7 +563,7 @@ classify_content(post)  # classifies AND fires the matching handler
 
 Calling `classify_content(post)` classifies the post and fires the matching handler in a single call: classification and routing are wired together at the decorator.
 
-Later, when downstream signals reveal whether the routing was right (a successful user appeal, a moderator override on the review queue, an external takedown notice, a regulator inquiry), `classify_content.switch.record_verdict(record_id, Verdict.CORRECT)` registers an outcome. The gate fires automatically every $N$ verdicts and graduates the underlying classifier when evidence justifies it. The work §1 listed as the typical cost of replacing a rule by hand — outcome plumbing, feature pipelines, training, deployment, shadow evaluation, monitoring, rollback — is what the decorator handles internally, the same way at every site.
+Later, when downstream signals reveal whether the routing was right (a successful user appeal, a moderator override on the review queue, an external takedown notice, a regulator inquiry), `classify_content.switch.record_verdict(record_id, Verdict.CORRECT)` registers an outcome. The gate fires automatically every $N$ verdicts and graduates the underlying classifier when evidence justifies it. The work §1 listed as the typical cost of replacing a rule by hand (outcome plumbing, feature pipelines, training, deployment, shadow evaluation, monitoring, rollback) is what the decorator handles internally, the same way at every site.
 
 The keyword rule (`if any(term in text for term in BANNED_TERMS): return "block"`, plus the three-report threshold for `"review"`) fails in predictable, expensive ways. A slur with a deliberate typo or zero-width character evades the banned-terms list and publishes; a coordinated brigade of three reports flags a legitimate post into the review queue; an emerging coded epithet sails through every keyword.
 
@@ -512,9 +573,9 @@ The decorator is the difference between a moderation rule that decays as languag
 
 The body of `classify_content` is the exact `if`/`else` you would have inlined; the decorator is the only addition. Everything else (outcome logging, gate evaluation, lifecycle migration, audit chain, circuit breaker) happens for free.
 
-**You write your rule once; Dendra upgrades it from a hand-written keyword check to a trained ML head, in production, with no rewrite.** On the §5 benchmarks, that upgrade is a 70.0% → 88.7% lift on ATIS and a 0.5–1.8% → 81.9–87.7% lift on the high-cardinality regime.
+**You write your rule once; Dendra upgrades it from a hand-written keyword check to a trained ML head, in production, with no rewrite.** On the §5 benchmarks the upgrade is a 70.0% → 88.7% lift on ATIS, a 43.0% → 85.2% lift on TREC-6, and a sustained climb from chance-floor to 81.9 to 87.7% on the high-cardinality cluster (Banking77, HWU64, CLINC150), measured against the as-shipped HuggingFace splits at seed=100. The high-cardinality numbers are sensitive to training-stream order (§5.4); the McNemar gate fires within 250 to 500 outcomes regardless of the rule's specific starting point.
 
-Other dimensions ride along. **Latency** drops from LLM-class (hundreds of milliseconds to seconds at Phase 1 / Phase 2, dominated by API round-trip and decode) to ML-class (under 2 ms at Phase 5, in-process sklearn predict) — a two-to-three-orders-of-magnitude reduction at the call site, measured on the reference implementation. **Per-call cost** drops from $\$10^{-4}$–$\$10^{-2}$ per LLM inference to essentially zero per ML-head call once the gate clears P5; §10.3 lays out the at-scale extrapolation. **Drift detection** ships in the same primitive (the gate fires in reverse when the rule reclaims the lead). And **the call site itself is permanent** — production code calls `classify_content(post)` on day one and on day thirty just the same. The *learned switch* on the inside (the tuple $S = (R, M, H, \phi)$ of §3.1) is what evolves.
+Other dimensions ride along. **Latency** drops from LLM-class (hundreds of milliseconds to seconds at Phase 1 / Phase 2, dominated by API round-trip and decode) to ML-class (under 2 ms at Phase 5, in-process sklearn predict): a two-to-three-orders-of-magnitude reduction at the call site, measured on the reference implementation. **Per-call cost** drops from $\$10^{-4}$ to $\$10^{-2}$ per LLM inference to essentially zero per ML-head call once the gate clears P5; §10.3 lays out the at-scale extrapolation. **Drift detection** ships in the same primitive (the gate fires in reverse when the rule reclaims the lead). And **the call site itself is permanent**. Production code calls `classify_content(post)` on day one and on day thirty just the same. The *learned switch* on the inside (the tuple $S = (R, M, H, \phi)$ of §3.1) is what evolves.
 
 ### 9.2 Storage and durability
 
@@ -530,11 +591,11 @@ The same-LLM-as-classifier-and-judge bias is enforced at construction time: the 
 
 The §5.6 finding (no universally best MLHead) is exposed as a configurable surface, not a hard-coded default:
 
-- **`MLHeadStrategy` Protocol** — `select(records) -> MLHead`. Consulted lazily by `LearnedSwitch` on first ML-head access when the user passes `head_strategy=...` instead of an explicit `ml_head=...`.
-- **`CardinalityMLHeadStrategy`** — the shipped default. Picks `TfidfMultinomialNB` for high-cardinality + low-density (CLINC150-shape), `TfidfLinearSVC` for mid-cardinality (ATIS / HWU64 / Banking77), and falls through to `TfidfLogReg` otherwise. Thresholds are constructor kwargs so organizations with their own empirical findings can override.
-- **`FixedMLHeadStrategy(head)`** — bypasses the picker. Useful when an institution has run their own `CandidateHarness` and decided.
-- **Factory registry** — `register_ml_head(name, factory)` and `make_ml_head(name)`. Built-in heads are pre-registered (`tfidf_logreg`, `tfidf_linearsvc`, `tfidf_multinomial_nb`, `tfidf_gradient_boosting`, `image_pixel_logreg`); strategies can refer to heads by name without importing the class. Plugins extending Dendra register their own heads at import time.
-- **`TfidfHeadBase`** — public extension class. Subclass and override `_build_classifier()` to ship a TF-IDF + custom-estimator head; the shared pipeline (feature extraction, fit-from-correct-records, predict-with-confidence, `state_bytes` / `load_state` round-trip) is inherited. The four built-in TF-IDF heads use this base; user-contributed heads (`TfidfXGBoostHead`, `TfidfSGDClassifierHead`, etc.) plug in the same way.
+- **`MLHeadStrategy` Protocol**: `select(records) -> MLHead`. Consulted lazily by `LearnedSwitch` on first ML-head access when the user passes `head_strategy=...` instead of an explicit `ml_head=...`.
+- **`CardinalityMLHeadStrategy`**: the shipped default. Picks `TfidfMultinomialNB` for high-cardinality + low-density (CLINC150-shape), `TfidfLinearSVC` for mid-cardinality (ATIS / HWU64 / Banking77), and falls through to `TfidfLogReg` otherwise. Thresholds are constructor kwargs so organizations with their own empirical findings can override.
+- **`FixedMLHeadStrategy(head)`**: bypasses the picker. Useful when an institution has run their own `CandidateHarness` and decided.
+- **Factory registry**: `register_ml_head(name, factory)` and `make_ml_head(name)`. Built-in heads are pre-registered (`tfidf_logreg`, `tfidf_linearsvc`, `tfidf_multinomial_nb`, `tfidf_gradient_boosting`, `image_pixel_logreg`); strategies can refer to heads by name without importing the class. Plugins extending Dendra register their own heads at import time.
+- **`TfidfHeadBase`**: public extension class. Subclass and override `_build_classifier()` to ship a TF-IDF + custom-estimator head; the shared pipeline (feature extraction, fit-from-correct-records, predict-with-confidence, `state_bytes` / `load_state` round-trip) is inherited. The four built-in TF-IDF heads use this base; user-contributed heads (`TfidfXGBoostHead`, `TfidfSGDClassifierHead`, etc.) plug in the same way.
 
 The strategy is itself a Dendra rule applied to Dendra: a hand-coded threshold today, with a clear graduation path (gate-driven head-selection learned over the autoresearch trajectory) sketched in §10.7.
 
@@ -641,7 +702,7 @@ Trivedy's (2026) "Better Harness" framing (that harness hill-climbing is the ite
 
 ### 10.6 Future work
 
-- **External-customer production case studies.** §5.6 reports one production case study on Dendra's own MLHead selection (the `CandidateHarness` running on the project's own data). External-customer deployments — third-party classification sites with their own outcome plumbing and downstream signal — are the natural extension and the strongest test of generalization beyond the laboratory benchmark suite.
+- **External-customer production case studies.** §5.6 reports one production case study on Dendra's own MLHead selection (the `CandidateHarness` running on the project's own data). External-customer deployments (third-party classification sites with their own outcome plumbing and downstream signal) are the natural extension and the strongest test of generalization beyond the laboratory benchmark suite.
 - **Bidirectional drift handling.** The v1 reference implementation ships an autonomous demotion path: the same paired-test machinery, called with the rule as the comparison target, fires when accumulated evidence shows the current decision-maker has been overtaken by the rule. The paper above proves the Type-I error symmetry. The open work is empirical characterization of demotion timing under realistic drift profiles (gradual vs adversarial, bounded vs unbounded distribution shift) and the demotion-curve analog of the transition curves we report.
 - **Multi-axis gating.** Production decisions involve more than one safety axis. Latency, cost, distributional coverage, and provider availability all admit paired observations and statistical tests in the same shape as the accuracy gate (Wilcoxon for continuous metrics, paired McNemar for binary indicators, threshold-based for constant-per-source quantities). The Gate protocol is direction- and axis-agnostic by construction; multi-axis support is a configuration extension, not a redesign. Joint safety follows from the union bound across axes ($k$ axes, each bounded by $\alpha$, give a per-cycle joint bound of $k\alpha$). A companion paper on the multi-axis safety story is the natural follow-on.
 - **Federated training.** Aggregating outcome pools across institutions without raw-data sharing. Does federation accelerate transitions?
@@ -662,7 +723,7 @@ This is the paper's thesis applied to its own internals. The strategy is the rul
 
 Rule-to-ML graduation is a recurring production pattern that has been left to per-project engineering effort, with no shared statistical primitive and no structural safety floor. Formalized as a six-phase graduated-autonomy lifecycle, it admits a paired McNemar gate at $\alpha = 0.01$ that bounds per-transition Type-I error. Empirical transition curves on eight public text benchmarks plus one image benchmark (CIFAR-10) demonstrate that the gate is tight at small outcome volumes: the original four-benchmark headline suite (ATIS, HWU64, Banking77, CLINC150) clears at 250 outcomes; the extended suite (Snips, TREC-6, AG News, codelangs) ranges from 250 to 2000.
 
-Three regimes emerge from the suite, organized along two axes (cardinality and rule-keyword affinity). A *rule-near-optimum* corner where the rule is competitive with ML throughout (codelangs); a *rule-usable* mid-range where ML decisively wins (ATIS, TREC-6); and a *rule-at-floor* regime where the rule is at-or-near chance from day one — driven either by high cardinality (HWU64, Banking77, CLINC150) or by weak rule-keyword affinity (Snips, AG News). The Dendra reference implementation, the transition-curve dataset, and the benchmark harness are released so that practitioners can adopt the primitive in commercial workloads and so that the empirical claim can be reproduced and extended.
+Three regimes emerge from the suite, organized along two axes (cardinality and rule-keyword affinity). A *rule-near-optimum* corner where the rule is competitive with ML throughout (codelangs); a *rule-usable* mid-range where ML decisively wins (ATIS, TREC-6); and a *rule-at-floor* regime where the rule is at-or-near chance from day one, driven either by high cardinality (HWU64, Banking77, CLINC150) or by weak rule-keyword affinity (Snips, AG News). The Dendra reference implementation, the transition-curve dataset, and the benchmark harness are released so that practitioners can adopt the primitive in commercial workloads and so that the empirical claim can be reproduced and extended.
 
 The framing is graduated autonomy. The contribution is a *primitive* (one library, one gate, one safety theorem) for a pattern that production codebases re-solve from scratch. The transition curve is the empirical anchor that lets a practitioner answer, before deployment: *when should this rule learn?*
 
@@ -781,4 +842,4 @@ Key implementation references:
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC. Apache-2.0 licensed._
+_Copyright (c) 2026 B-Tree Labs. Apache-2.0 licensed._
