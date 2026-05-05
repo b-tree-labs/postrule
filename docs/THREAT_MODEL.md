@@ -7,15 +7,16 @@ adopter who wants to know **what Dendra defends against by design**, **what
 is left to the operator**, and **what is honestly out of scope**.
 
 The document is conservative: where a mitigation is implemented in code,
-it cites the file. Where a mitigation is *aspirational* or expected but
-not yet implemented, it says so explicitly with a `[TODO]` marker rather
-than overclaiming.
+it cites the file. Where a mitigation is planned for a later release,
+it is marked `[v1.1]` or `[v1.x]` so readers can distinguish what ships
+today from what is on the roadmap.
 
-Last reviewed: 2026-04-25 against `src/dendra/` at HEAD.
+Last reviewed: 2026-05-04 against `src/dendra/` at HEAD.
 
 ## What ships today
 
-Dendra v1.0 is **a Python library** plus a small in-process CLI:
+Dendra v1.0 is **a Python library and CLI** plus a small hosted account
+surface for account creation, API keys, and billing:
 
 - **Client SDK** (Apache 2.0) — `import dendra` into your own process.
   Decorator, switch, gates, storage, adapters, verdict sources, autoresearch
@@ -24,11 +25,16 @@ Dendra v1.0 is **a Python library** plus a small in-process CLI:
   `dendra` CLI: `dendra analyze`, `dendra init`, `dendra roi`,
   `dendra bench`, `dendra plot`, `dendra quickstart`. **Runs locally
   in the user's process; not a network service.**
+- **Hosted account surface** — a Cloudflare-hosted dashboard
+  (`app.dendra.run`) and Worker (`api.dendra.run`) for account creation
+  (Clerk auth), API key issuance, and billing (Stripe). These exchange
+  metadata only; **no source code, prompt content, or labels are
+  transmitted** by the v1.0 client to any Dendra-operated service.
 
-There is **no Dendra hosted offering, dashboard, or remote analyzer
-service** in v1.0. Sections of this document that describe
-"SDK ↔ Analyzer" or "Hosted ↔ tenant" boundaries are forward-looking
-and marked `[TODO: not yet implemented]`.
+There is **no Dendra-hosted analyzer service** in v1.0 — the Analyzer
+runs only in the user's own process. Sections of this document that
+describe "SDK ↔ remote Analyzer" or "Hosted-analyzer ↔ tenant"
+boundaries are forward-looking and marked `[v1.1]`.
 
 ## Trust boundaries
 
@@ -41,15 +47,16 @@ authentication boundary, and no remote service** between the SDK
 and the Analyzer at v1.0 — they share the same process and the
 same trust domain.
 
-**Future-state (Hosted, post-v1.0):** if a Dendra-hosted analyzer is
-introduced, the boundary becomes:
+**Future-state (Hosted Analyzer, `[v1.1]`):** if a Dendra-hosted
+analyzer is introduced, the boundary becomes:
 
-- **Protocol:** `[TODO: not yet implemented]` (HTTPS over a REST or
-  gRPC API is the planned shape).
-- **Authentication:** `[TODO: not yet implemented]` (planned: API
-  key in a request header; OAuth/SSO integrations after).
-- **Transport security:** `[TODO: not yet implemented]` (TLS 1.3
-  is the planned floor).
+- **Protocol** `[v1.1]` — HTTPS over a REST API. Existing
+  `api.dendra.run` Worker is the natural host.
+- **Authentication** `[v1.1]` — API key in a request header (the
+  `dndr_live_…` keys already issued by the v1.0 dashboard apply
+  unchanged); OAuth/SSO integrations after.
+- **Transport security** `[v1.1]` — TLS 1.3 floor; Cloudflare-managed
+  certificates per the existing `*.dendra.run` zone.
 
 ### 2. Switch ↔ outcome-log data store
 
@@ -98,10 +105,23 @@ are agnostic to this choice.
 
 ### 4. Hosted ↔ tenant isolation
 
-`[TODO: not yet implemented]` — Dendra v1.0 has no Hosted offering.
-When one is introduced, this section will document the isolation
-strategy (logical / dedicated schema / dedicated instance) and the
-data-residency contract.
+The v1.0 hosted account surface (`api.dendra.run` Worker +
+`app.dendra.run` dashboard) handles account creation, API key
+issuance, and billing. It exchanges metadata only — **no source
+code, prompt content, or labels are transmitted by the v1.0 client
+to any Dendra-operated service.**
+
+Tenant isolation today is logical: each row in the `users`,
+`api_keys`, and `subscriptions` tables in the production D1 database
+carries a `user_id` foreign key, and every server-side route enforces
+the row-level filter from the authenticated session. There is no
+multi-tenant analyzer execution to isolate at v1.0 because the
+analyzer runs in the user's own process.
+
+**Hosted Analyzer (`[v1.1]`):** if a Dendra-hosted analyzer is
+introduced, this section will be revised to document the per-tenant
+isolation strategy (logical / dedicated schema / dedicated instance)
+and the data-residency contract.
 
 ## Threats considered and mitigations
 
@@ -113,7 +133,7 @@ data-residency contract.
 | Concurrent writers corrupt the outcome log | Medium | `FileStorage(lock=True)` (default) uses POSIX `flock` for serialization across processes + threads on a single host. `SqliteStorage` uses WAL mode. **NFS / SMB are not safe** — flock is unreliable across network filesystems; use a local disk or `SqliteStorage`. **Windows has no POSIX flock** — `FileStorage` falls back to a no-op lock and emits a one-time `UserWarning`; use `SqliteStorage` for cross-platform multi-process safety. |
 | Process crash mid-write loses outcomes | Medium | `FileStorage(fsync=True)` opts into per-write fsync (host-crash-durable, slower). Default `fsync=False` is kernel-buffer-durable (process-death-safe, host-crash window of typically a few seconds). `SqliteStorage(sync="NORMAL")` is the default; `sync="FULL"` for stricter durability. |
 | Storage backend outage takes the classifier offline | Medium | `ResilientStorage` wraps any primary backend with an in-memory fallback that drains on recovery. `degraded_writes` and `degraded_evictions` counters surface the fallback's activity so operators can see when the audit chain has been partially captured in memory only. |
-| Audit-chain tampering | Medium | **Append-only by convention** — `Storage.append_record` is the only documented mutation API; there is no public delete. JSONL files are line-append-only on disk; SqliteStorage uses an INSERT-only schema. **NOT cryptographically signed.** A privileged attacker with disk access can rewrite past records; this is **out of scope for v1.0**. Cryptographic tamper-evidence (hash-chain / signed records) is `[TODO: planned for a future release]` if compliance buyers require it. |
+| Audit-chain tampering | Medium | **Append-only by convention** — `Storage.append_record` is the only documented mutation API; there is no public delete. JSONL files are line-append-only on disk; SqliteStorage uses an INSERT-only schema. **NOT cryptographically signed.** A privileged attacker with disk access can rewrite past records; this is **out of scope for v1.0**. Cryptographic tamper-evidence (hash-chain / signed records) is on the `[v1.x]` roadmap if compliance buyers require it. |
 | PII / regulated content leaked via outcome log | Medium | `redact=` hook on `FileStorage` and `SqliteStorage` runs before the record enters the in-memory queue or the disk; raw input never touches storage when correctly wired. The hook is intentional seam, not default — operators must opt in (`docs/storage-backends.md` §"Redaction hook"). |
 | Self-judgment bias inflates accuracy in the gate | Medium | `JudgeSource(guard_against_same_llm=True)` (default) refuses construction if `judge_model` and `require_distinct_from` resolve to the same model. The same check fires from `LearnedSwitch.__init__` when both a `model=` and a `verifier=` are wired. Cited literature: G-Eval (NAACL 2023), MT-Bench (NeurIPS 2023), Chatbot Arena (ICML 2024). |
 | Statistical-gate noise yields false promotion | Medium | `McNemarGate(alpha=0.01, min_paired=200)` is the default — paired-McNemar with a 1% false-promotion-rate ceiling (5× the conventional 5%, accounting for family-wise testing across phases). `min_paired=200` floor refuses promotion until 200 paired correct-outcome records exist. `safety_critical=True` further caps the maximum reachable phase. |
@@ -138,7 +158,7 @@ data-residency contract.
   "Audit-chain tampering" above).
 - **Cryptographic tamper-evidence on the audit chain (v1.0).** The
   log is append-only by convention, not by signature. See the
-  `[TODO]` marker above for the planned mitigation.
+  `[v1.x]` marker in the audit-chain row above for the roadmap.
 - **DOS / abuse rate-limiting at the SDK layer.** Dendra is a
   library; the operator's request-throttling layer (queue, API
   gateway, web framework) is the right place for rate limits.

@@ -27,7 +27,7 @@ in the following ways without contacting us:
   the mark as generic ("our dendra"). Avoid suggesting official
   endorsement.
 - **Interoperability statements.** "Compatible with Dendra
-  v0.2+" is fine. "Dendra Certified" or "Powered by Dendra"
+  v1.0+" is fine. "Dendra Certified" or "Powered by Dendra"
   requires a license.
 - **Bug reports, support questions, and contributions.**
   Referring to the project by name is always fine.
@@ -65,10 +65,10 @@ not.
 
 ## Logo and visual identity
 
-No Dendra logo has been finalized as of this writing. When one
-is published, its use will be governed by the same rules as the
-word mark: fair use in descriptive references is fine; use
-implying endorsement or partnership requires a license.
+The Dendra wordmark and any associated logos under `brand/logo/`
+are governed by the same rules as the word mark: fair use in
+descriptive references is fine; use implying endorsement or
+partnership requires a license.
 
 ## Reporting misuse
 

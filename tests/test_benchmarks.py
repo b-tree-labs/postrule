@@ -1,4 +1,4 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
+# Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: LicenseRef-BSL-1.1
 """TDD spec for the close-the-loop benchmark + report harness (v1.1).
 
