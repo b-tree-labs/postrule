@@ -17,7 +17,7 @@ is current; minor-release cutoffs are announced in
 
 **Please do NOT open a public GitHub issue for security reports.**
 
-Email the maintainer directly: `ben@b-treeventures.com`.
+Email security findings to `security@b-treeventures.com`.
 
 Include:
 
