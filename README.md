@@ -70,8 +70,8 @@ you get every dollar of consulting back.
 ## Why I built this
 
 I'm Ben Booth — solo founder, sole inventor. CEO of SoilMetrix
-(my own company, AI-using software in production) and Research
-Scientist in Nuclear Engineering at UT. Both roles put me in the
+(my own company, AI-using software in production) and Nuclear 
+Engineering Software Researcher at UT. Both roles put me in the
 "I am the customer" seat: I run LLM-classified decision sites in
 production, and I needed a primitive that would let me graduate
 those sites off LLMs once a smaller in-process head had earned
