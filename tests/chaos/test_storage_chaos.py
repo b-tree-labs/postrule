@@ -343,7 +343,9 @@ class TestSymlinkLoops:
         bad.symlink_to(bad)
 
         store = FileStorage(base)
-        with pytest.raises((OSError, ValueError)):
+        # pathlib raises OSError on 3.10/3.13, RuntimeError on 3.11/3.12 for
+        # self-referential symlink loops; both are "fail loud" outcomes.
+        with pytest.raises((OSError, ValueError, RuntimeError)):
             store.append_record("bad", _rec())
 
 

@@ -59,7 +59,7 @@ def test_collector_post_synthetic_event(smoke_collector_target: str, is_producti
         "events": [
             {
                 "event_type": "analyze",
-                "timestamp": _dt.datetime.now(_dt.UTC).isoformat(),
+                "timestamp": _dt.datetime.now(_dt.timezone.utc).isoformat(),
                 "schema_version": 1,
                 "site_fingerprint": None,
                 "payload": {
@@ -135,7 +135,7 @@ def test_collector_rejects_unknown_event_type(
         "events": [
             {
                 "event_type": "totally_made_up",
-                "timestamp": _dt.datetime.now(_dt.UTC).isoformat(),
+                "timestamp": _dt.datetime.now(_dt.timezone.utc).isoformat(),
                 "schema_version": 1,
                 "site_fingerprint": None,
                 "payload": {"key": "value"},
