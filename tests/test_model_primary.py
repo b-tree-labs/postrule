@@ -1,4 +1,4 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
+# Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
 """Tests for Phase 2 (MODEL_PRIMARY) — LLM decides, rule is the floor."""

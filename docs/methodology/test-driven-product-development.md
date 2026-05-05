@@ -195,7 +195,7 @@ will need their own gate definitions — but the discipline transfers.
 ---
 
 *This methodology is the work of [Benjamin Booth](mailto:ben@b-treeventures.com)
-at B-Tree Labs (a B-Tree Ventures, LLC DBA). First public statement
+at B-Tree Labs (a B-Tree Labs DBA). First public statement
 2026. Cite as: Booth, B. (2026). "Test-Driven Product Development."
 [`dendra.run/methodology`](https://dendra.run/methodology).*
 

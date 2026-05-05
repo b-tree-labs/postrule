@@ -42,7 +42,7 @@ agreement.
 ## Trademark questions
 
 DENDRA and B-TREE LABS are trademarks (or pending trademarks) of
-B-Tree Ventures, LLC. Most uses you'd want are covered by
+B-Tree Labs. Most uses you'd want are covered by
 nominative fair use — see [`TRADEMARKS.md`](./TRADEMARKS.md).
 For anything beyond that, email `trademarks@b-treeventures.com`.
 
@@ -74,4 +74,4 @@ commercial-support engagements are handled ad hoc — email
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC (dba B-Tree Labs)._
+_Copyright (c) 2026 B-Tree Labs (dba B-Tree Labs)._

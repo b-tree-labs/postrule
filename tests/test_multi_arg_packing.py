@@ -1,4 +1,4 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
+# Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
 """Multi-arg / kwargs packing for ``@ml_switch`` and ``dendra.Switch``.

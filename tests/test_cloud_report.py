@@ -1,4 +1,4 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
+# Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: LicenseRef-BSL-1.1
 
 """Tests for ``dendra.cloud.report`` — Phase 1 markdown report card.

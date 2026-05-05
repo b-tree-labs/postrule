@@ -1,5 +1,5 @@
 Dendra
-Copyright (c) 2026 B-Tree Ventures, LLC (dba Axiom Labs)
+Copyright (c) 2026 B-Tree Ventures, LLC (dba B-Tree Labs)
 
 This product is split-licensed. Different source files carry
 different licenses; each file's own header is authoritative.
@@ -18,9 +18,9 @@ different licenses; each file's own header is authoritative.
 See LICENSE.md for the developer-oriented split map and
 LICENSING.md for a plain-English "can I use this?" guide.
 
-The DENDRA, TRANSITION CURVES, and AXIOM LABS names and logos
-are trademarks of B-Tree Ventures, LLC. The licenses above do
-not grant rights to use these marks; see TRADEMARKS.md.
+The DENDRA and B-Tree Labs names and logos are trademarks of
+B-Tree Ventures, LLC. The licenses above do not grant rights to
+use these marks; see TRADEMARKS.md.
 
 Commercial licensing that removes the BSL restrictions
 (e.g., to offer a hosted Dendra-derivative service) is

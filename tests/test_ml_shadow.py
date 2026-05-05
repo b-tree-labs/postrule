@@ -1,4 +1,4 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
+# Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
 """Tests for Phase 3 (ML_SHADOW) — ML head trains behind the primary path."""

@@ -1,4 +1,4 @@
-# Copyright (c) 2026 B-Tree Ventures, LLC
+# Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 """FastAPI integration sketch — `await sw.aclassify(...)` in a route.
 

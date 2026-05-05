@@ -482,7 +482,7 @@ src/dendra/
 ├── benchmarks/       # Public-benchmark loaders + reference rules
 └── cli.py            # `dendra` CLI entry point
 
-tests/                # 473 tests passing, 4 skipped (require optional extras)
+tests/                # 1290 tests passing, 3 skipped (require optional extras)
 docs/
 ├── autoresearch.md          # Production substrate for autoresearch loops
 ├── async.md                 # Async API + interop contract
@@ -555,7 +555,7 @@ Prescriptive analyzer (Phase 5 hazard diagnostics) ✓
 Account system MVP + `dendra login` ✓
 MCP server (`dendra mcp`) ✓
 VS Code extension (early v1.1) ✓
-800+ tests passing.
+1,290 tests passing.
 
 Wave 2 (cloud features + hosted analyzer + dashboards) — rolling
 through 2026; waitlist on [dendra.run](https://dendra.run).
@@ -582,11 +582,11 @@ pytest tests/
 
 ---
 
-_Copyright © 2026 B-Tree Ventures, LLC (dba B-Tree Labs).
+_Copyright © 2026 B-Tree Labs (dba B-Tree Labs).
 Split-licensed — Apache 2.0 on the client SDK, BSL 1.1 on
 Dendra-operated components; see [`LICENSE.md`](LICENSE.md).
 Dendra and B-Tree Labs are trademarks (or pending trademarks) of
-B-Tree Ventures, LLC. Neither the Apache 2.0 license nor the
+B-Tree Labs. Neither the Apache 2.0 license nor the
 BSL 1.1 license grants any right to use these marks — see
 [`TRADEMARKS.md`](TRADEMARKS.md) for the project's fair-use
 position._
