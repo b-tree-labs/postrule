@@ -69,16 +69,18 @@ you get every dollar of consulting back.
 
 ## Why I built this
 
-I'm Ben Booth — solo founder, sole inventor. CEO of SoilMetrix
-(my own company, AI-using software in production) and Nuclear 
-Engineering Software Researcher at UT. Both roles put me in the
-"I am the customer" seat: I run LLM-classified decision sites in
-production, and I needed a primitive that would let me graduate
-those sites off LLMs once a smaller in-process head had earned
-it on real traffic. Dendra is what I wrote because nothing on the
-shelf did this — and the formal grounding (paired-McNemar, the
-companion paper, the eight-benchmark suite) is what I needed
-before I'd trust it on my own systems.
+Every system I've worked on with classification decisions in
+production — ML at Uber, research-software work in nuclear
+engineering at UT, and AI-using software at SoilMetrix —
+repeated the same pattern: rules accumulate, larger models
+earn their seat over the rule, but graduating decisions *off*
+a larger model onto something smaller and cheaper needed a
+formal evidence gate that nothing on the shelf provided. I
+wrote Dendra because I needed it on my own systems. The
+companion paper formalizes the gate (paired-McNemar at every
+transition); the eight-benchmark suite stress-tests it.
+
+— Ben Booth
 
 ## What graduation looks like
 
@@ -498,8 +500,9 @@ docs/
 ## Paper
 
 *"When Should a Rule Learn? Transition Curves for Safe
-Rule-to-ML Graduation"* — published on arXiv. Outline +
-reproducible benchmark results at
+Rule-to-ML Graduation"* — companion paper, arXiv submission
+targeted for the v1.0 launch. Outline + reproducible benchmark
+results at
 [`docs/papers/2026-when-should-a-rule-learn/`](docs/papers/2026-when-should-a-rule-learn/).
 Annotated bibliography of related work at
 [`related-work-bibliography.md`](docs/papers/2026-when-should-a-rule-learn/related-work-bibliography.md).
@@ -573,12 +576,19 @@ pip install -e '.[dev,train,bench,viz]'
 pytest tests/
 ```
 
-## Contact
+## About B-Tree Labs
+
+B-Tree Labs is a DBA of B-Tree Ventures, LLC (Texas). Dendra is
+patent-protected (USPTO provisional filed 2026-04-21),
+dual-licensed (Apache 2.0 + BSL 1.1 with Change Date 2030-05-01
+→ Apache 2.0), and shipped under a formal release process — the
+company carries the work, not any single person.
 
 - GitHub: <https://github.com/b-tree-labs/dendra>
-- Maintainer: Benjamin Booth — `ben@b-treeventures.com`
-- B-Tree Labs: the commercial vehicle behind Dendra (a B-Tree
-  Ventures, LLC DBA).
+- Issues / questions: <https://github.com/b-tree-labs/dendra/issues>
+- Maintainer: Benjamin Booth ([@benjaminbooth](https://github.com/benjaminbooth))
+- Trademark / licensing inquiries — `trademarks@b-treeventures.com`,
+  `licensing@b-treeventures.com`
 
 ---
 
