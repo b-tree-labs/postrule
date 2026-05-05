@@ -585,7 +585,8 @@ dual-licensed (Apache 2.0 + BSL 1.1 with Change Date 2030-05-01
 company carries the work, not any single person.
 
 - GitHub: <https://github.com/b-tree-labs/dendra>
-- Maintainer: Benjamin Booth — `ben@b-treeventures.com`
+- Issues / questions: <https://github.com/b-tree-labs/dendra/issues>
+- Maintainer: Benjamin Booth ([@benjaminbooth](https://github.com/benjaminbooth))
 - Trademark / licensing inquiries — `trademarks@b-treeventures.com`,
   `licensing@b-treeventures.com`
 
