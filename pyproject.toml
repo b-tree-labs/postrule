@@ -31,7 +31,12 @@ maintainers = [
     { name = "Benjamin Booth", email = "ben@b-treeventures.com" },
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    # `dendra.cloud.{sync,registry,team_corpus}` make HTTP calls to the
+    # account/registry endpoints with `requests`. Hard dep because
+    # `import dendra.cloud.*` would otherwise fail at import time.
+    "requests>=2.28",
+]
 keywords = [
     "classification",
     "machine-learning",
