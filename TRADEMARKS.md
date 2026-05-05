@@ -1,6 +1,6 @@
 # Dendra Trademark Policy
 
-**DENDRA**, **TRANSITION CURVES**, and **AXIOM LABS** are
+**DENDRA** and **B-TREE LABS** are
 trademarks of B-Tree Ventures, LLC. This document describes what
 uses of those marks are permitted without advance permission
 ("fair use") and what uses require a commercial trademark license.
@@ -72,7 +72,7 @@ implying endorsement or partnership requires a license.
 
 ## Reporting misuse
 
-If you see the DENDRA name or an Axiom Labs brand used in a way
+If you see the DENDRA name or a B-Tree Labs brand used in a way
 that seems to imply endorsement or that could confuse users,
 please email `trademarks@b-treeventures.com`. Low-severity
 misuse is usually resolved with a polite note asking for
@@ -87,8 +87,8 @@ updated wording.
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC (dba Axiom Labs).
+_Copyright (c) 2026 B-Tree Ventures, LLC (dba B-Tree Labs).
 This document is licensed CC-BY 4.0; reproduce it with
 attribution as a starting template for your own trademark
-policy if useful. DENDRA, TRANSITION CURVES, and AXIOM LABS
+policy if useful. DENDRA and B-TREE LABS
 are trademarks of B-Tree Ventures, LLC._

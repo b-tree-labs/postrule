@@ -97,5 +97,3 @@ Total ops: 40000; elapsed: 2.16s; rate: 18495 ops/s
     40000    0.013    0.000    0.516    0.000 /Users/ben/Projects/UT_Computational_NE/dendra/src/dendra/storage.py:732(_serialize_line)
 40000/39766    0.012    0.000    0.419    0.000 /opt/homebrew/Cellar/python@3.13/3.13.12_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_abc.py:442(exists)
     40001    0.011    0.000    0.022    0.000 {built-in method builtins.sum}
-
-

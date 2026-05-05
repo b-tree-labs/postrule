@@ -1,0 +1,65 @@
+# Weekly refresh of landing/data/llm-prices.json from BerriAI/litellm's
+# community-maintained pricing catalog. Opens a PR if the file changes.
+# We do not auto-merge: pricing affects the public calculator and a
+# human should eyeball the diff. Add `automerge` label manually if you
+# want a future run to take it.
+name: refresh-llm-prices
+
+on:
+  schedule:
+    # Mondays at 14:00 UTC (~9 AM Central) — early in the week so a PR
+    # sits long enough for Ben to look at it before the weekend.
+    - cron: "0 14 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run refresh script
+        run: python3 scripts/update_llm_prices.py
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- landing/data/llm-prices.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No upstream pricing changes."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff -- landing/data/llm-prices.json | head -200
+          fi
+
+      - name: Open PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(pricing): refresh llm-prices.json from LiteLLM catalog"
+          title: "chore(pricing): refresh llm-prices.json from LiteLLM catalog"
+          branch: refresh/llm-prices
+          delete-branch: true
+          body: |
+            Automated weekly refresh of `landing/data/llm-prices.json`
+            from BerriAI/litellm's `model_prices_and_context_window.json`.
+
+            Source: https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json
+
+            **What changed:** see the diff below. Pricing data feeds the
+            public calculator on `dendra.run/#pricing` and the analyzer-demo
+            ROI section, so eyeball before merge.
+
+            To curate the provider list, edit `CURATED` at the top of
+            `scripts/update_llm_prices.py`.
+          labels: |
+            pricing
+            automated

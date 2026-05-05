@@ -22,6 +22,9 @@ eggs/
 .eggs/
 lib/
 lib64/
+# The Python `lib/` ignore above is too broad — exempt the dashboard's
+# JS source dir which lives at cloud/dashboard/lib/.
+!cloud/dashboard/lib/
 parts/
 sdist/
 var/
@@ -247,3 +250,4 @@ notes/sidequest-*.md
 # -----------------------------------------------------------------------------
 docs/working/
 docs/marketing/
+.wrangler/

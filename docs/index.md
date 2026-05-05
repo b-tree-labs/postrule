@@ -104,9 +104,9 @@ self-contained, runs without API keys, and walks one concept.
 
 ## Help + community
 
-- **GitHub issues:** <https://github.com/axiom-labs-os/dendra/issues>
+- **GitHub issues:** <https://github.com/b-tree-labs/dendra/issues>
 - **Email:** ben@b-treeventures.com
-- **Hosted-beta waitlist:** [dendra.dev](https://dendra.dev)
+- **Hosted-beta waitlist:** [dendra.run](https://dendra.run)
 
 ## License
 

@@ -115,12 +115,12 @@ record_triage_outcome = triage_ticket.record_outcome
 
 ### 4. Update `pyproject.toml` / `requirements.txt`
 
-Add `dendra>=0.2.0` as a dependency:
+Add `dendra>=1.0.0` as a dependency:
 
 ```toml
 dependencies = [
     ...,
-    "dendra>=0.2.0",
+    "dendra>=1.0.0",
 ]
 ```
 
@@ -129,7 +129,7 @@ taking a hard dep (preferred when the host is itself a library):
 
 ```toml
 [project.optional-dependencies]
-learning = ["dendra>=0.2.0"]
+learning = ["dendra>=1.0.0"]
 ```
 
 In that case, guard the import:

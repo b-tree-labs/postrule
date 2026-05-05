@@ -24,7 +24,7 @@ Status tags appear inline next to each item:
 
 ## 3. Hidden state, how to make it visible
 
-The auto-lift design (`docs/working/auto-lift-design-2026-04-27.md`) makes implicit dependencies explicit. v1 ships with full auto-lift across the categories below.
+The auto-lift mechanism makes implicit dependencies explicit. v1 ships with full auto-lift across the categories below.
 
 - **Globals** (`FEATURE_FLAGS["x"]`, module-level config): auto-liftable [v1]. The lifter generates a `_gather` that reads the global at dispatch time and packs the value into the evidence dataclass.
 - **`self.attr`** (instance state on a method): auto-liftable [v1]. Same mechanism; `self.<name>` reads land in `_gather`.
@@ -41,7 +41,7 @@ The auto-lift design (`docs/working/auto-lift-design-2026-04-27.md`) makes impli
 
 ## 5. Performance
 
-- **Cold-path overhead per dispatch**: roughly 1.67 µs p50 at Phase 0 with default config (writes an UNKNOWN outcome record per call). 0.50 µs p50 with `auto_record=False`. Measured on Apple M5 / Python 3.13. See `docs/benchmarks/v1-audit-benchmarks.md` for the full matrix.
+- **Cold-path overhead per dispatch**: roughly 1.00 µs p50 at Phase.RULE (`dispatch`); 0.96 µs p50 (`classify`); 1.50 µs p50 at Phase.ML_PRIMARY with the model stubbed. Measured on Apple M5 / Python 3.13. Full matrix + reproduce instructions in [`docs/benchmarks/perf-baselines-2026-05-01.md`](benchmarks/perf-baselines-2026-05-01.md).
 - **`_gather` adds I/O cost when evidence-lifted**. If the lifted classifier reads a database row in `_gather`, that read happens on every dispatch. The original function had the same read, so the cost is preserved, not added. For lifted code where the read is expensive, the bypass path (call the classifier directly with a pre-packed input) is the escape hatch.
 - **Async overhead profile**: every sync entry point has an async peer (`aclassify`, `adispatch`, `arecord_verdict`). Async language-model adapters (`OpenAIAsyncAdapter`, `AnthropicAsyncAdapter`, `OllamaAsyncAdapter`, `LlamafileAsyncAdapter`) ship in v1. A 3-judge committee runs roughly 3x faster under async parallel evaluation; see `examples/16_async_committee.py`.
 - **Per-dispatch evidence-gather benchmark** (Phase 0 sizing): pending. The auto-lift design flags this as an open question; concrete numbers land with the Phase 3 evidence lifter.

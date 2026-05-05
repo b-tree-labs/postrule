@@ -1,6 +1,6 @@
 # Dendra FAQ
 
-Answers to the questions people ask first. Updated 2026-04-22.
+Answers to the questions people ask first. Updated 2026-04-28.
 
 ## What is Dendra, in one sentence?
 
@@ -8,6 +8,73 @@ A Python decorator that wraps a classification function and lets
 it graduate from rule → model-shadow → language model → ML-shadow → ML —
 with a paired-proportion statistical gate at every transition
 and the original rule retained as the safety floor.
+
+## How does Dendra know when a switch is ready to graduate?
+
+Every gate evaluation is a paired-McNemar test on accumulated
+correctness data. When the ML head's correct-vs-rule margin
+clears α (default 0.01) on at least 30 paired samples, the gate
+fires and the switch advances a phase. The full statistical
+framework — including the regime taxonomy, the
+sequential-testing posture, and the eight-benchmark validation —
+is in the [companion paper](papers/2026-when-should-a-rule-learn/paper-draft.md)
+and the [Test-Driven Product Development methodology
+reference](methodology/test-driven-product-development.md).
+The short version: every graduation is a pre-registered, paired,
+statistically-defensible decision. Not vibes; not a hand-coded
+threshold. The gate fires *because evidence justified it*.
+
+## What does the report card show me?
+
+When a wrapped switch graduates (or hits a drift event), Dendra
+writes a markdown report card at `dendra/results/<switch>.md`. It
+captures everything the gate saw and decided:
+
+- **Phase + graduation timestamp** — which lifecycle phase the
+  switch is in, when it last advanced, after how many outcomes
+- **Gate evidence** — the configured gate (default `McNemarGate`),
+  the α it cleared, the p-value at fire, the effect size in
+  percentage points
+- **Transition curve** — rule accuracy vs ML accuracy over outcomes,
+  rendered as a PNG. The crossover point + the gate-fire point are
+  both labelled.
+- **p-value trajectory** — gate p-value over outcomes (log scale).
+  The dashed α line + the fire-point are labelled. A monotone-
+  strict-decreasing trajectory after the fire is the signal we look
+  for to confirm the graduation isn't a sampling fluke.
+- **Phase timeline** — Mermaid Gantt chart showing the lifecycle
+  history (RULE → MODEL_SHADOW → ... → ML_PRIMARY) with timestamps
+- **Cost trajectory** — per-call cost over time, with a table
+  showing pre/post-graduation reduction in $ and latency
+- **What-if** — re-run the cost numbers under a different LLM with
+  `dendra report <switch> --model claude-haiku-4.5` etc.
+- **Drift posture** — whether the drift detector is currently green,
+  what the last check measured, and what would trigger a demotion
+
+Three commands produce the evidence trilogy:
+
+| Command | Card |
+|---|---|
+| `dendra analyze --report` | initial-analysis discovery card — which sites are candidates for graduation |
+| `dendra report <switch>` | per-switch graduation card — what the gate saw and when it fired |
+| `dendra report --summary` | project rollup — cockpit view across every wrapped switch |
+
+Sample cards are committed in [`docs/sample-reports/`](sample-reports/)
+so reviewers can see the full evidence shape before installing.
+
+## When does the report card update?
+
+After every gate evaluation. Default config evaluates on every 50th
+outcome, so on a switch seeing 1,000 verdicts/day the card updates
+~20 times per day. The card is always current with the most recent
+audit-chain state — re-run `dendra report <switch>` any time, or
+let CI re-render it on a schedule (the `aggregator.yml` workflow
+template does this nightly).
+
+If the drift detector trips, the card re-renders immediately with
+the drift event highlighted at the top and a `**Action required**`
+callout. That's the version that should land in the on-call
+notification.
 
 ## Do I actually need this? Can't I just use if/else?
 
@@ -50,6 +117,43 @@ Some shapes of code look like classification but aren't, or have constraints tha
 - **Decisions that need hidden out-of-process state we can't see.** If the rule consults a remote service or database state, that state has to be exposed as evidence (auto-lift, or `@evidence_inputs`). If the state can't be exposed, the LLM/ML head can never see what the rule saw, and Dendra refuses with a specific diagnostic.
 
 The full list, with version tags and the path forward for each item, is in [`limitations.md`](./limitations.md).
+
+## Does it work with LangChain agents (and the other broker frameworks)?
+
+Yes. The classification sites that Dendra wraps live inside the
+framework code, not your code. We've already run the v1 analyzer
+against the eight largest LLM-broker libraries (LangChain,
+LlamaIndex, Haystack, AutoGen, CrewAI, DSPy, LiteLLM, Instructor)
+and surfaced 919 classification sites across 10,889 Python files.
+Most of the high-fit sites sit on class methods, which the v1.5
+lifters reach.
+
+You don't replace the framework. You point Dendra at your
+project's import surface or at the framework you depend on; the
+wrapping is opt-in and per-site. To see the breakdown for any of
+these libraries on your machine, clone the repo and run
+`dendra analyze .` against it.
+
+## Will `dendra init --auto-lift` break my agent graph?
+
+No, by construction. `--auto-lift` writes opt-in lifters that
+live alongside the original function and apply via decorator.
+The original control flow still runs underneath; the gate
+simply routes the call once a candidate has earned it on real
+traffic.
+
+If a candidate site looks unsafe to lift (hidden state, side
+effects inside a branch, non-pure rule), the analyzer refuses
+with a specific diagnostic instead of silently lifting. The
+drift detector (`dendra refresh --check`) tells you if the
+underlying function changed since the lift was written, and
+`dendra doctor` reports any site whose AST hash no longer
+matches.
+
+The first thing to do after `--auto-lift` runs is your existing
+test suite. The lifters preserve return shape and exception
+behavior; if anything regresses, the diff is small enough to
+read in one sitting.
 
 ## Why not just use shadow mode / A-B testing / a feature flag?
 
@@ -222,6 +326,23 @@ See [`docs/autoresearch.md`](autoresearch.md) and
 [`examples/19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py)
 for the full picture.
 
+## How is this different from FrugalGPT, model routing, or LLM-cost cascades?
+
+Routing picks which LLM to call for a given request. Every
+routed call is still a remote LLM call; the savings come from
+sending cheaper or smaller calls when the input allows it.
+
+Dendra graduates the *site* off LLMs entirely once a small
+in-process head has earned it. Once the paired-McNemar gate
+fires for that site, the call drops from "LLM round-trip" to
+"sub-millisecond local inference," and the per-call cost line
+goes from cents-or-fractions-of-cents to electricity.
+
+The two compose. Route to a cheaper LLM while you're
+accumulating evidence; graduate to in-process inference once
+the gate clears. Routing reduces the unit cost of a remote
+call. Graduation removes the unit.
+
 ## How does this relate to Karpathy's "autoresearch" loop pattern?
 
 > **Autoresearch tells you what to try. Dendra tells you when it worked.**
@@ -282,19 +403,25 @@ McNemar at every step.
 
 ## What's the latency overhead?
 
-At Phase.RULE with `auto_record=False`, **0.50 µs p50** over the
-bare rule call. With the default `auto_record=True` it's 1.67 µs
-p50 (writes an UNKNOWN outcome record each call). Measured in
-`tests/test_latency_pinned.py` on Apple M5 / Python 3.13.
+At Phase.RULE: `classify` is 0.96 µs p50 / 1.04 µs p95; `dispatch`
+(classify + invoke matched action) is 1.00 µs p50 / 1.08 µs p95.
+~24× a bare Python call (42 ns) in relative terms; ~1 µs in
+absolute terms.
 
-At Phase.ML_WITH_FALLBACK with a TF-IDF + logistic head, ~105 µs
-p50 — well inside typical web-request budgets. At MODEL_PRIMARY
-with the shipped local default (`qwen2.5:7b` via Ollama), ~481 ms
-p50 (dominated by the language model, not Dendra). `persist=True`
-(batched FileStorage) adds 33 µs p50;
-per-call fsync durability is an explicit 195 µs opt-in for
-regulated workloads. See `docs/benchmarks/v1-audit-benchmarks.md`
-for the full matrix.
+At Phase.MODEL_PRIMARY (model verifier stubbed): 1.46 µs p50.
+At Phase.ML_PRIMARY (ML head stubbed): 1.50 µs p50. Real-LLM and
+real-ML latency is dominated by the model, not by Dendra — for
+the shipped local default `qwen2.5:7b` via Ollama, ~481 ms p50.
+
+Storage: `BoundedInMemoryStorage` (default for ephemeral state)
+sustains 12M writes/sec. `FileStorage` with batching (production-
+recommended) sustains 245K writes/sec at 4.1 µs per write with a
+~50 ms crash window. `FileStorage` unbatched per-call fsync is the
+explicit opt-in for regulated workloads at 28K writes/sec (4
+threads concurrent).
+
+Full methodology + reproduce instructions in
+[`docs/benchmarks/perf-baselines-2026-05-01.md`](benchmarks/perf-baselines-2026-05-01.md).
 
 ## What's the cost overhead?
 
@@ -414,7 +541,7 @@ code is still there for the community.
 ## Who's behind Dendra?
 
 Benjamin Booth, sole inventor and sole operator of B-Tree
-Ventures, LLC (dba Axiom Labs). Clean B-Tree Ventures work, no
+Ventures, LLC (dba B-Tree Labs). Clean B-Tree Ventures work, no
 academic or institutional co-ownership.
 
 ## How do I try it?
@@ -426,7 +553,7 @@ dendra analyze /path/to/your/python/code
 
 Gallery of runnable examples in
 [`examples/`](../examples/). Start with
-`01_hello_world.py`. No accounts, no API keys, no phone-home.
+`01_hello_world.py`.
 
 ## How do I get help?
 
