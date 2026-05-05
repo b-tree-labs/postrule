@@ -171,11 +171,7 @@ top of the v0.2.0 → v1.0.0 feature work that landed earlier.
   Phase A (this release) ships the client-side wire +
   enrollment flow + analyze hook. Collector endpoint, nightly
   aggregator, EU residency, Stripe coupon wiring, and dashboard
-  settings page are Phase B (v1.1, ~5 weeks post-launch). See
-  ``docs/working/telemetry-value-engine-2026-04-29.md`` for the
-  full upgrade plan and
-  ``docs/working/telemetry-program-design-2026-04-28.md`` for
-  the underlying privacy posture (unchanged).
+  settings page are Phase B (v1.1, ~5 weeks post-launch).
 
 ### Changed
 
@@ -241,9 +237,7 @@ auto-liftable.
   collapsed the auto-rule to a single class (predict-the-modal-class
   at chance accuracy). Under the new default the Banking77 rule jumps
   from 1.30 % to a median of ≈ 24 % across shuffle seeds, and Snips
-  jumps from 14.3 % to ≈ 75 % — see
-  `docs/working/banking77-validation-report-2026-04-28.md` for the
-  full evidence. The `dendra bench` CLI gains `--no-shuffle` and
+  jumps from 14.3 % to ≈ 75 %. The `dendra bench` CLI gains `--no-shuffle` and
   `--shuffle-seed` flags. Migration: pass `shuffle=False` to
   `build_reference_rule` (or `--no-shuffle` to `dendra bench`) to
   reproduce the v0.x paper-as-shipped numbers.

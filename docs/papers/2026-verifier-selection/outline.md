@@ -1,7 +1,7 @@
 # Picking a Judge: A Verifier-Selection Methodology for Production Classification
 
 **Working title.** Alternates: "Above-Chance Picking", "When Should an SLM Judge Your Classifier?".
-**Author.** Benjamin Booth, B-Tree Ventures LLC.
+**Author.** Benjamin Booth, B-Tree Labs.
 **Status.** Outline v0.1 — 2026-04-26.
 **Target.** arXiv post-launch (cs.LG / cs.CL); companion to "When Should a Rule Learn?".
 **Substrate.** `docs/benchmarks/slm-verifier-bench.json` + `docs/benchmarks/slm-verifier-results.md`. Re-run via `python scripts/run_slm_verifier_bench.py`.
@@ -103,4 +103,4 @@ A decision tree, calibrated by domain attributes:
 
 ---
 
-_Copyright (c) 2026 B-Tree Ventures, LLC. Apache-2.0 licensed._
+_Copyright (c) 2026 B-Tree Labs. Apache-2.0 licensed._
