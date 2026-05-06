@@ -1,0 +1,61 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: Apache-2.0
+#
+# Integration-test manifest — names the canonical user journeys that
+# MUST have a passing test on every CI run. Validated by
+# scripts/check_integration_manifest.py.
+#
+# Coverage % is intentionally not used here: integration tests cross
+# system boundaries, so line/branch coverage is the wrong metric.
+# Instead, this manifest enforces *scenario coverage* — every named
+# journey below must map to a test that runs and passes.
+#
+# Adding a new public endpoint or user-facing flow? Add an entry here
+# and the corresponding test, in the same PR. CI will fail otherwise.
+#
+# Schema: a list of scenarios. Each scenario has:
+#   name        — human-readable journey description
+#   kind        — pytest | github-workflow
+#   test        — pytest node-id, OR workflow filename for kind=github-workflow
+#   description — what the test must demonstrate
+
+scenarios:
+  - name: "dendra login — RFC 8628 device flow happy path"
+    kind: pytest
+    test: "tests/test_cli_login.py::TestHappyPath::test_full_flow_writes_credentials"
+    description: |
+      Full /device/code → browser-authorize → /device/token poll → API key
+      written to ~/.config/dendra/credentials.json. Stubs the network +
+      webbrowser + sleep so it stays offline-fast.
+
+  - name: "dendra login — error branches return non-zero exit codes"
+    kind: pytest
+    test: "tests/test_cli_login.py::TestErrorPaths"
+    description: |
+      Network-unreachable, server 5xx, access_denied, expired_token,
+      invalid_grant, KeyboardInterrupt — each must yield the documented
+      exit code (1 or 130 for Ctrl-C) and a useful stderr message.
+
+  - name: "License key — Ed25519 sign + offline Python verify"
+    kind: pytest
+    test: "tests/test_license.py"
+    description: |
+      Sign a license key on the dashboard side, verify offline in the
+      Python client. Round-trip must accept valid keys and reject
+      tampered / expired ones.
+
+  - name: "Auth — API-key parsing + bearer-token validation"
+    kind: pytest
+    test: "tests/test_auth.py"
+    description: |
+      dndr_live_/dndr_test_ prefix routing, length, base62 character
+      class, missing-Bearer rejection. The tier-mapping path is
+      covered by webhook tests in cloud/api/.
+
+  - name: "CLI install-smoke — wheel build + pip install + import"
+    kind: github-workflow
+    test: "install-smoke.yml"
+    description: |
+      Builds the wheel from a clean checkout, installs into a fresh
+      venv, runs `python -c 'import dendra; dendra.__version__'`.
+      Matrix: macos-latest + ubuntu-latest × py3.10/3.12/3.13.
