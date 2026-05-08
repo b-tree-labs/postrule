@@ -76,6 +76,7 @@ jobs:
               tests/test_lifter_branch_v1_5.py|\
               tests/test_lifter_evidence.py|\
               tests/test_lifter_evidence_v1_1.py|\
+              tests/test_aggregator.py|\
               tests/test_mcp_server.py|\
               tests/test_research.py|\
               tests/test_roi.py)

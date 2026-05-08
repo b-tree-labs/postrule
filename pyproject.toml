@@ -160,6 +160,10 @@ filterwarnings = [
     "error",
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
+    # Python 3.14 surfaces benign tempfile deallocation in urllib.error.HTTPError
+    # GC paths as PytestUnraisableExceptionWarning. The exception value is None
+    # (no actual error) so this is noise, not a real defect.
+    "ignore:.*_TemporaryFileCloser.*:pytest.PytestUnraisableExceptionWarning",
 ]
 
 [tool.coverage.run]
