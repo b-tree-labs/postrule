@@ -213,6 +213,28 @@ class TestMaybeInstall:
         assert em is None
         assert isinstance(get_default_emitter(), NullEmitter)
 
+    def test_signed_in_with_telemetry_off_does_not_install(self):
+        # Server-side preference (cached in ~/.dendra/credentials at
+        # `dendra login` time) was toggled off via /dashboard/settings.
+        creds = {
+            "api_key": "dndr_live_abc",  # pragma: allowlist secret
+            "email": "ben@example",
+            "telemetry_enabled": False,
+        }
+        em = maybe_install(api_url="http://localhost:8787", auth_lookup=lambda: creds)
+        assert em is None
+        assert isinstance(get_default_emitter(), NullEmitter)
+
+    def test_signed_in_with_telemetry_on_installs(self):
+        creds = {
+            "api_key": "dndr_live_abc",  # pragma: allowlist secret
+            "email": "ben@example",
+            "telemetry_enabled": True,
+        }
+        em = maybe_install(api_url="http://localhost:8787", auth_lookup=lambda: creds)
+        assert isinstance(em, CloudVerdictEmitter)
+        em.close(timeout=0.1)
+
 
 # ---------------------------------------------------------------------------
 # CloudVerdictEmitter — payload shape, queue, sender thread
