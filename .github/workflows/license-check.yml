@@ -46,6 +46,7 @@ jobs:
               src/dendra/cloud/registry.py|\
               src/dendra/cloud/sync.py|\
               src/dendra/cloud/team_corpus.py|\
+              src/dendra/cloud/verdict_telemetry.py|\
               src/dendra/cloud/report/__init__.py|\
               src/dendra/cloud/report/aggregator.py|\
               src/dendra/cloud/report/charts.py|\
@@ -71,6 +72,7 @@ jobs:
               tests/test_cloud_report.py|\
               tests/test_cloud_sync.py|\
               tests/test_cloud_team_corpus.py|\
+              tests/test_cloud_verdict_telemetry.py|\
               tests/test_enrich_landing_corpus.py|\
               tests/test_lifter_branch.py|\
               tests/test_lifter_branch_v1_5.py|\
