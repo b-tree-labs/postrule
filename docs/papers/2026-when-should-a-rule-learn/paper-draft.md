@@ -2,7 +2,7 @@
 
 **Author.** Benjamin Booth, B-Tree Labs.
 **Status.** Draft v0.1, 2026-04-26.
-**Target.** arXiv (cs.LG / cs.SE), 2026-05-13.
+**Target.** arXiv (cs.LG / cs.SE), ~2026-05-22 (decoupled from launch 2026-05-20).
 **Code + data.** `https://github.com/b-tree-labs/dendra`. Apache 2.0.
 **Patent.** Patent pending. U.S. Provisional Patent Application No. 64/045,809, filed 2026-04-21.
 
