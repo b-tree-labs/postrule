@@ -504,8 +504,9 @@ docs/
 
 *"When Should a Rule Learn? Transition Curves for Safe
 Rule-to-ML Graduation"* — companion paper, arXiv submission
-targeted for the v1.0 launch. Outline + reproducible benchmark
-results at
+targeted for ~2026-05-22 (a few days after the v1.0 launch, once
+the Snips-rerun + paper-polish work is in). Outline + reproducible
+benchmark results at
 [`docs/papers/2026-when-should-a-rule-learn/`](docs/papers/2026-when-should-a-rule-learn/).
 Annotated bibliography of related work at
 [`related-work-bibliography.md`](docs/papers/2026-when-should-a-rule-learn/related-work-bibliography.md).
@@ -550,7 +551,7 @@ US provisional patent (application pending, filed 2026-04-21).
 
 ## Status
 
-**v1.0.0** — public release (2026-05-13).
+**v1.0.0** — public release (2026-05-20).
 Six lifecycle phases ✓ Head-to-head evidence gates ✓
 Native async API ✓ VerdictSource family ✓
 CandidateHarness for autoresearch loops ✓
