@@ -736,7 +736,7 @@ reported separately in §5.7. Table 3 reports the headline numbers.
     [#strong[ATIS]], [flight booking], [26], [70.0%], [75.6%], [81.9%], [#strong[88.7%]], [#strong[250]], [4,978],
     [#strong[TREC-6]], [question type], [6], [43.0%], [60.6%], [70.8%], [#strong[85.2%]], [#strong[250]], [5,452],
     [#strong[AG News]], [news topics], [4], [25.9%], [46.9%], [46.9%], [#strong[91.8%]], [#strong[1,000]], [120,000],
-    [#strong[Snips]], [voice assistant], [7], [14.3%], [27.4%], [0.0%], [#strong[98.2%]], [#strong[2,000]], [13,084],
+    [#strong[Snips]], [voice assistant], [7], [14.3%], [27.4%], [14.3%], [#strong[98.2%]], [#strong[2,000]], [13,084],
     [#strong[HWU64]], [multi-domain], [64], [1.8%], [2.7%], [10.5%], [#strong[83.6%]], [#strong[250]], [8,954],
     [#strong[Banking77]], [banking], [77], [1.3%], [2.6%], [8.8%], [#strong[87.7%]], [#strong[250]], [10,003],
     [#strong[CLINC150]], [multi-domain + OOS], [151], [0.5%], [1.6%], [5.2%], [#strong[81.9%]], [#strong[250]], [15,250],
@@ -762,7 +762,14 @@ on these four rows is therefore a property of stream ordering at
 seed=100, not of the benchmark itself. Snips is the one outlier on
 first-clear depth: the as-shipped rule's 14.3% accuracy beats the ML
 head at the 250-outcome checkpoint, and the advance gate fires only at
-2,000 outcomes after ML overtakes.
+2,000 outcomes after ML overtakes. The Snips `ML \@ 1k` cell equals
+the rule baseline (14.3%) because Snips' as-shipped HuggingFace
+training split is sorted by label: outcomes 1 through ~1,842 are all
+``AddToPlaylist``, so the ML head sees one class through the 1k
+checkpoint and degenerates to a constant predictor matching the
+rule's modal fallback. A second class enters the stream at outcome
+~1,842, and ML separates from the rule at the 2,000-outcome
+checkpoint.
 
 Two views of the data are useful and pull complementary signals.
 
