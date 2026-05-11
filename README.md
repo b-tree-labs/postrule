@@ -593,6 +593,10 @@ company carries the work, not any single person.
 - Maintainer: Benjamin Booth ([@benjaminbooth](https://github.com/benjaminbooth))
 - Trademark / licensing inquiries — `trademarks@b-treeventures.com`,
   `licensing@b-treeventures.com`
+- Procurement-ready documents: [DPA template](docs/legal/dpa-template.md),
+  [sub-processors](docs/legal/sub-processors.md),
+  [access policy](docs/legal/access-policy.md),
+  [telemetry wire spec](docs/legal/telemetry-shape.md).
 
 ---
 

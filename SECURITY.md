@@ -64,6 +64,10 @@ You can expect:
   to the provider.
 - Dendra Cloud (when it exists) — separate security policy will apply.
 
+For the hosted-side personnel-access posture, compelled-disclosure
+commitments, and breach-notification SLA, see
+[`docs/legal/access-policy.md`](docs/legal/access-policy.md).
+
 ## Cryptographic signing
 
 Dendra releases are:
