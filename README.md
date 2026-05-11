@@ -306,7 +306,10 @@ test on per-example correctness:
 Every benchmark clears paired statistical significance (p < 0.01)
 at the **first** checkpoint of 250 labeled outcomes. Two days of
 moderate production traffic, not six months. Reproducible:
-`dendra bench atis` regenerates Figure 1 in seconds.
+`dendra bench atis` regenerates the ATIS panel of Figure 1 in
+seconds; pass other benchmark names (`banking77`, `clinc150`,
+`hwu64`, `snips`, `trec6`, `ag_news`, `codelangs`) for the other
+panels.
 
 Measured latency (Apple M5 / Python 3.13 / macOS 26 — full
 methodology + reproduce instructions in

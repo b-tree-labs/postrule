@@ -102,9 +102,8 @@
   ]
   #v(1.4em)
   #text(size: 11pt)[
-    *Benjamin Booth* — B-Tree Labs \
-    Draft v0.1 · 2026-04-26 \
-    Target: arXiv (cs.LG / cs.SE), 2026-05-13
+    *Benjamin Booth* — B-Tree Labs, Austin, TX \
+    Correspondence: #link("mailto:research@b-treeventures.com")[research\@b-treeventures.com]
   ]
   #v(0.6em)
   #text(size: 9.5pt, fill: gray.darken(20%))[
