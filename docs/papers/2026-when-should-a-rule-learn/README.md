@@ -23,4 +23,5 @@ Compile time: ~2 seconds on Apple Silicon.
 ## Status
 
 Draft v0.1 as of 2026-04-26. Target submission: arXiv (cs.LG / cs.SE)
-on 2026-05-13 (slipped to ~2026-05-27 with the SaaS launch sequence).
+on ~2026-05-22 (decoupled from launch day 2026-05-20 to incorporate
+the Snips bench rerun).

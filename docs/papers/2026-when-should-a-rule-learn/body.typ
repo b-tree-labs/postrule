@@ -4,9 +4,9 @@
 == Abstract
 <abstract>
 Production classification sites cross a paired-McNemar gate at α = 0.01
-within 250 to 2,000 recorded outcomes on eight public benchmarks, even
-when the day-zero rule is a 100-example keyword auto-build at chance
-accuracy. We formalize the rule-to-ML migration as a
+within 250 to 500 outcomes on seven of eight public benchmarks (2,000
+on the eighth, Snips), even when the day-zero rule is a 100-example
+keyword auto-build at chance accuracy. We formalize the rule-to-ML migration as a
 #emph[graduated-autonomy lifecycle] (`RULE` → `MODEL_SHADOW` →
 `MODEL_PRIMARY` → `ML_SHADOW` → `ML_WITH_FALLBACK` → `ML_PRIMARY`),
 prove a per-step Type-I bound (the marginal probability of a
@@ -270,7 +270,7 @@ rule floor and statistical gating.
 candidate hypotheses, evaluates them against a test corpus, and refines
 (Wang et al., 2023, #emph[Voyager]\; Shinn et al., 2023,
 #emph[Reflexion]\; Wei et al., 2022, #emph[Chain-of-Thought]\; Karpathy,
-2025, on the autoresearch loop). These works focus on the agent's
+2026, #emph[autoresearch]). These works focus on the agent's
 reasoning trajectory rather than the production-deployment substrate.
 
 Our `CandidateHarness` is the production substrate underneath: it
@@ -596,9 +596,10 @@ conventional $0.05$ is a deliberate conservatism appropriate to
 #emph[production] decisions, where Type-I error is a per-deployment cost
 rather than a per-experiment cost.
 
-Recent evaluation work in adjacent areas (Papailiopoulos's #emph[ReJump]
-framework for LLM reasoning evaluation in 2025, and Tzamos et al.'s
-theoretical-foundation work on classifier comparison) supports the more
+Recent evaluation work in adjacent areas (Papailiopoulos et al.'s
+#emph[ReJump] framework for LLM reasoning evaluation, 2025;
+Tzamos and Zarifis's principled-test-statistic work on active
+classification under misspecification, 2024) supports the more
 general claim that production-grade ML evaluation should use paired,
 statistically-grounded gates rather than ad-hoc thresholds.
 
@@ -709,9 +710,11 @@ accuracy and against gate-statistic) for each benchmark.
 <reproducibility>
 All code is at `https://github.com/b-tree-labs/dendra` (Apache 2.0). All
 fixed seeds are documented in the benchmark JSONL output. The
-transition-curve dataset is released as
-`dendra-transition-curves-2026.jsonl` accompanying this paper. The
-benchmark harness ships in
+transition-curve dataset is released as per-benchmark JSONL files
+under `results/` (`atis_paired.jsonl`, `banking77_paired.jsonl`,
+`clinc150_paired.jsonl`, `hwu64_paired.jsonl`, `snips_paired.jsonl`,
+`trec6_paired.jsonl`, `ag_news_paired.jsonl`, `codelangs_paired.jsonl`)
+accompanying this paper. The benchmark harness ships in
 `src/dendra/research.py::run_benchmark_experiment` and the McNemar
 computation in `src/dendra/gates.py::McNemarGate`.
 
@@ -1535,9 +1538,9 @@ Other dimensions ride along. #strong[Latency] drops from LLM-class
 API round-trip and decode) to ML-class (under 2 ms at Phase 5,
 in-process sklearn predict): a two-to-three-orders-of-magnitude
 reduction at the call site, measured on the reference implementation.
-#strong[Per-call cost] drops from $\$ 10^(- 4)$ to $\$ 10^(- 2)$ per LLM
-inference to essentially zero per ML-head call once the gate clears P5;
-§10.3 lays out the at-scale extrapolation. #strong[Drift detection]
+#strong[Per-call cost] ranges from $\$ 10^(- 4)$ to $\$ 10^(- 2)$ per
+LLM inference and drops to essentially zero per ML-head call once the
+gate clears P5; §10.3 lays out the at-scale extrapolation. #strong[Drift detection]
 ships in the same primitive (the gate fires in reverse when the rule
 reclaims the lead). And #strong[the call site itself is permanent].
 Production code calls `classify_content(post)` on day one and on day
@@ -1616,7 +1619,7 @@ For the autoresearch use case, `CandidateHarness` accepts a stream of
 agent-proposed candidate classifiers, runs them in shadow mode against
 live production traffic, and either promotes via the McNemar gate or
 discards. This is the production substrate underneath the autoresearch
-loops described by Karpathy (2025), Shinn et al.~(2023), and Wang et
+loops described by Karpathy (2026), Shinn et al.~(2023), and Wang et
 al.~(2023).
 
 As an illustrative production setting, consider payment fraud screening,
@@ -1852,7 +1855,7 @@ instantiation among many.
 
 === 10.5 Implications for the autoresearch / agent literature
 <implications-for-the-autoresearch-agent-literature>
-The autoresearch loop pattern (Karpathy, 2025; Shinn et al., 2023; Wang
+The autoresearch loop pattern (Karpathy, 2026; Shinn et al., 2023; Wang
 et al., 2023; Wei et al., 2022) is currently bottlenecked by the
 #emph[evaluation harness]. An agent that proposes 100 candidate
 classifiers per hour but cannot statistically distinguish them will
@@ -1910,8 +1913,9 @@ a research program.
   per-transition and per-axis. A stronger statement, that the joint
   distribution over transitions and axes admits a
   better-than-union-bound guarantee, would require characterizing the
-  dependence between gates. Tzamos et al.'s theory work on
-  classifier-comparison testing is the relevant adjacent literature.
+  dependence between gates. Tzamos and Zarifis's (2024) work on
+  active classification under misspecification is the relevant
+  adjacent literature.
 - #strong[Multi-modal extension and a companion paper.] The §5.7
   CIFAR-10 image bench demonstrates the lifecycle generalizes beyond
   text without library-side changes. Pretrained-embedding heads (CLIP,
@@ -1991,8 +1995,7 @@ in practice] is the question this work invites the field to ask.
 
 == Acknowledgments
 <acknowledgments>
-The author thanks the reviewers and early adopters who provided feedback
-on drafts of this work.
+The author thanks early readers of preliminary drafts.
 
 #horizontalrule
 
@@ -2029,6 +2032,11 @@ D., Zhang, H., Zhu, B., Jordan, M., Gonzalez, J. E., & Stoica, I.
 (2024). Chatbot Arena: An Open Platform for Evaluating LLMs by Human
 Preference. #emph[ICML 2024].
 
+Coucke, A., Saade, A., Ball, A., Bluche, T., Caulier, A., Leroy, D.,
+et al.~(2018). Snips Voice Platform: an embedded Spoken Language
+Understanding system for private-by-design voice interfaces.
+arXiv:1805.10190.
+
 Dekoninck, J., et al.~(2025). A Unified Approach to Routing and
 Cascading for LLMs. #emph[ICML 2025]. arXiv:2410.10347.
 
@@ -2058,9 +2066,9 @@ Hutter, F., Kotthoff, L., & Vanschoren, J. (Eds.) (2019).
 #emph[Automated Machine Learning: Methods, Systems, Challenges].
 Springer.
 
-Karpathy, A. (2025). On the autoresearch loop. #emph[Public talks and
-writings]. \[Cited as the most visible recent advocacy for LLM-driven
-research loops; primary venue references in final version.\]
+Karpathy, A. (2026). autoresearch: A minimal agent-driven LLM
+experiment loop. #emph[GitHub repository].
+https:\/\/github.com/karpathy/autoresearch
 
 Kuleshov, V., Fenner, N., & Ermon, S. (2018). Accurate Uncertainties for
 Deep Learning Using Calibrated Regression. #emph[ICML 2018].
@@ -2072,6 +2080,9 @@ Larson, S., Mahendran, A., Peper, J. J., Clarke, C., Lee, A., Hill, P.,
 Kummerfeld, J. K., Leach, K., Laurenzano, M. A., Tang, L., & Mars, J.
 (2019). An Evaluation Dataset for Intent Classification and Out-of-Scope
 Prediction. #emph[EMNLP-IJCNLP 2019].
+
+Li, X., & Roth, D. (2002). Learning Question Classifiers.
+#emph[COLING 2002].
 
 Liu, X., Eshghi, A., Swietojanski, P., & Rieser, V. (2019). Benchmarking
 Natural Language Understanding Services for Building Conversational
@@ -2102,9 +2113,9 @@ Paleyes, A., Urma, R.-G., & Lawrence, N. D. (2022). Challenges in
 Deploying Machine Learning: A Survey of Case Studies. #emph[ACM
 Computing Surveys, 55]\(6).
 
-Papailiopoulos, D., et al.~(2025). ReJump: A reasoning-evaluation
-framework for large language models. \[Recent MSR AI Frontiers Lab work;
-final venue/citation in submission.\]
+Papailiopoulos, D., et al.~(2025). ReJump: A Tree-Jump Representation
+for Analyzing and Improving LLM Reasoning. arXiv:2512.00831.
+https:\/\/github.com/UW-Madison-Lee-Lab/ReJump
 
 Polyzotis, N., Roy, S., Whang, S. E., & Zinkevich, M. (2018). Data
 Lifecycle Challenges in Production Machine Learning: A Survey.
@@ -2125,10 +2136,8 @@ Trivedy, V. (2026). Better Harness: A Recipe for Harness Hill-Climbing
 with Evals. LangChain blog.
 https:\/\/blog.langchain.com/better-harness-a-recipe-for-harness-hill-climbing-with-evals/
 
-Tzamos, C., et al.~#emph[Theoretical foundations for classifier
-comparison testing.] \[Working reference; final citation in submission.
-Tzamos's broader theory portfolio at the ML/stats interface motivates
-the principled-test-statistic framing.\]
+Tzamos, C., & Zarifis, N. (2024). Active Classification with Few
+Queries under Misspecification. #emph[NeurIPS 2024 (Spotlight)].
 
 Viola, P., & Jones, M. (2001). Rapid Object Detection Using a Boosted
 Cascade of Simple Features. #emph[CVPR 2001].
@@ -2140,6 +2149,13 @@ Large Language Models. arXiv:2305.16291.
 Wei, J., Wang, X., Schuurmans, D., Bosma, M., Ichter, B., Xia, F., Chi,
 E. H., Le, Q. V., & Zhou, D. (2022). Chain-of-Thought Prompting Elicits
 Reasoning in Large Language Models. #emph[NeurIPS 2022].
+
+Yang, J., Wang, R., Song, Y., & Li, J. (2023). Block-regularized 5×2
+Cross-validated McNemar's Test for Comparing Two Classification
+Algorithms. arXiv:2304.03990.
+
+Zhang, X., Zhao, J., & LeCun, Y. (2015). Character-level Convolutional
+Networks for Text Classification. #emph[NeurIPS 2015]. arXiv:1509.01626.
 
 Zheng, L., Chiang, W.-L., Sheng, Y., Zhuang, S., Wu, Z., Zhuang, Y.,
 Lin, Z., Li, Z., Li, D., Xing, E. P., Zhang, H., Gonzalez, J. E., &
@@ -2166,7 +2182,7 @@ rules per benchmark in
   laptop CPU.
 - ✓ All benchmark JSONLs and `paired_mcnemar_summary.json` released.
 - ✓ Benchmark harness reproduces the result:
-  `dendra bench {atis,banking77,clinc150,hwu64}`.
+  `dendra bench {atis,banking77,clinc150,hwu64,snips,trec6,ag_news,codelangs}`.
 
 == Appendix C: Code listings
 <appendix-c-code-listings>
