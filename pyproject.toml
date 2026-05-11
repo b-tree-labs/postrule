@@ -3,7 +3,7 @@
 
 [project]
 name = "dendra"
-version = "1.0.0rc1"
+version = "1.1.0"
 description = "Graduated-autonomy classification primitive — start as a rule, graduate to ML when evidence justifies it."
 readme = "README.md"
 # Split license (PEP 639 SPDX expression). See LICENSE.md in the

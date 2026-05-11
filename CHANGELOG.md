@@ -333,12 +333,20 @@ auto-liftable.
   `build_reference_rule` (or `--no-shuffle` to `dendra bench`) to
   reproduce the v0.x paper-as-shipped numbers.
 
-## [1.0.0] — 2026-05-20
+## [1.1.0] — 2026-05-20
 
-The first public release. Ships ahead of the companion paper
-*"When should a rule learn? A statistical framework for
-graduated ML autonomy"* (arXiv submission targeted ~2026-05-22,
-a few days after launch).
+The first public release. Skips 1.0.0 deliberately to match the
+product posture explicitly ("software smarter every month than
+the day you shipped it") — the .0.0 milestone weight reads as
+"this is frozen now," which it isn't and won't be. 1.0.0rc1 was
+the pre-release tag on PyPI; 1.1.0 supersedes it for the public
+ship. Subsequent iteration releases as 1.1.x / 1.2.0 / etc.,
+each version increment a measurable improvement rather than a
+re-coronation.
+
+Ships ahead of the companion paper *"When should a rule learn?
+A statistical framework for graduated ML autonomy"* (arXiv
+submission targeted ~2026-05-22, a few days after launch).
 
 ### Highlights
 
