@@ -6,7 +6,98 @@ Version numbers follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
-## [1.0.0rc1] — 2026-05-13 (target)
+Phase 1 of the launch push. The v1.0 SaaS surface gets honest
+before asking for money: real dashboard, telemetry pipeline,
+pricing restructure, signup CTAs, BYOK judge orchestration
+positioned behind Pro. Slips public launch by 7 days
+(2026-05-13 → **2026-05-20**); arXiv decoupled to ~2026-05-22.
+
+### Added
+
+- **Aggregator publishes cohort defaults to Cloudflare KV** (#27).
+  Separates code from data: the nightly `aggregator.yml` workflow
+  now writes `tuned-defaults.json` to a versioned KV namespace
+  instead of pushing to `main`. Staging + production KV namespace
+  IDs pinned in repo config. Python 3.10 compatibility shim on the
+  aggregator's `datetime.now(timezone.utc)` call. BSL allowlist
+  updated so `tests/test_aggregator.py` clears the path-check.
+- **Landing signup CTAs** (#28). Nav pill, hero secondary button,
+  end-of-install-block CTA. Three high-leverage paths from the
+  landing page into account creation; previously the only signup
+  surface was the pricing table.
+- **Telemetry pipeline (SDK → cloud)** (#31). End-to-end verdict-
+  event pipeline: SDK emits count-only events (switch_name, phase,
+  paired-correctness, timestamp, HMAC-SHA256 of credential),
+  cloud `/v1/events` accepts + persists, aggregator rolls into
+  per-tenant `/v1/usage`. Default-on for signed-in users; three
+  honored opt-outs (`DENDRA_NO_TELEMETRY=1`, per-switch
+  `telemetry=False`, `/dashboard/settings` toggle).
+- **`dendra analyze` M3 login nudge** (#33). After a successful
+  `dendra analyze` run, the CLI prints a one-line invite to sign
+  up at `dendra.run` to persist results and unlock the dashboard
+  trail. Suppressible via `--no-nudge`; honored across stdout +
+  JSON output modes.
+- **Real `/dashboard` root** (#35). Replaces the two-admin-card
+  shim with tier-aware tier+usage, onboarding checklist, recent-
+  activity feed, and an earned-upgrade banner that fires when
+  observed verdicts cross the Free cap.
+- **`/dashboard/insights` cohort toggle + `/dashboard/settings`
+  telemetry + account** (#36). Insights toggle gates whether the
+  account contributes to cohort-tuned defaults; settings page
+  exposes the telemetry-default toggle and a delete-via-mailto
+  account-deletion path (no DELETE endpoint until v1.1).
+- **`/dashboard/switches` list + per-switch report-card page**
+  (#37). The cockpit view across every wrapped switch in an
+  account, plus a per-switch graduation card that mirrors the
+  markdown report card shape.
+
+### Changed
+
+- **Pricing restructure: collapse free tiers, BYOK judge → Pro,
+  "Verdicts / mo" metering** (#29). Single Free tier replaces the
+  prior Free / Starter / OSS split. BYOK judge orchestration
+  moved from Free to Pro (the value framing fix per the launch
+  proposal). Metering unit renamed `Classifications / mo` →
+  `Verdicts / mo` across landing, dashboard, and Stripe metadata.
+- **Dashboard brand port + v1.0 privacy contract** (#30). Landing-
+  page brand tokens copied verbatim into `cloud/dashboard/app/
+  globals.css`; Space Grotesk + Geist Mono via `next/font/google`;
+  wordmark + glyph header on every page; pill-outline buttons
+  replace prior Tailwind `bg-black` defaults across `/`,
+  `/dashboard`, `/dashboard/keys`, `/dashboard/billing`,
+  `/cli-auth`, `/privacy`, `/terms`. Privacy page rewritten
+  around the v1.0 telemetry contract: unauthenticated → nothing;
+  signed-in → count-only verdict events default-on; three opt-
+  outs honored; richer per-switch data is opt-in only; retention
+  Free 7d / Pro 30d / Scale 90d / Business 1y.
+- **Paper polish + concrete sketch citations + submission-ready
+  title page** (#34). Pre-arXiv polish pass: title page reflowed
+  to camera-ready form; placeholder citations resolved to concrete
+  entries in `related-work-bibliography.md`; abstract sharpened.
+  Pairs with #32 (Snips rerun) as the two PRs that gate the
+  ~2026-05-22 arXiv submission.
+
+### Fixed
+
+- **Snips ML head degenerate at 1k checkpoint** (#32). The
+  `SklearnTextHead._MonoclassPredictor` no-op path (single-class
+  fit short-circuit) collapsed the Snips ML rule to predict-the-
+  modal-class on the 1k-row checkpoint, dropping accuracy to
+  ~14.3%. Root-caused to a build-order interaction in
+  `build_reference_rule` when the seed slice happened to contain
+  one label after sort. Fix forces multi-class fit at the head
+  level; Table 3 corrected with the rerun numbers.
+
+### Pending (open at time of cut)
+
+- **SDK-side telemetry-toggle pickup** (#38, open). SDK honors
+  `/v1/whoami.telemetry_enabled` at install time so the
+  dashboard toggle takes effect without a second SDK call. Will
+  ship before launch if it merges in time; otherwise the
+  in-process opt-outs (`DENDRA_NO_TELEMETRY=1`, per-switch
+  `telemetry=False`) cover the same ground.
+
+
 
 Pre-launch release candidate. Captures the public-surface +
 launch-infrastructure work from the 2026-05-01/02 launch sweep on
@@ -242,11 +333,12 @@ auto-liftable.
   `build_reference_rule` (or `--no-shuffle` to `dendra bench`) to
   reproduce the v0.x paper-as-shipped numbers.
 
-## [1.0.0] — 2026-05-13
+## [1.0.0] — 2026-05-20
 
-The first public release. Ships alongside the companion paper
+The first public release. Ships ahead of the companion paper
 *"When should a rule learn? A statistical framework for
-graduated ML autonomy"* on arXiv.
+graduated ML autonomy"* (arXiv submission targeted ~2026-05-22,
+a few days after launch).
 
 ### Highlights
 

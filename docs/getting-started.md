@@ -59,7 +59,7 @@ Three things happen around a switch, in this order:
    `rule.record_verdict(input, label, outcome)` method is the
    same thing without the back-reference.
 3. **Dendra graduates the phase** automatically, every
-   `auto_advance_interval` verdicts (default 100). The configured
+   `auto_advance_interval` verdicts (default 500). The configured
    gate reads the log and, if the evidence is strong enough,
    mutates the phase up by one.
 
@@ -201,7 +201,7 @@ whether the evidence earns the next phase.
 ## 4. Graduation — automatic (3 minutes)
 
 You don't have to do anything. Every `auto_advance_interval`
-verdicts (default 100), the switch asks its gate whether the
+verdicts (default 500), the switch asks its gate whether the
 evidence has earned the next phase. When it does, Dendra
 mutates the phase and emits an `advance` telemetry event tagged
 `auto=true`. Subsequent `classify()` calls route through the

@@ -48,7 +48,7 @@ The auto-lift mechanism makes implicit dependencies explicit. v1 ships with full
 
 ## 6. Roadmap (versioned)
 
-**v1.0 (ships 2026-05-13).** Native `dendra.Switch` class authoring pattern (subclass with `_evidence_*` / `_rule` / `_on_*` methods); `@ml_switch` decorator (existing API, retained); multi-arg packing; full auto-lift across globals, `self`, mid-function I/O, closures (Phases 2-3 of the auto-lift design); drift detection (Phase 4); prescriptive analyzer (Phase 5); account system; `propagate_action_exceptions` config knob; MCP server; cross-phase test suite; six-phase lifecycle; head-to-head evidence gates; async API; verdict sources; CandidateHarness; Tournament.
+**v1.0 (ships 2026-05-20).** Native `dendra.Switch` class authoring pattern (subclass with `_evidence_*` / `_rule` / `_on_*` methods); `@ml_switch` decorator (existing API, retained); multi-arg packing; full auto-lift across globals, `self`, mid-function I/O, closures (Phases 2-3 of the auto-lift design); drift detection (Phase 4); prescriptive analyzer (Phase 5); account system; `propagate_action_exceptions` config knob; MCP server; cross-phase test suite; six-phase lifecycle; head-to-head evidence gates; async API; verdict sources; CandidateHarness; Tournament.
 
 **v1.1.** TBD based on real-user telemetry. The list of candidate items will be set after v1.0 ships and we observe which limitations users hit first.
 

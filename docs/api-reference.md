@@ -125,7 +125,7 @@ fires `config.on_verdict(record)` if set, may trigger
 
 **Role:** the phase-graduation verb. Usually called
 automatically — `record_verdict` triggers it every
-`config.auto_advance_interval` records (default 100). Manual
+`config.auto_advance_interval` records (default 500). Manual
 calls probe the gate on demand; they work whether auto-advance
 is on or off.
 
@@ -198,7 +198,7 @@ LearnedSwitch(
     gate=None,                         # optional; default McNemarGate()
     auto_record=True,                  # optional; classify auto-logs UNKNOWN records
     auto_advance=True,                 # optional; default ON
-    auto_advance_interval=100,         # optional; evaluate gate every N verdicts
+    auto_advance_interval=500,         # optional; evaluate gate every N verdicts (default 500)
     on_verdict=None,                   # optional; callback fired per verdict
     storage=None,                      # optional; default BoundedInMemoryStorage
     persist=False,                     # optional; True = durable FileStorage

@@ -1,6 +1,6 @@
 # Dendra FAQ
 
-Answers to the questions people ask first. Updated 2026-04-28.
+Answers to the questions people ask first. Updated 2026-05-11.
 
 ## What is Dendra, in one sentence?
 
@@ -508,6 +508,121 @@ and selling access to third parties as a service that competes
 with what we plan to ship. If you're not sure whether your use
 case crosses the line, email `licensing@b-treeventures.com` and
 we'll tell you plainly.
+
+## Can I depend on Dendra in a commercial library I ship to customers?
+
+Short answer: **yes**, almost certainly without preconditions.
+The SDK is Apache 2.0 — ship it freely, including in proprietary
+commercial libraries. The four BSL 1.1 files
+([`analyzer.py`](../src/dendra/analyzer.py),
+[`cli.py`](../src/dendra/cli.py),
+[`research.py`](../src/dendra/research.py),
+[`roi.py`](../src/dendra/roi.py))
+carry an explicit "production self-hosted use is permitted" carve-
+out via the Additional Use Grant in `LICENSE-BSL`. The only
+prohibited use case is operating a hosted Dendra-clone service to
+third parties.
+
+Keep three concerns separate (they have separate remedies and
+shouldn't blur together):
+
+1. **Copyright** (Apache 2.0 / BSL 1.1) covers the source-code text.
+2. **Patent** (US provisional filed 2026-04-21) covers the
+   graduated-autonomy primitive itself. Apache 2.0 §3 grants
+   downstream users an implicit patent license **when they
+   implement through Dendra**. Re-implementing the same primitive
+   from scratch is exposed.
+3. **Trademark** (DENDRA, pending USPTO) covers the name.
+   Nominative fair use ("my-lib integrates Dendra") is fine;
+   brand-prominent use (`DendraPro`, `Dendra-Enterprise`) needs
+   permission — see [`TRADEMARKS.md`](../TRADEMARKS.md).
+
+**Three reseller patterns + their exposure:**
+
+- **A — Runtime SDK use only.** Zero BSL exposure. Your library
+  can ship under any license, including proprietary. Most common
+  case.
+- **B — Build/dev-time analyzer/CLI use.** Fine; the BSL
+  Additional Use Grant covers production self-hosted use. Only
+  blocked: building a hosted analyzer-as-a-service.
+- **C — Re-export of Dendra surface.** Copyright fine; trademark
+  is the gotcha — you can't brand it as "Dendra-something."
+
+**Attribution required for any redistribution:**
+
+- Preserve the Apache 2.0 `NOTICE` (one-paragraph mention in
+  your docs).
+- Include `LICENSE-APACHE` (and `LICENSE-BSL` if you redistribute
+  any BSL source verbatim).
+- Preserve SPDX headers and copyright lines; don't remove or
+  modify the per-file SPDX identifiers.
+
+The three things a reseller could plausibly get a letter about:
+operating a hosted SaaS that replicates Dendra's cloud surface
+(BSL); stripping `NOTICE`/attribution and reshipping (Apache §4);
+or using the DENDRA mark in a brand-prominent / endorsement-
+implying way (trademark). Everything else: ship freely. Friction-
+case commercial licensing is available — contact
+`licensing@b-treeventures.com`.
+
+## What happens if my Dendra-using product gets acquired?
+
+For the overwhelming majority of acquisitions, **nothing
+changes**. The Dendra dependency shows up as one SBOM line item
+during diligence:
+
+```
+dendra==X.Y.Z  Apache-2.0 (SDK) + LicenseRef-BSL-1.1 (4 files)
+```
+
+For ~95% of acquirers this is a green-light find — preserve
+attribution, move on. No contract to sign, no renewal to budget,
+no notification owed to B-Tree Labs. Apache 2.0 + BSL 1.1 are
+both self-executing.
+
+Three "ignore" senses, three different answers:
+
+1. **Operationally invisible to B-Tree Labs?** Yes, almost
+   entirely. A downstream acquirer never needs to contact us, pay
+   us, notify us, or renew anything.
+2. **Invisible in the acquired stack?** No — it'll appear as a
+   line item in SBOM diligence. Usually green-light.
+3. **Can the acquirer rip Dendra out?** Legally yes, economically
+   usually negative-ROI (losing the Apache 2.0 §3 patent grant,
+   re-implementing 6–12 engineer-months of SDK, losing cloud-
+   feature compatibility).
+
+**Three friction cases that DO matter at acquisition:**
+
+1. **Acquirer is itself an ML-platform / classification-platform
+   company.** BSL "no competing hosted service" applies downstream
+   too. Three exits: keep the acquired product self-hosted, buy
+   a commercial license, or rip out the four BSL files and keep
+   only the Apache SDK.
+2. **Acquirer has procurement policy rejecting non-OSI licenses.**
+   BSL is source-available, not OSI-approved. Two exits: a
+   commercial license that strips BSL, or keep only the Apache
+   SDK and replace dev/CI tooling (feasible — analyzer/CLI/
+   research/ROI are dev tools, not runtime).
+3. **Acquirer wants to white-label and brand-prominently re-skin.**
+   Trademark gate, separate from copyright. Nominative use
+   ("based on Dendra") stays free; brand-prominent rebranding
+   needs a trademark license.
+
+The clean pitch-deck line for an acquisition-aware customer:
+
+> "LibX depends on Dendra (Apache 2.0 SDK + per-file BSL 1.1 on
+> CLI/analyzer/dev tools, with a production self-hosted carve-
+> out). In an acquisition this shows up as a green-light SBOM
+> line item for ~95% of acquirers. The exceptions: if the
+> acquirer is itself an ML platform offering a competing hosted
+> service, has an OSI-only procurement policy, or wants to
+> white-label with their own brand front-and-center. In those
+> cases B-Tree Labs sells commercial licenses that resolve the
+> friction in a single transaction."
+
+If a friction case IS in play, route to
+`licensing@b-treeventures.com`.
 
 ## Are the benchmarks real or cherry-picked?
 
