@@ -47,8 +47,15 @@ You can expect:
 
 - The Dendra library itself (`pip install dendra`) at the current
   supported version.
-- The reference CLIs (`dendra init`, `dendra analyze`, etc.).
+- The reference CLIs (`dendra init`, `dendra analyze`, `dendra login`,
+  etc.).
 - The shipped LLM / ML adapters.
+- **Dendra Cloud surface** — the api Worker at `api.dendra.run` and
+  the dashboard at `app.dendra.run`. Includes the bearer-auth `/v1/*`
+  endpoints, the service-token `/admin/*` endpoints, the telemetry
+  intake at `POST /v1/verdicts`, and the Clerk-authed dashboard
+  surfaces (switches list, per-switch report cards, insights
+  enrollment, settings, billing).
 - Documented behavior that affects classification correctness,
   decision-path isolation, circuit-breaker persistence, or the
   safety-critical cap.
@@ -62,11 +69,28 @@ You can expect:
   disabling `safety_critical=True` on an authorization classifier).
 - LLM provider-side issues (OpenAI, Anthropic, Ollama, etc.) — report
   to the provider.
-- Dendra Cloud (when it exists) — separate security policy will apply.
+- Sub-processor-side issues (Cloudflare, Clerk, Stripe, GitHub) —
+  report to the provider; we'll coordinate on impact assessment.
+  The published sub-processor list is at
+  [`docs/legal/sub-processors.md`](docs/legal/sub-processors.md).
 
-For the hosted-side personnel-access posture, compelled-disclosure
-commitments, and breach-notification SLA, see
-[`docs/legal/access-policy.md`](docs/legal/access-policy.md).
+For the cloud surface specifically, four documents in `docs/legal/`
+expand on what we collect, who can access it, and how we'll respond
+to incidents:
+
+- **[Data Processing Addendum (template)](docs/legal/dpa-template.md)** —
+  GDPR Article 28 template, Module 2 SCCs by reference for EU
+  customers; execute via `licensing@b-treeventures.com`.
+- **[Sub-processor list](docs/legal/sub-processors.md)** — third
+  parties that touch customer telemetry, with 30-day prior notice
+  on additions.
+- **[Access + disclosure policy](docs/legal/access-policy.md)** —
+  personnel-access principles, 24-hour compelled-disclosure
+  notification (unless legally prohibited), 72-hour breach SLA,
+  and the explicit catalogue of unmade claims.
+- **[Telemetry wire spec](docs/legal/telemetry-shape.md)** — exact
+  on-the-wire format of every event the SDK sends, with a
+  programmatic verification recipe.
 
 ## Cryptographic signing
 
