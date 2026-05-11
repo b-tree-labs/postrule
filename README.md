@@ -551,7 +551,11 @@ US provisional patent (application pending, filed 2026-04-21).
 
 ## Status
 
-**v1.0.0** — public release (2026-05-20).
+**v1.1.0** — public release (2026-05-20). Skips 1.0.0
+deliberately to match the product posture (software smarter
+every month, not frozen at .0.0). PyPI
+[1.0.0rc1](https://pypi.org/project/dendra/1.0.0rc1/) was the
+pre-release; 1.1.0 supersedes it for the public ship.
 Six lifecycle phases ✓ Head-to-head evidence gates ✓
 Native async API ✓ VerdictSource family ✓
 CandidateHarness for autoresearch loops ✓
