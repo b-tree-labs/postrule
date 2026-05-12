@@ -598,7 +598,7 @@ rather than a per-experiment cost.
 
 Recent evaluation work in adjacent areas (Papailiopoulos et al.'s
 #emph[ReJump] framework for LLM reasoning evaluation, 2025;
-Tzamos and Zarifis's principled-test-statistic work on active
+Kontonis, Ma, and Tzamos's principled-test-statistic work on active
 classification under misspecification, 2024) supports the more
 general claim that production-grade ML evaluation should use paired,
 statistically-grounded gates rather than ad-hoc thresholds.
@@ -1236,7 +1236,7 @@ defer them to a companion paper.
 <category-taxonomy-predicting-transition-depth>
 If transition depth is predictable from dataset attributes,
 practitioners can estimate graduation timing #emph[before] they deploy.
-Five attribute dimensions are available without training:
+Seven attribute dimensions are available without training:
 
 + #strong[Label cardinality] (count of distinct labels).
 + #strong[Rule keyword affinity] (does the label boundary admit stable
@@ -1913,7 +1913,7 @@ a research program.
   per-transition and per-axis. A stronger statement, that the joint
   distribution over transitions and axes admits a
   better-than-union-bound guarantee, would require characterizing the
-  dependence between gates. Tzamos and Zarifis's (2024) work on
+  dependence between gates. Kontonis, Ma, and Tzamos's (2024) work on
   active classification under misspecification is the relevant
   adjacent literature.
 - #strong[Multi-modal extension and a companion paper.] The §5.7
@@ -2070,6 +2070,9 @@ Karpathy, A. (2026). autoresearch: A minimal agent-driven LLM
 experiment loop. #emph[GitHub repository].
 https:\/\/github.com/karpathy/autoresearch
 
+Kontonis, V., Ma, M., & Tzamos, C. (2024). Active Classification with Few
+Queries under Misspecification. #emph[NeurIPS 2024 (Spotlight)].
+
 Kuleshov, V., Fenner, N., & Ermon, S. (2018). Accurate Uncertainties for
 Deep Learning Using Calibrated Regression. #emph[ICML 2018].
 
@@ -2135,9 +2138,6 @@ Classification Under Budget Constraints. #emph[AISTATS 2013].
 Trivedy, V. (2026). Better Harness: A Recipe for Harness Hill-Climbing
 with Evals. LangChain blog.
 https:\/\/blog.langchain.com/better-harness-a-recipe-for-harness-hill-climbing-with-evals/
-
-Tzamos, C., & Zarifis, N. (2024). Active Classification with Few
-Queries under Misspecification. #emph[NeurIPS 2024 (Spotlight)].
 
 Viola, P., & Jones, M. (2001). Rapid Object Detection Using a Boosted
 Cascade of Simple Features. #emph[CVPR 2001].
