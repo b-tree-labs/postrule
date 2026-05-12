@@ -487,7 +487,7 @@ src/dendra/
 ├── benchmarks/       # Public-benchmark loaders + reference rules
 └── cli.py            # `dendra` CLI entry point
 
-tests/                # 1290 tests passing, 3 skipped (require optional extras)
+tests/                # 1,433 tests passing, 88 deselected (benchmark/perf/smoke)
 docs/
 ├── autoresearch.md          # Production substrate for autoresearch loops
 ├── async.md                 # Async API + interop contract
@@ -566,7 +566,7 @@ Prescriptive analyzer (Phase 5 hazard diagnostics) ✓
 Account system MVP + `dendra login` ✓
 MCP server (`dendra mcp`) ✓
 VS Code extension (early v1.1) ✓
-1,290 tests passing.
+1,433 tests passing.
 
 Wave 2 (cloud features + hosted analyzer + dashboards) — rolling
 through 2026; waitlist on [dendra.run](https://dendra.run).

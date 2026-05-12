@@ -116,9 +116,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/b-tree-labs/dendra"
-Documentation = "https://github.com/b-tree-labs/dendra#readme"
+Homepage = "https://dendra.run"
+Documentation = "https://github.com/b-tree-labs/dendra/tree/main/docs"
+Repository = "https://github.com/b-tree-labs/dendra"
 Issues = "https://github.com/b-tree-labs/dendra/issues"
+Changelog = "https://github.com/b-tree-labs/dendra/blob/main/CHANGELOG.md"
 
 [project.scripts]
 dendra = "dendra.cli:main"
