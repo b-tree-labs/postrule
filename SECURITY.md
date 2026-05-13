@@ -92,6 +92,18 @@ to incidents:
   on-the-wire format of every event the SDK sends, with a
   programmatic verification recipe.
 
+## Supply-chain posture
+
+We maintain a defense-in-depth posture against supply-chain
+attacks: CI workflows are scoped to limit fork-PR impact, the
+publish pipeline uses OIDC trusted-publishing with provenance
+attestations, and dependency alerts are monitored continuously
+with high-severity findings patched same-week.
+
+For procurement-grade detail, see the legal docs under
+`docs/legal/` (DPA template, published sub-processor list, access
++ disclosure policy, telemetry wire spec).
+
 ## Cryptographic signing
 
 Dendra releases are:
@@ -104,7 +116,7 @@ Dendra releases are:
 Verify a release:
 
 ```bash
-git verify-tag v1.0.0
+git verify-tag v1.1.0
 ```
 
 ## Hall of fame
