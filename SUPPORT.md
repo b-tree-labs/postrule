@@ -22,7 +22,7 @@ We try to acknowledge new issues within 2 business days.
 
 **Do not file security issues publicly.** See
 [`SECURITY.md`](./SECURITY.md) for the private disclosure
-channel. In short: email `security@b-treeventures.com` with
+channel. In short: email `security@dendra.run` with
 reproduction steps, and we'll coordinate a fix + public
 disclosure timeline with you.
 
