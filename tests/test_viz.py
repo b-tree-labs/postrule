@@ -234,7 +234,7 @@ class TestMcNemar:
         from dendra.viz import mcnemar_p
 
         # Rule wrong, ML right on 20 examples; rule right ML wrong on 1.
-        # One-sided binomial p on b=20, n=21 → very small.
+        # Two-sided exact binomial on b=20, c=1, n=21 → very small.
         rule = [False] * 20 + [True]
         ml = [True] * 20 + [False]
         p = mcnemar_p(rule, ml)
@@ -243,11 +243,11 @@ class TestMcNemar:
     def test_equal_performance_yields_large_p(self):
         from dendra.viz import mcnemar_p
 
-        # 5 each direction; b=5, n=10 → p ~ 0.62.
+        # 5 each direction; b=c=5, n=10. Two-sided p caps at 1.0.
         rule = [False, False, False, False, False, True, True, True, True, True]
         ml = [True, True, True, True, True, False, False, False, False, False]
         p = mcnemar_p(rule, ml)
-        assert p is not None and 0.4 < p < 0.8
+        assert p is not None and p > 0.9
 
     def test_no_disagreements_returns_one(self):
         from dendra.viz import mcnemar_p
