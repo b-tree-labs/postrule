@@ -27,7 +27,7 @@ batch crosses.
 
 from __future__ import annotations
 
-from dendra import (
+from postrule import (
     BulkVerdict,
     LearnedSwitch,
     Verdict,

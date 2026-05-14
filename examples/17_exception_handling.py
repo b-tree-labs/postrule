@@ -1,6 +1,6 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Using a Dendra switch as an exception-handling dispatcher.
+"""Using a Postrule switch as an exception-handling dispatcher.
 
 Run: `python examples/17_exception_handling.py`
 
@@ -32,7 +32,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from dendra import LearnedSwitch, Verdict
+from postrule import LearnedSwitch, Verdict
 
 
 @dataclass

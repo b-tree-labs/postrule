@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for the dendra.insights package — Phase A pre-launch wire."""
+"""Tests for the postrule.insights package — Phase A pre-launch wire."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dendra.insights import (
+from postrule.insights import (
     BAKED_IN_DEFAULTS,
     InsightsEvent,
     TunedDefaults,
@@ -25,12 +25,12 @@ from dendra.insights import (
     write_enrollment,
     write_unenrollment,
 )
-from dendra.insights._paths import (
+from postrule.insights._paths import (
     enrollment_path,
     queue_path,
     tuned_defaults_cache_path,
 )
-from dendra.insights.tuned_defaults import (
+from postrule.insights.tuned_defaults import (
     TUNED_DEFAULTS_URL,
     cache_is_fresh,
     write_cache,
@@ -38,9 +38,9 @@ from dendra.insights.tuned_defaults import (
 
 
 @pytest.fixture(autouse=True)
-def _isolated_dendra_home(tmp_path, monkeypatch):
-    """Point all insights state at a tmp_path so tests don't touch ~/.dendra/."""
-    monkeypatch.setenv("DENDRA_HOME", str(tmp_path))
+def _isolated_postrule_home(tmp_path, monkeypatch):
+    """Point all insights state at a tmp_path so tests don't touch ~/.postrule/."""
+    monkeypatch.setenv("POSTRULE_HOME", str(tmp_path))
     yield
 
 
@@ -204,26 +204,26 @@ class TestTunedDefaults:
         os.utime(path, (old_time, old_time))
         assert cache_is_fresh() is False
 
-    def test_default_url_is_dendra_run(self):
+    def test_default_url_is_postrule_run(self):
         # Pin the canonical URL so a typo on launch day doesn't slip.
-        assert TUNED_DEFAULTS_URL == "https://dendra.run/insights/tuned-defaults.json"
+        assert TUNED_DEFAULTS_URL == "https://postrule.ai/insights/tuned-defaults.json"
 
     def test_get_tuned_defaults_url_honors_env_override(self, monkeypatch):
-        from dendra.insights.tuned_defaults import (
+        from postrule.insights.tuned_defaults import (
             DEFAULT_TUNED_DEFAULTS_URL,
             get_tuned_defaults_url,
         )
 
-        monkeypatch.delenv("DENDRA_INSIGHTS_URL", raising=False)
+        monkeypatch.delenv("POSTRULE_INSIGHTS_URL", raising=False)
         assert get_tuned_defaults_url() == DEFAULT_TUNED_DEFAULTS_URL
 
-        monkeypatch.setenv("DENDRA_INSIGHTS_URL", "https://staging.example/foo.json")
+        monkeypatch.setenv("POSTRULE_INSIGHTS_URL", "https://staging.example/foo.json")
         assert get_tuned_defaults_url() == "https://staging.example/foo.json"
 
     def test_fetch_uses_env_override_url_when_passed_none(self, monkeypatch):
-        from dendra.insights.tuned_defaults import fetch_tuned_defaults
+        from postrule.insights.tuned_defaults import fetch_tuned_defaults
 
-        monkeypatch.setenv("DENDRA_INSIGHTS_URL", "https://override.example/x.json")
+        monkeypatch.setenv("POSTRULE_INSIGHTS_URL", "https://override.example/x.json")
         captured: dict[str, str] = {}
 
         def fake_urlopen(req, timeout):
@@ -241,7 +241,7 @@ class TestTunedDefaults:
         assert d.version == 1
 
     def test_refresh_if_stale_writes_cache_on_success(self):
-        from dendra.insights.tuned_defaults import refresh_if_stale
+        from postrule.insights.tuned_defaults import refresh_if_stale
 
         payload = {
             "version": 99,
@@ -257,7 +257,7 @@ class TestTunedDefaults:
         assert refreshed is not None
         assert refreshed.version == 99
         # Cache reflects the fetched values.
-        from dendra.insights import load_cached_or_baked_in
+        from postrule.insights import load_cached_or_baked_in
 
         cached = load_cached_or_baked_in()
         assert cached.version == 99
@@ -265,7 +265,7 @@ class TestTunedDefaults:
         assert cached.median_outcomes_to_graduation["narrow"] == 222
 
     def test_refresh_if_stale_skips_when_cache_is_fresh(self):
-        from dendra.insights.tuned_defaults import refresh_if_stale, write_cache
+        from postrule.insights.tuned_defaults import refresh_if_stale, write_cache
 
         # Pre-warm a fresh cache.
         write_cache(TunedDefaults(version=42, cohort_size=3))
@@ -279,7 +279,7 @@ class TestTunedDefaults:
     def test_refresh_if_stale_handles_fetch_failure_silently(self):
         import urllib.error
 
-        from dendra.insights.tuned_defaults import refresh_if_stale
+        from postrule.insights.tuned_defaults import refresh_if_stale
 
         with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("boom")):
             result = refresh_if_stale()

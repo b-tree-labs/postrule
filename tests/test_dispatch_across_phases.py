@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Dispatch fires ``on=`` callables identically across every Dendra phase.
+"""Dispatch fires ``on=`` callables identically across every Postrule phase.
 
 The dispatch path (`core.dispatch` -> `_classify_impl` -> `_maybe_dispatch`)
 is phase-blind: ``_maybe_dispatch`` looks up the chosen label on the switch's
@@ -21,7 +21,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     MLPrediction,
     ModelPrediction,
@@ -70,7 +70,7 @@ def handling_rule(ctx: FailureContext) -> str:
 class StubModel:
     """Model adapter that returns a configurable (label, confidence).
 
-    Matches the :class:`dendra.models.ModelClassifier` protocol shape:
+    Matches the :class:`postrule.models.ModelClassifier` protocol shape:
     ``classify(input, labels) -> ModelPrediction``.
     """
 
@@ -87,7 +87,7 @@ class StubModel:
 class StubMLHead:
     """ML head returning configurable (label, confidence); can simulate failure.
 
-    Matches the :class:`dendra.ml.MLHead` protocol shape:
+    Matches the :class:`postrule.ml.MLHead` protocol shape:
     ``predict(input, labels) -> MLPrediction``, with ``fit`` / ``model_version``.
     """
 

@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 
-from dendra import Switch
+from postrule import Switch
 
 
 @dataclass

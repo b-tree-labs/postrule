@@ -46,7 +46,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     LearnedSwitch,
@@ -56,7 +56,7 @@ from dendra import (
     SwitchConfig,
     Verdict,
 )
-from dendra.models import ModelPrediction
+from postrule.models import ModelPrediction
 
 pytestmark = [
     pytest.mark.concurrency,

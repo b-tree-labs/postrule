@@ -16,8 +16,8 @@ import time
 
 import pytest
 
-from dendra.lifters.branch import LiftRefused, lift_branches
-from dendra.lifters.evidence import lift_evidence
+from postrule.lifters.branch import LiftRefused, lift_branches
+from postrule.lifters.evidence import lift_evidence
 
 # ---------------------------------------------------------------------------
 # Many branches

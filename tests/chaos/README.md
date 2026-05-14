@@ -1,7 +1,7 @@
-# Dendra chaos test suite
+# Postrule chaos test suite
 
 Pre-launch failure-injection coverage for the v1 ship. Each test pins
-ONE failure mode and asserts the contract Dendra's user-facing
+ONE failure mode and asserts the contract Postrule's user-facing
 docstrings already promise.
 
 ## Run

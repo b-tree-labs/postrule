@@ -14,7 +14,7 @@ HIPAA-bound triage, export-control gates have zero tolerance for
 
 from __future__ import annotations
 
-from dendra import LearnedSwitch, Phase
+from postrule import LearnedSwitch, Phase
 
 
 def access_rule(request: dict) -> str:
@@ -52,7 +52,7 @@ if __name__ == "__main__":
             safety_critical=True,
         )
     except ValueError as exc:
-        # ValueError is the specific class Dendra raises for
+        # ValueError is the specific class Postrule raises for
         # safety_critical + ML_PRIMARY; narrowing keeps this block from
         # masking unrelated bugs during demo runs.
         print(f"{Phase.ML_PRIMARY.name:20s} refused: {type(exc).__name__}: {exc}")

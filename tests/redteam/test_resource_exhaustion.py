@@ -20,7 +20,7 @@ import time
 
 import pytest
 
-from dendra import Label, LearnedSwitch
+from postrule import Label, LearnedSwitch
 
 pytestmark = pytest.mark.redteam
 
@@ -81,7 +81,7 @@ def test_recursive_on_handler_does_not_kill_process():
 
     # The load-bearing claim: this call returns. It does NOT raise
     # RecursionError into the user's code. (The recursion is caught
-    # by Dendra's own action-exception capture.)
+    # by Postrule's own action-exception capture.)
     result = sw.dispatch("trigger")
     assert result.label == "loop"
 
@@ -154,7 +154,7 @@ def test_label_lookup_is_dict_not_linear():
     """The label name index must be a dict for O(1) lookup. Otherwise
     a 100k-label switch would have an O(N) per-call dispatch.
     """
-    from dendra.core import LearnedSwitch as LS
+    from postrule.core import LearnedSwitch as LS
 
     sw = LS(rule=lambda _: "ok", labels=[f"l{i}" for i in range(1000)], name="dict-lookup")
     # The label index must be a dict.

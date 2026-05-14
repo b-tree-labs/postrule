@@ -1,6 +1,6 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Tests for the offline license verifier in src/dendra/license.py.
+"""Tests for the offline license verifier in src/postrule/license.py.
 
 The matching signer lives at cloud/api/src/license.ts (TypeScript,
 running on Cloudflare Workers via SubtleCrypto). This file regenerates
@@ -22,7 +22,7 @@ pytest.importorskip("cryptography")
 from cryptography.hazmat.primitives import serialization  # noqa: E402
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey  # noqa: E402
 
-from dendra.license import (  # noqa: E402
+from postrule.license import (  # noqa: E402
     LicenseClaims,
     LicenseInvalid,
     verify_license,
@@ -40,7 +40,7 @@ def _make_token(
     header: dict | None = None,
 ) -> str:
     """Sign a token using the same JWS-compact shape the Worker emits."""
-    h = header or {"alg": "EdDSA", "typ": "DendraLicense", "v": 1}
+    h = header or {"alg": "EdDSA", "typ": "PostruleLicense", "v": 1}
     header_b64 = _b64u(json.dumps(h, separators=(",", ":")).encode())
     payload_b64 = _b64u(json.dumps(claims, separators=(",", ":")).encode())
     signing_input = f"{header_b64}.{payload_b64}".encode("ascii")
@@ -63,7 +63,7 @@ def keypair():
 def baseline_claims():
     now = int(time.time())
     return {
-        "iss": "dendra.run",
+        "iss": "postrule.ai",
         "sub": "42",
         "tier": "business",
         "account_hash": "abc123",
@@ -76,7 +76,7 @@ def baseline_claims():
 
 def test_verify_round_trip(monkeypatch, keypair, baseline_claims):
     priv, pub_hex = keypair
-    monkeypatch.setenv("DENDRA_LICENSE_PUBLIC_KEY_HEX", pub_hex)
+    monkeypatch.setenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", pub_hex)
 
     token = _make_token(priv, baseline_claims)
     claims = verify_license(token)
@@ -90,7 +90,7 @@ def test_verify_round_trip(monkeypatch, keypair, baseline_claims):
 
 def test_verify_rejects_tampered_payload(monkeypatch, keypair, baseline_claims):
     priv, pub_hex = keypair
-    monkeypatch.setenv("DENDRA_LICENSE_PUBLIC_KEY_HEX", pub_hex)
+    monkeypatch.setenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", pub_hex)
 
     token = _make_token(priv, baseline_claims)
     h, p, s = token.split(".")
@@ -111,7 +111,7 @@ def test_verify_rejects_wrong_key(monkeypatch, keypair, baseline_claims):
         encoding=serialization.Encoding.Raw,
         format=serialization.PublicFormat.Raw,
     ).hex()
-    monkeypatch.setenv("DENDRA_LICENSE_PUBLIC_KEY_HEX", other_hex)
+    monkeypatch.setenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", other_hex)
 
     token = _make_token(priv, baseline_claims)
     with pytest.raises(LicenseInvalid, match="signature does not match"):
@@ -120,7 +120,7 @@ def test_verify_rejects_wrong_key(monkeypatch, keypair, baseline_claims):
 
 def test_verify_rejects_expired(monkeypatch, keypair, baseline_claims):
     priv, pub_hex = keypair
-    monkeypatch.setenv("DENDRA_LICENSE_PUBLIC_KEY_HEX", pub_hex)
+    monkeypatch.setenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", pub_hex)
 
     expired = dict(baseline_claims)
     expired["exp"] = int(time.time()) - 60
@@ -132,7 +132,7 @@ def test_verify_rejects_expired(monkeypatch, keypair, baseline_claims):
 
 def test_verify_rejects_future_issuance(monkeypatch, keypair, baseline_claims):
     priv, pub_hex = keypair
-    monkeypatch.setenv("DENDRA_LICENSE_PUBLIC_KEY_HEX", pub_hex)
+    monkeypatch.setenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", pub_hex)
 
     future = dict(baseline_claims)
     future["iat"] = int(time.time()) + 3600  # 1h in the future, beyond skew
@@ -144,7 +144,7 @@ def test_verify_rejects_future_issuance(monkeypatch, keypair, baseline_claims):
 
 def test_verify_rejects_bad_header(monkeypatch, keypair, baseline_claims):
     priv, pub_hex = keypair
-    monkeypatch.setenv("DENDRA_LICENSE_PUBLIC_KEY_HEX", pub_hex)
+    monkeypatch.setenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", pub_hex)
 
     # Wrong typ: spoofed header claiming this is a different token kind
     token = _make_token(
@@ -165,7 +165,7 @@ def test_verify_no_keys_configured(monkeypatch, keypair, baseline_claims):
     # No env override; built-in registry has only the placeholder which
     # the verifier silently skips → "no public keys configured".
     priv, _ = keypair
-    monkeypatch.delenv("DENDRA_LICENSE_PUBLIC_KEY_HEX", raising=False)
+    monkeypatch.delenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", raising=False)
     token = _make_token(priv, baseline_claims)
     with pytest.raises(LicenseInvalid, match="no public keys"):
         verify_license(token)

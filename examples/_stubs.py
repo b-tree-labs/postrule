@@ -9,7 +9,7 @@
 
 The purpose: every example in `examples/01_*.py` through
 `examples/20_*.py` is self-contained, runs without network, and
-demonstrates exactly one Dendra concept. To keep that promise we
+demonstrates exactly one Postrule concept. To keep that promise we
 need stand-ins for the real language-model adapters / ML heads / verdict
 sources — and we want those stand-ins to be visually obvious so
 a reader doesn't waste cognitive cycles tracing whether the
@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from dendra import MLPrediction, ModelPrediction
+from postrule import MLPrediction, ModelPrediction
 
 # ---------------------------------------------------------------------------
 # language-model adapters — fake "ModelClassifier" implementations

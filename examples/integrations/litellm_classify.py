@@ -1,14 +1,14 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra + LiteLLM — wrap a classifier-style LLM call.
+"""Postrule + LiteLLM — wrap a classifier-style LLM call.
 
 LiteLLM is the universal proxy: one ``completion(...)`` call goes to
 any provider. The most common production use case is a classifier
 (intent routing, content moderation, severity tagging) where the LLM
-returns one of N labels. That's the call site Dendra wraps.
+returns one of N labels. That's the call site Postrule wraps.
 
 Pattern: wrap the classifier function; LiteLLM stays as the actual
-LLM client; Dendra logs the calls and eventually graduates the easy
+LLM client; Postrule logs the calls and eventually graduates the easy
 cases off LLM entirely. Per-call cost drops from ~$0.0015 (Sonnet 4.6)
 to ~$0.000003 (in-process sklearn head) on graduated traffic.
 
@@ -18,7 +18,7 @@ LiteLLM optional — falls back to a stub so the example runs offline.
 
 from __future__ import annotations
 
-from dendra import ml_switch
+from postrule import ml_switch
 
 try:
     from litellm import completion

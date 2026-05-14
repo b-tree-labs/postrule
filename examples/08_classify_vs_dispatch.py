@@ -15,7 +15,7 @@ Run: `python examples/08_classify_vs_dispatch.py`
 
 from __future__ import annotations
 
-from dendra import ClassificationResult, ml_switch
+from postrule import ClassificationResult, ml_switch
 
 
 def send_to_engineering(ticket: dict) -> str:
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     print("\n── dispatch() with a failing handler — graceful capture ───────────────")
     # Poison-pill routes to 'question' → send_to_support raises.
-    # Dendra captures; the classification decision is preserved; the
+    # Postrule captures; the classification decision is preserved; the
     # caller can branch on action_raised to retry / log / escalate.
     poison = {"title": "poison: is support even online?"}
     outcome = triage_rule.dispatch(poison)

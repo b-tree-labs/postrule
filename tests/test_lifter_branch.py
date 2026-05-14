@@ -1,6 +1,6 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: LicenseRef-BSL-1.1
-"""TDD spec for the branch-body lifter (`dendra init --auto-lift`, Phase 2).
+"""TDD spec for the branch-body lifter (`postrule init --auto-lift`, Phase 2).
 
 The lifter takes a Python source file plus a target function name and
 emits a refactored ``Switch`` subclass that preserves the rule's label
@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from dendra.lifters import LiftRefused, lift_branches
+from postrule.lifters import LiftRefused, lift_branches
 
 FIXTURE_DIR = Path(__file__).parent / "lifter_fixtures"
 

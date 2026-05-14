@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Native authoring pattern: ``dendra.Switch`` class convention.
+"""Native authoring pattern: ``postrule.Switch`` class convention.
 
 TDD spec for the foundational v1 feature. The class lets users author a
 classifier as a Python class with three method-name conventions
@@ -19,8 +19,8 @@ from dataclasses import is_dataclass
 
 import pytest
 
-from dendra import Phase
-from dendra.switch_class import Switch
+from postrule import Phase
+from postrule.switch_class import Switch
 
 # ------------------------------------------------------------------
 # Test fixtures: a realistic single-arg switch with three labels.

@@ -32,7 +32,7 @@ different rule, but quantifying that sensitivity across the suite
 requires multi-seed runs deferred to the next revision (see Appendix
 B).
 
-We release the reference implementation (the Dendra library), the full
+We release the reference implementation (the Postrule library), the full
 transition-curve dataset, the benchmark harness, and an `MLHead`
 candidate-selection harness that picks among sklearn estimators under
 the same gate.
@@ -137,7 +137,7 @@ We make four contributions:
   suite range from 250 outcomes to 2000. §5 reports the curves; §6 lays
   out the regime taxonomy.
 
-+ #strong[An open-source reference implementation] (the Dendra Python
++ #strong[An open-source reference implementation] (the Postrule Python
   library) with the transition-curve dataset, the benchmark harness, and
   signed Apache 2.0 licensing on the client SDK so practitioners can
   adopt the primitive in commercial workloads.
@@ -314,13 +314,13 @@ direction-agnostic and the safety theorem (§3.3, Remark) applies
 symmetrically.
 
 #strong[Head-to-head comparison.] Against the four named alternatives a
-practitioner is most likely to weigh against Dendra:
+practitioner is most likely to weigh against Postrule:
 
 #figure(
   align(center)[#text(size: 8pt)[#table(
     columns: (26%, 14%, 14%, 14%, 16%, 16%),
     align: (left,left,left,left,left,left,),
-    table.header([Property], [Dendra], [FrugalGPT], [RouteLLM], [Raw ML], [Ad-hoc],),
+    table.header([Property], [Postrule], [FrugalGPT], [RouteLLM], [Raw ML], [Ad-hoc],),
     table.hline(),
     [Needs labels at day 1?], [no], [no], [yes (preference data)], [yes], [no],
     [Statistical guarantee on transitions?], [yes (paired McNemar, $alpha$-bounded)], [no], [no (learned router)], [n/a], [no],
@@ -341,7 +341,7 @@ learned routing (RouteLLM) optimize inference-time selection among an
 already-trained model pool; both keep the LLM tier permanently in the
 critical path. Raw ML-from-day-one bypasses the
 cold-start problem only when day-one labels exist. Ad-hoc thresholding
-is what most production code defaults to without a primitive. Dendra is
+is what most production code defaults to without a primitive. Postrule is
 the only entry that combines a day-zero rule floor, a Type-I-bounded
 statistical gate, and an explicit graduation off the LLM tier.
 
@@ -646,7 +646,7 @@ the lifecycle generalizes beyond text.
 === 4.2 Rule construction
 <rule-construction>
 The day-zero rule is automated and deliberately simple. For each
-dataset, `dendra.benchmarks.rules.build_reference_rule` constructs an
+dataset, `postrule.benchmarks.rules.build_reference_rule` constructs an
 `if/elif` cascade by:
 
 + Inspecting the first $k = 100$ training examples (paper default).
@@ -665,7 +665,7 @@ in §5.4.
 === 4.3 ML head
 <ml-head>
 The ML head for the §5.1 headline experiment is
-`dendra.ml.SklearnTextHead`: TF-IDF features with sublinear
+`postrule.ml.SklearnTextHead`: TF-IDF features with sublinear
 term-frequency, plus an L2-regularized logistic regression. Deliberately
 simple: a transformer would produce higher absolute accuracy but would
 conflate the #emph[transition-curve shape] (the contribution) with the
@@ -713,15 +713,15 @@ accuracy and against gate-statistic) for each benchmark.
 
 === 4.6 Reproducibility
 <reproducibility>
-All code is at `https://github.com/b-tree-labs/dendra` (Apache 2.0). All
+All code is at `https://github.com/b-tree-labs/postrule` (Apache 2.0). All
 fixed seeds are documented in the benchmark JSONL output. The
 transition-curve dataset is released as per-benchmark JSONL files
 under `results/` (`atis_paired.jsonl`, `banking77_paired.jsonl`,
 `clinc150_paired.jsonl`, `hwu64_paired.jsonl`, `snips_paired.jsonl`,
 `trec6_paired.jsonl`, `ag_news_paired.jsonl`, `codelangs_paired.jsonl`)
 accompanying this paper. The benchmark harness ships in
-`src/dendra/research.py::run_benchmark_experiment` and the McNemar
-computation in `src/dendra/gates.py::McNemarGate`.
+`src/postrule/research.py::run_benchmark_experiment` and the McNemar
+computation in `src/postrule/gates.py::McNemarGate`.
 
 #horizontalrule
 
@@ -738,7 +738,7 @@ reported separately in §5.7. Table 4 reports the headline numbers.
   align(center)[#text(size: 8pt)[#table(
     columns: (12%, 16%, 7%, 9%, 10%, 8%, 9%, 11%, 18%),
     align: (left,left,right,right,right,right,right,right,right,),
-    table.header([Benchmark], [Domain], [Labels], [Rule acc], [ML first clear], [ML \@ 1k], [ML final], [First clear ($p < 0.01$)#footnote[#emph[First clear] reports the smallest checkpoint at which $b > c$ and $p < alpha$. The production gate (`McNemarGate` in `src/dendra/gates.py`) additionally requires $n_"paired" >= n_min$, which can be satisfied later than this column shows on small test sets or under extreme effect sizes. With $n_min = 200$ enforced, the first-clear depths shift to: codelangs never (139-row test set never reaches $n_"paired" = 200$), ATIS 250, TREC-6 250, AG News 1,000, Snips 3,000, HWU64 2,250, Banking77 1,000, CLINC150 750. Path (c) of the V1 review, re-running the column under the production gate, is deferred to a follow-up revision.]], [Outcomes to ML final],),
+    table.header([Benchmark], [Domain], [Labels], [Rule acc], [ML first clear], [ML \@ 1k], [ML final], [First clear ($p < 0.01$)#footnote[#emph[First clear] reports the smallest checkpoint at which $b > c$ and $p < alpha$. The production gate (`McNemarGate` in `src/postrule/gates.py`) additionally requires $n_"paired" >= n_min$, which can be satisfied later than this column shows on small test sets or under extreme effect sizes. With $n_min = 200$ enforced, the first-clear depths shift to: codelangs never (139-row test set never reaches $n_"paired" = 200$), ATIS 250, TREC-6 250, AG News 1,000, Snips 3,000, HWU64 2,250, Banking77 1,000, CLINC150 750. Path (c) of the V1 review, re-running the column under the production gate, is deferred to a follow-up revision.]], [Outcomes to ML final],),
     table.hline(),
     [#strong[codelangs]], [code], [12], [87.8%], [97.1%], [#emph[\(extract)]], [#strong[97.8%]], [#strong[400]], [553],
     [#strong[ATIS]], [flight booking], [26], [70.0%], [75.6%], [81.9%], [#strong[88.7%]], [#strong[250]], [4,978],
@@ -758,7 +758,7 @@ benchmark crosses paired-McNemar significance at $alpha = 0.01$.
 Column key: #emph[Rule acc] is at seed=100, no shuffle; #emph[ML first
 clear] is the ML head's test accuracy at the gate-fire moment;
 #emph[ML final] is the asymptote after the entire training corpus is
-consumed. Benchmark citations: codelangs (Dendra 2026); ATIS (Hemphill
+consumed. Benchmark citations: codelangs (Postrule 2026); ATIS (Hemphill
 et al. 1990); TREC-6 (Li & Roth 2002); AG News (Zhang et al. 2015);
 Snips (Coucke et al. 2018); HWU64 (Liu et al. 2019); Banking77
 (Casanueva et al. 2020); CLINC150 (Larson et al. 2019). Banking77, HWU64, CLINC150, and Snips at
@@ -876,7 +876,7 @@ the rule was never a viable baseline, and no team could have shipped a
 1%-accurate (or chance-accuracy) keyword classifier as the user-visible
 decision in the first place. High-cardinality or low-affinity workloads
 in production start at Phase 2 with an off-the-shelf zero-shot LLM, or
-wait on hand-labeled training data before launching. Dendra's role here
+wait on hand-labeled training data before launching. Postrule's role here
 is cold-start substrate, not graduation: outcome logging from day one
 regardless of which decision-maker is in front, with an explicit
 migration path to a trained ML head once enough data accumulates.
@@ -900,7 +900,7 @@ The three regimes correspond to different product conversations:
   you within the first 250 outcomes."
 - #strong[Regime III user (high cardinality or weak affinity):] "We need
   an N-way classifier and we don't have training data yet." → "Start at
-  Phase 2 with a zero-shot LLM in front of Dendra's outcome-logging
+  Phase 2 with a zero-shot LLM in front of Postrule's outcome-logging
   layer; the log it generates is the training-data source for the
   eventual ML head."
 - #strong[Regime I user:] "Our rule works very well; is graduation even
@@ -948,7 +948,7 @@ HuggingFace splits sorted by label, the seed window is captured by a
 single class; re-shuffling the training stream redraws the window from
 across the label space and changes the rule. Quantifying this axis
 properly requires multi-seed runs across the six relevant benchmarks
-(`dendra bench <name> --shuffle-seed N` over $N in 1..10$); those runs
+(`postrule bench <name> --shuffle-seed N` over $N in 1..10$); those runs
 are deferred to the next revision and the corresponding sensitivity
 table is not included here (see Appendix B). The qualitative point stands
 as a falsifiable claim awaiting the regenerated data: that the
@@ -1063,7 +1063,7 @@ compound-label task.
 52% dominates both the rule (1.3%) and the cold ML head (2.6% at the
 250-outcome checkpoint). High-cardinality or weak-keyword-affinity
 workloads can start at Phase 2 with a 7B-class local LLM and accumulate
-outcome data via Dendra's logging substrate while the trained ML head
+outcome data via Postrule's logging substrate while the trained ML head
 warms up. This is the empirical anchor for §5.2's claim that Regime III
 is not a graduation problem but a cold-start substrate problem.
 
@@ -1141,11 +1141,11 @@ The finding is structural: #strong[there is no universally best MLHead
 for paired-correctness intent classification.] The right choice is a
 function of data shape (cardinality, samples-per-class density,
 class-balance skew). The reference implementation exposes this as a
-configurable strategy: `dendra.MLHeadStrategy` is a Protocol,
+configurable strategy: `postrule.MLHeadStrategy` is a Protocol,
 `CardinalityMLHeadStrategy` is the shipped default with thresholds
 informed by Table 8, and `head_strategy=` plumbs into `LearnedSwitch` so
 the strategy is consulted lazily on first ML-head access. The strategy
-is itself a Dendra rule applied to Dendra: a hand-coded threshold rule
+is itself a Postrule rule applied to Postrule: a hand-coded threshold rule
 today, with a clear graduation path (gate-driven head-selection learned
 over the autoresearch trajectory) as the v1.x story.
 
@@ -1164,12 +1164,12 @@ implementation.
 
 The CIFAR-10 setup uses two pieces shipped in v1.0:
 
-- #strong[Rule:] `dendra.image_rules.build_color_centroid_rule`
-  (companion to `dendra.benchmarks.rules.build_reference_rule` for
+- #strong[Rule:] `postrule.image_rules.build_color_centroid_rule`
+  (companion to `postrule.benchmarks.rules.build_reference_rule` for
   text). For each class in the seed window, computes the mean RGB
   triple; predicts an unseen image by L2-nearest centroid. Cheap,
   deterministic, no training; the image analog of a keyword rule.
-- #strong[ML head:] `dendra.ml.ImagePixelLogRegHead`. Flattens the
+- #strong[ML head:] `postrule.ml.ImagePixelLogRegHead`. Flattens the
   32×32×3 uint8 image to a 3072-dim float vector (normalized to \[0,
   1\]), fits a multinomial logistic regression. sklearn-only, no torch
   dependency on the v1.0 install path.
@@ -1296,7 +1296,7 @@ of absolute percentage:
   under uniform class distribution); Snips and AG News (low cardinality
   but the intent boundary doesn't reduce to keyword matches the
   auto-rule can extract). The rule is at-or-near chance from day one.
-  Dendra's role here is cold-start substrate, not graduation: outcome
+  Postrule's role here is cold-start substrate, not graduation: outcome
   logging while a higher-capacity decider (zero-shot LLM, trained ML
   head) runs in front, with a clear migration path. Snips is the
   canonical surprise: 7 labels, but cardinality alone does not save you
@@ -1418,7 +1418,7 @@ We list the limitations that reviewers should weigh.
   set explicitly; we do not provide a fleet-aggregated guarantee.
 
 + #strong[One production case study; external customer deployments still
-  pending.] §5.6's autoresearch on Dendra's own MLHead choice is a real
+  pending.] §5.6's autoresearch on Postrule's own MLHead choice is a real
   application of the framework: the `CandidateHarness` (§9.5) ran on
   actual data, with real paired-McNemar evidence, producing a verifiable
   promotion decision (`TfidfLinearSVC` for mid-cardinality,
@@ -1432,10 +1432,10 @@ We list the limitations that reviewers should weigh.
 
 #horizontalrule
 
-== 9. The Dendra Reference Implementation
-<the-dendra-reference-implementation>
+== 9. The Postrule Reference Implementation
+<the-postrule-reference-implementation>
 The reference implementation realizes the lifecycle as a Python library
-(`pip install dendra`). Python is the v1.0 reference because the
+(`pip install postrule`). Python is the v1.0 reference because the
 empirical work in §5 is in Python, but the lifecycle, the Gate protocol,
 and the audit-chain format are language-agnostic by design. Client
 libraries for additional languages (TypeScript/JavaScript, Go, Java,
@@ -1451,7 +1451,7 @@ migrates from rule to ML. The decorator is how the call site stays
 fixed while the internals graduate. Wrap the rule function once:
 
 ```python
-from dendra import ml_switch
+from postrule import ml_switch
 from myapp.moderation import publish, queue_for_review, block_and_notify
 
 # Content moderation: each label is paired with a downstream system
@@ -1517,7 +1517,7 @@ inlined; the decorator is the only addition. Everything else (outcome
 logging, gate evaluation, lifecycle migration, audit chain, circuit
 breaker) happens for free.
 
-#strong[You write your rule once; Dendra upgrades it from a hand-written
+#strong[You write your rule once; Postrule upgrades it from a hand-written
 keyword check to a trained ML head, in production, with no rewrite.] On
 the §5 benchmarks the upgrade is a 70.0% → 88.7% lift on ATIS, a 43.0% →
 85.2% lift on TREC-6, and a sustained climb from chance-floor to 81.9 to
@@ -1593,7 +1593,7 @@ configurable surface, not a hard-coded default:
   `make_ml_head(name)`. Built-in heads are pre-registered
   (`tfidf_logreg`, `tfidf_linearsvc`, `tfidf_multinomial_nb`,
   `tfidf_gradient_boosting`, `image_pixel_logreg`); strategies can refer
-  to heads by name without importing the class. Plugins extending Dendra
+  to heads by name without importing the class. Plugins extending Postrule
   register their own heads at import time.
 - #strong[`TfidfHeadBase`]: public extension class. Subclass and
   override `_build_classifier()` to ship a TF-IDF + custom-estimator
@@ -1603,7 +1603,7 @@ configurable surface, not a hard-coded default:
   use this base; user-contributed heads (`TfidfXGBoostHead`,
   `TfidfSGDClassifierHead`, etc.) plug in the same way.
 
-The strategy is itself a Dendra rule applied to Dendra: a hand-coded
+The strategy is itself a Postrule rule applied to Postrule: a hand-coded
 threshold today, with a clear graduation path (gate-driven
 head-selection learned over the autoresearch trajectory) sketched in
 §10.7.
@@ -1625,7 +1625,7 @@ feature combinations against the live verdict log) is the workflow
 `CandidateHarness` is built for:
 
 ```python
-from dendra import ml_switch, CandidateHarness
+from postrule import ml_switch, CandidateHarness
 from myapp.payments import approve, decline, send_to_review
 from myapp.fraud_research import propose_candidate  # agent-driven proposer
 
@@ -1670,7 +1670,7 @@ substrate underneath.
 
 === 9.6 Licensing and governance
 <licensing-and-governance>
-The client SDK (everything end-users `import dendra` reaches) is Apache
+The client SDK (everything end-users `import postrule` reaches) is Apache
 2.0. The analyzer / research / ROI components (`analyzer.py`, `cli.py`,
 `research.py`, `roi.py`) are BSL 1.1 with a Change Date of 2030-05-01
 (Change License: Apache 2.0). The split is enforced at PR time by a CI
@@ -1684,7 +1684,7 @@ U.S. Provisional Patent Application No.~64/045,809 ("System and Method
 for Graduated-Autonomy Classification with Statistically-Gated Phase
 Transitions, and Companion Analyzer System for Identifying
 Classification Sites in Production Codebases"), filed 2026-04-21,
-attorney docket BTV-DENDRA-PPA-001, covers the graduated-autonomy
+attorney docket BTV-POSTRULE-PPA-001, covers the graduated-autonomy
 lifecycle, the paired-test gating mechanism, and the companion analyzer
 described in this paper; the system is #emph[patent pending]. The Apache
 2.0 grant on the client SDK includes the patent grant standard to that
@@ -1754,7 +1754,7 @@ structurally identical and operationally larger at scale. The lifecycle
 moves the decision-maker from an LLM (Phase 1 / Phase 2, hosted or
 local) to a trained ML head (Phase 4 / Phase 5, a sklearn pipeline).
 That is a transition between two regimes of inference economics, not
-just two regimes of accuracy. Production teams that adopt Dendra
+just two regimes of accuracy. Production teams that adopt Postrule
 inherit #emph[both] graduations: the gate-validated accuracy lift the
 paper measures, and a per-call cost-and-latency drop the paper has not
 yet emphasized.
@@ -1844,7 +1844,7 @@ work generalizes the question to the #emph[lifecycle in which models
 are introduced and retired]. A `MODEL_PRIMARY` phase is structurally
 analogous to a two-stage cascade in the FrugalGPT lineage (LLM
 classifier with rule fallback), but the cascade direction is reversed:
-FrugalGPT escalates cheap→expensive on uncertainty, where Dendra's
+FrugalGPT escalates cheap→expensive on uncertainty, where Postrule's
 `MODEL_PRIMARY` falls back expensive→cheap. The gating optimization in
 our setting is on the cheap fallback (the rule, which is structurally
 preserved) rather than on the expensive primary (the LLM). Both
@@ -1881,7 +1881,7 @@ a research program.
 === 10.6 Future work
 <future-work>
 - #strong[External-customer production case studies.] §5.6 reports one
-  production case study on Dendra's own MLHead selection (the
+  production case study on Postrule's own MLHead selection (the
   `CandidateHarness` running on the project's own data).
   External-customer deployments (third-party classification sites with
   their own outcome plumbing and downstream signal) are the natural
@@ -1930,11 +1930,11 @@ a research program.
   natural follow-ons; we treat them as a companion-paper program rather
   than v1.0 scope.
 
-=== 10.7 MLHead-strategy graduation as a recursive Dendra problem
-<mlhead-strategy-graduation-as-a-recursive-dendra-problem>
+=== 10.7 MLHead-strategy graduation as a recursive Postrule problem
+<mlhead-strategy-graduation-as-a-recursive-postrule-problem>
 The §5.6 finding that the empirical winner depends on data shape
 generalizes recursively. A `CardinalityMLHeadStrategy` is structurally a
-Dendra rule applied to the MLHead-selection problem: a hand-coded
+Postrule rule applied to the MLHead-selection problem: a hand-coded
 threshold table over data-profile features. Each time anyone runs the
 autoresearch loop on a new dataset, they produce one record of the form
 $\( upright("data-profile") \, upright("winning-head") \, upright("paired-McNemar evidence") \)$.
@@ -1976,7 +1976,7 @@ corner where the rule is competitive with ML throughout (codelangs); a
 #emph[rule-usable] mid-range where ML decisively wins (ATIS, TREC-6);
 and a #emph[rule-at-floor] regime where the rule is at-or-near chance
 from day one, driven either by high cardinality (HWU64, Banking77,
-CLINC150) or by weak rule-keyword affinity (Snips, AG News). The Dendra
+CLINC150) or by weak rule-keyword affinity (Snips, AG News). The Postrule
 reference implementation, the transition-curve dataset, and the
 benchmark harness are released so that practitioners can adopt the
 primitive in commercial workloads and so that the empirical claim can be
@@ -2173,8 +2173,8 @@ Arena. #emph[NeurIPS 2023]. arXiv:2306.05685.
 == Appendix A: Reference Rules
 <appendix-a-reference-rules>
 The four reference rules are auto-generated by
-`dendra.benchmarks.rules.build_reference_rule(seed=100)`. The full
-source is at `src/dendra/benchmarks/rules.py`. We publish the generated
+`postrule.benchmarks.rules.build_reference_rule(seed=100)`. The full
+source is at `src/postrule/benchmarks/rules.py`. We publish the generated
 rules per benchmark in
 `docs/papers/2026-when-should-a-rule-learn/rules/` for replication.
 
@@ -2190,12 +2190,12 @@ rules per benchmark in
 - ✓ Benchmark harness reproduces Table 4 (as-shipped HuggingFace splits;
   the `--no-shuffle` flag opts out of the v1.0 default seed-window
   shuffle and recovers the v0.x paper-as-shipped behavior):
-  `dendra bench --no-shuffle {atis,banking77,clinc150,hwu64,snips,trec6,ag_news,codelangs}`.
+  `postrule bench --no-shuffle {atis,banking77,clinc150,hwu64,snips,trec6,ag_news,codelangs}`.
 
 #strong[Deferred to the next revision: shuffle-sensitivity table.] The
 shuffle-sensitivity multi-seed runs that would back a Regime III
 shuffle-recovery table are slated for the next paper revision once the
-regeneration sweep has been done. The CLI is `dendra bench <name>
+regeneration sweep has been done. The CLI is `postrule bench <name>
 --shuffle-seed N` with `N in 1..10` across the six benchmarks in the
 at-chance cluster (HWU64, Banking77, CLINC150, Snips, AG News, plus
 TREC-6 as a control); per the v1.0 README estimate, the sweep is
@@ -2203,13 +2203,13 @@ roughly $6 times 10 times 30$ minutes $approx 30$ CPU-hours total.
 
 == Appendix C: Code listings
 <appendix-c-code-listings>
-Key implementation references: - `src/dendra/core.py::LearnedSwitch`:
-six-phase lifecycle. - `src/dendra/gates.py::McNemarGate`:
+Key implementation references: - `src/postrule/core.py::LearnedSwitch`:
+six-phase lifecycle. - `src/postrule/gates.py::McNemarGate`:
 paired-McNemar gate. -
-`src/dendra/research.py::run_benchmark_experiment`: the harness used in
-§4--§5. - `src/dendra/verdicts.py::JudgeSource`: LLM-as-judge with
+`src/postrule/research.py::run_benchmark_experiment`: the harness used in
+§4--§5. - `src/postrule/verdicts.py::JudgeSource`: LLM-as-judge with
 same-model bias guardrail. -
-`src/dendra/autoresearch.py::CandidateHarness`: autoresearch substrate.
+`src/postrule/autoresearch.py::CandidateHarness`: autoresearch substrate.
 
 #horizontalrule
 

@@ -92,7 +92,7 @@ class TestBranchLifterOnRealExample:
     in a stable, well-diagnosed way."""
 
     def test_triage_rule_lifts_or_refuses_with_specific_diagnostic(self):
-        from dendra.lifters.branch import LiftRefused, lift_branches
+        from postrule.lifters.branch import LiftRefused, lift_branches
 
         source = (EXAMPLES_DIR / "01_hello_world.py").read_text()
         try:
@@ -117,7 +117,7 @@ class TestEvidenceLifterOnSyntheticInput:
     without coupling to example specifics.)"""
 
     def test_globals_read_lifts_to_switch_class(self):
-        from dendra.lifters.evidence import lift_evidence
+        from postrule.lifters.evidence import lift_evidence
 
         source = (
             "def gate(text: str) -> str:\n"
@@ -146,7 +146,7 @@ def test_hazard_analysis_runs_on_every_example(example: Path):
     example file (defensive check; the detectors swallow per-function
     failures but a broken AST walker would still surface as a hard
     error)."""
-    from dendra.analyzer import analyze
+    from postrule.analyzer import analyze
 
     report = analyze(example.parent, ignore_dirs={".venv", ".git"})
     # Just confirming the call returned without exception. The actual

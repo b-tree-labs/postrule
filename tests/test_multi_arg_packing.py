@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Multi-arg / kwargs packing for ``@ml_switch`` and ``dendra.Switch``.
+"""Multi-arg / kwargs packing for ``@ml_switch`` and ``postrule.Switch``.
 
 A user's rule function (or a Switch subclass's evidence / rule / on
 methods) may take more than one positional argument. The wrapping
@@ -19,7 +19,7 @@ from dataclasses import is_dataclass
 
 import pytest
 
-from dendra import Switch, ml_switch
+from postrule import Switch, ml_switch
 
 # ----------------------------------------------------------------------
 # Decorator path: @ml_switch on multi-arg functions.

@@ -37,9 +37,9 @@ jobs:
 
       - name: Smoke-test the installed package
         run: |
-          python -c "import dendra; print('version:', dendra.__version__ if hasattr(dendra, '__version__') else 'unknown')"
-          python -c "from dendra import ml_switch, Phase, SwitchConfig, LearnedSwitch; print('client SDK imports ok')"
-          dendra --help
+          python -c "import postrule; print('version:', postrule.__version__ if hasattr(postrule, '__version__') else 'unknown')"
+          python -c "from postrule import ml_switch, Phase, SwitchConfig, LearnedSwitch; print('client SDK imports ok')"
+          postrule --help
 
       - name: Run example gallery against the installed wheel
         run: |

@@ -1,7 +1,7 @@
 # Agent-harness integrations
 
 Self-contained examples showing how to wrap a classification or
-routing decision in your existing stack with Dendra's `@ml_switch`.
+routing decision in your existing stack with Postrule's `@ml_switch`.
 Each file:
 
 - runs offline (the framework imports are optional — falls back to
@@ -26,7 +26,7 @@ The five examples cluster into two patterns:
 
 1. **Wrap the routing decision** — LangChain / LlamaIndex. The
    orchestration framework already has a discrete "which path?"
-   choice. Wrapping it lets Dendra graduate the picker without
+   choice. Wrapping it lets Postrule graduate the picker without
    touching the downstream chains/retrievers.
 
 2. **Wrap the LLM call site** — LiteLLM / Hermes / Axiom. The LLM

@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from dendra import ClassificationRecord, SqliteStorage, Verdict
+from postrule import ClassificationRecord, SqliteStorage, Verdict
 
 
 def _record(output: str = "bug") -> ClassificationRecord:

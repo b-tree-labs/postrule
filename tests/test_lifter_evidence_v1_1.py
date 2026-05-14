@@ -32,8 +32,8 @@ from pathlib import Path
 
 import pytest
 
-from dendra.lifters import LiftRefused, evidence_inputs, evidence_via_probe
-from dendra.lifters.evidence import lift_evidence
+from postrule.lifters import LiftRefused, evidence_inputs, evidence_via_probe
+from postrule.lifters.evidence import lift_evidence
 
 FIXTURE_DIR = Path(__file__).parent / "lifter_fixtures" / "evidence_v1_1"
 
@@ -275,8 +275,8 @@ class TestDecoratorRuntime:
             return "ok"
 
         assert maybe_charge("anything") == "ok"
-        assert hasattr(maybe_charge, "_dendra_evidence_probes")
-        assert maybe_charge._dendra_evidence_probes == {"charge_status": "api.charge_probe(req)"}
+        assert hasattr(maybe_charge, "_postrule_evidence_probes")
+        assert maybe_charge._postrule_evidence_probes == {"charge_status": "api.charge_probe(req)"}
 
     def test_inputs_attaches_metadata(self):
         def gather(self, text, kind):
@@ -286,5 +286,5 @@ class TestDecoratorRuntime:
         def route(self, text, kind):
             return "low"
 
-        assert hasattr(route, "_dendra_evidence_inputs")
-        assert route._dendra_evidence_inputs == {"handler_priority": gather}
+        assert hasattr(route, "_postrule_evidence_inputs")
+        assert route._postrule_evidence_inputs == {"handler_priority": gather}

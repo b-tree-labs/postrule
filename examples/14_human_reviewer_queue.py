@@ -30,8 +30,8 @@ import queue
 import threading
 import time
 
-from dendra import Verdict
-from dendra.verdicts import HumanReviewerSource
+from postrule import Verdict
+from postrule.verdicts import HumanReviewerSource
 
 
 def _fake_reviewer_loop(

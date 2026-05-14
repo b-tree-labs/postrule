@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     FileStorage,

@@ -1,6 +1,6 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra hello-world — rule + dispatch in the smallest form.
+"""Postrule hello-world — rule + dispatch in the smallest form.
 
 Run: `python examples/01_hello_world.py`
 
@@ -12,7 +12,7 @@ output equals this label, evaluate this action."
 
 from __future__ import annotations
 
-from dendra import ml_switch
+from postrule import ml_switch
 
 
 def send_to_engineering(ticket: dict) -> str:

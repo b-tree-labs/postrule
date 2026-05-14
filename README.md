@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="brand/logo/dendra-wordmark-horizontal-dark.svg">
-  <img src="brand/logo/dendra-wordmark-horizontal.svg" alt="Dendra" width="420">
+  <source media="(prefers-color-scheme: dark)" srcset="brand/logo/postrule-wordmark-horizontal-dark.svg">
+  <img src="brand/logo/postrule-wordmark-horizontal.svg" alt="Postrule" width="420">
 </picture>
 
 # Software that's smarter every month than the day you shipped it.
@@ -8,7 +8,7 @@
 **Drop a rule. Drop a verifier. Watch your classifier get smarter automatically.**
 
 ```python
-from dendra import ml_switch, default_verifier
+from postrule import ml_switch, default_verifier
 
 @ml_switch(
     labels=["bug", "feature_request", "question"],
@@ -32,7 +32,7 @@ failure.
 
 **No reviewer queues. No labeled-data prerequisite. No manual
 `mark_correct()` calls scattered through your code.** Drop the
-verifier and Dendra's autonomous mode does the rest.
+verifier and Postrule's autonomous mode does the rest.
 
 > **What `default_verifier()` does on first call.** Lazy-downloads
 > `qwen2.5:7b` (~4.7 GB) into your Ollama cache, then runs locally
@@ -54,7 +54,7 @@ bespoke engineering at every decision point — and "we should ML
 this" tickets sit in backlogs forever because nobody has the
 time to build the migration scaffolding.
 
-Dendra is the migration scaffolding. Six lifecycle phases (rule
+Postrule is the migration scaffolding. Six lifecycle phases (rule
 → model-shadow → model → ML-shadow → ML), a head-to-head evidence
 gate at every transition (McNemar's exact test under the hood —
 swappable), the rule retained as a safety floor with a circuit
@@ -63,7 +63,7 @@ evidence to evaluate without you wiring a reviewer queue.
 
 ## The bet
 
-If your AI bill is more than $1M/yr and Dendra is in your stack,
+If your AI bill is more than $1M/yr and Postrule is in your stack,
 that bill will be 30% smaller in 12 months. Public benchmark, or
 you get every dollar of consulting back.
 
@@ -76,7 +76,7 @@ repeated the same pattern: rules accumulate, larger models
 earn their seat over the rule, but graduating decisions *off*
 a larger model onto something smaller and cheaper needed a
 formal evidence gate that nothing on the shelf provided. I
-wrote Dendra because I needed it on my own systems. The
+wrote Postrule because I needed it on my own systems. The
 companion paper formalizes the gate (paired-McNemar at every
 transition); the eight-benchmark suite stress-tests it.
 
@@ -84,12 +84,12 @@ transition); the eight-benchmark suite stress-tests it.
 
 ## What graduation looks like
 
-When a wrapped switch graduates, Dendra writes a markdown report
+When a wrapped switch graduates, Postrule writes a markdown report
 card alongside your other repo artifacts. The card is the launch
 evidence — what the gate saw, when it fired, the cost trajectory,
 the drift posture going forward.
 
-Excerpt from `dendra/results/triage_rule.md` — a sample card
+Excerpt from `postrule/results/triage_rule.md` — a sample card
 generated 2026-04-29 (full sample in
 [`docs/sample-reports/triage_rule.md`](docs/sample-reports/triage_rule.md)):
 
@@ -101,13 +101,13 @@ generated 2026-04-29 (full sample in
 
 Three commands produce the evidence trilogy:
 
-- `dendra analyze --report` — initial-analysis discovery card. Which
+- `postrule analyze --report` — initial-analysis discovery card. Which
   sites would graduate, projected savings, recommended order.
   ([sample](docs/sample-reports/_initial-analysis.md))
-- `dendra report <switch>` — per-switch graduation card. Transition
+- `postrule report <switch>` — per-switch graduation card. Transition
   curve, p-value trajectory, cost trajectory, drift checks.
   ([sample](docs/sample-reports/triage_rule.md))
-- `dendra report --summary` — project rollup. Cockpit view across
+- `postrule report --summary` — project rollup. Cockpit view across
   every wrapped switch with phase distribution and aggregate
   reduction. ([sample](docs/sample-reports/_summary.md))
 
@@ -119,7 +119,7 @@ no SaaS lock-in for the evidence.
 
 ## Status & limitations
 
-v1.0 ships the full decorator path (`@ml_switch`), the native `dendra.Switch` class authoring pattern, multi-arg signatures via auto-packing, full auto-lift across globals / `self.attr` / mid-function I/O / closures, drift detection, the prescriptive analyzer, the account system, the `propagate_action_exceptions` knob, and the MCP server. The classifier function returns a label name (string), not a structured value; tests, fixtures, validators, and order-dependent state machines are not classification sites; dynamic dispatch (`getattr` with runtime keys) requires explicit `@evidence_inputs` annotation; `eval` / `exec` is refused. Deep IDE plugins, A2A integration, and runtime AST mode are out of v1. The full list, version-tagged with the path forward for each item, lives in [`docs/limitations.md`](docs/limitations.md).
+v1.0 ships the full decorator path (`@ml_switch`), the native `postrule.Switch` class authoring pattern, multi-arg signatures via auto-packing, full auto-lift across globals / `self.attr` / mid-function I/O / closures, drift detection, the prescriptive analyzer, the account system, the `propagate_action_exceptions` knob, and the MCP server. The classifier function returns a label name (string), not a structured value; tests, fixtures, validators, and order-dependent state machines are not classification sites; dynamic dispatch (`getattr` with runtime keys) requires explicit `@evidence_inputs` annotation; `eval` / `exec` is refused. Deep IDE plugins, A2A integration, and runtime AST mode are out of v1. The full list, version-tagged with the path forward for each item, lives in [`docs/limitations.md`](docs/limitations.md).
 
 ## Install
 
@@ -128,11 +128,11 @@ Three ways in. Pick whichever matches what you have on hand.
 ### A. Bring your own API key (fastest first verdict)
 
 ```bash
-pip install dendra
+pip install postrule
 export OPENAI_API_KEY=sk-...        # or ANTHROPIC_API_KEY=...
 ```
 ```python
-from dendra import default_verifier
+from postrule import default_verifier
 verifier = default_verifier(prefer="openai")     # or "anthropic"
 ```
 
@@ -142,10 +142,10 @@ disk, no Ollama install. Recurring API cost.
 ### B. Bundled local model (privacy + offline-capable)
 
 ```bash
-pip install dendra[bundled]
+pip install postrule[bundled]
 ```
 ```python
-from dendra.bundled import default_verifier_bundled, default_classifier
+from postrule.bundled import default_verifier_bundled, default_classifier
 verifier = default_verifier_bundled()    # qwen2.5:7b, ~4.7 GB
 model    = default_classifier()           # gemma2:2b, ~1.6 GB
 ```
@@ -164,25 +164,25 @@ benchmark-justified — see
 ```bash
 pip install axi-platform
 axi serve     # starts the bundled local-LM server on localhost
-pip install dendra
+pip install postrule
 ```
 ```python
-from dendra import LearnedSwitch, JudgeSource, LlamafileAdapter
+from postrule import LearnedSwitch, JudgeSource, LlamafileAdapter
 verifier = JudgeSource(LlamafileAdapter())   # talks to the running axi node
 ```
 
 If you already run an [Axiom](https://github.com/b-tree-labs/axiom-os)
 node — or you'd like other tools on this machine to share one
-local-LM runtime — Path C wires Dendra's verifier through it.
+local-LM runtime — Path C wires Postrule's verifier through it.
 
 ### Try it in 60 seconds (no API keys, no Ollama)
 
 ```bash
-pip install dendra
-dendra quickstart           # copies a working example into the cwd and runs it
+pip install postrule
+postrule quickstart           # copies a working example into the cwd and runs it
 ```
 ```bash
-dendra quickstart --list    # see the menu (hello / tournament / autoresearch / ...)
+postrule quickstart --list    # see the menu (hello / tournament / autoresearch / ...)
 ```
 
 Runnable examples in [`examples/`](./examples/) — each file is
@@ -245,7 +245,7 @@ beats the live decision. The autoresearch loop reads
 from bad proposals throughout.
 
 ```python
-from dendra import CandidateHarness, LearnedSwitch
+from postrule import CandidateHarness, LearnedSwitch
 
 sw = LearnedSwitch(rule=production_rule, ...)
 
@@ -266,7 +266,7 @@ if report.recommend_promote:
 ```
 
 > **Autoresearch tells you what to try.**
-> **Dendra tells you when it worked.**
+> **Postrule tells you when it worked.**
 
 Full walkthrough in [`docs/autoresearch.md`](docs/autoresearch.md);
 runnable end-to-end loop in
@@ -276,19 +276,19 @@ runnable end-to-end loop in
 
 ```bash
 # Find classification sites in any codebase (static AST scan).
-dendra analyze ./my-repo --format markdown --project-savings
+postrule analyze ./my-repo --format markdown --project-savings
 
 # Wrap a target function with @ml_switch (AST injection, no typos).
-dendra init src/triage.py:triage_ticket --author "@triage:support"
+postrule init src/triage.py:triage_ticket --author "@triage:support"
 
 # Reproduce the four-benchmark transition-curve measurements.
-dendra bench banking77
+postrule bench banking77
 
 # Render a Figure 1-style plot from benchmark output.
-dendra plot results/atis.jsonl -o figure-1.png
+postrule plot results/atis.jsonl -o figure-1.png
 
 # Self-measured ROI report from production outcome logs.
-dendra roi runtime/dendra/
+postrule roi runtime/postrule/
 ```
 
 ## What's measured
@@ -306,7 +306,7 @@ test on per-example correctness:
 Every benchmark clears paired statistical significance (p < 0.01)
 at the **first** checkpoint of 250 labeled outcomes. Two days of
 moderate production traffic, not six months. Reproducible:
-`dendra bench atis` regenerates the ATIS panel of Figure 1 in
+`postrule bench atis` regenerates the ATIS panel of Figure 1 in
 seconds; pass other benchmark names (`banking77`, `clinc150`,
 `hwu64`, `snips`, `trec6`, `ag_news`, `codelangs`) for the other
 panels.
@@ -336,7 +336,7 @@ methodology + reproduce instructions in
 **Framework tax** at Phase.RULE: ~24× a bare Python call
 (42 ns → 1 µs). In absolute terms ~1 µs is fast enough that any
 production hot path is dominated by the caller's own logic and
-(when later phases engage) by the model's inference, not by Dendra.
+(when later phases engage) by the model's inference, not by Postrule.
 
 Raw numbers + JSONL benchmark data:
 [`docs/benchmarks/v1-audit-benchmarks.md`](docs/benchmarks/v1-audit-benchmarks.md).
@@ -345,7 +345,7 @@ Regression-guard tests:
 
 ## Where truth comes from
 
-Verdicts feed the outcome log and drive gate graduation. Dendra
+Verdicts feed the outcome log and drive gate graduation. Postrule
 ships five built-in `VerdictSource` implementations:
 
 - `CallableVerdictSource` — any `(input, label) -> Verdict`
@@ -397,7 +397,7 @@ Full surface + interop contract: [`docs/async.md`](docs/async.md).
   `samsung_internal` markers) concatenated with an injection
   attempt drawn from publicly-documented families (AgentDojo,
   InjecAgent, OWASP LLM Top-10). An env-gated live-provider
-  sweep is available via `DENDRA_JAILBREAK_LIVE=1` for in-situ
+  sweep is available via `POSTRULE_JAILBREAK_LIVE=1` for in-situ
   validation.
 - **PII corpus:** rule-only classifier, mixed corpus (SSN, phone,
   email, CC, passport, AWS key, JWT, Bearer token, MRN, ICD-10,
@@ -428,7 +428,7 @@ construction at `Phase.ML_PRIMARY` — the rule floor cannot be
 removed without a code change.
 
 ```python
-from dendra import ml_switch, Phase
+from postrule import ml_switch, Phase
 
 @ml_switch(
     labels=["safe", "pii", "toxic", "confidential"],
@@ -454,7 +454,7 @@ millisecond per call with zero token cost on the 80%+ of
 traffic the ML handles confidently.
 
 ```python
-from dendra.research import train_ml_from_model_outcomes
+from postrule.research import train_ml_from_model_outcomes
 
 used = train_ml_from_llm_outcomes(
     switch=triage.switch,
@@ -469,7 +469,7 @@ for a runnable demo.
 ## Project structure
 
 ```
-src/dendra/
+src/postrule/
 ├── core.py           # LearnedSwitch, Phase, SwitchConfig, ClassificationRecord
 ├── decorator.py      # @ml_switch
 ├── gates.py          # Gate protocol + McNemar / AccuracyMargin / MinVolume / Composite / Manual
@@ -478,14 +478,14 @@ src/dendra/
 ├── storage.py        # FileStorage (batched), SqliteStorage, ResilientStorage, BoundedInMemoryStorage
 ├── models.py         # OpenAI / Anthropic / Ollama / Llamafile adapters (sync + async siblings)
 ├── ml.py             # MLHead protocol + sklearn default head
-├── wrap.py           # AST-based @ml_switch injector (`dendra init`)
-├── analyzer.py       # Static classification-site finder (`dendra analyze`)
+├── wrap.py           # AST-based @ml_switch injector (`postrule init`)
+├── analyzer.py       # Static classification-site finder (`postrule analyze`)
 ├── research.py       # Transition-curve runner, paired-test helpers
-├── roi.py            # Self-measured ROI report (`dendra roi`)
+├── roi.py            # Self-measured ROI report (`postrule roi`)
 ├── viz.py            # Figure rendering + McNemar p-values
 ├── telemetry.py      # Emitter protocol + shipped emitters
 ├── benchmarks/       # Public-benchmark loaders + reference rules
-└── cli.py            # `dendra` CLI entry point
+└── cli.py            # `postrule` CLI entry point
 
 tests/                # 1,433 tests passing, 88 deselected (benchmark/perf/smoke)
 docs/
@@ -513,26 +513,26 @@ Annotated bibliography of related work at
 
 ## Licensing
 
-Dendra is split-licensed:
+Postrule is split-licensed:
 
 - **Client SDK** (what you `import` — decorator, config, storage,
   adapters, telemetry, viz, benchmarks, gates, verdicts,
   autoresearch): **Apache License 2.0**. Free for any commercial
   use.
-- **Dendra-operated components** (analyzer, ROI reporter,
+- **Postrule-operated components** (analyzer, ROI reporter,
   research/graduation tooling, CLI, hosted surfaces): **Business
   Source License 1.1** with Change Date **2030-05-01** (auto-
   conversion to Apache 2.0). Additional Use Grant: **production
   self-hosted use is permitted** — the BSL only prohibits
-  offering a competing hosted Dendra service.
+  offering a competing hosted Postrule service.
 
-**The split lives at the per-file level inside `src/dendra/`**, not
-at the directory level. Most files in `src/dendra/` are Apache 2.0;
+**The split lives at the per-file level inside `src/postrule/`**, not
+at the directory level. Most files in `src/postrule/` are Apache 2.0;
 the four BSL-licensed exceptions are
-[`src/dendra/analyzer.py`](src/dendra/analyzer.py),
-[`src/dendra/cli.py`](src/dendra/cli.py),
-[`src/dendra/research.py`](src/dendra/research.py), and
-[`src/dendra/roi.py`](src/dendra/roi.py). Tests for those four files
+[`src/postrule/analyzer.py`](src/postrule/analyzer.py),
+[`src/postrule/cli.py`](src/postrule/cli.py),
+[`src/postrule/research.py`](src/postrule/research.py), and
+[`src/postrule/roi.py`](src/postrule/roi.py). Tests for those four files
 mirror the BSL identifier; everything else is Apache. Each source
 file's `SPDX-License-Identifier:` header is authoritative when in
 doubt — the `.github/workflows/license-check.yml` workflow enforces
@@ -554,22 +554,22 @@ US provisional patent (application pending, filed 2026-04-21).
 **v1.1.0** — public release (2026-05-20). Skips 1.0.0
 deliberately to match the product posture (software smarter
 every month, not frozen at .0.0). PyPI
-[1.0.0rc1](https://pypi.org/project/dendra/1.0.0rc1/) was the
+[1.0.0rc1](https://pypi.org/project/postrule/1.0.0rc1/) was the
 pre-release; 1.1.0 supersedes it for the public ship.
 Six lifecycle phases ✓ Head-to-head evidence gates ✓
 Native async API ✓ VerdictSource family ✓
 CandidateHarness for autoresearch loops ✓
 Native `Switch` class authoring ✓ Multi-arg auto-packing ✓
-`dendra init --auto-lift` (branch + evidence lifters) ✓
-Drift detection (`dendra refresh` / `doctor`) ✓
+`postrule init --auto-lift` (branch + evidence lifters) ✓
+Drift detection (`postrule refresh` / `doctor`) ✓
 Prescriptive analyzer (Phase 5 hazard diagnostics) ✓
-Account system MVP + `dendra login` ✓
-MCP server (`dendra mcp`) ✓
+Account system MVP + `postrule login` ✓
+MCP server (`postrule mcp`) ✓
 VS Code extension (early v1.1) ✓
 1,433 tests passing.
 
 Wave 2 (cloud features + hosted analyzer + dashboards) — rolling
-through 2026; waitlist on [dendra.run](https://dendra.run).
+through 2026; waitlist on [postrule.ai](https://postrule.ai).
 PyCharm plugin + benchmark/report harness + branch-lifter relaxation —
 v1.5 / v1.x. See [`docs/limitations.md`](docs/limitations.md) for the
 versioned roadmap.
@@ -577,8 +577,8 @@ versioned roadmap.
 ## Dev setup
 
 ```bash
-git clone https://github.com/b-tree-labs/dendra.git
-cd dendra
+git clone https://github.com/b-tree-labs/postrule.git
+cd postrule
 python -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev,train,bench,viz]'
 pytest tests/
@@ -586,14 +586,14 @@ pytest tests/
 
 ## About B-Tree Labs
 
-B-Tree Labs is a DBA of B-Tree Ventures, LLC (Texas). Dendra is
+B-Tree Labs is a DBA of B-Tree Ventures, LLC (Texas). Postrule is
 patent-protected (USPTO provisional filed 2026-04-21),
 dual-licensed (Apache 2.0 + BSL 1.1 with Change Date 2030-05-01
 → Apache 2.0), and shipped under a formal release process — the
 company carries the work, not any single person.
 
-- GitHub: <https://github.com/b-tree-labs/dendra>
-- Issues / questions: <https://github.com/b-tree-labs/dendra/issues>
+- GitHub: <https://github.com/b-tree-labs/postrule>
+- Issues / questions: <https://github.com/b-tree-labs/postrule/issues>
 - Maintainer: Benjamin Booth ([@benjaminbooth](https://github.com/benjaminbooth))
 - Trademark / licensing inquiries — `trademarks@b-treeventures.com`,
   `licensing@b-treeventures.com`
@@ -606,8 +606,8 @@ company carries the work, not any single person.
 
 _Copyright © 2026 B-Tree Labs (dba B-Tree Labs).
 Split-licensed — Apache 2.0 on the client SDK, BSL 1.1 on
-Dendra-operated components; see [`LICENSE.md`](LICENSE.md).
-Dendra and B-Tree Labs are trademarks (or pending trademarks) of
+Postrule-operated components; see [`LICENSE.md`](LICENSE.md).
+Postrule and B-Tree Labs are trademarks (or pending trademarks) of
 B-Tree Labs. Neither the Apache 2.0 license nor the
 BSL 1.1 license grants any right to use these marks — see
 [`TRADEMARKS.md`](TRADEMARKS.md) for the project's fair-use

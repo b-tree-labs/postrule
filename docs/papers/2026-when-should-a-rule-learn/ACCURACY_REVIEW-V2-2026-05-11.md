@@ -36,7 +36,7 @@ All five V1 must-fix items are still in the paper as of this pass:
 - **S1-5.** §7.2 line 1356 still names `ApprovalBackend` protocol and
   "signed advance proposals". Confirmed: no symbol named
   `ApprovalBackend`, `AdvanceProposal`, or `advance_proposal` anywhere
-  in `src/dendra/`.
+  in `src/postrule/`.
 
 ---
 
@@ -80,7 +80,7 @@ mechanical-fix rules.
 > "`classify_content.switch.record_verdict(record_id, Verdict.CORRECT)`
 > registers an outcome."
 
-**Source of truth.** `src/dendra/core.py:1583` defines
+**Source of truth.** `src/postrule/core.py:1583` defines
 `record_verdict` with this signature:
 
 ```python
@@ -103,7 +103,7 @@ written would raise `TypeError: record_verdict() takes 1 positional
 argument but 3 were given`.
 
 **Why this matters.** §9.1 is the headline code example showing
-practitioners how to wire Dendra into their codebase. A reader who
+practitioners how to wire Postrule into their codebase. A reader who
 copy-pastes the cited call gets an immediate exception. The first
 external reader to try the example will file an issue.
 
@@ -131,7 +131,7 @@ gate definition).
 >     return (advance, p, b, c)
 > ```
 
-**Source of truth.** `src/dendra/viz.py:112-141` implements `mcnemar_p`
+**Source of truth.** `src/postrule/viz.py:112-141` implements `mcnemar_p`
 as a **one-sided** exact binomial / normal-approximation:
 
 ```python
@@ -152,7 +152,7 @@ def mcnemar_p(rule_correct: list[bool], ml_correct: list[bool]) -> float | None:
     return 0.5 * math.erfc(z / math.sqrt(2))
 ```
 
-And `src/dendra/gates.py:245-301` (`McNemarGate.evaluate`) compares this
+And `src/postrule/gates.py:245-301` (`McNemarGate.evaluate`) compares this
 one-sided p directly against `self._alpha` (default 0.01) with no
 factor-of-2 conversion.
 
@@ -191,7 +191,7 @@ based on:
 **Why this matters.** This is a load-bearing algorithm description in
 §3 — the very gate the safety theorem proves bounds on. A reader
 implementing the §3.2 algorithm from the paper alone will write a
-strictly different gate than the one Dendra ships.
+strictly different gate than the one Postrule ships.
 
 **Suggested resolution.** Either:
 - (a) update `viz.py::mcnemar_p` and `gates.py::McNemarGate` to use
@@ -262,10 +262,10 @@ citation.
 **Paper location.** `body.typ:2184-2185`:
 
 > ✓ Benchmark harness reproduces the result:
-> `dendra bench {atis,banking77,clinc150,hwu64,snips,trec6,ag_news,codelangs}`.
+> `postrule bench {atis,banking77,clinc150,hwu64,snips,trec6,ag_news,codelangs}`.
 
-**Source of truth.** `src/dendra/cli.py:1735-1746` (the `--no-shuffle`
-flag definition) and `src/dendra/benchmarks/rules.py:77-115`
+**Source of truth.** `src/postrule/cli.py:1735-1746` (the `--no-shuffle`
+flag definition) and `src/postrule/benchmarks/rules.py:77-115`
 (`build_reference_rule`'s `shuffle` parameter).
 
 The CLI flag's own help text says it all:
@@ -297,7 +297,7 @@ benchmarks are much higher accuracy per Table 4b).
 So a reviewer who runs
 
 ```bash
-dendra bench banking77
+postrule bench banking77
 ```
 
 will see Rule acc ≈ 24% (the shuffle-recovered version), **not** the
@@ -309,7 +309,7 @@ incomplete. Both undermine trust.
 
 ```
 ✓ Benchmark harness reproduces Table 3 (as-shipped HuggingFace splits):
-  `dendra bench --no-shuffle {atis,banking77,clinc150,hwu64,snips,
+  `postrule bench --no-shuffle {atis,banking77,clinc150,hwu64,snips,
   trec6,ag_news,codelangs}`.
 ```
 
@@ -506,7 +506,7 @@ percentage point.
 
 **Why this matters.** A reviewer who knows the RouteLLM result will
 flag this as either careless or willfully softening (the "15%" is
-slightly less impressive than "14%", which makes Dendra's
+slightly less impressive than "14%", which makes Postrule's
 post-graduation cost story relatively stronger). Either way, it's a
 fixable inaccuracy.
 
@@ -569,7 +569,7 @@ no semantic content.
 > accumulate."
 
 **Source of truth.** The production `LearnedSwitch` default in
-`src/dendra/core.py:392`:
+`src/postrule/core.py:392`:
 
 ```python
 auto_advance_interval: int = 500
@@ -604,13 +604,13 @@ once n_min = 200 paired outcomes accumulate."
 - **FrugalGPT cascade** (Chen et al., 2024): "weakest-model-first,
   escalate-on-low-confidence". Small/cheap model runs first; the
   expensive model is the escalation tier.
-- **Dendra MODEL_PRIMARY** (paper Table 1 at `body.typ:374`):
+- **Postrule MODEL_PRIMARY** (paper Table 1 at `body.typ:374`):
   "M(x) if conf_M ≥ θ; else R(x)". The **LLM (M)** runs first; the
   **rule (R)** is the fallback on low LLM confidence.
 
 These are reverse cascades:
 - FrugalGPT: cheap → expensive on uncertainty.
-- Dendra at MODEL_PRIMARY: expensive (LLM) → cheap (rule) on
+- Postrule at MODEL_PRIMARY: expensive (LLM) → cheap (rule) on
   uncertainty.
 
 The "structurally identical" claim collapses this difference.
@@ -761,7 +761,7 @@ in the test set)."
 > construction time: the `JudgeSource` constructor refuses a judge
 > model that resolves to the same identity as the classifier"
 
-**Source of truth.** `src/dendra/verdicts.py:182-211`:
+**Source of truth.** `src/postrule/verdicts.py:182-211`:
 
 ```python
 def __init__(
@@ -847,7 +847,7 @@ lines 20-21:
 > "TODO: wire shuffle_seed through the CLI; currently requires
 > Python-level invocation of run_benchmark_experiment."
 
-But `src/dendra/cli.py:1747-1756` does ship a `--shuffle-seed`
+But `src/postrule/cli.py:1747-1756` does ship a `--shuffle-seed`
 flag (plus `--no-shuffle`). The README's TODO was completed; the
 README was not updated.
 
@@ -861,7 +861,7 @@ the README documents.
 ```bash
 for SEED in 1 2 3 4 5; do
   for BENCH in atis hwu64 banking77 clinc150; do
-    dendra bench $BENCH --shuffle-seed $SEED > ${BENCH}_seed${SEED}.jsonl
+    postrule bench $BENCH --shuffle-seed $SEED > ${BENCH}_seed${SEED}.jsonl
   done
 done
 ```
@@ -879,7 +879,7 @@ the shipping paper artifact — flagging for human cleanup.)
 | Karpathy autoresearch (2026): confirmed | Still clean. Re-verified via github.com/karpathy/autoresearch. |
 | Papailiopoulos et al. (2025) ReJump arXiv:2512.00831: real paper | Did not re-check (V1's separate finding S2-5 already flags the author-citation form). |
 | Table 8 (CIFAR-10) cells: every cell matches `cifar10_paired.jsonl` | Re-derived p-values from rule_correct/ml_correct arrays at every checkpoint. Two-sided p-values match Table 8 to within rounding. **But** §5.7 prose says "1000 train rows + 200 test rows" when the data file's summary says 4000 train + 500 test (**V2-S1-1, new finding**). |
-| Snips outcomes 1 through ~1,842 are all AddToPlaylist | Re-verified by `from dendra.benchmarks import load_snips; ds = load_snips()`. First class change at index 1842 exactly. ✓ |
+| Snips outcomes 1 through ~1,842 are all AddToPlaylist | Re-verified by `from postrule.benchmarks import load_snips; ds = load_snips()`. First class change at index 1842 exactly. ✓ |
 | paired_mcnemar_summary.json: ATIS / HWU64 / Banking77 / CLINC150 match | Re-verified. **But**: `trans_p` field is two-sided p (e.g., HWU64 trans_p=0.001953 = 2 × one-sided 0.000977), so this artifact uses the paper's algorithm convention, not the deployed gate's. See **V2-S1-3**. |
 | Table 4 seed=1000 rule accuracies | Re-verified. ✓ |
 | Table 7 autoresearch winners and margins | Re-verified all 8 rows from `results/autoresearch-mlhead-*.json`. All match. ✓ |
@@ -919,7 +919,7 @@ adversarial pass complementing the V1 review of the same day.
 **Methodology footprint.** Roughly 60 numerical claims chased to data
 files (every Table 3 / 4 / 4b / 5 / 6 / 7 / 8 cell plus every abstract
 and §1.3 / §5 / §10 number). 38 backtick-quoted symbols searched
-against `src/dendra/` (all resolve except the two V1-flagged phantoms).
+against `src/postrule/` (all resolve except the two V1-flagged phantoms).
 Algorithm-vs-code mismatch on the McNemar gate's p-value convention
 re-derived from `viz.py::mcnemar_p` and verified against
 `cifar10_paired.jsonl` and `paired_mcnemar_summary.json`. Five
@@ -948,7 +948,7 @@ fix applied).
 4. **V2-S1-3** (§3.2 algorithm two-sided vs code one-sided) — the
    paper's described gate differs from the deployed gate. Safety
    theorem still holds, but the algorithm reader-can-reimplement is
-   a different test than the one Dendra ships.
+   a different test than the one Postrule ships.
 5. **V2-S1-4** (Tzamos & Zarifis author list wrong — already fixed
    mechanically). V1 mis-verified this; flagging the
    verification-methodology gap.

@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for dendra.viz — JSONL parsing + crossover computation.
+"""Tests for postrule.viz — JSONL parsing + crossover computation.
 
 matplotlib rendering is smoke-tested; heavy visual diffing is
 out-of-scope.
@@ -13,7 +13,7 @@ import json
 
 import pytest
 
-from dendra.viz import BenchmarkRun, load_run, plot_transition_curves
+from postrule.viz import BenchmarkRun, load_run, plot_transition_curves
 
 
 def _write_jsonl(path, summary, checkpoints):
@@ -231,7 +231,7 @@ class TestTransitionDepth:
 
 class TestMcNemar:
     def test_ml_strictly_better_yields_small_p(self):
-        from dendra.viz import mcnemar_p
+        from postrule.viz import mcnemar_p
 
         # Rule wrong, ML right on 20 examples; rule right ML wrong on 1.
         # Two-sided exact binomial on b=20, c=1, n=21 → very small.
@@ -241,7 +241,7 @@ class TestMcNemar:
         assert p is not None and p < 1e-4
 
     def test_equal_performance_yields_large_p(self):
-        from dendra.viz import mcnemar_p
+        from postrule.viz import mcnemar_p
 
         # 5 each direction; b=c=5, n=10. Two-sided p caps at 1.0.
         rule = [False, False, False, False, False, True, True, True, True, True]
@@ -250,14 +250,14 @@ class TestMcNemar:
         assert p is not None and p > 0.9
 
     def test_no_disagreements_returns_one(self):
-        from dendra.viz import mcnemar_p
+        from postrule.viz import mcnemar_p
 
         rule = [True, False, True]
         ml = [True, False, True]
         assert mcnemar_p(rule, ml) == 1.0
 
     def test_mismatched_lengths_returns_none(self):
-        from dendra.viz import mcnemar_p
+        from postrule.viz import mcnemar_p
 
         assert mcnemar_p([True], [True, False]) is None
 

@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-from dendra import Switch
+from postrule import Switch
 
 
 class HandleSwitch(Switch):

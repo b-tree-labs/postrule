@@ -21,14 +21,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     MLPrediction,
     ModelPrediction,
     Phase,
     SwitchConfig,
 )
-from dendra.gates import GateDecision
+from postrule.gates import GateDecision
 
 # ---------------------------------------------------------------------------
 # Fakes
@@ -200,7 +200,7 @@ class TestMultiHopRoundTrip:
 
 class TestCycleAuditTrail:
     def test_advance_demote_advance_emits_three_events(self):
-        from dendra.telemetry import ListEmitter
+        from postrule.telemetry import ListEmitter
 
         emitter = ListEmitter()
         sw = LearnedSwitch(

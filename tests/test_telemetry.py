@@ -5,8 +5,8 @@
 
 from __future__ import annotations
 
-from dendra import LearnedSwitch, Verdict
-from dendra.telemetry import ListEmitter, NullEmitter
+from postrule import LearnedSwitch, Verdict
+from postrule.telemetry import ListEmitter, NullEmitter
 
 
 def _rule(ticket: dict) -> str:

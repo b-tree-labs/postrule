@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 name: Bug report
-description: Something in Dendra doesn't work as documented.
+description: Something in Postrule doesn't work as documented.
 title: "[bug] "
 labels: ["bug", "triage"]
 body:
@@ -31,7 +31,7 @@ body:
       description: Shortest code that reproduces the bug. Copy-paste-runnable if possible.
       render: python
       placeholder: |
-        from dendra import ml_switch, Phase, SwitchConfig
+        from postrule import ml_switch, Phase, SwitchConfig
 
         @ml_switch(
             labels=["a", "b"],
@@ -44,10 +44,10 @@ body:
       required: true
 
   - type: input
-    id: dendra-version
+    id: postrule-version
     attributes:
-      label: Dendra version
-      description: Output of `pip show dendra | grep Version`.
+      label: Postrule version
+      description: Output of `pip show postrule | grep Version`.
       placeholder: "1.0.0"
     validations:
       required: true

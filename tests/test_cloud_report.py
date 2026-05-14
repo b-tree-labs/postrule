@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: LicenseRef-BSL-1.1
 
-"""Tests for ``dendra.cloud.report`` — Phase 1 markdown report card.
+"""Tests for ``postrule.cloud.report`` — Phase 1 markdown report card.
 
 Covers: aggregator output shape, day-zero (no-records) handling,
 gate-fire detection, crossover detection, hypothesis-vs-observed
@@ -14,14 +14,14 @@ import time
 
 import pytest
 
-from dendra.cloud.report import (
+from postrule.cloud.report import (
     HypothesisVerdict,
     aggregate_switch,
     render_switch_card,
 )
-from dendra.cloud.report.aggregator import _is_correct
-from dendra.core import ClassificationRecord, Phase
-from dendra.storage import InMemoryStorage
+from postrule.cloud.report.aggregator import _is_correct
+from postrule.core import ClassificationRecord, Phase
+from postrule.storage import InMemoryStorage
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -303,10 +303,10 @@ except ImportError:  # pragma: no cover
     _HAVE_MPL = False
 
 
-@pytest.mark.skipif(not _HAVE_MPL, reason="dendra[viz] not installed")
+@pytest.mark.skipif(not _HAVE_MPL, reason="postrule[viz] not installed")
 class TestCharts:
     def test_transition_curve_writes_png(self, graduated_storage, tmp_path):
-        from dendra.cloud.report import charts
+        from postrule.cloud.report import charts
 
         m = aggregate_switch(graduated_storage, "test_switch", min_paired=10, alpha=0.05)
         out = tmp_path / "test_switch.transition.png"
@@ -315,7 +315,7 @@ class TestCharts:
         assert result.stat().st_size > 1000  # PNG is non-trivial in size
 
     def test_pvalue_trajectory_writes_png(self, graduated_storage, tmp_path):
-        from dendra.cloud.report import charts
+        from postrule.cloud.report import charts
 
         m = aggregate_switch(graduated_storage, "test_switch", min_paired=10, alpha=0.05)
         out = tmp_path / "test_switch.pvalue.png"
@@ -324,7 +324,7 @@ class TestCharts:
         assert result.stat().st_size > 1000
 
     def test_cost_trajectory_writes_png(self, graduated_storage, tmp_path):
-        from dendra.cloud.report import charts
+        from postrule.cloud.report import charts
 
         m = aggregate_switch(graduated_storage, "test_switch", min_paired=10, alpha=0.05)
         out = tmp_path / "test_switch.cost.png"
@@ -333,7 +333,7 @@ class TestCharts:
         assert result.stat().st_size > 1000
 
     def test_chart_raises_on_no_checkpoints(self, empty_storage, tmp_path):
-        from dendra.cloud.report import charts
+        from postrule.cloud.report import charts
 
         m = aggregate_switch(empty_storage, "x")
         with pytest.raises(ValueError, match="checkpoint"):
@@ -347,7 +347,7 @@ class TestCharts:
 
 class TestHypothesisFileGeneration:
     def test_creates_file_with_expected_sections(self, tmp_path):
-        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+        from postrule.cloud.report.hypotheses import generate_hypothesis_file
 
         out_path, content_hash, created = generate_hypothesis_file(
             "triage_rule",
@@ -370,11 +370,11 @@ class TestHypothesisFileGeneration:
         assert "## 4. Expected effect size" in text
         assert "## 5. Truth source" in text
         assert "## 6. Rollback rule" in text
-        assert "## Verdict (filled in by `dendra report`)" in text
+        assert "## Verdict (filled in by `postrule report`)" in text
         assert content_hash  # non-empty SHA-256
 
     def test_idempotent_does_not_overwrite_existing(self, tmp_path):
-        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+        from postrule.cloud.report.hypotheses import generate_hypothesis_file
 
         # First call creates.
         out_path, hash1, created1 = generate_hypothesis_file("x", root=tmp_path / "h")
@@ -387,7 +387,7 @@ class TestHypothesisFileGeneration:
         assert out_path2.read_text(encoding="utf-8") == "CUSTOM CONTENT"
 
     def test_overwrite_flag_replaces(self, tmp_path):
-        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+        from postrule.cloud.report.hypotheses import generate_hypothesis_file
 
         out_path, _, _ = generate_hypothesis_file("x", root=tmp_path / "h")
         out_path.write_text("CUSTOM", encoding="utf-8")
@@ -396,7 +396,7 @@ class TestHypothesisFileGeneration:
         assert "Pre-registered hypothesis" in out_path2.read_text(encoding="utf-8")
 
     def test_explicit_cohort_interval_overrides_regime_default(self, tmp_path):
-        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+        from postrule.cloud.report.hypotheses import generate_hypothesis_file
 
         out_path, _, _ = generate_hypothesis_file(
             "x",
@@ -409,7 +409,7 @@ class TestHypothesisFileGeneration:
         assert "**400–600 outcomes**" in text
 
     def test_regime_default_when_no_cohort(self, tmp_path):
-        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+        from postrule.cloud.report.hypotheses import generate_hypothesis_file
 
         out_path, _, _ = generate_hypothesis_file("x", regime="narrow", root=tmp_path / "h")
         text = out_path.read_text(encoding="utf-8")
@@ -417,7 +417,7 @@ class TestHypothesisFileGeneration:
         assert "**200–400 outcomes**" in text
 
     def test_content_hash_is_deterministic_for_same_inputs(self, tmp_path):
-        from dendra.cloud.report.hypotheses import generate_hypothesis_file
+        from postrule.cloud.report.hypotheses import generate_hypothesis_file
 
         # Generate same inputs twice (with different output dirs)
         # — only the timestamp varies, so hashes will differ in
@@ -437,7 +437,7 @@ class TestHypothesisFileGeneration:
 
 class TestProjectSummary:
     def test_aggregate_project_with_explicit_switch_list(self, graduated_storage):
-        from dendra.cloud.report import aggregate_project
+        from postrule.cloud.report import aggregate_project
 
         # Add a second switch with no records
         s = graduated_storage
@@ -450,8 +450,8 @@ class TestProjectSummary:
         # missing_switch is wrapped-but-no-data, neither graduated nor pre-grad
 
     def test_aggregate_project_falls_back_to_switch_names_method(self, tmp_path):
-        from dendra.cloud.report import aggregate_project
-        from dendra.storage import FileStorage
+        from postrule.cloud.report import aggregate_project
+        from postrule.storage import FileStorage
 
         s = FileStorage(tmp_path)
         # FileStorage has switch_names() method (returns []
@@ -461,14 +461,14 @@ class TestProjectSummary:
         assert result.total_outcomes == 0
 
     def test_aggregate_project_raises_when_no_switch_names_method(self, empty_storage):
-        from dendra.cloud.report import aggregate_project
+        from postrule.cloud.report import aggregate_project
 
         # InMemoryStorage doesn't have switch_names()
         with pytest.raises(AttributeError, match="switch_names"):
             aggregate_project(empty_storage)
 
     def test_render_project_summary_empty(self):
-        from dendra.cloud.report import ProjectSummary, render_project_summary
+        from postrule.cloud.report import ProjectSummary, render_project_summary
 
         summary = ProjectSummary()
         out = render_project_summary(summary, project_name="empty_project")
@@ -477,7 +477,7 @@ class TestProjectSummary:
         assert "`empty_project`" in out
 
     def test_render_project_summary_with_switches(self, graduated_storage):
-        from dendra.cloud.report import (
+        from postrule.cloud.report import (
             aggregate_project,
             render_project_summary,
         )
@@ -541,7 +541,7 @@ class TestDiscoveryReport:
         return report
 
     def test_renders_empty_codebase(self):
-        from dendra.cloud.report import render_discovery_report
+        from postrule.cloud.report import render_discovery_report
 
         report = self._build_analyzer_report([])
         out = render_discovery_report(report)
@@ -549,7 +549,7 @@ class TestDiscoveryReport:
         assert "No classification sites discovered" in out
 
     def test_renders_with_auto_liftable_sites(self):
-        from dendra.cloud.report import render_discovery_report
+        from postrule.cloud.report import render_discovery_report
 
         sites = [
             {
@@ -583,7 +583,7 @@ class TestDiscoveryReport:
         assert "Estimated annual LLM cost reduction" in out
 
     def test_refused_sites_show_remediation(self):
-        from dendra.cloud.report import render_discovery_report
+        from postrule.cloud.report import render_discovery_report
 
         sites = [
             {
@@ -605,7 +605,7 @@ class TestDiscoveryReport:
         assert "Refactor to make state-mutation explicit" in out
 
     def test_cohort_comparison_appears_when_cohort_size_present(self):
-        from dendra.cloud.report import render_discovery_report
+        from postrule.cloud.report import render_discovery_report
 
         sites = [
             {
@@ -626,7 +626,7 @@ class TestDiscoveryReport:
         assert "## Cohort comparison" not in out_without
 
     def test_recommended_sequence_only_with_2plus_sites(self):
-        from dendra.cloud.report import render_discovery_report
+        from postrule.cloud.report import render_discovery_report
 
         single = [
             {
@@ -659,7 +659,7 @@ class TestDiscoveryReport:
         assert "## Recommended sequence" in out_many
 
     def test_methodology_link_in_footer(self):
-        from dendra.cloud.report import render_discovery_report
+        from postrule.cloud.report import render_discovery_report
 
         report = self._build_analyzer_report([])
         out = render_discovery_report(report)

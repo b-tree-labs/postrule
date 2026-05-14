@@ -30,7 +30,7 @@ from pathlib import Path
 
 import pytest
 
-from dendra.lifters import LiftRefused, lift_branches
+from postrule.lifters import LiftRefused, lift_branches
 
 FIXTURE_DIR = Path(__file__).parent / "lifter_fixtures" / "branch_v1_5"
 

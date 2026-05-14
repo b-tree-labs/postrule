@@ -1,6 +1,6 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: LicenseRef-BSL-1.1
-"""TDD spec for the evidence lifter (`dendra init --auto-lift`, Phase 3 v1).
+"""TDD spec for the evidence lifter (`postrule init --auto-lift`, Phase 3 v1).
 
 The evidence lifter takes a function with hidden state reads (module
 globals, ``self.attr``, mid-function call binds whose result is later
@@ -26,8 +26,8 @@ from pathlib import Path
 
 import pytest
 
-from dendra.lifters import LiftRefused
-from dendra.lifters.evidence import lift_evidence
+from postrule.lifters import LiftRefused
+from postrule.lifters.evidence import lift_evidence
 
 FIXTURE_DIR = Path(__file__).parent / "lifter_fixtures" / "evidence"
 

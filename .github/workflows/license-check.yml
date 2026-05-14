@@ -38,30 +38,30 @@ jobs:
           # ──────────────────────────────────────────────────────────────
           is_bsl_allowed() {
             case "$1" in
-              src/dendra/analyzer.py|\
-              src/dendra/auth.py|\
-              src/dendra/benchmarks/harness.py|\
-              src/dendra/cli.py|\
-              src/dendra/cloud/__init__.py|\
-              src/dendra/cloud/registry.py|\
-              src/dendra/cloud/sync.py|\
-              src/dendra/cloud/team_corpus.py|\
-              src/dendra/cloud/verdict_telemetry.py|\
-              src/dendra/cloud/report/__init__.py|\
-              src/dendra/cloud/report/aggregator.py|\
-              src/dendra/cloud/report/charts.py|\
-              src/dendra/cloud/report/discovery.py|\
-              src/dendra/cloud/report/hypotheses.py|\
-              src/dendra/cloud/report/render_markdown.py|\
-              src/dendra/cloud/report/summary.py|\
-              src/dendra/lifters/__init__.py|\
-              src/dendra/lifters/branch.py|\
-              src/dendra/lifters/evidence.py|\
-              src/dendra/mcp_server.py|\
-              src/dendra/research.py|\
-              src/dendra/roi.py|\
+              src/postrule/analyzer.py|\
+              src/postrule/auth.py|\
+              src/postrule/benchmarks/harness.py|\
+              src/postrule/cli.py|\
+              src/postrule/cloud/__init__.py|\
+              src/postrule/cloud/registry.py|\
+              src/postrule/cloud/sync.py|\
+              src/postrule/cloud/team_corpus.py|\
+              src/postrule/cloud/verdict_telemetry.py|\
+              src/postrule/cloud/report/__init__.py|\
+              src/postrule/cloud/report/aggregator.py|\
+              src/postrule/cloud/report/charts.py|\
+              src/postrule/cloud/report/discovery.py|\
+              src/postrule/cloud/report/hypotheses.py|\
+              src/postrule/cloud/report/render_markdown.py|\
+              src/postrule/cloud/report/summary.py|\
+              src/postrule/lifters/__init__.py|\
+              src/postrule/lifters/branch.py|\
+              src/postrule/lifters/evidence.py|\
+              src/postrule/mcp_server.py|\
+              src/postrule/research.py|\
+              src/postrule/roi.py|\
               cloud/aggregator/run.py|\
-              landing/wasm/dendra_analyzer.py|\
+              landing/wasm/postrule_analyzer.py|\
               scripts/sizing_study.py|\
               tests/test_analyzer.py|\
               tests/test_auth.py|\

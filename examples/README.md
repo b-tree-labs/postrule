@@ -1,15 +1,15 @@
-# Dendra examples
+# Postrule examples
 
 Runnable examples. Each file is self-contained — no external
 services, no API keys — and targets a single conceptual piece of
-the Dendra primitive.
+the Postrule primitive.
 
 ```bash
-pip install git+https://github.com/b-tree-labs/dendra
+pip install git+https://github.com/b-tree-labs/postrule
 python examples/01_hello_world.py
 ```
 
-New to Dendra? Start with [`01_hello_world.py`](./01_hello_world.py),
+New to Postrule? Start with [`01_hello_world.py`](./01_hello_world.py),
 then skim [`../docs/api-reference.md`](../docs/api-reference.md) for
 the minimum required vs optional surface.
 
@@ -33,7 +33,7 @@ the minimum required vs optional surface.
 | 14 | [`14_human_reviewer_queue.py`](./14_human_reviewer_queue.py) | `HumanReviewerSource` — queue-backed human-in-the-loop. `pending` queue drains to your reviewer tool; `verdicts` queue fills from it. Timeout → UNKNOWN so no reviewer on shift doesn't stall the classifier. |
 | 15 | [`15_async_fastapi.py`](./15_async_fastapi.py) | FastAPI route with `await sw.aclassify(...)`, reviewer roundtrip via `apply_reviews`, and a sync `/status` handler. Shows sync + async on the same switch. Requires `pip install fastapi uvicorn`. |
 | 16 | [`16_async_committee.py`](./16_async_committee.py) | `LLMCommitteeSource.ajudge` via `asyncio.gather` — committee latency is `max(judge_latency)`, not `sum`. Sequential-vs-parallel timing delta printed inline (3× on a 3-judge committee). |
-| 17 | [`17_exception_handling.py`](./17_exception_handling.py) | Dendra as the try/except-tree replacement: exception-handling as classification. Rule picks retry / fallback / escalate / drop; outcomes feed back from downstream signals so the policy can learn endpoint-specific patterns the author couldn't hand-write. |
+| 17 | [`17_exception_handling.py`](./17_exception_handling.py) | Postrule as the try/except-tree replacement: exception-handling as classification. Rule picks retry / fallback / escalate / drop; outcomes feed back from downstream signals so the policy can learn endpoint-specific patterns the author couldn't hand-write. |
 | 18 | [`18_system_defaults_tuning.py`](./18_system_defaults_tuning.py) | Post-install tuning: ship hand-written defaults, let the installed system re-derive them from its own workload. HTTP cache-TTL selection as the worked example — rule-agreement rate becomes a health metric; graduation upgrades defaults without shipping a new binary. |
 | 19 | [`19_autoresearch_loop.py`](./19_autoresearch_loop.py) | `CandidateHarness` shadows candidate classifiers against production, runs head-to-head significance tests on the same inputs, and returns a per-candidate promotion recommendation. Drop-in for an LLM-driven autoresearch loop. Production rule at 55% accuracy ratchets to 100% across four loop iterations. |
 | 20 | [`20_verifier_default.py`](./20_verifier_default.py) | `verifier=` configuration: every classification routes through an LLM judge automatically and the verdict-bearing record lands without a manual `record_verdict()` call. |
@@ -45,7 +45,7 @@ Not yet written — contributions welcome via
 [`../CONTRIBUTING.md`](../CONTRIBUTING.md):
 
 - End-to-end transition curve on a public benchmark (ATIS-class).
-- `dendra roi` report from an accumulated outcome log.
+- `postrule roi` report from an accumulated outcome log.
 - Integration with LangSmith / Weights & Biases telemetry.
 - Vision / audio / multimodal adapters.
 - FastAPI / LangGraph integration showcase (pairs with the

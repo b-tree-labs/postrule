@@ -3,7 +3,7 @@
 ## Supported versions
 
 Security patches are backported to the current minor release only.
-Dendra follows semver: patches (1.0.x) land on 1.0 as long as 1.0
+Postrule follows semver: patches (1.0.x) land on 1.0 as long as 1.0
 is current; minor-release cutoffs are announced in
 [CHANGELOG.md](CHANGELOG.md).
 
@@ -17,15 +17,15 @@ is current; minor-release cutoffs are announced in
 
 **Please do NOT open a public GitHub issue for security reports.**
 
-Email security findings to `security@dendra.run`.
+Email security findings to `security@postrule.ai`.
 
 Include:
 
 - A clear description of the vulnerability.
 - Steps to reproduce, ideally with a minimal code sample.
-- The affected Dendra version (`pip show dendra` output).
+- The affected Postrule version (`pip show postrule` output).
 - If relevant: the threat model you're assuming (attacker position,
-  preconditions, what they gain). Dendra's documented threat model
+  preconditions, what they gain). Postrule's documented threat model
   is in [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 
 You can expect:
@@ -45,13 +45,13 @@ You can expect:
 
 **In scope:**
 
-- The Dendra library itself (`pip install dendra`) at the current
+- The Postrule library itself (`pip install postrule`) at the current
   supported version.
-- The reference CLIs (`dendra init`, `dendra analyze`, `dendra login`,
+- The reference CLIs (`postrule init`, `postrule analyze`, `postrule login`,
   etc.).
 - The shipped LLM / ML adapters.
-- **Dendra Cloud surface** — the api Worker at `api.dendra.run` and
-  the dashboard at `app.dendra.run`. Includes the bearer-auth `/v1/*`
+- **Postrule Cloud surface** — the api Worker at `api.postrule.ai` and
+  the dashboard at `app.postrule.ai`. Includes the bearer-auth `/v1/*`
   endpoints, the service-token `/admin/*` endpoints, the telemetry
   intake at `POST /v1/verdicts`, and the Clerk-authed dashboard
   surfaces (switches list, per-switch report cards, insights
@@ -106,7 +106,7 @@ For procurement-grade detail, see the legal docs under
 
 ## Cryptographic signing
 
-Dendra releases are:
+Postrule releases are:
 
 - **Git tags** — signed with the maintainer's SSH key (ed25519).
 - **PyPI releases** — built and published via GitHub Actions trusted

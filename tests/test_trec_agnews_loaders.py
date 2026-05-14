@@ -27,13 +27,13 @@ AG_NEWS_LABELS = {"World", "Sports", "Business", "Sci/Tech"}
 class TestTrec6Loader:
     def test_loader_is_importable(self):
         try:
-            from dendra.benchmarks.loaders import load_trec6
+            from postrule.benchmarks.loaders import load_trec6
         except ImportError:
-            pytest.fail("dendra.benchmarks.loaders.load_trec6 not implemented yet")
+            pytest.fail("postrule.benchmarks.loaders.load_trec6 not implemented yet")
         assert callable(load_trec6)
 
     def test_returns_six_canonical_categories(self):
-        from dendra.benchmarks.loaders import load_trec6
+        from postrule.benchmarks.loaders import load_trec6
 
         ds = load_trec6()
         assert ds.name == "trec6"
@@ -44,7 +44,7 @@ class TestTrec6Loader:
         )
 
     def test_pairs_have_string_text_and_known_labels(self):
-        from dendra.benchmarks.loaders import load_trec6
+        from postrule.benchmarks.loaders import load_trec6
 
         ds = load_trec6()
         for text, label in (ds.train + ds.test)[:50]:
@@ -56,13 +56,13 @@ class TestTrec6Loader:
 class TestAgNewsLoader:
     def test_loader_is_importable(self):
         try:
-            from dendra.benchmarks.loaders import load_ag_news
+            from postrule.benchmarks.loaders import load_ag_news
         except ImportError:
-            pytest.fail("dendra.benchmarks.loaders.load_ag_news not implemented yet")
+            pytest.fail("postrule.benchmarks.loaders.load_ag_news not implemented yet")
         assert callable(load_ag_news)
 
     def test_returns_four_canonical_categories(self):
-        from dendra.benchmarks.loaders import load_ag_news
+        from postrule.benchmarks.loaders import load_ag_news
 
         ds = load_ag_news()
         assert ds.name == "ag_news"
@@ -75,7 +75,7 @@ class TestAgNewsLoader:
     def test_inputs_are_longer_than_utterance_length(self):
         """AG News articles should be substantially longer than ATIS-style
         utterances. This is the stress axis that motivates including AG News."""
-        from dendra.benchmarks.loaders import load_ag_news
+        from postrule.benchmarks.loaders import load_ag_news
 
         ds = load_ag_news()
         sample = ds.train[:200]
@@ -89,14 +89,14 @@ class TestAgNewsLoader:
 @pytest.mark.benchmark
 class TestRegistration:
     def test_both_in_public_init(self):
-        import dendra.benchmarks as benchmarks_mod
+        import postrule.benchmarks as benchmarks_mod
 
         exported = getattr(benchmarks_mod, "__all__", [])
         assert "load_trec6" in exported
         assert "load_ag_news" in exported
 
     def test_both_in_cli_registry(self):
-        from dendra.cli import _BENCHMARKS
+        from postrule.cli import _BENCHMARKS
 
         assert "trec6" in _BENCHMARKS
         assert "ag_news" in _BENCHMARKS

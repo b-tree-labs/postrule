@@ -31,11 +31,11 @@ from pathlib import Path
 
 import pytest
 
-from dendra import LearnedSwitch, MLPrediction, Phase, SwitchConfig
-from dendra.core import ClassificationRecord
-from dendra.gates import McNemarGate
-from dendra.models import ModelPrediction
-from dendra.storage import (
+from postrule import LearnedSwitch, MLPrediction, Phase, SwitchConfig
+from postrule.core import ClassificationRecord
+from postrule.gates import McNemarGate
+from postrule.models import ModelPrediction
+from postrule.storage import (
     BoundedInMemoryStorage,
     FileStorage,
     SqliteStorage,
@@ -92,7 +92,7 @@ def _measure(fn: Callable[[], None], *, n: int, warmup: int = 500) -> dict[str, 
 
     Kept in-module (rather than imported from the benchmark script) so
     the test suite has zero scripts/ dependency and can run in an
-    isolated install of dendra (pip install dendra[dev]).
+    isolated install of postrule (pip install postrule[dev]).
     """
     for _ in range(warmup):
         fn()
@@ -227,7 +227,7 @@ def test_record_verdict_bounded_inmemory():
 
 
 def test_record_verdict_file_storage():
-    with tempfile.TemporaryDirectory(prefix="dendra_test_lat_") as td:
+    with tempfile.TemporaryDirectory(prefix="postrule_test_lat_") as td:
         sw = LearnedSwitch(
             rule=_rule_atis,
             name=_unique_name("pin_rv_fs"),
@@ -245,7 +245,7 @@ def test_record_verdict_file_storage():
 
 
 def test_record_verdict_sqlite_storage():
-    with tempfile.TemporaryDirectory(prefix="dendra_test_lat_") as td:
+    with tempfile.TemporaryDirectory(prefix="postrule_test_lat_") as td:
         sw = LearnedSwitch(
             rule=_rule_atis,
             name=_unique_name("pin_rv_sq"),
@@ -272,7 +272,7 @@ def test_record_verdict_sqlite_storage():
 
 
 def test_mcnemar_gate_on_10k_records():
-    from dendra.core import Verdict as _V  # noqa: N813
+    from postrule.core import Verdict as _V  # noqa: N813
 
     records: list[ClassificationRecord] = []
     for i in range(10_000):
@@ -347,7 +347,7 @@ def test_classify_auto_record_plus_persist_file_storage_sync():
     at 2 ms to absorb CI noise without tolerating the old
     regression.
     """
-    with tempfile.TemporaryDirectory(prefix="dendra_pin_arps_") as td:
+    with tempfile.TemporaryDirectory(prefix="postrule_pin_arps_") as td:
         storage = FileStorage(Path(td) / "fs", batching=False)
         try:
             sw = LearnedSwitch(
@@ -383,7 +383,7 @@ def test_classify_auto_record_plus_persist_file_storage_batched():
     (down from 4.48 ms — 11× p99, 77× p50). The default for
     ``persist=True`` — shippable on the production recommendation.
     """
-    with tempfile.TemporaryDirectory(prefix="dendra_pin_arpb_") as td:
+    with tempfile.TemporaryDirectory(prefix="postrule_pin_arpb_") as td:
         storage = FileStorage(Path(td) / "fs", batching=True)
         try:
             sw = LearnedSwitch(
@@ -442,8 +442,8 @@ def test_composite_gate_all_of_vs_mcnemar_alone():
     that's a 1.9× cost over McNemar alone (4.30 ms vs 2.24 ms p50).
     Session 3 hoists pair-extraction to gate entry.
     """
-    from dendra.core import Verdict as _V  # noqa: N813
-    from dendra.gates import AccuracyMarginGate, CompositeGate
+    from postrule.core import Verdict as _V  # noqa: N813
+    from postrule.gates import AccuracyMarginGate, CompositeGate
 
     records: list[ClassificationRecord] = []
     for i in range(10_000):

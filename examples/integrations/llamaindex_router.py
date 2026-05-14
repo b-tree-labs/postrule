@@ -1,12 +1,12 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra + LlamaIndex — wrap a retrieval-strategy selection.
+"""Postrule + LlamaIndex — wrap a retrieval-strategy selection.
 
 LlamaIndex's strength: many ways to retrieve. Vector search, BM25,
 hybrid, summary index, knowledge graph — each shines on different
 query shapes. Most production setups have a router that picks the
 right strategy per query, today usually with an LLM. That router is
-exactly what Dendra graduates.
+exactly what Postrule graduates.
 
 Pattern: wrap the strategy-picker. The downstream retrieval +
 synthesis pipeline doesn't change; the picker eventually becomes a
@@ -19,7 +19,7 @@ LlamaIndex optional — falls back to a stub so the example runs offline.
 
 from __future__ import annotations
 
-from dendra import ml_switch
+from postrule import ml_switch
 
 try:
     from llama_index.core import Settings, VectorStoreIndex  # noqa: F401
@@ -71,7 +71,7 @@ def select_strategy(query: str) -> str:
 
 
 def retrieve(query: str) -> str:
-    """Top-level retrieval. Dendra-wrapped strategy + LlamaIndex pipeline."""
+    """Top-level retrieval. Postrule-wrapped strategy + LlamaIndex pipeline."""
     strategy = select_strategy(query)
     # In production, dispatch to the LlamaIndex query engine for that
     # strategy. Here we just narrate.

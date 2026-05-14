@@ -26,7 +26,7 @@ isn't worth it — see ``docs/scenarios.md``.
 
 from __future__ import annotations
 
-from dendra import LearnedSwitch, MLPrediction, Phase
+from postrule import LearnedSwitch, MLPrediction, Phase
 
 
 def triage_rule(ticket: dict) -> str:

@@ -20,15 +20,15 @@
 #   description — what the test must demonstrate
 
 scenarios:
-  - name: "dendra login — RFC 8628 device flow happy path"
+  - name: "postrule login — RFC 8628 device flow happy path"
     kind: pytest
     test: "tests/test_cli_login.py::TestHappyPath::test_full_flow_writes_credentials"
     description: |
       Full /device/code → browser-authorize → /device/token poll → API key
-      written to ~/.config/dendra/credentials.json. Stubs the network +
+      written to ~/.config/postrule/credentials.json. Stubs the network +
       webbrowser + sleep so it stays offline-fast.
 
-  - name: "dendra login — error branches return non-zero exit codes"
+  - name: "postrule login — error branches return non-zero exit codes"
     kind: pytest
     test: "tests/test_cli_login.py::TestErrorPaths"
     description: |
@@ -48,7 +48,7 @@ scenarios:
     kind: pytest
     test: "tests/test_auth.py"
     description: |
-      dndr_live_/dndr_test_ prefix routing, length, base62 character
+      prul_live_/prul_test_ prefix routing, length, base62 character
       class, missing-Bearer rejection. The tier-mapping path is
       covered by webhook tests in cloud/api/.
 
@@ -57,5 +57,5 @@ scenarios:
     test: "install-smoke.yml"
     description: |
       Builds the wheel from a clean checkout, installs into a fresh
-      venv, runs `python -c 'import dendra; dendra.__version__'`.
+      venv, runs `python -c 'import postrule; postrule.__version__'`.
       Matrix: macos-latest + ubuntu-latest × py3.10/3.12/3.13.

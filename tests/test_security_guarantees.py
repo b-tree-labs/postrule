@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     MLPrediction,
     Phase,
@@ -126,7 +126,7 @@ class TestBreakerPersistence:
         tripped — rule floor holds.
         """
         # Chdir into tmp_path so the default breaker-state path
-        # (runtime/dendra/<name>/.breaker) lives under the test's
+        # (runtime/postrule/<name>/.breaker) lives under the test's
         # scratch directory. Restores on teardown.
         monkeypatch.chdir(tmp_path)
 

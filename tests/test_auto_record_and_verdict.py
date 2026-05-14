@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import (
+from postrule import (
     ClassificationResult,
     LearnedSwitch,
     Phase,

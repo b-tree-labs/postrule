@@ -15,7 +15,7 @@ import tracemalloc
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     LearnedSwitch,
     Phase,
@@ -140,7 +140,7 @@ class TestRSSDrift:
         )
 
         # Warmup so the trace doesn't catch first-call allocations
-        # (lazy-imports inside dendra hit on the first call).
+        # (lazy-imports inside postrule hit on the first call).
         for i in range(1000):
             sw.classify(i)
         gc.collect()

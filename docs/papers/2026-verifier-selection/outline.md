@@ -58,7 +58,7 @@ The first two we can write today. The third is exactly what the launch will give
 
 - Corpus: n=102 ticket-triage pairs, balanced 51/51 correct/incorrect, three labels (`bug`, `feature_request`, `question`) at 34 each.
 - Why n=102: power-curve analysis showing 102 is enough to separate the 11 models tested at $\alpha = 0.05$ on the above-chance metric.
-- Prompt: `_DEFAULT_JUDGE_PROMPT` from `src/dendra/verdicts.py`. Single-template across all 11 models — deliberately fair (no per-model tuning) but a known limitation.
+- Prompt: `_DEFAULT_JUDGE_PROMPT` from `src/postrule/verdicts.py`. Single-template across all 11 models — deliberately fair (no per-model tuning) but a known limitation.
 - Stack: Apple M5 / 24GB / Ollama localhost; raw llamafile for Bonsai. Latency reflects single-host home/dev hardware, not optimized inference servers.
 - Reproducibility: `python scripts/run_slm_verifier_bench.py` regenerates `slm-verifier-bench.json`.
 
@@ -85,7 +85,7 @@ A decision tree, calibrated by domain attributes:
 - **High-cardinality, broad domain** (CLINC150-like) → judge needs more accuracy; consider frontier API or qwen2.5:14b/32b on capable hardware.
 - **Regulated / classified** → no external API; SLM-only with `verifier_sample_rate < 1.0` to bound cost.
 - **Hot-path latency-bound** → reduce `verifier_sample_rate` and run verifier on a sampled subset; the McNemar gate is robust to lower sample rates as long as the sample is unbiased.
-- **Privacy-bound** → bundled `dendra[bundled]` with llama-cpp-python; same model choice, no Ollama daemon.
+- **Privacy-bound** → bundled `postrule[bundled]` with llama-cpp-python; same model choice, no Ollama daemon.
 
 ### 8. Limitations
 

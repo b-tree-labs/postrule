@@ -20,7 +20,7 @@ Each item below has the form:
 
 ### 1. Cross-domain benchmark contributions
 
-**Expect.** Early adopters running Dendra on their own domains (banking
+**Expect.** Early adopters running Postrule on their own domains (banking
 intent, security alerts, content moderation, clinical coding, support
 triage variants). Some will publish or share verifier benchmarks for
 their corpus.
@@ -36,7 +36,7 @@ shift in high-cardinality domains — this is exactly where to test.
   CLI that anyone can point at their own corpus.
 - Add a **community benchmarks** section to `docs/benchmarks/` and call
   for contributions in the launch posts.
-- The Dendra `CandidateHarness` already records paired-correctness
+- The Postrule `CandidateHarness` already records paired-correctness
   per checkpoint; verifier benchmarks fall out of `harness.report()`
   if we wire a `--verifier-only` mode. Worth a small PR pre-launch.
 
@@ -67,9 +67,9 @@ distribution of user choices and discuss why operators deviate from
 the recommendation.
 
 **During launch.**
-- Confirm telemetry posture: Dendra v1.0 ships **no phone-home**; we have
+- Confirm telemetry posture: Postrule v1.0 ships **no phone-home**; we have
   no aggregate verifier-pick stats unless adopters volunteer them.
-- Add a `dendra doctor --share-anonymous` opt-in that emits the
+- Add a `postrule doctor --share-anonymous` opt-in that emits the
   verifier choice + an anonymized hardware fingerprint to a community
   endpoint. **Decision required: do we want this at all?** Memory says
   Ben is privacy-conscious; this might be a no.

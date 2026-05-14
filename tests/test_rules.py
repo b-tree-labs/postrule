@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from dendra.benchmarks.rules import ReferenceRule, build_reference_rule
+from postrule.benchmarks.rules import ReferenceRule, build_reference_rule
 
 # Marker used by the Banking77 integration tests below; skipped when the
 # optional `datasets` extra is not installed or when Banking77 isn't in
@@ -240,7 +240,7 @@ class TestRuleConstructionShuffle:
 #
 # These are the launch-blocker assertions from the validation report.
 # Skipped when the dataset is not locally available; otherwise they run
-# against the cached HF copy in ~/.cache/dendra/datasets/banking77.
+# against the cached HF copy in ~/.cache/postrule/datasets/banking77.
 # ---------------------------------------------------------------------------
 
 
@@ -248,7 +248,7 @@ def _try_load_banking77():
     if not _HAVE_DATASETS:
         return None
     try:
-        from dendra.benchmarks.loaders import load_banking77
+        from postrule.benchmarks.loaders import load_banking77
 
         return load_banking77()
     except Exception:  # pragma: no cover — network / cache-miss / mirror outage

@@ -30,11 +30,11 @@ from __future__ import annotations
 
 import textwrap
 
-from dendra.lifters.evidence import lift_evidence
+from postrule.lifters.evidence import lift_evidence
 
 SOURCE = textwrap.dedent(
     """\
-    from dendra.lifters import evidence_via_probe
+    from postrule.lifters import evidence_via_probe
 
     @evidence_via_probe(charge_ok="api.charge_probe(req).ok")
     def maybe_charge(req):
@@ -52,7 +52,7 @@ def main() -> None:
     for line in SOURCE.rstrip().split("\n"):
         print(f"  {line}")
     print()
-    print("After dendra init --auto-lift:")
+    print("After postrule init --auto-lift:")
     print()
     lifted = lift_evidence(SOURCE, "maybe_charge")
     for line in lifted.rstrip().split("\n"):

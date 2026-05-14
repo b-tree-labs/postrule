@@ -41,7 +41,7 @@ don't — see ``docs/scenarios.md``.
 
 from __future__ import annotations
 
-from dendra import Tournament
+from postrule import Tournament
 
 # ---------------------------------------------------------------------------
 # Three candidate triage rules — same task, different keyword strategies

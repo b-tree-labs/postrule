@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     MLPrediction,
     ModelPrediction,

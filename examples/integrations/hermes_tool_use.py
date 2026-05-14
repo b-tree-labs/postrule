@@ -1,12 +1,12 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra + NousResearch Hermes — wrap a tool-selection call.
+"""Postrule + NousResearch Hermes — wrap a tool-selection call.
 
 Hermes is the de-facto open-weights model family for function-
 calling / tool-use. A typical Hermes-driven agent loop calls the
 model to pick which tool to invoke for the current step. That tool-
 selection decision is a classifier with a finite label set (the
-tools you registered) — exactly the shape Dendra graduates.
+tools you registered) — exactly the shape Postrule graduates.
 
 Why this matters for an open-weights stack: Hermes self-hosts cheaply
 (~$0.00002/call on a single A100), but the latency floor is the
@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import json
 
-from dendra import ml_switch
+from postrule import ml_switch
 
 # Hermes Function Calling typically goes via a local OpenAI-compatible
 # endpoint (vLLM / Ollama / llamafile). Use openai-python as the client
@@ -106,7 +106,7 @@ def pick_next_tool(task: str, history: list[str]) -> str:
 if __name__ == "__main__":
     scenarios = [
         ("Find recent papers on graduated autonomy", []),
-        ("Read the config at /etc/dendra/cohort.yaml", []),
+        ("Read the config at /etc/postrule/cohort.yaml", []),
         ("Query the events table for yesterday's signups", []),
         ("Notify @oncall that drift was detected", []),
         (
@@ -124,5 +124,5 @@ if __name__ == "__main__":
     print(
         "Latency at Phase.RULE (Hermes 70B local):  ~150 ms p50.\n"
         "Latency post-graduation (sklearn head):    <1 ms p50.\n"
-        "Open-weights win — keep your stack on-prem, add Dendra's gate."
+        "Open-weights win — keep your stack on-prem, add Postrule's gate."
     )

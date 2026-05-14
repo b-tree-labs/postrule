@@ -9,7 +9,7 @@ captures the exception, stringifies it onto ``result.action_raised``, and lets
 handler never loses the classification decision; postmortem happens via
 telemetry / the outcome log.
 
-But pre-Dendra callers wrap their classify+act sites in ``try/except`` blocks
+But pre-Postrule callers wrap their classify+act sites in ``try/except`` blocks
 expecting handler exceptions to bubble. The ``propagate_action_exceptions`` knob
 restores that parity opt-in. When set ``True``:
 
@@ -30,7 +30,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     LearnedSwitch,
     MLPrediction,

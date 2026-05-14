@@ -8,7 +8,7 @@ The analyzer doesn't just score sites by fit; it also tells the user
 unblock it. Each ClassificationSite carries a ``hazards`` list and a
 ``lift_status`` (auto_liftable | needs_annotation | refused).
 
-The detection logic delegates to the lifters (``dendra.lifters.*``)
+The detection logic delegates to the lifters (``postrule.lifters.*``)
 when available so the analyzer's diagnostics line up with the lifters'
 actual refusal reasons. The analyzer never silently disagrees with the
 lifter.
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import textwrap
 
-from dendra.analyzer import Hazard, LiftStatus, analyze_function_source
+from postrule.analyzer import Hazard, LiftStatus, analyze_function_source
 
 
 def _src(s: str) -> str:

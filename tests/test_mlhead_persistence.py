@@ -16,9 +16,9 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import LearnedSwitch, Phase, SwitchConfig
-from dendra.gates import GateDecision
-from dendra.ml import SklearnTextHead
+from postrule import LearnedSwitch, Phase, SwitchConfig
+from postrule.gates import GateDecision
+from postrule.ml import SklearnTextHead
 
 
 def _rule(text: str) -> str:
@@ -37,7 +37,7 @@ class _AlwaysAdvanceGate:
 
 @pytest.fixture
 def chdir_to_tmp(tmp_path, monkeypatch):
-    """Persistence writes under ``runtime/dendra/`` of the cwd. Sandbox."""
+    """Persistence writes under ``runtime/postrule/`` of the cwd. Sandbox."""
     monkeypatch.chdir(tmp_path)
     return tmp_path
 
@@ -108,7 +108,7 @@ class TestSwitchSidecarPersistence:
             config=SwitchConfig(starting_phase=Phase.ML_SHADOW, gate=_AlwaysAdvanceGate()),
         )
         sw.advance()
-        sidecar = chdir_to_tmp / "runtime" / "dendra" / "persist_test" / ".head"
+        sidecar = chdir_to_tmp / "runtime" / "postrule" / "persist_test" / ".head"
         assert sidecar.exists(), "advance() should have written the head sidecar"
         assert sidecar.read_bytes() == head.state_bytes()
 
@@ -123,14 +123,14 @@ class TestSwitchSidecarPersistence:
             config=SwitchConfig(starting_phase=Phase.ML_WITH_FALLBACK),
         )
         sw.persist_head()
-        sidecar = chdir_to_tmp / "runtime" / "dendra" / "manual_persist" / ".head"
+        sidecar = chdir_to_tmp / "runtime" / "postrule" / "manual_persist" / ".head"
         assert sidecar.exists()
 
     def test_construction_rehydrates_head(self, chdir_to_tmp):
         # Pre-populate a sidecar from a trained head at the location the
         # switch will look.
         trained_head = _train_head()
-        target_dir = chdir_to_tmp / "runtime" / "dendra" / "rehydrate_test"
+        target_dir = chdir_to_tmp / "runtime" / "postrule" / "rehydrate_test"
         target_dir.mkdir(parents=True)
         (target_dir / ".head").write_bytes(trained_head.state_bytes())
 
@@ -171,7 +171,7 @@ class TestSwitchSidecarPersistence:
         )
         sw.advance()
         sw.persist_head()
-        sidecar = chdir_to_tmp / "runtime" / "dendra" / "no_persist" / ".head"
+        sidecar = chdir_to_tmp / "runtime" / "postrule" / "no_persist" / ".head"
         assert not sidecar.exists(), "persist=False must not write any sidecar"
 
 
@@ -185,7 +185,7 @@ class TestNonPersistentHeadIsDegradedNotBroken:
     that haven't opted in) must not break advance / persist_head."""
 
     def test_advance_with_legacy_head_does_not_crash(self, chdir_to_tmp):
-        from dendra import MLPrediction
+        from postrule import MLPrediction
 
         class LegacyHead:
             def fit(self, records):
@@ -207,5 +207,5 @@ class TestNonPersistentHeadIsDegradedNotBroken:
             config=SwitchConfig(starting_phase=Phase.ML_SHADOW, gate=_AlwaysAdvanceGate()),
         )
         sw.advance()  # should NOT raise
-        sidecar = chdir_to_tmp / "runtime" / "dendra" / "legacy_head" / ".head"
+        sidecar = chdir_to_tmp / "runtime" / "postrule" / "legacy_head" / ".head"
         assert not sidecar.exists(), "legacy heads should not produce a sidecar"

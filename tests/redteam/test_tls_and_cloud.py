@@ -20,7 +20,7 @@ import pytest
 pytestmark = pytest.mark.redteam
 
 
-_CLOUD_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "dendra" / "cloud"
+_CLOUD_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "postrule" / "cloud"
 
 
 # ---------------------------------------------------------------------
@@ -29,7 +29,7 @@ _CLOUD_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "dendra" / 
 
 
 def test_no_verify_false_in_cloud_module():
-    """Grep ``src/dendra/cloud/`` for ``verify=False``. Zero hits required."""
+    """Grep ``src/postrule/cloud/`` for ``verify=False``. Zero hits required."""
     hits = []
     for py in _CLOUD_DIR.rglob("*.py"):
         text = py.read_text(encoding="utf-8")
@@ -52,9 +52,9 @@ def test_no_verify_false_in_cloud_module():
 
 
 def test_no_http_urls_in_cloud_module():
-    """No ``http://`` URLs in src/dendra/cloud/.
+    """No ``http://`` URLs in src/postrule/cloud/.
 
-    The cloud module talks to api.dendra.ai over TLS only. Localhost
+    The cloud module talks to api.postrule.ai over TLS only. Localhost
     targets and docstring URLs are exempt.
     """
     hits = []
@@ -88,8 +88,8 @@ def test_cloud_imports_requests_and_uses_default_verify():
 
 
 def test_cloud_uses_https_only_for_default_endpoint():
-    """The default cloud base URL is https://. Reading /src/dendra/cloud/
-    files for the ``_DEFAULT_BASE`` / ``DENDRA_CLOUD_URL`` style
+    """The default cloud base URL is https://. Reading /src/postrule/cloud/
+    files for the ``_DEFAULT_BASE`` / ``POSTRULE_CLOUD_URL`` style
     constants should turn up only https:// scheme.
     """
     pattern = re.compile(r'"(https?://[^"]+)"')
@@ -109,7 +109,7 @@ def test_cloud_uses_https_only_for_default_endpoint():
 def test_self_signed_cert_refused(monkeypatch):
     """When the configured cloud endpoint serves a self-signed cert,
     ``requests.post`` raises ``SSLError`` because we don't pass
-    ``verify=False``. Dendra surfaces that error rather than silently
+    ``verify=False``. Postrule surfaces that error rather than silently
     succeeding.
 
     We don't stand up a real TLS server: we monkey-patch
@@ -118,7 +118,7 @@ def test_self_signed_cert_refused(monkeypatch):
     """
     import requests
 
-    from dendra.cloud import sync as cloud_sync
+    from postrule.cloud import sync as cloud_sync
 
     def fake_post(*a, **kw):
         # Simulate the requests-library cert-validation refusal.
@@ -139,7 +139,7 @@ def test_self_signed_cert_refused(monkeypatch):
 
 def test_default_session_verifies_certs():
     """Pin: the default ``requests`` session verifies TLS. (The
-    library default is True; Dendra never overrides.)
+    library default is True; Postrule never overrides.)
     """
     import requests
 

@@ -12,7 +12,7 @@
 # Additional Use Grant: see LICENSE-BSL. Production use is
 # permitted; offering a competing hosted service is not.
 
-"""Tests for ``dendra.cloud.sync`` — switch-config push / pull stubs."""
+"""Tests for ``postrule.cloud.sync`` — switch-config push / pull stubs."""
 
 from __future__ import annotations
 
@@ -20,15 +20,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dendra import auth
-from dendra.cloud import NotLoggedInError, sync
+from postrule import auth
+from postrule.cloud import NotLoggedInError, sync
 
 
 @pytest.fixture()
 def fake_home(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    monkeypatch.delenv("DENDRA_API_KEY", raising=False)
+    monkeypatch.delenv("POSTRULE_API_KEY", raising=False)
     return tmp_path
 
 
@@ -44,7 +44,7 @@ class TestPushSwitchConfig:
             sync.push_switch_config({"name": "triage", "phase": "RULE"})
 
     def test_sends_auth_header_when_logged_in(self, logged_in):
-        with patch("dendra.cloud.sync.requests.post") as mock_post:
+        with patch("postrule.cloud.sync.requests.post") as mock_post:
             mock_response = MagicMock()
             mock_response.ok = True
             mock_response.status_code = 200
@@ -59,7 +59,7 @@ class TestPushSwitchConfig:
             assert headers.get("Authorization") == "Bearer dndra_token_abc"
 
     def test_returns_false_on_http_error(self, logged_in):
-        with patch("dendra.cloud.sync.requests.post") as mock_post:
+        with patch("postrule.cloud.sync.requests.post") as mock_post:
             mock_response = MagicMock()
             mock_response.ok = False
             mock_response.status_code = 500
@@ -75,7 +75,7 @@ class TestPullSwitchConfig:
             sync.pull_switch_config("triage")
 
     def test_returns_config_when_found(self, logged_in):
-        with patch("dendra.cloud.sync.requests.get") as mock_get:
+        with patch("postrule.cloud.sync.requests.get") as mock_get:
             mock_response = MagicMock()
             mock_response.ok = True
             mock_response.status_code = 200
@@ -86,7 +86,7 @@ class TestPullSwitchConfig:
             assert config == {"name": "triage", "phase": "ML_PRIMARY"}
 
     def test_returns_none_when_404(self, logged_in):
-        with patch("dendra.cloud.sync.requests.get") as mock_get:
+        with patch("postrule.cloud.sync.requests.get") as mock_get:
             mock_response = MagicMock()
             mock_response.ok = False
             mock_response.status_code = 404
@@ -95,7 +95,7 @@ class TestPullSwitchConfig:
             assert sync.pull_switch_config("nope") is None
 
     def test_auth_header_set(self, logged_in):
-        with patch("dendra.cloud.sync.requests.get") as mock_get:
+        with patch("postrule.cloud.sync.requests.get") as mock_get:
             mock_response = MagicMock()
             mock_response.ok = True
             mock_response.status_code = 200

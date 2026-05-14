@@ -14,14 +14,14 @@ import sys
 
 import pytest
 
-from dendra.benchmarks import (
+from postrule.benchmarks import (
     BenchmarkDataset,
     load_atis,
     load_banking77,
     load_clinc150,
     load_hwu64,
 )
-from dendra.benchmarks import loaders as _loaders
+from postrule.benchmarks import loaders as _loaders
 
 # ---------------------------------------------------------------------------
 # Unconditional shape tests
@@ -78,7 +78,7 @@ def test_loader_raises_clear_import_error_when_datasets_missing(loader, monkeypa
 
     with pytest.raises(ImportError) as exc:
         loader()
-    assert "pip install dendra[bench]" in str(exc.value)
+    assert "pip install postrule[bench]" in str(exc.value)
 
 
 # ---------------------------------------------------------------------------

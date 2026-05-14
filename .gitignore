@@ -205,7 +205,7 @@ node_modules/
 _site/
 
 # =============================================================================
-# Section 3: Dendra-specific
+# Section 3: Postrule-specific
 # =============================================================================
 
 # Default FileStorage base + outcome logs.
@@ -217,7 +217,7 @@ provenance-*/
 
 # Patent filing packet — regenerated from .md sources by build-packet.sh.
 docs/working/patent/packet/
-docs/working/patent/dendra-ppa.pdf
+docs/working/patent/postrule-ppa.pdf
 docs/working/patent/drawings/*.pdf
 docs/working/patent/drawings/*.tex
 docs/working/patent/drawings/*-raw.pdf

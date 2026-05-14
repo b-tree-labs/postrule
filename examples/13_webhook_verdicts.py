@@ -34,8 +34,8 @@ auth headers for production:
 
 from __future__ import annotations
 
-from dendra import Verdict
-from dendra.verdicts import WebhookVerdictSource
+from postrule import Verdict
+from postrule.verdicts import WebhookVerdictSource
 
 
 def main() -> None:

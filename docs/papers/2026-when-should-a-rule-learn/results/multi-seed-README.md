@@ -8,7 +8,7 @@ validation). Those 17 MB of duplicate JSONL files were removed from
 this directory.
 
 **Correct multi-seed runs** use the `shuffle_seed=N` keyword in
-`dendra.research.run_benchmark_experiment`, which actually shuffles
+`postrule.research.run_benchmark_experiment`, which actually shuffles
 the training stream before streaming it through the switch. The
 kwarg is shipped as of v0.2.0.
 
@@ -20,10 +20,10 @@ for SEED in 1 2 3 4 5; do
     # TODO: wire shuffle_seed through the CLI; currently requires
     # Python-level invocation of run_benchmark_experiment.
     ../.venv/bin/python -c "
-from dendra.benchmarks import load_${BENCH}
-from dendra.benchmarks.rules import build_reference_rule
-from dendra.ml import SklearnTextHead
-from dendra.research import run_benchmark_experiment
+from postrule.benchmarks import load_${BENCH}
+from postrule.benchmarks.rules import build_reference_rule
+from postrule.ml import SklearnTextHead
+from postrule.research import run_benchmark_experiment
 import json, dataclasses
 
 ds = load_${BENCH}()

@@ -7,7 +7,7 @@ Run: `python examples/02_outcome_log.py`
 ``persist=True`` wraps a ``FileStorage`` in ``ResilientStorage`` so
 outcomes survive process restart and feed later phase-transition
 analysis, ROI reports, and the dashboard. Records land under
-``./runtime/dendra/<name>/outcomes.jsonl``.
+``./runtime/postrule/<name>/outcomes.jsonl``.
 
 For scratch workflows, omit ``persist`` — the default
 ``BoundedInMemoryStorage`` keeps the most recent 10 000 records
@@ -16,7 +16,7 @@ per switch.
 
 from __future__ import annotations
 
-from dendra import LearnedSwitch, Verdict
+from postrule import LearnedSwitch, Verdict
 
 
 def triage_rule(ticket: dict) -> str:
@@ -56,6 +56,6 @@ if __name__ == "__main__":
 
     print()
     records = switch.storage.load_records(switch.name)
-    print(f"Recorded {len(records)} outcomes  (persisted to ./runtime/dendra/{switch.name}/).")
+    print(f"Recorded {len(records)} outcomes  (persisted to ./runtime/postrule/{switch.name}/).")
     correct = sum(1 for r in records if r.outcome == Verdict.CORRECT.value)
     print(f"Rule accuracy so far: {correct}/{len(records)}  ({correct / len(records):.0%})")

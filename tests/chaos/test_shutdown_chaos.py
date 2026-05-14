@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     FileStorage,
@@ -179,7 +179,7 @@ class TestAtexitDurability:
         script = (
             "import sys\n"
             f"sys.path.insert(0, {str(Path(__file__).parents[2] / 'src')!r})\n"
-            "from dendra import FileStorage, ClassificationRecord, Verdict\n"
+            "from postrule import FileStorage, ClassificationRecord, Verdict\n"
             "import time\n"
             f"store = FileStorage({str(base)!r}, batching=True, batch_size=128, flush_interval_ms=10000)\n"
             "for i in range(20):\n"

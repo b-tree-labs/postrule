@@ -1,7 +1,7 @@
-# Dendra red-team / security test suite
+# Postrule red-team / security test suite
 
 This directory contains adversarial / security tests that pin the
-threat model Dendra v1 ships under. Every test is decorated with
+threat model Postrule v1 ships under. Every test is decorated with
 `@pytest.mark.redteam` and runs by default with the regular suite.
 
 To run only this suite:
@@ -18,17 +18,17 @@ To opt out:
 
 ## Threat model summary
 
-Dendra is a Python library that ships:
+Postrule is a Python library that ships:
 
 1. A classification primitive (`LearnedSwitch`) that runs in-process.
 2. A storage layer (`FileStorage`, `BoundedInMemoryStorage`) that
    appends JSON-line outcome records keyed by switch name.
-3. A static-analysis lifter (`dendra.lifters.evidence`) that reads
+3. A static-analysis lifter (`postrule.lifters.evidence`) that reads
    user source code, applies AST transforms, and emits Python modules
-   into `__dendra_generated__/` directories.
-4. A CLI (`dendra refresh`, `dendra init`, `dendra whoami`) that
+   into `__postrule_generated__/` directories.
+4. A CLI (`postrule refresh`, `postrule init`, `postrule whoami`) that
    walks user repos and reads/writes generated files + credentials.
-5. An optional cloud client (`dendra.cloud.*`) that talks to a hosted
+5. An optional cloud client (`postrule.cloud.*`) that talks to a hosted
    API for sync, registry, and team-corpus features.
 
 ### Trust boundaries
@@ -40,9 +40,9 @@ Dendra is a Python library that ships:
 | user source -> lifter | Python source as string | parsed via `ast.parse`, never `exec`'d |
 | `@evidence_via_probe(field="expr")` | string | parsed via `ast.parse(mode='eval')`, never eval'd at lift time |
 | `@evidence_inputs(field=lambda: ...)` | callable | inspected as AST, never invoked at lift time |
-| `__dendra_generated__/*.py` | file content | parser reads header only; never imports/exec's the file |
-| `~/.dendra/credentials` | JSON file | json-parsed; non-dict / missing-key payloads refused |
-| `DENDRA_API_KEY` env var | string | opaque, never shell-interpolated |
+| `__postrule_generated__/*.py` | file content | parser reads header only; never imports/exec's the file |
+| `~/.postrule/credentials` | JSON file | json-parsed; non-dict / missing-key payloads refused |
+| `POSTRULE_API_KEY` env var | string | opaque, never shell-interpolated |
 | cloud HTTP responses | bytes/json | TLS-verified, never executed as code |
 
 ### What's IN scope
@@ -63,7 +63,7 @@ Dendra is a Python library that ships:
 
 - Side-channel attacks against the ML head (timing, cache).
 - Adversarial ML inputs that exploit a specific trained head's
-  decision boundary. Dendra is the substrate; head robustness is
+  decision boundary. Postrule is the substrate; head robustness is
   the head's responsibility.
 - Compromise of the user's local Python environment. If `pip` is
   poisoned, all bets are off.
@@ -81,18 +81,18 @@ Dendra is a Python library that ships:
 
 ## Real vulnerabilities found and fixed
 
-### 1. `dendra refresh` followed `__dendra_generated__/` symlinks outside the project root
+### 1. `postrule refresh` followed `__postrule_generated__/` symlinks outside the project root
 
-`cmd_refresh` walked the project tree via `Path.rglob("__dendra_generated__")`
+`cmd_refresh` walked the project tree via `Path.rglob("__postrule_generated__")`
 which silently follows symlinks on POSIX. A malicious
-`__dendra_generated__` symlink inside the project root pointing at
+`__postrule_generated__` symlink inside the project root pointing at
 e.g. `/etc` would let the walker glob (and parse-read) arbitrary `*.py`
 files there. No code was executed (parse_generated_header is parse-only),
 but presenting an out-of-tree path is itself information leakage.
 
 **Severity**: low (parse-only, no exec, requires attacker write inside
 the project directory).
-**Fix**: `cmd_refresh` now resolves each candidate `__dendra_generated__`
+**Fix**: `cmd_refresh` now resolves each candidate `__postrule_generated__`
 dir and skips any whose `.resolve()` escapes `root.resolve()`, with a
 stderr warning. Same filter applied to individual `*.py` entries.
 Test: `test_refresh_walk_does_not_follow_symlink_to_outside`.
@@ -106,7 +106,7 @@ but the probe AST was unparsed back into the generated source and
 written to disk. A user who later ran the generated module would fire
 whatever the probe expressed, so a hostile annotation like
 `@evidence_via_probe(field="__import__('os').system('rm')")` was a
-deferred RCE vector for any user who ran `dendra init --auto-lift` on
+deferred RCE vector for any user who ran `postrule init --auto-lift` on
 attacker-controlled source and then imported the result.
 
 **Severity**: medium (deferred RCE; requires the attacker to control
@@ -146,14 +146,14 @@ moment their underlying surface lands.
 
 | Category | Gap | Fix |
 |---|---|---|
-| Header version handling | `parse_generated_header` accepted any blake2b hash length; a longer hash from a newer Dendra would otherwise raise a generic "malformed hash" error. | `refresh.py` now pins `_HASH_MIN_LEN` / `_HASH_MAX_LEN` (both 32 in v1) and emits a distinct "unsupported Dendra version" error when a hash exceeds the max, naming the version so operators upgrade Dendra rather than chasing a corrupt-file ghost. |
+| Header version handling | `parse_generated_header` accepted any blake2b hash length; a longer hash from a newer Postrule would otherwise raise a generic "malformed hash" error. | `refresh.py` now pins `_HASH_MIN_LEN` / `_HASH_MAX_LEN` (both 32 in v1) and emits a distinct "unsupported Postrule version" error when a hash exceeds the max, naming the version so operators upgrade Postrule rather than chasing a corrupt-file ghost. |
 | `whoami` truncation | A key with embedded ANSI ESC / BEL / BS / DEL bytes rendered terminal-control chars when printed. | `cli.py` adds `_strip_unsafe_chars`; `_truncate_key` runs through it so non-printable bytes never reach stdout. The stored credential is unchanged. |
 
 ### Queued for v1.2 (xfail strict)
 
 | Category | Gap | Reason for deferral |
 |---|---|---|
-| `dendra refresh` walk | `Path.rglob` follows symlinks for intermediate dir traversal. The resolved-under-root check already catches the escape case. | `follow_symlinks=False` requires Python 3.13; `requires-python` is `>=3.10`. Will swap once min Python bumps. |
+| `postrule refresh` walk | `Path.rglob` follows symlinks for intermediate dir traversal. The resolved-under-root check already catches the escape case. | `follow_symlinks=False` requires Python 3.13; `requires-python` is `>=3.10`. Will swap once min Python bumps. |
 | Dispatch input pickling | A custom storage backend could pickle records, turning attacker-controlled input into a deserialization sink. | Docstring landing collides with a peer change-stream rewriting `storage.py` (concurrency / lock refactor); will batch with that work. |
 | Cloud SSL pinning | We rely on the system CA bundle; a compromised CA could MITM. | Needs a config surface (env var or credentials field), a cert-rotation story, and an opt-out for users behind corporate MITM proxies. v1 round pins `verify=True` + https-only via `test_tls_and_cloud.py`. |
 

@@ -13,7 +13,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     FileStorage,
@@ -22,8 +22,8 @@ from dendra import (
     SwitchConfig,
     Verdict,
 )
-from dendra.gates import GateDecision
-from dendra.lifters.evidence import lift_evidence
+from postrule.gates import GateDecision
+from postrule.lifters.evidence import lift_evidence
 
 
 def _rec(label: str = "x") -> ClassificationRecord:
@@ -103,7 +103,7 @@ class _SlowEchoModel:
     """
 
     def classify(self, input, labels):
-        from dendra.models import ModelPrediction
+        from postrule.models import ModelPrediction
 
         time.sleep(0.005)
         return ModelPrediction(label="model", confidence=0.99)
@@ -121,7 +121,7 @@ class TestAdvanceVsDispatch:
         """
         # We need an ML head for ML_SHADOW. Use a stub that always
         # returns a deterministic label.
-        from dendra.ml import MLPrediction
+        from postrule.ml import MLPrediction
 
         class StubMLHead:
             def fit(self, records):

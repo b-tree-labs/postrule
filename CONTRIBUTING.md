@@ -1,15 +1,15 @@
-# Contributing to Dendra
+# Contributing to Postrule
 
-Thanks for considering a contribution. Dendra is
+Thanks for considering a contribution. Postrule is
 [split-licensed](./LICENSE.md) — Apache 2.0 on the client SDK,
-BSL 1.1 on Dendra-operated components — and welcomes community
+BSL 1.1 on Postrule-operated components — and welcomes community
 pull requests, issues, and discussion.
 
 ## Quick start for contributors
 
 ```bash
-git clone https://github.com/b-tree-labs/dendra.git
-cd dendra
+git clone https://github.com/b-tree-labs/postrule.git
+cd postrule
 python -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev,train,bench,viz]'
 pytest tests/
@@ -17,7 +17,7 @@ pytest tests/
 
 ## Philosophy
 
-Dendra is a **primitive**. The core design goal is a small, coherent
+Postrule is a **primitive**. The core design goal is a small, coherent
 API surface that composes cleanly — not a sprawling toolkit. Before
 sending a PR that adds to the public surface, please open an issue to
 discuss whether the addition belongs in core or in a companion
@@ -50,12 +50,12 @@ What probably belongs in a companion repo:
   Origin" below.
 - [ ] New files carry a license header matching their target
   bucket (Apache 2.0 for client-SDK modules, BSL for
-  Dendra-operated modules — see `LICENSE.md` for the mapping).
+  Postrule-operated modules — see `LICENSE.md` for the mapping).
 - [ ] CHANGELOG entry in the `[Unreleased]` section.
-- [ ] For API changes: update `src/dendra/__init__.py` `__all__`,
+- [ ] For API changes: update `src/postrule/__init__.py` `__all__`,
   add a docstring, and note if it's a breaking change.
 - [ ] For patent-relevant architectural changes: open an issue
-  first. Dendra's architecture is covered by a filed provisional
+  first. Postrule's architecture is covered by a filed provisional
   patent, and contributions that materially change the claimed
   method may require additional discussion about IP.
 
@@ -70,7 +70,7 @@ What probably belongs in a companion repo:
 
 ## Code style
 
-Dendra uses **ruff** for lint and format. Configuration is in
+Postrule uses **ruff** for lint and format. Configuration is in
 `pyproject.toml`. The pre-commit config runs ruff + detect-secrets
 automatically; install the hooks with:
 
@@ -115,7 +115,7 @@ updated results.
 ## Reporting issues
 
 - **Bugs:** open a GitHub issue with a minimal reproducer + your
-  Python version + Dendra version (`pip show dendra`).
+  Python version + Postrule version (`pip show postrule`).
 - **Security:** see [SECURITY.md](SECURITY.md). Don't file security
   issues publicly.
 - **Feature requests:** issue first; PR after discussion.
@@ -126,7 +126,7 @@ By participating you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Developer Certificate of Origin (DCO)
 
-Dendra uses the [Developer Certificate of Origin
+Postrule uses the [Developer Certificate of Origin
 1.1](https://developercertificate.org/) for contributions. Every
 commit must carry a `Signed-off-by:` line. Add it automatically
 with `git commit -s`; verify with `git log`.
@@ -147,10 +147,10 @@ licensed under the same license as the file it modifies:
 - Contributions to files under **Apache 2.0** (client SDK
   modules) are licensed under Apache 2.0.
 - Contributions to files under **Business Source License 1.1**
-  (Dendra-operated components) are licensed under BSL 1.1 with
+  (Postrule-operated components) are licensed under BSL 1.1 with
   the same Change Date and Change License parameters.
 - New files must declare one of the two licenses in their
-  header. See existing files in `src/dendra/` for the canonical
+  header. See existing files in `src/postrule/` for the canonical
   header blocks.
 
 If you're unsure which license applies to a new file, open an
@@ -162,9 +162,9 @@ the copyright holder) via the DCO sign-off.
 
 ## Trademarks
 
-DENDRA and B-TREE LABS are trademarks (or pending trademarks) of
+POSTRULE and B-TREE LABS are trademarks (or pending trademarks) of
 B-Tree Labs. Contributions may reference these names
-descriptively (e.g., "improves the Dendra CLI's error handling")
+descriptively (e.g., "improves the Postrule CLI's error handling")
 but may not use them in a way that implies endorsement or
 affiliation without explicit permission. See
 [`TRADEMARKS.md`](./TRADEMARKS.md).

@@ -10,13 +10,13 @@ import threading
 
 import pytest
 
-from dendra import (
+from postrule import (
     BulkVerdict,
     LearnedSwitch,
     SwitchConfig,
     Verdict,
 )
-from dendra.verdicts import (
+from postrule.verdicts import (
     CallableVerdictSource,
     HumanReviewerSource,
     WebhookVerdictSource,
@@ -87,7 +87,7 @@ class TestBulkRecordVerdicts:
 
         class _CountingGate:
             def evaluate(self, records, current, target, /):
-                from dendra.gates import GateDecision
+                from postrule.gates import GateDecision
 
                 advance_calls.append(len(records))
                 return GateDecision(target_better=False, rationale="never")
@@ -119,7 +119,7 @@ class TestBulkRecordVerdicts:
 
         class _CountingGate:
             def evaluate(self, records, current, target, /):
-                from dendra.gates import GateDecision
+                from postrule.gates import GateDecision
 
                 advance_calls.append(len(records))
                 return GateDecision(target_better=False, rationale="never")

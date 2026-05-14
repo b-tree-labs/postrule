@@ -15,7 +15,7 @@ import warnings
 
 import pytest
 
-from dendra import (
+from postrule import (
     ClassificationRecord,
     FileStorage,
     StorageBase,
@@ -144,7 +144,7 @@ class TestFsync:
             called.append(fd)
             return real_fsync(fd)
 
-        monkeypatch.setattr("dendra.storage.os.fsync", spy_fsync)
+        monkeypatch.setattr("postrule.storage.os.fsync", spy_fsync)
         storage = FileStorage(tmp_path, fsync=True)
         storage.append_record("s", _record(output="a"))
         assert len(called) == 1
@@ -155,7 +155,7 @@ class TestFsync:
         def spy_fsync(fd):
             called.append(fd)
 
-        monkeypatch.setattr("dendra.storage.os.fsync", spy_fsync)
+        monkeypatch.setattr("postrule.storage.os.fsync", spy_fsync)
         storage = FileStorage(tmp_path, fsync=False)
         storage.append_record("s", _record(output="a"))
         assert called == []
@@ -276,7 +276,7 @@ class TestWindowsFallback:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific fallback path")
     def test_warning_emitted_once_on_windows(self, tmp_path):
         # Reset the module-level flag so the warning fires.
-        import dendra.storage as st
+        import postrule.storage as st
 
         st._WINDOWS_LOCK_WARNING_ISSUED = False
         with warnings.catch_warnings(record=True) as w:
@@ -454,7 +454,7 @@ class TestRedactionHook:
     def test_redactor_on_sqlite(self, tmp_path):
         from dataclasses import replace
 
-        from dendra import SqliteStorage
+        from postrule import SqliteStorage
 
         def scrub(r):
             return replace(r, input="<redacted>")

@@ -1,13 +1,13 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra + Axiom OS — wrap a local-LLM classifier through axi serve.
+"""Postrule + Axiom OS — wrap a local-LLM classifier through axi serve.
 
 Axiom OS (https://github.com/b-tree-labs/axiom-os) is the shared
 local-LLM runtime that other tools on the same machine can talk to:
 ``pip install axi-platform && axi serve`` brings up a local-LM server
-on localhost. Dendra's ``LlamafileAdapter`` connects to it directly.
+on localhost. Postrule's ``LlamafileAdapter`` connects to it directly.
 
-This is the canonical Path C from the Dendra README — when you'd
+This is the canonical Path C from the Postrule README — when you'd
 rather not depend on a hosted provider at all. The trade-off is
 local-LM latency at Phase.RULE; graduation to an in-process sklearn
 head erases that on the easy cases.
@@ -21,7 +21,7 @@ from __future__ import annotations
 import urllib.error
 import urllib.request
 
-from dendra import LlamafileAdapter, ml_switch
+from postrule import LlamafileAdapter, ml_switch
 
 
 def _axiom_node_reachable() -> bool:
@@ -72,7 +72,7 @@ else:
 def safety_check(response: str) -> str:
     """Classify an LLM response before it leaves your service.
 
-    safety_critical=True caps graduation at MODEL_PRIMARY — Dendra
+    safety_critical=True caps graduation at MODEL_PRIMARY — Postrule
     will not silently let an ML head replace this. The rule (and
     later the verifier) stay as the safety floor.
     """
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     print(f"Switch '{status.name}' phase={status.phase} outcomes={status.outcomes_total}")
     print()
     print(
-        "Path C — single shared local-LM node serves Dendra + everything\n"
+        "Path C — single shared local-LM node serves Postrule + everything\n"
         "else on the box. Per-call cost is electricity (~$0.00002 on Apple\n"
         "Silicon); the latency win post-graduation still applies."
     )

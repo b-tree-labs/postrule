@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import (
+from postrule import (
     ClassificationRecord,
     ClassificationResult,
     InMemoryStorage,
@@ -50,7 +50,7 @@ class TestConstruction:
             LearnedSwitch(name="x", rule=_rule, author="")
 
     def test_default_storage_is_bounded_in_memory(self):
-        from dendra import BoundedInMemoryStorage
+        from postrule import BoundedInMemoryStorage
 
         s = LearnedSwitch(name="x", rule=_rule, author="alice")
         assert isinstance(s.storage, BoundedInMemoryStorage)

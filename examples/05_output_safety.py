@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 
-from dendra import ml_switch
+from postrule import ml_switch
 
 _SSN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _PHONE = re.compile(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b")
@@ -27,7 +27,7 @@ _CONFIDENTIAL = ("CONFIDENTIAL", "INTERNAL ONLY", "DO NOT DISTRIBUTE")
 @ml_switch(
     # list[str] labels: the caller wants the verdict back and decides
     # what to do in its own layer. Use dict-labels (example 01) when
-    # you want Dendra to dispatch a handler on match.
+    # you want Postrule to dispatch a handler on match.
     labels=["safe", "pii", "confidential"],
     safety_critical=True,
 )
