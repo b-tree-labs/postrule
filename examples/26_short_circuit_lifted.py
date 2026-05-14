@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import textwrap
 
-from dendra.lifters.evidence import lift_evidence
+from postrule.lifters.evidence import lift_evidence
 
 SOURCE = textwrap.dedent(
     """\
@@ -46,7 +46,7 @@ def main() -> None:
     for line in SOURCE.rstrip().split("\n"):
         print(f"  {line}")
     print()
-    print("After dendra init --auto-lift:")
+    print("After postrule init --auto-lift:")
     print()
     lifted = lift_evidence(SOURCE, "authorize")
     for line in lifted.rstrip().split("\n"):

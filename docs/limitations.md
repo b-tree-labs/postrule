@@ -1,4 +1,4 @@
-# Dendra, limitations
+# Postrule, limitations
 
 What works at v1.0, what's deferred, and what's permanently out of scope.
 
@@ -12,7 +12,7 @@ Status tags appear inline next to each item:
 ## 1. Function shape requirements
 
 - **Single positional input (today), multi-arg via auto-pack** [v1]. The classifier function takes one positional argument at the v1.0 baseline. Multi-arg signatures are supported in v1 via auto-packing: the decorator inspects `inspect.signature(...)` and synthesizes a packed input. `*args` and `**kwargs` work via dict packing; defaults are preserved; type hints are required for the LLM/ML head schema.
-- **Returns a label name (string), not a computed value** [Permanent]. The classifier returns one of a known finite set of label strings. Functions that compute and return a structured value (a dataclass, a tuple, a domain object) are not classifiers in Dendra's sense.
+- **Returns a label name (string), not a computed value** [Permanent]. The classifier returns one of a known finite set of label strings. Functions that compute and return a structured value (a dataclass, a tuple, a domain object) are not classifiers in Postrule's sense.
 - **Pure or pure-after-side-effect-extraction** [v1]. The classifier body must be free of side effects, or its side effects must be extractable into label-keyed action handlers (`_on_<label>` methods, `Label(on=...)`, dict-labels). Auto-lift (Phases 2-3) extracts side effects mechanically; until then, the user does the extraction.
 
 ## 2. What can't be a classification site
@@ -48,7 +48,7 @@ The auto-lift mechanism makes implicit dependencies explicit. v1 ships with full
 
 ## 6. Roadmap (versioned)
 
-**v1.0 (ships 2026-05-20).** Native `dendra.Switch` class authoring pattern (subclass with `_evidence_*` / `_rule` / `_on_*` methods); `@ml_switch` decorator (existing API, retained); multi-arg packing; full auto-lift across globals, `self`, mid-function I/O, closures (Phases 2-3 of the auto-lift design); drift detection (Phase 4); prescriptive analyzer (Phase 5); account system; `propagate_action_exceptions` config knob; MCP server; cross-phase test suite; six-phase lifecycle; head-to-head evidence gates; async API; verdict sources; CandidateHarness; Tournament.
+**v1.0 (ships 2026-05-20).** Native `postrule.Switch` class authoring pattern (subclass with `_evidence_*` / `_rule` / `_on_*` methods); `@ml_switch` decorator (existing API, retained); multi-arg packing; full auto-lift across globals, `self`, mid-function I/O, closures (Phases 2-3 of the auto-lift design); drift detection (Phase 4); prescriptive analyzer (Phase 5); account system; `propagate_action_exceptions` config knob; MCP server; cross-phase test suite; six-phase lifecycle; head-to-head evidence gates; async API; verdict sources; CandidateHarness; Tournament.
 
 **v1.1.** TBD based on real-user telemetry. The list of candidate items will be set after v1.0 ships and we observe which limitations users hit first.
 

@@ -2,7 +2,7 @@
 
 Strict fact-check of `body.typ` / `paper.typ` against the underlying data
 files in `results/`, `docs/benchmarks/perf-baselines-2026-05-01.md`, the
-`src/dendra/` implementation, and the load-bearing external citations.
+`src/postrule/` implementation, and the load-bearing external citations.
 
 This is a punch list for human resolution. Mechanical fixes that were
 unambiguous have been committed in the same PR; everything substantive
@@ -27,8 +27,8 @@ bullet), `body.typ:888-893` (§5.2 regime narrative), `body.typ:1531-1534`
 **Source of truth.** `body.typ:434-436` and `body.typ:692` both
 define the gate as `b > c AND p < α AND b + c ≥ n_min` with
 `n_min = 200`. The harness used to produce the JSONL is in
-`src/dendra/research.py::run_benchmark_experiment` and the gate
-itself is `src/dendra/gates.py::McNemarGate` (`DEFAULT_MIN_PAIRED = 200`
+`src/postrule/research.py::run_benchmark_experiment` and the gate
+itself is `src/postrule/gates.py::McNemarGate` (`DEFAULT_MIN_PAIRED = 200`
 at line 202).
 
 **What the JSONL actually says.** Computing the paired McNemar
@@ -95,11 +95,11 @@ would be the strictly accurate phrasing).
 > A locally-served 22M-parameter embedding-cosine baseline reaches 62.2%."
 
 **Source of truth.** Cannot find any file under `results/`, in
-`src/dendra/`, or in `tests/` that produces these numbers. Specifically:
+`src/postrule/`, or in `tests/` that produces these numbers. Specifically:
 
 - `14.6%` (hand-written keyword regex of ~35 patterns): no JSONL,
   no test, no rules file in `docs/papers/2026-when-should-a-rule-learn/`
-  or `src/dendra/` produces this number on Banking77. The auto-rule at
+  or `src/postrule/` produces this number on Banking77. The auto-rule at
   seed=100 gives 1.3% (verified). The auto-rule at seed=1000 gives
   6.8% (verified, Table 4). Neither matches 14.6%.
 - `62.2%` (22M-parameter embedding-cosine baseline): no file in the
@@ -177,8 +177,8 @@ but keeps the paper honest.
 **Paper location.** `body.typ:1579` ("`LLMCommitteeSource` for
 ensemble verdicts").
 
-**Source of truth.** `src/dendra/__init__.py:110` exports
-`JudgeCommittee`; `src/dendra/verdicts.py:21` describes the class
+**Source of truth.** `src/postrule/__init__.py:110` exports
+`JudgeCommittee`; `src/postrule/verdicts.py:21` describes the class
 as `:class:JudgeCommittee` — multi-model committee. No class named
 `LLMCommitteeSource` exists anywhere in `src/`.
 
@@ -204,7 +204,7 @@ move.
 > to be reviewed by an external system..."
 
 **Source of truth.** No symbol named `ApprovalBackend`, no
-`AdvanceProposal`, no `advance_proposal` anywhere in `src/dendra/`
+`AdvanceProposal`, no `advance_proposal` anywhere in `src/postrule/`
 (grep confirmed). The audit chain (storage of phase transitions) does
 ship, but the named protocol and the "signed advance proposals"
 artifacts do not.
@@ -330,7 +330,7 @@ n_min on its test set" case). Pending resolution of S1-1.
 > **Target.** arXiv (cs.LG / cs.SE), 2026-05-13.
 
 **Source of truth.** Per PR #39's date sweep and the latest launch
-posture (memory `project_dendra_launch.md`), the launch is 2026-05-20
+posture (memory `project_postrule_launch.md`), the launch is 2026-05-20
 and arXiv submission is decoupled to ~2026-05-22.
 
 **Mechanical fix applied.** `paper-draft.md:5` updated to
@@ -363,7 +363,7 @@ doc and `body.typ` is the source of truth.
 
 `body.typ:2185` (Appendix B reproducibility) uses CLI-form
 `{atis,banking77,clinc150,hwu64,snips,trec6,ag_news,codelangs}` —
-this matches `src/dendra/cli.py:779-788` exactly. ✓
+this matches `src/postrule/cli.py:779-788` exactly. ✓
 
 Narrative prose elsewhere uses "AG News" (with space) — this is the
 correct convention for prose vs CLI. No inconsistency, verified clean.
@@ -372,7 +372,7 @@ correct convention for prose vs CLI. No inconsistency, verified clean.
 
 **Paper location.** `body.typ:317-326` (Table 1, head-to-head).
 
-The Dendra column claims are mostly substantiated by §5 (the "yes
+The Postrule column claims are mostly substantiated by §5 (the "yes
 (paired McNemar, α-bounded)" cell maps to Theorem 1; the
 "sub-millisecond final state? yes (in-process sklearn at P5)" cell
 maps to `tests/test_latency_pinned.py`'s 1-5 µs assertions). The
@@ -462,40 +462,40 @@ These categories were checked and found to be accurate:
   research@b-treeventures.com" matches PR #34 spec ✓
 - **Patent details** (`paper.typ:111`, `body.typ:1688-1692`):
   Provisional 64/045,809, filed 2026-04-21, attorney docket
-  BTV-DENDRA-PPA-001. Matches memory
-  `project_dendra_licensing_position.md` ✓
+  BTV-POSTRULE-PPA-001. Matches memory
+  `project_postrule_licensing_position.md` ✓
 - **License split** (`body.typ:1678-1682`): Apache 2.0 client SDK +
   BSL 1.1 with 2030-05-01 Change Date for analyzer/cli/research/roi.
   Matches memory and per-file SPDX headers ✓
-- **Trademark posture**: paper does NOT claim DENDRA is registered;
+- **Trademark posture**: paper does NOT claim POSTRULE is registered;
   uses "pending USPTO 1(b)" wording correctly (or omits the claim
   entirely in the academic context) ✓
 - **No date references to 2026-05-13** remain in `body.typ` or
   `paper.typ` ✓ (only stale ref was in `paper-draft.md`, fixed
   mechanically — see S2-7)
 - **Implementation references all resolve**:
-  - `src/dendra/research.py::run_benchmark_experiment` ✓
-  - `src/dendra/gates.py::McNemarGate` ✓
-  - `src/dendra/core.py::LearnedSwitch` ✓
-  - `src/dendra/verdicts.py::JudgeSource` ✓
-  - `src/dendra/autoresearch.py::CandidateHarness` ✓
-  - `src/dendra/benchmarks/rules.py::build_reference_rule` ✓
-  - `src/dendra/image_rules.py::build_color_centroid_rule` ✓
-  - `src/dendra/ml.py::SklearnTextHead`, `TfidfHeadBase`,
+  - `src/postrule/research.py::run_benchmark_experiment` ✓
+  - `src/postrule/gates.py::McNemarGate` ✓
+  - `src/postrule/core.py::LearnedSwitch` ✓
+  - `src/postrule/verdicts.py::JudgeSource` ✓
+  - `src/postrule/autoresearch.py::CandidateHarness` ✓
+  - `src/postrule/benchmarks/rules.py::build_reference_rule` ✓
+  - `src/postrule/image_rules.py::build_color_centroid_rule` ✓
+  - `src/postrule/ml.py::SklearnTextHead`, `TfidfHeadBase`,
     `ImagePixelLogRegHead`, `register_ml_head` ✓
-  - `src/dendra/ml_strategy.py::CardinalityMLHeadStrategy`,
+  - `src/postrule/ml_strategy.py::CardinalityMLHeadStrategy`,
     `FixedMLHeadStrategy`, `MLHeadStrategy` (Protocol) ✓
-  - `src/dendra/decorator.py::ml_switch` decorator ✓
-  - `src/dendra/storage.py`: `BoundedInMemoryStorage`,
+  - `src/postrule/decorator.py::ml_switch` decorator ✓
+  - `src/postrule/storage.py`: `BoundedInMemoryStorage`,
     `FileStorage`, `SqliteStorage`, `ResilientStorage` ✓
-  - `src/dendra/models.py`: `OllamaAdapter`, `AnthropicAdapter`,
+  - `src/postrule/models.py`: `OllamaAdapter`, `AnthropicAdapter`,
     `OpenAIAdapter`, `LlamafileAdapter` ✓
-  - `src/dendra/gates.py::CompositeGate` ✓
-  - `src/dendra/verdicts.py::HumanReviewerSource`,
+  - `src/postrule/gates.py::CompositeGate` ✓
+  - `src/postrule/verdicts.py::HumanReviewerSource`,
     `WebhookVerdictSource` ✓
   - (See S1-4 / S1-5 for the two implementation refs that did NOT
     resolve: `LLMCommitteeSource` and `ApprovalBackend`.)
-- **CLI subcommand registry** (`src/dendra/cli.py:779-788`): all 8
+- **CLI subcommand registry** (`src/postrule/cli.py:779-788`): all 8
   benchmarks (`banking77`, `clinc150`, `hwu64`, `atis`, `snips`,
   `trec6`, `ag_news`, `codelangs`) match Appendix B's reproducibility
   command exactly. The `ag_news` underscore form is used in the CLI

@@ -1,10 +1,10 @@
 # Storage backends — guarantees, limitations, customization
 
 **Status:** v0.2.x. Owner: Benjamin Booth.
-Relevant code: `src/dendra/storage.py`, tests under
+Relevant code: `src/postrule/storage.py`, tests under
 `tests/test_storage*.py`.
 
-Every downstream decision Dendra makes — phase graduation,
+Every downstream decision Postrule makes — phase graduation,
 drift detection, ROI estimation, multi-language model comparison — reads
 off the outcome log, so the storage backend choice is the
 deployment knob with the largest blast radius.
@@ -23,8 +23,8 @@ deployment knob with the largest blast radius.
 The default when you construct a bare `LearnedSwitch` is
 `BoundedInMemoryStorage(max_records=10_000)` — safe for any
 process but volatile. Pass `persist=True` to get `FileStorage`
-rooted at `./runtime/dendra/` (single-host durable), or pass
-`storage=SqliteStorage("./runtime/dendra.db")` for the concurrent-
+rooted at `./runtime/postrule/` (single-host durable), or pass
+`storage=SqliteStorage("./runtime/postrule.db")` for the concurrent-
 safe option.
 
 ## BoundedInMemoryStorage
@@ -72,7 +72,7 @@ if you skip durable storage in production, set the cap deliberately.
 - Dev / tests.
 - Short-lived CLI tools that classify and exit.
 - Deployments where an external system (queue, APM, data
-  pipeline) owns durable persistence and Dendra is the in-
+  pipeline) owns durable persistence and Postrule is the in-
   process routing layer only.
 
 ## InMemoryStorage
@@ -108,7 +108,7 @@ if you skip durable storage in production, set the cap deliberately.
   silently skipped by the reader (`some data beats no data`).
 
 ### Limitations
-- **POSIX `flock` only.** Windows has no equivalent; Dendra
+- **POSIX `flock` only.** Windows has no equivalent; Postrule
   falls back to a no-op lock and emits a one-time
   `UserWarning`. For cross-platform concurrency use
   `SqliteStorage`.
@@ -124,10 +124,10 @@ if you skip durable storage in production, set the cap deliberately.
 
 ### Configuration knobs
 ```python
-from dendra import FileStorage
+from postrule import FileStorage
 
 storage = FileStorage(
-    "./runtime/dendra",
+    "./runtime/postrule",
     max_bytes_per_segment=64 * 1024 * 1024,   # 64 MB
     max_rotated_segments=8,                    # 8 × 64 MB retained
     lock=True,                                 # POSIX flock on append + rotate
@@ -146,12 +146,12 @@ must never reach the durable outcome log, both `FileStorage` and
 
 ```python
 from dataclasses import replace
-from dendra import ClassificationRecord, FileStorage
+from postrule import ClassificationRecord, FileStorage
 
 def scrub_pii(record: ClassificationRecord) -> ClassificationRecord:
     return replace(record, input="<redacted>")
 
-storage = FileStorage("./runtime/dendra", redact=scrub_pii)
+storage = FileStorage("./runtime/postrule", redact=scrub_pii)
 ```
 
 The redactor runs once per `append_record`, before the record
@@ -170,9 +170,9 @@ with a `ResilientStorage` so a slow redactor can't take down
 classification:
 
 ```python
-from dendra import FileStorage, ResilientStorage
+from postrule import FileStorage, ResilientStorage
 
-storage = ResilientStorage(FileStorage("./runtime/dendra", redact=scrub_pii))
+storage = ResilientStorage(FileStorage("./runtime/postrule", redact=scrub_pii))
 ```
 
 ### Sync vs batched
@@ -201,9 +201,9 @@ default — it's the recommended production path when paired with
 fsync-strict durability, construct storage explicitly:
 
 ```python
-from dendra import FileStorage, LearnedSwitch
+from postrule import FileStorage, LearnedSwitch
 
-storage = FileStorage("runtime/dendra", batching=False, fsync=True)
+storage = FileStorage("runtime/postrule", batching=False, fsync=True)
 sw = LearnedSwitch(rule=..., storage=storage)
 ```
 
@@ -268,10 +268,10 @@ language.
 
 ### Configuration
 ```python
-from dendra import SqliteStorage
+from postrule import SqliteStorage
 
 storage = SqliteStorage(
-    "./runtime/dendra.db",
+    "./runtime/postrule.db",
     sync="NORMAL",    # or "FULL" for host-crash safety
     timeout=30.0,     # seconds to wait on a contended writer
 )
@@ -316,14 +316,14 @@ a transient primary failure does not take down classification.
 
 ### Configuration
 ```python
-from dendra import ResilientStorage, FileStorage
+from postrule import ResilientStorage, FileStorage
 
 storage = ResilientStorage(
-    FileStorage("./runtime/dendra"),
+    FileStorage("./runtime/postrule"),
     fallback_max_records=100_000,     # cap on in-memory buffer
     recovery_probe_every=100,          # writes between recovery attempts
-    on_degrade=lambda exc: alerts.emit("dendra.degraded", error=str(exc)),
-    on_recover=lambda n: alerts.emit("dendra.recovered", drained=n),
+    on_degrade=lambda exc: alerts.emit("postrule.degraded", error=str(exc)),
+    on_recover=lambda n: alerts.emit("postrule.recovered", drained=n),
 )
 ```
 
@@ -333,13 +333,13 @@ storage = ResilientStorage(
 switch = LearnedSwitch(rule=..., persist=True)
 switch = LearnedSwitch(
     rule=...,
-    storage=ResilientStorage(FileStorage("runtime/dendra")),
+    storage=ResilientStorage(FileStorage("runtime/postrule")),
 )
 ```
 If you want the bare primary with no fallback (hard-fail on
 I/O error — useful for audit-grade strict mode):
 ```python
-switch = LearnedSwitch(rule=..., storage=FileStorage("runtime/dendra"))
+switch = LearnedSwitch(rule=..., storage=FileStorage("runtime/postrule"))
 ```
 
 ### When NOT to use
@@ -377,7 +377,7 @@ Any object with `append_record(switch_name, record)` and
 valid backend. No inheritance required.
 
 ```python
-from dendra import ClassificationRecord, serialize_record, deserialize_record
+from postrule import ClassificationRecord, serialize_record, deserialize_record
 
 class StdoutStorage:
     """Toy backend: log predictions to stdout and never read back."""
@@ -397,7 +397,7 @@ Prefer inheritance for abstract-method enforcement? Subclass
 `StorageBase`:
 
 ```python
-from dendra import StorageBase, serialize_record, deserialize_record
+from postrule import StorageBase, serialize_record, deserialize_record
 import boto3
 
 class S3Storage(StorageBase):
@@ -436,7 +436,7 @@ construction.
 ### Helpers — use these, don't re-invent
 
 ```python
-from dendra import serialize_record, deserialize_record
+from postrule import serialize_record, deserialize_record
 
 # Encode a record → single JSON line (no trailing newline).
 line = serialize_record(record)
@@ -446,7 +446,7 @@ line = serialize_record(record)
 rec = deserialize_record(line)
 ```
 
-Both helpers are stable across Dendra versions within the same
+Both helpers are stable across Postrule versions within the same
 major release. Breaking changes are called out in
 `CHANGELOG.md`.
 
@@ -463,7 +463,7 @@ major release. Breaking changes are called out in
    gracefully to skipping malformed entries. They should never
    crash.
 
-## When to reach outside Dendra's built-ins
+## When to reach outside Postrule's built-ins
 
 Use a custom backend (or the upcoming `PostgresStorage`) when:
 

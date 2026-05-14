@@ -1,6 +1,6 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Using a Dendra switch to tune system defaults post-install.
+"""Using a Postrule switch to tune system defaults post-install.
 
 Run: `python examples/18_system_defaults_tuning.py`
 
@@ -17,7 +17,7 @@ The pattern:
 
 1. Ship the system with a hand-written rule (Phase.RULE) — the
    same defaults everyone gets at install time.
-2. Every decision routes through the Dendra switch, so the rule
+2. Every decision routes through the Postrule switch, so the rule
    is the live picker on day 0 and every choice is recorded.
 3. Outcomes come from the system's own signals (cache hit
    useful or stale, timeout abandoned vs completed, batch size
@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from dendra import LearnedSwitch, Verdict
+from postrule import LearnedSwitch, Verdict
 
 
 @dataclass

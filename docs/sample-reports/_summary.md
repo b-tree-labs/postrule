@@ -1,7 +1,7 @@
 # Project Switches — Status Summary
 
 Generated 2026-04-29 22:15 UTC.
-Project: `dendra-trial`. 6 switches across 3 source files.
+Project: `postrule-trial`. 6 switches across 3 source files.
 Last drift check: 2026-04-29 22:14 UTC.
 
 ## Cockpit
@@ -61,9 +61,9 @@ Each switch's report card has a pre-registered hypothesis. The project-level rol
 | Drift handling (auto-rollback) | 1 | 0 | 0 | 1 |
 
 All in-flight hypotheses are pre-registered with content-hashes in
-`dendra/hypotheses/` and are observable in this project's git history.
+`postrule/hypotheses/` and are observable in this project's git history.
 Confirmed hypotheses can be exported as a signed PDF via
-`dendra report --export-pdf` (Hosted Business tier).
+`postrule report --export-pdf` (Hosted Business tier).
 
 ## Cohort comparison
 
@@ -97,10 +97,10 @@ Other switches: clean.
 
 ---
 
-*Regenerate with `dendra report --summary`. Per-switch deep-dives live
-alongside this file in `dendra/results/`. Each `--summary`
+*Regenerate with `postrule report --summary`. Per-switch deep-dives live
+alongside this file in `postrule/results/`. Each `--summary`
 regeneration writes both the canonical `_summary.md` and a dated copy
-under `dendra/results/archive/` so historical snapshots are preserved
+under `postrule/results/archive/` so historical snapshots are preserved
 for compliance.*
 
 *Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*

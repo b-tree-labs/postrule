@@ -17,7 +17,7 @@ Covered behaviors:
   on import-time autoconfig and is not picked up by fresh switches.
 - Signed-in users emit one POST per ``record_verdict`` with the
   expected payload shape (no inputs, no labels, no metadata).
-- ``DENDRA_NO_TELEMETRY=1`` short-circuits at the default-emitter
+- ``POSTRULE_NO_TELEMETRY=1`` short-circuits at the default-emitter
   level, regardless of credentials presence.
 - A transport failure or 5xx response never raises into the caller.
 - The token-bucket rate limiter drops over-budget events cleanly
@@ -40,14 +40,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dendra import LearnedSwitch, Verdict
-from dendra.cloud.verdict_telemetry import (
+from postrule import LearnedSwitch, Verdict
+from postrule.cloud.verdict_telemetry import (
     CloudVerdictEmitter,
     maybe_install,
     uninstall,
 )
-from dendra.core import _per_classifier_correct
-from dendra.telemetry import (
+from postrule.core import _per_classifier_correct
+from postrule.telemetry import (
     NullEmitter,
     get_default_emitter,
     register_default_emitter,
@@ -141,7 +141,7 @@ class TestDefaultEmitterResolution:
             return NullEmitter()
 
         register_default_emitter(factory)
-        monkeypatch.setenv("DENDRA_NO_TELEMETRY", "1")
+        monkeypatch.setenv("POSTRULE_NO_TELEMETRY", "1")
         em = get_default_emitter()
         assert isinstance(em, NullEmitter)
         assert called["n"] == 0  # factory never consulted
@@ -150,7 +150,7 @@ class TestDefaultEmitterResolution:
         sentinel = NullEmitter()
         register_default_emitter(lambda: sentinel)
         for v in ("0", "false", "no", "off", ""):
-            monkeypatch.setenv("DENDRA_NO_TELEMETRY", v)
+            monkeypatch.setenv("POSTRULE_NO_TELEMETRY", v)
             assert get_default_emitter() is sentinel
 
     def test_factory_exception_falls_back_to_null(self):
@@ -186,21 +186,21 @@ class TestMaybeInstall:
         assert em is None
 
     def test_signed_in_installs_and_registers(self):
-        creds = {"api_key": "dndr_live_abc", "email": "ben@example"}  # pragma: allowlist secret
+        creds = {"api_key": "prul_live_abc", "email": "ben@example"}  # pragma: allowlist secret
         em = maybe_install(api_url="http://localhost:8787", auth_lookup=lambda: creds)
         assert isinstance(em, CloudVerdictEmitter)
         assert get_default_emitter() is em
         em.close(timeout=0.1)
 
     def test_env_var_blocks_install(self, monkeypatch):
-        monkeypatch.setenv("DENDRA_NO_TELEMETRY", "1")
-        creds = {"api_key": "dndr_live_abc"}  # pragma: allowlist secret
+        monkeypatch.setenv("POSTRULE_NO_TELEMETRY", "1")
+        creds = {"api_key": "prul_live_abc"}  # pragma: allowlist secret
         em = maybe_install(auth_lookup=lambda: creds)
         assert em is None
         assert isinstance(get_default_emitter(), NullEmitter)
 
     def test_uninstall_restores_null(self):
-        creds = {"api_key": "dndr_live_abc"}  # pragma: allowlist secret
+        creds = {"api_key": "prul_live_abc"}  # pragma: allowlist secret
         maybe_install(auth_lookup=lambda: creds)
         uninstall()
         assert isinstance(get_default_emitter(), NullEmitter)
@@ -214,10 +214,10 @@ class TestMaybeInstall:
         assert isinstance(get_default_emitter(), NullEmitter)
 
     def test_signed_in_with_telemetry_off_does_not_install(self):
-        # Server-side preference (cached in ~/.dendra/credentials at
-        # `dendra login` time) was toggled off via /dashboard/settings.
+        # Server-side preference (cached in ~/.postrule/credentials at
+        # `postrule login` time) was toggled off via /dashboard/settings.
         creds = {
-            "api_key": "dndr_live_abc",  # pragma: allowlist secret
+            "api_key": "prul_live_abc",  # pragma: allowlist secret
             "email": "ben@example",
             "telemetry_enabled": False,
         }
@@ -227,7 +227,7 @@ class TestMaybeInstall:
 
     def test_signed_in_with_telemetry_on_installs(self):
         creds = {
-            "api_key": "dndr_live_abc",  # pragma: allowlist secret
+            "api_key": "prul_live_abc",  # pragma: allowlist secret
             "email": "ben@example",
             "telemetry_enabled": True,
         }
@@ -245,7 +245,7 @@ class TestCloudVerdictEmitterPayload:
     def _make(self, sender: _RecordingSender) -> CloudVerdictEmitter:
         return CloudVerdictEmitter(
             api_url="http://localhost:8787",
-            bearer_token="dndr_live_test",  # pragma: allowlist secret
+            bearer_token="prul_live_test",  # pragma: allowlist secret
             sender=sender,
         )
 
@@ -310,7 +310,7 @@ class TestCloudVerdictEmitterPayload:
         bad_sender.post.side_effect = RuntimeError("network down")
         em = CloudVerdictEmitter(
             api_url="http://localhost:8787",
-            bearer_token="dndr_live_test",  # pragma: allowlist secret
+            bearer_token="prul_live_test",  # pragma: allowlist secret
             sender=bad_sender,
         )
         try:
@@ -437,7 +437,7 @@ class TestEndToEndDefaultEmitter:
         )
         try:
             register_default_emitter(lambda: emitter)
-            monkeypatch.setenv("DENDRA_NO_TELEMETRY", "1")
+            monkeypatch.setenv("POSTRULE_NO_TELEMETRY", "1")
             # Construct a switch under the opt-out env var; should
             # fall back to NullEmitter despite the registered factory.
             s = LearnedSwitch(name="triage", rule=_rule, author="alice")
@@ -456,7 +456,7 @@ class TestEndToEndDefaultEmitter:
 
 class TestEnrichedOutcomePayload:
     def test_list_emitter_sees_rule_correct(self):
-        from dendra.telemetry import ListEmitter
+        from postrule.telemetry import ListEmitter
 
         em = ListEmitter()
         s = LearnedSwitch(name="t", rule=_rule, author="alice", telemetry=em)

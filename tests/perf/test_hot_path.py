@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     FileStorage,
@@ -26,7 +26,7 @@ from dendra import (
     Phase,
     SwitchConfig,
 )
-from dendra.models import ModelPrediction
+from postrule.models import ModelPrediction
 from tests.perf.conftest import measure, perf_test  # noqa: TID252
 
 pytestmark = pytest.mark.perf
@@ -281,7 +281,7 @@ def test_storage_write_filestorage_unbatched(perf_record, tmp_path: Path):
 
     Flock + write + (no fsync) per call. Per the spec, this is a
     measure of "single-record latency" with the cheapest durable
-    backend Dendra ships.
+    backend Postrule ships.
     """
     fs = FileStorage(tmp_path / "fs", batching=False, fsync=False)
     try:

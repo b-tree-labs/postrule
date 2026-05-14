@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Native Switch class authoring — the v1 idiomatic way to write a Dendra
+"""Native Switch class authoring — the v1 idiomatic way to write a Postrule
 classifier from scratch.
 
 The convention:
@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from dendra import Phase, Switch
+from postrule import Phase, Switch
 
 # ---------------------------------------------------------------------------
 # Domain: an internal helpdesk router.

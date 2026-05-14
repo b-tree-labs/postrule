@@ -6,7 +6,7 @@
 
 This page lists the third parties B-Tree Ventures, LLC (dba B-Tree
 Labs, the "Processor") engages to process customer Personal Data on
-the Customer's behalf in connection with the Dendra service. It is
+the Customer's behalf in connection with the Postrule service. It is
 published under GDPR Article 28(2) so that the Customer is informed of
 each Sub-processor before processing begins.
 
@@ -137,7 +137,7 @@ L.L.C.; Google LLC; DeepInfra, Inc.; any other provider the Customer
 configures.
 
 **Service provided.** When the Customer chooses to use an LLM judge
-inside the Dendra SDK and supplies their own API key for it, the SDK
+inside the Postrule SDK and supplies their own API key for it, the SDK
 calls the chosen provider directly from the Customer's infrastructure.
 
 **Role allocation — important.** In this flow the Customer (not the
@@ -201,6 +201,6 @@ under the §"Notice and objection" mechanism.
 
 - Sub-processor questions: `licensing@b-treeventures.com`.
 - Security-related concerns about Sub-processors:
-  `security@dendra.run`.
+  `security@postrule.ai`.
 
 *Last updated 2026-05-11. Not legal advice.*

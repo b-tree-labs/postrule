@@ -4,7 +4,7 @@
 """Lifter perf tests — auto-lift work isn't free.
 
 Measures branch lifter, evidence lifter, and Phase 5 hazard analyzer
-on synthetic 100- and 1000-line functions, plus ``dendra analyze``
+on synthetic 100- and 1000-line functions, plus ``postrule analyze``
 on the entire ``examples/`` directory.
 """
 
@@ -17,9 +17,9 @@ from pathlib import Path
 
 import pytest
 
-from dendra.analyzer import analyze, analyze_function_source
-from dendra.lifters.branch import lift_branches
-from dendra.lifters.evidence import lift_evidence
+from postrule.analyzer import analyze, analyze_function_source
+from postrule.lifters.branch import lift_branches
+from postrule.lifters.evidence import lift_evidence
 from tests.perf.conftest import perf_test  # noqa: TID252
 
 pytestmark = pytest.mark.perf
@@ -229,7 +229,7 @@ def test_analyze_function_source_1000_line(perf_record):
 
 
 # ---------------------------------------------------------------------------
-# 4. ``dendra analyze`` on the examples/ directory.
+# 4. ``postrule analyze`` on the examples/ directory.
 # ---------------------------------------------------------------------------
 
 
@@ -237,10 +237,10 @@ def test_analyze_function_source_1000_line(perf_record):
 def test_analyze_examples_directory(perf_record):
     """Target: under 2s.
 
-    Calls the in-process :func:`dendra.analyzer.analyze` API directly
+    Calls the in-process :func:`postrule.analyzer.analyze` API directly
     rather than shelling out to the CLI, so the measurement excludes
     interpreter cold-start. CLI-level latency is covered by
-    :func:`test_import_dendra_cold` plus this number.
+    :func:`test_import_postrule_cold` plus this number.
     """
     examples = Path(__file__).resolve().parent.parent.parent / "examples"
     assert examples.is_dir(), f"expected examples/ at {examples}"

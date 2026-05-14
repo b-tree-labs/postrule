@@ -1,14 +1,14 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 name: Feature request
-description: Propose a new capability for Dendra.
+description: Propose a new capability for Postrule.
 title: "[feat] "
 labels: ["enhancement", "triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for proposing a feature. Dendra is a **primitive** —
+        Thanks for proposing a feature. Postrule is a **primitive** —
         we aim for a small, coherent API surface. Read
         `CONTRIBUTING.md` §Philosophy first if you haven't.
 
@@ -25,7 +25,7 @@ body:
       label: What problem are you trying to solve?
       description: Describe the underlying use case, not a specific implementation.
       placeholder: |
-        I'm running Dendra in a regulated environment and need a way to...
+        I'm running Postrule in a regulated environment and need a way to...
     validations:
       required: true
 
@@ -52,8 +52,8 @@ body:
       label: Where does this belong?
       description: See `CONTRIBUTING.md` §Philosophy for what belongs in core vs companion.
       options:
-        - Dendra core (public API)
-        - Dendra analyzer / CLI
+        - Postrule core (public API)
+        - Postrule analyzer / CLI
         - A companion library
         - Not sure
     validations:

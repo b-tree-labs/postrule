@@ -1,18 +1,18 @@
-# Getting started with Dendra
+# Getting started with Postrule
 
 A working switch in 2 minutes. A switch that graduates itself in
 15. No prior ML experience required.
 
 > **If you only read one thing:** You call your rule (or
-> `rule.classify()` / `rule.dispatch()`). Dendra logs every call
+> `rule.classify()` / `rule.dispatch()`). Postrule logs every call
 > automatically. When a verdict arrives — from a human reviewer,
 > a downstream signal, an oracle — you record it with
 > `result.mark_correct()` (or `.mark_incorrect()`). Every N
-> verdicts, Dendra's gate reads the log and graduates the phase
+> verdicts, Postrule's gate reads the log and graduates the phase
 > if the evidence is strong enough. You never have to call
 > `advance()` by hand.
 
-## What Dendra is
+## What Postrule is
 
 A classification primitive — first shipped as a Python
 decorator; TypeScript and Mojo-compat bindings follow — that
@@ -28,11 +28,11 @@ the hood); `AccuracyMarginGate`, `CompositeGate`,
 `MinVolumeGate`, and `ManualGate` also ship, and any
 `Gate`-conforming object works.
 
-You keep the rule. Dendra learns around it.
+You keep the rule. Postrule learns around it.
 
-## Limitations & when not to use Dendra
+## Limitations & when not to use Postrule
 
-Dendra is a primitive for production-grade classification, not a general-purpose dispatcher. Before reading further, check the constraints:
+Postrule is a primitive for production-grade classification, not a general-purpose dispatcher. Before reading further, check the constraints:
 
 - The classifier function returns a label name (string), not a computed value (tuple, dict, dataclass, scalar).
 - The decision is per-input, not order-dependent across calls. State machines are not classifiers.
@@ -45,9 +45,9 @@ The full list, with version tags and the path forward for each item, lives in [`
 
 Three things happen around a switch, in this order:
 
-1. **You call the rule** (or `.classify` / `.dispatch`). Dendra
+1. **You call the rule** (or `.classify` / `.dispatch`). Postrule
    runs it, optionally runs a shadow language model or ML head depending on
-   the phase, and returns the label. **Dendra also auto-appends
+   the phase, and returns the label. **Postrule also auto-appends
    a `ClassificationRecord`** to the outcome log with
    `outcome=UNKNOWN` and every shadow observation captured —
    drift dashboards, ROI reports, and multi-language model scorecards now
@@ -58,7 +58,7 @@ Three things happen around a switch, in this order:
    `ClassificationResult`. For async / webhook feedback, the
    `rule.record_verdict(input, label, outcome)` method is the
    same thing without the back-reference.
-3. **Dendra graduates the phase** automatically, every
+3. **Postrule graduates the phase** automatically, every
    `auto_advance_interval` verdicts (default 500). The configured
    gate reads the log and, if the evidence is strong enough,
    mutates the phase up by one.
@@ -74,7 +74,7 @@ and call `switch.advance()` from your own workflow.
 ## 1. The smallest switch (2 minutes)
 
 ```python
-from dendra import ml_switch
+from postrule import ml_switch
 
 @ml_switch(labels=["bug", "feature_request", "question"])
 def triage_rule(ticket: dict) -> str:
@@ -95,13 +95,13 @@ auto-appends a record with the label, the shadow predictions
 (when a model is configured), and `outcome=UNKNOWN` waiting for
 your verdict.
 
-**What Dendra did:** built a `LearnedSwitch` holding your rule,
+**What Postrule did:** built a `LearnedSwitch` holding your rule,
 initialized an outcome log (bounded in-memory by default),
 picked a default gate, made the decorated name callable, and —
 on the first call above — appended an UNKNOWN record you can
 later update with feedback.
 
-## 2. Dispatch: let Dendra call the handler (2 minutes)
+## 2. Dispatch: let Postrule call the handler (2 minutes)
 
 Most production code doesn't just want the label — it wants
 *the thing that happens when the label is X.* Pass handlers in
@@ -137,14 +137,14 @@ handler). A handler that raises is captured on
 `result.action_raised`, not propagated — the classification
 decision survives handler bugs.
 
-**What Dendra did:** ran the rule, looked up the matched
+**What Postrule did:** ran the rule, looked up the matched
 label's `on=` callable, invoked it with the input, captured any
 exception as a string on the result, and auto-appended the
 call + action outcome to the log.
 
 ## 3. Recording verdicts — three easy ways (2 minutes)
 
-When feedback arrives you tell Dendra the verdict. Four
+When feedback arrives you tell Postrule the verdict. Four
 equivalent shapes — pick the one that fits your control flow:
 
 **Fluent on the result** (immediate-feedback pattern):
@@ -192,7 +192,7 @@ walkthrough.
 def triage_rule(ticket): ...
 ```
 
-**What Dendra did:** appended a verdict-bearing
+**What Postrule did:** appended a verdict-bearing
 `ClassificationRecord` to the outcome log, fired your
 `on_verdict` hook if configured, and — every
 `auto_advance_interval` verdicts — asked the configured gate
@@ -202,7 +202,7 @@ whether the evidence earns the next phase.
 
 You don't have to do anything. Every `auto_advance_interval`
 verdicts (default 500), the switch asks its gate whether the
-evidence has earned the next phase. When it does, Dendra
+evidence has earned the next phase. When it does, Postrule
 mutates the phase and emits an `advance` telemetry event tagged
 `auto=true`. Subsequent `classify()` calls route through the
 new phase's decision-maker.
@@ -212,10 +212,10 @@ new phase's decision-maker.
 print(triage_rule.switch.phase())     # MODEL_SHADOW — graduated automatically
 ```
 
-Dendra's default gate is `McNemarGate(alpha=0.01, min_paired=200)`
+Postrule's default gate is `McNemarGate(alpha=0.01, min_paired=200)`
 — it refuses to advance until at least 200 paired (current,
 target) outcomes are logged AND the paired-proportion test
-rejects the null at p < 0.01. The probability that Dendra
+rejects the null at p < 0.01. The probability that Postrule
 graduates to a worse-than-current phase is bounded above by
 `alpha`.
 
@@ -247,7 +247,7 @@ print(decision.rationale)  # explains whether it advanced and why
 **Operator-only graduation.** For regulated deployments:
 
 ```python
-from dendra import ManualGate
+from postrule import ManualGate
 
 @ml_switch(labels=..., gate=ManualGate())
 def triage_rule(ticket): ...
@@ -280,7 +280,7 @@ is the entire point of `verifier=default_verifier()`.
 The four knobs that turn the 2-minute demo into a production
 deployment:
 
-**Durable outcome log.** Pass `persist=True` and Dendra writes
+**Durable outcome log.** Pass `persist=True` and Postrule writes
 to a resilient file-backed store (rotating JSONL + auto-fallback
 to an in-memory buffer on disk issues). See
 [`storage-backends.md`](./storage-backends.md) for the full
@@ -351,7 +351,7 @@ evidence; no verdicts → no graduation, but drift / ROI /
 dashboards still work against the UNKNOWN rows.
 
 **Do I have to call `advance()` myself?**
-No — the default is automatic. Every 100 verdicts, Dendra asks
+No — the default is automatic. Every 100 verdicts, Postrule asks
 the gate. Pass `gate=ManualGate()` or set `auto_advance=False`
 for operator-only graduation; then call `switch.advance()`
 yourself from a cron or ops workflow.
@@ -378,6 +378,6 @@ roadmap.
 
 **Where's the language-model adapter?**
 `OpenAIAdapter`, `AnthropicAdapter`, `OllamaAdapter`,
-`LlamafileAdapter` ship out of the box; import from `dendra`.
-Pass one as `model=` to the switch; Dendra calls its
+`LlamafileAdapter` ship out of the box; import from `postrule`.
+Pass one as `model=` to the switch; Postrule calls its
 `classify(input, labels)` at MODEL_SHADOW and MODEL_PRIMARY.

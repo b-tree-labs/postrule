@@ -23,20 +23,20 @@ import pytest
 
 
 def test_default_blocks_external_write():
-    target = Path("/usr/local/dendra-sandbox-escape-attempt")
+    target = Path("/usr/local/postrule-sandbox-escape-attempt")
     with pytest.raises(RuntimeError, match="external write blocked"):
         target.write_text("x")
 
 
 def test_default_blocks_external_write_via_path_open():
-    target = Path("/usr/local/dendra-sandbox-escape-attempt-2")
+    target = Path("/usr/local/postrule-sandbox-escape-attempt-2")
     with pytest.raises(RuntimeError, match="external write blocked"), target.open("w"):
         pass
 
 
 def test_default_blocks_external_write_via_builtin_open():
     with pytest.raises(RuntimeError, match="external write blocked"):
-        open("/usr/local/dendra-sandbox-escape-attempt-3", "w")  # noqa: SIM115
+        open("/usr/local/postrule-sandbox-escape-attempt-3", "w")  # noqa: SIM115
 
 
 # ---------------------------------------------------------------------------

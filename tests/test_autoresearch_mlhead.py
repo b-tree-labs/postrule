@@ -3,7 +3,7 @@
 
 """Contracts for the MLHead-selection autoresearch loop (paper §9.4 dogfood).
 
-Dendra's ``CandidateHarness`` is the substrate that picked the
+Postrule's ``CandidateHarness`` is the substrate that picked the
 MLHead in our own paper. Three alternative heads (LinearSVC,
 MultinomialNB, GradientBoosting on the same TF-IDF features)
 compete head-to-head against the default ``SklearnTextHead``
@@ -28,7 +28,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from dendra.ml import MLHead
+from postrule.ml import MLHead
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -76,12 +76,12 @@ class TestAlternativeMLHeadContract:
 
     def _build(self, name: str):
         pytest.importorskip("sklearn")
-        from dendra import ml as ml_module
+        from postrule import ml as ml_module
 
         cls = getattr(ml_module, name, None)
         if cls is None:
             pytest.fail(
-                f"dendra.ml.{name} is not implemented yet. The autoresearch "
+                f"postrule.ml.{name} is not implemented yet. The autoresearch "
                 f"loop needs three sibling heads (LinearSVC / MultinomialNB / "
                 f"GradientBoosting) that share TF-IDF features with SklearnTextHead."
             )
@@ -118,11 +118,11 @@ class TestAlternativeMLHeadContract:
 class TestAlternativeHeadPersistence:
     def test_state_round_trip_preserves_predictions(self, head_name):
         pytest.importorskip("sklearn")
-        from dendra import ml as ml_module
+        from postrule import ml as ml_module
 
         cls = getattr(ml_module, head_name, None)
         if cls is None:
-            pytest.fail(f"dendra.ml.{head_name} not implemented; cannot round-trip persistence")
+            pytest.fail(f"postrule.ml.{head_name} not implemented; cannot round-trip persistence")
         h1 = cls(min_outcomes=10)
         h1.fit(_toy_corpus())
         blob = h1.state_bytes()

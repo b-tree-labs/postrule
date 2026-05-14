@@ -25,8 +25,8 @@ import time
 
 import pytest
 
-from dendra import LearnedSwitch, MLPrediction, Phase, SwitchConfig
-from dendra.gates import GateDecision
+from postrule import LearnedSwitch, MLPrediction, Phase, SwitchConfig
+from postrule.gates import GateDecision
 
 
 def _rule(text: str) -> str:
@@ -170,7 +170,7 @@ class TestAdvanceSaveDoesNotBlockClassify:
 class TestLazyLoadDoesNotBlockConstruction:
     def test_construction_returns_before_load_completes(self, chdir_to_tmp):
         # Pre-populate a sidecar so there's something for load_state to load.
-        sidecar_dir = chdir_to_tmp / "runtime" / "dendra" / "lazy_load_test"
+        sidecar_dir = chdir_to_tmp / "runtime" / "postrule" / "lazy_load_test"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / ".head").write_bytes(b"snapshot")
 

@@ -197,7 +197,7 @@ of Telemetry Events to opt-out toggling is by design.
 
 6.1 **2026.** During the first calendar year of operation, the
 Processor will report **each government or law-enforcement request
-individually** at <https://dendra.run/transparency> (or a successor
+individually** at <https://postrule.ai/transparency> (or a successor
 URL on this repository) within 30 days of receipt, subject to the
 legal-prohibition exception in §4.1.
 
@@ -221,7 +221,7 @@ covering 2026.
 ## 7. Vulnerability disclosure
 
 7.1 **Channel.** Security findings are reported by email to
-`security@dendra.run`. The full process is documented in
+`security@postrule.ai`. The full process is documented in
 [`SECURITY.md`](../../SECURITY.md).
 
 7.2 **Acknowledgement.** Acknowledgement of receipt within 72 hours,
@@ -273,12 +273,12 @@ The list is updated when an item moves from "not held" to "held."
 ## 9. Contact
 
 - Security incidents and vulnerability reports:
-  `security@dendra.run`. PGP key published at
-  <https://dendra.run/.well-known/security.txt> (in progress —
+  `security@postrule.ai`. PGP key published at
+  <https://postrule.ai/.well-known/security.txt> (in progress —
   targeted 2026-Q3).
 - Compliance documents and DPA execution:
   `licensing@b-treeventures.com`.
-- Privacy / Data Subject rights: `privacy@dendra.run`.
+- Privacy / Data Subject rights: `privacy@postrule.ai`.
 
 ---
 

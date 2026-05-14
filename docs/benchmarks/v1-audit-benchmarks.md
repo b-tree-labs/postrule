@@ -2,7 +2,7 @@
 
 > ⚠️ **Superseded by [`perf-baselines-2026-05-01.md`](perf-baselines-2026-05-01.md).**
 > Keeping this file for the historical context of the
-> 2026-04-24 measurement (Dendra 0.2.0); the launch-cited
+> 2026-04-24 measurement (Postrule 0.2.0); the launch-cited
 > numbers live in the successor doc.
 
 Run date: **2026-04-24**
@@ -16,7 +16,7 @@ Measured by: `scripts/run_v1_benchmarks.py` (perf_counter_ns, 10k iter / cell, 1
 - Machine: arm64
 - CPU: Apple M5
 - RAM: 24 GB
-- Dendra: 0.2.0
+- Postrule: 0.2.0
 
 ## Hot path: `classify()` — phase × auto_record matrix
 

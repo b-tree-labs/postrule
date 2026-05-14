@@ -46,12 +46,12 @@ CIFAR10_LABELS = {
 class TestCifar10Loader:
     def test_loader_is_importable(self):
         try:
-            from dendra.benchmarks.loaders import load_cifar10  # noqa: F401
+            from postrule.benchmarks.loaders import load_cifar10  # noqa: F401
         except ImportError:
-            pytest.fail("dendra.benchmarks.loaders.load_cifar10 not implemented yet")
+            pytest.fail("postrule.benchmarks.loaders.load_cifar10 not implemented yet")
 
     def test_returns_ten_canonical_labels(self):
-        from dendra.benchmarks.loaders import load_cifar10
+        from postrule.benchmarks.loaders import load_cifar10
 
         ds = load_cifar10(train_n=200, test_n=50)
         assert ds.name == "cifar10"
@@ -60,7 +60,7 @@ class TestCifar10Loader:
         assert labels == CIFAR10_LABELS, f"unexpected CIFAR-10 labels — got {labels}"
 
     def test_pairs_are_image_label_pairs(self):
-        from dendra.benchmarks.loaders import load_cifar10
+        from postrule.benchmarks.loaders import load_cifar10
 
         ds = load_cifar10(train_n=50, test_n=20)
         for image, label in (ds.train + ds.test)[:10]:
@@ -74,8 +74,8 @@ class TestCifar10Loader:
 @pytest.mark.benchmark
 class TestColorCentroidRule:
     def test_beats_chance(self):
-        from dendra.benchmarks.loaders import load_cifar10
-        from dendra.image_rules import build_color_centroid_rule
+        from postrule.benchmarks.loaders import load_cifar10
+        from postrule.image_rules import build_color_centroid_rule
 
         ds = load_cifar10(train_n=300, test_n=100)
         rule = build_color_centroid_rule(ds.train[:300])
@@ -89,9 +89,9 @@ class TestColorCentroidRule:
 @pytest.mark.benchmark
 class TestImagePixelLogRegHead:
     def test_trains_and_beats_rule(self):
-        from dendra.benchmarks.loaders import load_cifar10
-        from dendra.image_rules import build_color_centroid_rule
-        from dendra.ml import ImagePixelLogRegHead
+        from postrule.benchmarks.loaders import load_cifar10
+        from postrule.image_rules import build_color_centroid_rule
+        from postrule.ml import ImagePixelLogRegHead
 
         ds = load_cifar10(train_n=600, test_n=200)
         rule = build_color_centroid_rule(ds.train[:300])

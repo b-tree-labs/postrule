@@ -9,7 +9,7 @@ import time
 
 import pytest
 
-from dendra import (
+from postrule import (
     AccuracyMarginGate,
     ClassificationRecord,
     CompositeGate,
@@ -437,7 +437,7 @@ class TestAdvance:
         assert s.phase() is Phase.RULE
 
     def test_advance_emits_telemetry(self):
-        from dendra import ListEmitter
+        from postrule import ListEmitter
 
         events = ListEmitter()
 
@@ -512,7 +512,7 @@ class TestAdvance:
         assert s.phase() is Phase.RULE  # never advanced
 
     def test_auto_advance_tags_telemetry(self):
-        from dendra import ListEmitter
+        from postrule import ListEmitter
 
         events = ListEmitter()
 

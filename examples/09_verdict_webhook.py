@@ -30,7 +30,7 @@ import threading
 import time
 from typing import Any
 
-from dendra import Verdict, ml_switch
+from postrule import Verdict, ml_switch
 
 # A tiny audit log — in real systems this would be an append-only
 # database table, an S3 bucket, a Kafka topic.

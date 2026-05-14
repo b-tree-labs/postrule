@@ -1,46 +1,46 @@
 ---
-name: dendra-instrument-classifier
-description: Wrap a Python function that returns a string label from a finite set with Dendra's @ml_switch decorator so the primitive can log outcomes and graduate the classifier through six lifecycle phases safely. Invoke when the user says "add dendra to", "instrument this classifier", "dendra-ify", "wrap with @ml_switch", "make this learnable", or similar.
+name: postrule-instrument-classifier
+description: Wrap a Python function that returns a string label from a finite set with Postrule's @ml_switch decorator so the primitive can log outcomes and graduate the classifier through six lifecycle phases safely. Invoke when the user says "add postrule to", "instrument this classifier", "postrule-ify", "wrap with @ml_switch", "make this learnable", or similar.
 ---
 
-# Dendra — Instrument a Classifier
+# Postrule — Instrument a Classifier
 
 ## When invoked
 
 The user has a Python function that returns a string label from a
 fixed set (if/elif chains, match/case dispatch, keyword lookup,
 regex dispatch, or a model-prompted classifier). Your job is to wrap
-it with Dendra's `@ml_switch` decorator so the function logs outcomes
+it with Postrule's `@ml_switch` decorator so the function logs outcomes
 and can graduate through six phases (RULE → MODEL_SHADOW → MODEL_PRIMARY
 → ML_SHADOW → ML_WITH_FALLBACK → ML_PRIMARY) with a statistical gate
 at every transition.
 
 **Core invariant:** the wrap MUST NOT change what the caller sees.
-The rule is always the safety floor. Dendra adds an outcome log and
+The rule is always the safety floor. Postrule adds an outcome log and
 optional phase machinery around it.
 
 ## Steps
 
-### 1. Confirm the target fits Dendra
+### 1. Confirm the target fits Postrule
 
 Check the function:
 
 - **Returns a string label from a finite set?** Required.
-  - If it returns a number, ranking, or generation — Dendra doesn't
+  - If it returns a number, ranking, or generation — Postrule doesn't
     fit, STOP.
 - **Callable in production?** Required. A helper only called in
-  tests is not a Dendra target.
+  tests is not a Postrule target.
 - **Output will be observable post-hoc?** Preferred but not required
   — a site with no outcome signal can still benefit from uniform
   instrumentation.
 
 ### 2. Prefer the CLI for the wrap
 
-The library ships `dendra init`, which performs the AST surgery
+The library ships `postrule init`, which performs the AST surgery
 correctly without any risk of malformed decorator syntax:
 
 ```bash
-dendra init path/to/file.py:function_name \
+postrule init path/to/file.py:function_name \
     --author "@person:team" \
     [--labels bug,feature,question] \
     [--phase RULE] \
@@ -49,9 +49,9 @@ dendra init path/to/file.py:function_name \
 ```
 
 - `--author` is required. Use Matrix-style `@name:context`. Check
-  the codebase's `CLAUDE.md`, `AGENTS.md`, or existing Dendra switches
+  the codebase's `CLAUDE.md`, `AGENTS.md`, or existing Postrule switches
   for the local convention.
-- `--labels` is optional; omit it and Dendra infers from `return`
+- `--labels` is optional; omit it and Postrule infers from `return`
   string literals.
 - `--phase` defaults to `RULE`. Don't change unless the user has
   explicit reason to start at a higher phase.
@@ -65,7 +65,7 @@ dendra init path/to/file.py:function_name \
 Example — triage classifier, not safety-critical:
 
 ```bash
-dendra init src/support/triage.py:triage_ticket \
+postrule init src/support/triage.py:triage_ticket \
     --author "@triage:support" \
     --dry-run
 ```
@@ -73,7 +73,7 @@ dendra init src/support/triage.py:triage_ticket \
 Example — content-moderation, safety-critical:
 
 ```bash
-dendra init src/moderation/output_gate.py:gate_response \
+postrule init src/moderation/output_gate.py:gate_response \
     --author "@safety:output-gate" \
     --labels safe,pii,toxic,confidential \
     --safety-critical \
@@ -87,7 +87,7 @@ registration, class-based dispatchers, or integration into an
 existing factory):
 
 ```python
-from dendra import ml_switch, Phase, SwitchConfig
+from postrule import ml_switch, Phase, SwitchConfig
 
 LABELS = ["bug", "feature_request", "question"]
 
@@ -115,39 +115,39 @@ record_triage_outcome = triage_ticket.record_outcome
 
 ### 4. Update `pyproject.toml` / `requirements.txt`
 
-Add `dendra>=1.0.0` as a dependency:
+Add `postrule>=1.0.0` as a dependency:
 
 ```toml
 dependencies = [
     ...,
-    "dendra>=1.0.0",
+    "postrule>=1.0.0",
 ]
 ```
 
-Or for a host application that wants to be Dendra-*ready* without
+Or for a host application that wants to be Postrule-*ready* without
 taking a hard dep (preferred when the host is itself a library):
 
 ```toml
 [project.optional-dependencies]
-learning = ["dendra>=1.0.0"]
+learning = ["postrule>=1.0.0"]
 ```
 
 In that case, guard the import:
 
 ```python
 try:
-    from dendra import ml_switch, Phase, SwitchConfig
-    _DENDRA = True
+    from postrule import ml_switch, Phase, SwitchConfig
+    _POSTRULE = True
 except ImportError:
-    _DENDRA = False
+    _POSTRULE = False
 ```
 
-See `axiom/src/axiom/infra/dendra_adapter.py` in the companion Axiom
+See `axiom/src/axiom/infra/postrule_adapter.py` in the companion Axiom
 project for a full optional-adapter shim pattern.
 
 ### 5. Record outcomes when ground truth arrives
 
-The whole point of Dendra is the outcome log. Ensure the integration
+The whole point of Postrule is the outcome log. Ensure the integration
 calls `record_outcome` at the moment ground truth is known:
 
 ```python
@@ -173,11 +173,11 @@ pytest tests/
 - **Do not change the function body.** The rule stays as written.
 - **Do not change caller signatures.** The decorated function must
   be callable identically.
-- **Do not introduce classes or refactors.** Dendra integration is
+- **Do not introduce classes or refactors.** Postrule integration is
   a one-file decorator change.
 - **Do not graduate the phase yet.** Phase 0 (RULE) is the
   integration target. Graduation happens later when outcome data
-  justifies it, via `dendra roi` / `dendra bench` analysis.
+  justifies it, via `postrule roi` / `postrule bench` analysis.
 - **Do not pick arbitrary labels.** Infer from return strings or
   ask the user.
 
@@ -190,9 +190,9 @@ modified function so the user can review.
 
 ## Further reading
 
-- `README.md` in the Dendra repo — overview and quickstart
+- `README.md` in the Postrule repo — overview and quickstart
 - `docs/papers/2026-when-should-a-rule-learn/outline.md` — the
   formal framework behind the six phases
 - `docs/scenarios.md` — industry-scale applicability with
   cited volume / impact ranges
-- `dendra init --help` — CLI reference
+- `postrule init --help` — CLI reference

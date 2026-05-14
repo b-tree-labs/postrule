@@ -27,7 +27,7 @@ from typing import Any
 
 import pytest
 
-from dendra import (
+from postrule import (
     FixedMLHeadStrategy,
     LearnedSwitch,
     MLPrediction,

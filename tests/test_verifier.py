@@ -9,7 +9,7 @@ import asyncio
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     CallableVerdictSource,
     JudgeSource,
@@ -215,7 +215,7 @@ class TestHumanReviewerOnClassifyHotPathRefused:
     patterns are bulk_record_verdicts_from_source / export_for_review."""
 
     def test_human_reviewer_as_verifier_refused(self):
-        from dendra import HumanReviewerSource
+        from postrule import HumanReviewerSource
 
         with pytest.raises(ValueError, match="HumanReviewerSource"):
             LearnedSwitch(
@@ -226,7 +226,7 @@ class TestHumanReviewerOnClassifyHotPathRefused:
             )
 
     def test_error_mentions_safe_patterns(self):
-        from dendra import HumanReviewerSource
+        from postrule import HumanReviewerSource
 
         with pytest.raises(ValueError) as exc:
             LearnedSwitch(

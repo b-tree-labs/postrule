@@ -38,9 +38,9 @@ EXPECTED_LANGS = {
 class TestCodelangsLoader:
     def test_loader_is_importable(self):
         try:
-            from dendra.benchmarks.loaders import load_codelangs
+            from postrule.benchmarks.loaders import load_codelangs
         except ImportError:
-            pytest.fail("dendra.benchmarks.loaders.load_codelangs not implemented yet")
+            pytest.fail("postrule.benchmarks.loaders.load_codelangs not implemented yet")
         assert callable(load_codelangs)
 
     def test_data_directory_present(self):
@@ -54,7 +54,7 @@ class TestCodelangsLoader:
         )
 
     def test_returns_ten_canonical_languages(self):
-        from dendra.benchmarks.loaders import load_codelangs
+        from postrule.benchmarks.loaders import load_codelangs
 
         ds = load_codelangs()
         assert ds.name == "codelangs"
@@ -64,7 +64,7 @@ class TestCodelangsLoader:
         )
 
     def test_pairs_have_string_text_and_known_labels(self):
-        from dendra.benchmarks.loaders import load_codelangs
+        from postrule.benchmarks.loaders import load_codelangs
 
         ds = load_codelangs()
         for text, label in (ds.train + ds.test)[:50]:
@@ -75,7 +75,7 @@ class TestCodelangsLoader:
         """Cheap sanity check: at least one FORTRAN sample should contain
         a Fortran-distinctive token (PROGRAM, SUBROUTINE, MODULE, IMPLICIT)
         case-insensitive."""
-        from dendra.benchmarks.loaders import load_codelangs
+        from postrule.benchmarks.loaders import load_codelangs
 
         ds = load_codelangs()
         fortran_samples = [t for t, lbl in (ds.train + ds.test) if lbl == "fortran"]
@@ -92,11 +92,11 @@ class TestCodelangsLoader:
 @pytest.mark.benchmark
 class TestCodelangsRegistration:
     def test_in_public_init(self):
-        import dendra.benchmarks as benchmarks_mod
+        import postrule.benchmarks as benchmarks_mod
 
         assert "load_codelangs" in getattr(benchmarks_mod, "__all__", [])
 
     def test_in_cli_registry(self):
-        from dendra.cli import _BENCHMARKS
+        from postrule.cli import _BENCHMARKS
 
         assert "codelangs" in _BENCHMARKS

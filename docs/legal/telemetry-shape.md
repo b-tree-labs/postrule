@@ -1,7 +1,7 @@
 # Telemetry wire-format specification
 
 > **Last updated 2026-05-11.** Source of truth:
-> [`src/dendra/cloud/verdict_telemetry.py`](../../src/dendra/cloud/verdict_telemetry.py).
+> [`src/postrule/cloud/verdict_telemetry.py`](../../src/postrule/cloud/verdict_telemetry.py).
 > Companion to the rendered
 > [Privacy Policy](../../cloud/dashboard/app/privacy/page.tsx) and
 > [`dpa-template.md`](dpa-template.md) §5.
@@ -18,7 +18,7 @@ bug.
 
 ## 1. Overview
 
-The Dendra SDK emits at most one HTTP request per
+The Postrule SDK emits at most one HTTP request per
 `record_verdict()` call. The request carries a single Telemetry Event
 describing the outcome of one classification. The event contains
 metering and paired-correctness information; it does **not** contain
@@ -27,7 +27,7 @@ inputs, labels, or anything derived from inputs or labels.
 The SDK installs the telemetry sender at import time if **and only
 if** both of the following are true:
 
-1. The user has signed in (`~/.dendra/credentials` is present and
+1. The user has signed in (`~/.postrule/credentials` is present and
    contains an `api_key`).
 2. None of the three opt-out paths are active. See §3.
 
@@ -40,7 +40,7 @@ operates entirely in-process.
 Any one of these silences telemetry; whichever is most restrictive
 wins.
 
-- **Environment variable.** `DENDRA_NO_TELEMETRY=1` (or any of the
+- **Environment variable.** `POSTRULE_NO_TELEMETRY=1` (or any of the
   truthy spellings `true`/`yes`/`on`/non-`0`/non-`false`/non-`off`)
   in the process environment short-circuits the installer.
 - **Per-switch.** Passing `telemetry=NullEmitter()` to
@@ -48,7 +48,7 @@ wins.
   switch only.
 - **Account.** Toggling telemetry off on
   `/dashboard/settings`. The setting is cached locally in
-  `~/.dendra/credentials` at `dendra login` time and refreshed
+  `~/.postrule/credentials` at `postrule login` time and refreshed
   against `GET /v1/whoami` opportunistically.
 
 The three are checked independently; opt-out by any one of them
@@ -60,7 +60,7 @@ ignore" path.
 ## 2. Wire format
 
 Exact JSON shape of a Telemetry Event, as constructed by
-[`CloudVerdictEmitter._build_payload`](../../src/dendra/cloud/verdict_telemetry.py)
+[`CloudVerdictEmitter._build_payload`](../../src/postrule/cloud/verdict_telemetry.py)
 and serialised by `json.dumps(payload, default=str,
 separators=(",", ":"))`:
 
@@ -110,25 +110,25 @@ account.
 
 ```
 POST /v1/verdicts HTTP/1.1
-Host: api.dendra.run
-Authorization: Bearer dndr_live_<32 base62 chars>
+Host: api.postrule.ai
+Authorization: Bearer prul_live_<32 base62 chars>
 Content-Type: application/json
-User-Agent: dendra-sdk-verdicts/1.0
+User-Agent: postrule-sdk-verdicts/1.0
 
 <JSON body from §2>
 ```
 
 - **Method.** `POST`.
-- **Endpoint.** `https://api.dendra.run/v1/verdicts`. Overridable
-  with `$DENDRA_API_URL`.
+- **Endpoint.** `https://api.postrule.ai/v1/verdicts`. Overridable
+  with `$POSTRULE_API_URL`.
 - **Transport.** TLS only. The SDK constructs requests through
   `urllib.request.Request`; non-HTTPS endpoints would be rejected by
   the hosted API. For local development, an HTTP endpoint may be
-  configured via `$DENDRA_API_URL=http://localhost:8787`.
+  configured via `$POSTRULE_API_URL=http://localhost:8787`.
 - **Authorisation.** Bearer token. The token is a 190-bit random
-  string issued at `dendra login`; the server stores only an
+  string issued at `postrule login`; the server stores only an
   HMAC-SHA-256 hash of it under a server-side pepper (see
-  [`src/dendra/../cloud/api/src/keys.ts`](../../cloud/api/src/keys.ts)).
+  [`src/postrule/../cloud/api/src/keys.ts`](../../cloud/api/src/keys.ts)).
 - **Content-Type.** `application/json`. Body is the compact JSON
   serialisation in §2.
 - **Timeout.** `5.0` seconds per request (`REQUEST_TIMEOUT_SECONDS`).
@@ -157,7 +157,7 @@ inspection in §7.
 | Ground-truth label                 | The label is the customer's data.                                                                                                                |
 | Prompt text sent to an LLM judge   | The judge's prompt is constructed from the customer's input and is never serialised into the telemetry payload.                                  |
 | Switch dataset metadata            | Length, language, fingerprint, embedding, hashing-derived signal — none are computed at emit time and none are in the allow-list of `_build_payload`. |
-| Environment variables              | The SDK reads `DENDRA_API_URL`, `DENDRA_NO_TELEMETRY`, and the auth cache; it serialises none of them.                                           |
+| Environment variables              | The SDK reads `POSTRULE_API_URL`, `POSTRULE_NO_TELEMETRY`, and the auth cache; it serialises none of them.                                           |
 | Host information                   | Hostname, machine ID, MAC, OS version, CPU info — none are collected.                                                                            |
 | Client IP                          | The SDK does not include the client IP in the payload. The hosting Sub-processor (Cloudflare) sees the IP at the edge; the Processor does not store the IP against the Telemetry Event. Operational logs retain IPs for 24 hours and then redact. |
 | Per-call latency                   | Not measured in the payload-construction path; not included.                                                                                     |
@@ -231,11 +231,11 @@ You can verify what would leave your machine without running the
 sender. The `_build_payload` function is the audit point.
 
 ```python
-from dendra.cloud.verdict_telemetry import CloudVerdictEmitter
+from postrule.cloud.verdict_telemetry import CloudVerdictEmitter
 
 emitter = CloudVerdictEmitter(
     api_url="https://example.invalid",
-    bearer_token="dndr_live_x" + "0" * 31,
+    bearer_token="prul_live_x" + "0" * 31,
     start_thread=False,
 )
 
@@ -270,13 +270,13 @@ in your own pre-flight CI:
 
 ```python
 import pytest
-from dendra.cloud.verdict_telemetry import CloudVerdictEmitter
+from postrule.cloud.verdict_telemetry import CloudVerdictEmitter
 
 @pytest.fixture
 def emitter():
     return CloudVerdictEmitter(
         api_url="https://example.invalid",
-        bearer_token="dndr_live_x" + "0" * 31,
+        bearer_token="prul_live_x" + "0" * 31,
         start_thread=False,
     )
 
@@ -303,7 +303,7 @@ def test_payload_does_not_leak_inputs_or_labels(emitter):
 
 The test exercises the same allow-list construction the production
 sender uses. Pin it in your CI and you have a regression-time
-guarantee that no Dendra upgrade can widen the wire shape without
+guarantee that no Postrule upgrade can widen the wire shape without
 your test failing.
 
 ---
@@ -325,11 +325,11 @@ python -m http.server 8787 --bind 127.0.0.1 &  # for quick traffic check
 #  payload inspection)
 
 # Terminal 2 — run your code against the stub.
-export DENDRA_API_URL=http://localhost:8787
+export POSTRULE_API_URL=http://localhost:8787
 python your_app.py
 ```
 
-The Dendra SDK reads `DENDRA_API_URL` at `maybe_install` time and
+The Postrule SDK reads `POSTRULE_API_URL` at `maybe_install` time and
 sends every Telemetry Event to it. Inspect the request body to
 confirm it matches §2.
 
@@ -339,7 +339,7 @@ If you'd rather watch the wire directly:
 
 ```bash
 # Capture outbound traffic to the hosted endpoint.
-sudo tcpdump -i any -A -s 0 'host api.dendra.run and tcp port 443'
+sudo tcpdump -i any -A -s 0 'host api.postrule.ai and tcp port 443'
 ```
 
 You will see TLS handshakes, not plaintext bodies — which is the
@@ -379,5 +379,5 @@ Event leave their machine.
 ---
 
 *Last updated 2026-05-11. Source of truth is the code at
-[`src/dendra/cloud/verdict_telemetry.py`](../../src/dendra/cloud/verdict_telemetry.py).
+[`src/postrule/cloud/verdict_telemetry.py`](../../src/postrule/cloud/verdict_telemetry.py).
 If this page and the code disagree, the code is right.*

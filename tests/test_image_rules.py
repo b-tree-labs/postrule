@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Smoke tests for ``dendra.image_rules.build_color_centroid_rule``.
+"""Smoke tests for ``postrule.image_rules.build_color_centroid_rule``.
 
 The function is the auto-rule constructor cited in the companion paper
 (§5.8, CIFAR-10 image-modality bench). These tests cover the contract
@@ -21,7 +21,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from dendra.image_rules import build_color_centroid_rule
+from postrule.image_rules import build_color_centroid_rule
 
 
 def _solid(color: tuple[int, int, int], size: int = 4) -> np.ndarray:

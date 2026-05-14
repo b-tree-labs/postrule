@@ -107,7 +107,7 @@
   ]
   #v(0.6em)
   #text(size: 9.5pt, fill: gray.darken(20%))[
-    Code + data: #link("https://github.com/b-tree-labs/dendra")[github.com/b-tree-labs/dendra] (Apache 2.0) \
+    Code + data: #link("https://github.com/b-tree-labs/postrule")[github.com/b-tree-labs/postrule] (Apache 2.0) \
     Patent pending: U.S. Provisional Patent Application No. 64/045,809, filed 2026-04-21
   ]
   #v(2em)

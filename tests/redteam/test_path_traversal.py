@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from dendra.storage import FileStorage
+from postrule.storage import FileStorage
 
 pytestmark = pytest.mark.redteam
 
@@ -31,7 +31,7 @@ def _record():
     Imports are local so module collection still works if storage internals
     move around.
     """
-    from dendra import ClassificationRecord
+    from postrule import ClassificationRecord
 
     return ClassificationRecord(
         timestamp=0.0,

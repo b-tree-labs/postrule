@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for the AST-based dendra-init wrapper."""
+"""Tests for the AST-based postrule-init wrapper."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import ast
 
 import pytest
 
-from dendra.wrap import WrapError, wrap_function
+from postrule.wrap import WrapError, wrap_function
 
 # ---------------------------------------------------------------------------
 # Label inference
@@ -83,7 +83,7 @@ class TestDecoratorInsertion:
             labels=["bug", "feature"],
         )
         assert result.modified_source.startswith(
-            "from dendra import ml_switch, Phase, SwitchConfig\n"
+            "from postrule import ml_switch, Phase, SwitchConfig\n"
         )
 
     def test_import_after_module_docstring(self):
@@ -101,9 +101,9 @@ class TestDecoratorInsertion:
         lines = result.modified_source.splitlines()
         # Docstring on lines 1-4, then blank, then import.
         assert lines[0].startswith('"""Module docstring')
-        assert "from dendra import" in result.modified_source
+        assert "from postrule import" in result.modified_source
         docstring_line_idx = next(i for i, ln in enumerate(lines) if ln.startswith('"""') and i > 0)
-        import_line_idx = next(i for i, ln in enumerate(lines) if "from dendra import" in ln)
+        import_line_idx = next(i for i, ln in enumerate(lines) if "from postrule import" in ln)
         assert import_line_idx > docstring_line_idx
 
     def test_import_after_future_imports(self):
@@ -117,8 +117,8 @@ class TestDecoratorInsertion:
         lines = result.modified_source.splitlines()
         assert lines[0] == "from __future__ import annotations"
         future_idx = 0
-        dendra_idx = next(i for i, ln in enumerate(lines) if "from dendra import" in ln)
-        assert dendra_idx > future_idx
+        postrule_idx = next(i for i, ln in enumerate(lines) if "from postrule import" in ln)
+        assert postrule_idx > future_idx
 
     def test_safety_critical_flag_propagates(self):
         source = "def gate(x):\n    return 'safe'\n"
@@ -184,7 +184,7 @@ class TestErrorCases:
 
     def test_already_wrapped_raises(self):
         source = (
-            "from dendra import ml_switch\n"
+            "from postrule import ml_switch\n"
             "\n"
             "@ml_switch(labels=['bug'], author='@x:y')\n"
             "def triage(x):\n"
@@ -214,6 +214,6 @@ class TestDiff:
             labels=["bug"],
         )
         diff = result.diff(filename="triage.py")
-        assert "+from dendra import ml_switch" in diff
+        assert "+from postrule import ml_switch" in diff
         assert "+@ml_switch(" in diff
-        assert "triage.py (before dendra init)" in diff
+        assert "triage.py (before postrule init)" in diff

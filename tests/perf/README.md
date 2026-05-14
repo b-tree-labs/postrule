@@ -1,4 +1,4 @@
-# Dendra v1 perf-regression suite
+# Postrule v1 perf-regression suite
 
 Catches latency, throughput, and memory regressions before users do.
 Lives outside the default `pytest tests/` run so the regular suite
@@ -40,9 +40,9 @@ scheduler jitter dominates the signal at that resolution.
 | File | Covers |
 |---|---|
 | `test_hot_path.py` | `dispatch` / `classify` overhead, sync vs async, storage append |
-| `test_cold_start.py` | `import dendra`, decorator-at-import, Switch subclass introspection |
+| `test_cold_start.py` | `import postrule`, decorator-at-import, Switch subclass introspection |
 | `test_throughput.py` | Storage ops/sec, concurrent FileStorage, async dispatch |
-| `test_lifter.py` | `lift_evidence`, `lift_branches`, `analyze_function_source`, `dendra analyze` |
+| `test_lifter.py` | `lift_evidence`, `lift_branches`, `analyze_function_source`, `postrule analyze` |
 | `test_memory.py` | `tracemalloc` over 10k / 100k dispatches, FileStorage fd-leak probe |
 | `test_harness_sensitivity.py` | Validates the regression-detection comparator itself |
 

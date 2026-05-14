@@ -1,4 +1,4 @@
-# When does Dendra pay off? — concrete scenarios
+# When does Postrule pay off? — concrete scenarios
 
 The examples in `examples/` advertise specific measurable
 benefits. This doc turns each claim into a concrete picture:
@@ -21,7 +21,7 @@ Status of each section is marked inline.
 
 ## Industrial-scale fits at a glance
 
-Dendra's primitives apply broadly, but the economic case is
+Postrule's primitives apply broadly, but the economic case is
 strongest where **decision volume is high** *and* **the cost of
 a wrong decision is large** *and* **a hand-written rule already
 exists** that the team is afraid to ML-replace. Concretely:
@@ -57,7 +57,7 @@ gating earns its keep.
 
 ## Anti-scenarios: these look like classification but aren't
 
-Code that resembles a classifier but won't fit cleanly under `@ml_switch` (or its v1 native peer, `dendra.Switch`):
+Code that resembles a classifier but won't fit cleanly under `@ml_switch` (or its v1 native peer, `postrule.Switch`):
 
 - **Tests and fixtures.** A pytest function (`def test_routes_correctly(client): ...`) returns assertions, not labels. The analyzer filters these out; do not wrap them.
 - **Validators.** A function that returns `True` / `False` (or raises on invalid) is a binary predicate, not a multi-class classifier. If the predicate is one branch of a real classification problem (allow / deny / escalate), wrap the surrounding decision instead.
@@ -85,7 +85,7 @@ You let a language-model agent propose 30 classifier refinements while
 you sleep. Without statistical gating, the agent ships
 whichever variant happened to win on tonight's traffic — even
 the ones that won by 1pp on 50 samples (which is well inside
-noise). With Dendra's gate, only the ~1.5 candidates that
+noise). With Postrule's gate, only the ~1.5 candidates that
 actually beat the rule at p < 0.05 get the recommendation,
 and you read a clear "promote / hold" signal on each in the
 morning.
@@ -406,7 +406,7 @@ US Customs imports declare ~30M lines/yr [^cbp] across the
 top 100 codes is industry-standard; learned policies on the
 long tail are how brokers stay competitive. Mis-classification
 penalties under 19 USC §1592 are material and the audit chain
-matters — Dendra's outcome log makes the audit chain trivial.
+matters — Postrule's outcome log makes the audit chain trivial.
 
 ### Where it doesn't matter
 

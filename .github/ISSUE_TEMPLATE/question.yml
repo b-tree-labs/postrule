@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 name: Question
-description: A question about how to use Dendra.
+description: A question about how to use Postrule.
 title: "[question] "
 labels: ["question"]
 body:
@@ -9,7 +9,7 @@ body:
     attributes:
       value: |
         For longer-form discussions, consider
-        [GitHub Discussions](https://github.com/b-tree-labs/dendra/discussions)
+        [GitHub Discussions](https://github.com/b-tree-labs/postrule/discussions)
         instead — it's a better fit for open-ended questions.
 
         For support-contract / commercial inquiries, see
@@ -32,7 +32,7 @@ body:
       description: What are you trying to accomplish? What have you tried?
 
   - type: input
-    id: dendra-version
+    id: postrule-version
     attributes:
-      label: Dendra version (if relevant)
+      label: Postrule version (if relevant)
       placeholder: "1.0.0"

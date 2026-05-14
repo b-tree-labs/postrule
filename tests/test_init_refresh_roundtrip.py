@@ -1,8 +1,8 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Round-trip contract: ``dendra init --auto-lift`` followed by
-``dendra refresh --check`` must report no drift on the freshly-lifted
+"""Round-trip contract: ``postrule init --auto-lift`` followed by
+``postrule refresh --check`` must report no drift on the freshly-lifted
 file.
 
 Regression test for the v1.1 launch-blocker reported in
@@ -14,7 +14,7 @@ every fresh init.
 
 from __future__ import annotations
 
-from dendra.cli import main
+from postrule.cli import main
 
 
 def _run_cli(argv, capsys):
@@ -56,7 +56,7 @@ class TestInitRefreshRoundTrip:
         assert code == 0
 
         # Generated file must exist next to the source.
-        gen_dir = tmp_path / "__dendra_generated__"
+        gen_dir = tmp_path / "__postrule_generated__"
         gen_files = [p for p in gen_dir.glob("*.py") if p.name != "__init__.py"]
         assert len(gen_files) == 1, f"expected exactly one generated file, got {gen_files}"
 
@@ -153,13 +153,13 @@ class TestWriterReaderHashSymmetry:
         )
         assert code == 0
 
-        from dendra.refresh import (
+        from postrule.refresh import (
             _extract_function_source,
             ast_hash,
             parse_generated_header,
         )
 
-        gen_dir = tmp_path / "__dendra_generated__"
+        gen_dir = tmp_path / "__postrule_generated__"
         gen_files = [p for p in gen_dir.glob("*.py") if p.name != "__init__.py"]
         assert len(gen_files) == 1
         gen_path = gen_files[0]

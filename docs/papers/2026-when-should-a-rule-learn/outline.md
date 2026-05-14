@@ -28,7 +28,7 @@ intent-classification benchmarks (Banking77, CLINC150, HWU64, ATIS).
 Transition depth varies by two orders of magnitude across
 categories: label cardinality, distribution stability, and outcome
 quality each predict crossover. We introduce a reference
-implementation (the Dendra library) and release the transition-curve
+implementation (the Postrule library) and release the transition-curve
 dataset so practitioners can estimate when their own classifier
 should graduate.
 
@@ -79,7 +79,7 @@ uniformly.
 4. A **category taxonomy** (§6) predicting transition depth from
    dataset attributes (label cardinality, distribution stability,
    outcome latency, outcome quality).
-5. An open-source reference implementation (Dendra library, Apache
+5. An open-source reference implementation (Postrule library, Apache
    2.0) + released transition-curve dataset.
 
 ---
@@ -178,7 +178,7 @@ exactly. *Deliberately simple* — this represents the real-world
 Production systems accumulate outcomes over time; benchmark
 experiments simulate this by:
 
-1. Starting Dendra at Phase 0 (rule only).
+1. Starting Postrule at Phase 0 (rule only).
 2. Streaming test-set examples one at a time.
 3. Recording the rule's prediction + the ground-truth label as an
    outcome.
@@ -200,11 +200,11 @@ for each phase.
 
 ### 4.5 Reproducibility
 
-- All code: `dendra/` (Apache 2.0).
+- All code: `postrule/` (Apache 2.0).
 - All rules: published in supplementary material.
-- All seeds fixed; transition curves generated with `dendra bench`
+- All seeds fixed; transition curves generated with `postrule bench`
   (ships with v0.2.0).
-- Transition-curve dataset: released as `dendra-transition-curves-2026.jsonl`.
+- Transition-curve dataset: released as `postrule-transition-curves-2026.jsonl`.
 
 ---
 
@@ -283,7 +283,7 @@ graduate to ML-primary.
 ### 7.2 Approval backends
 
 Summarize the `ApprovalBackend` protocol (manual / conservative
-/ strict) from the Dendra spec. Emphasize: the **rule-update
+/ strict) from the Postrule spec. Emphasize: the **rule-update
 proposal** is a signed content-addressed artifact — consumer systems
 can mirror, audit, and sign off on phase transitions via their own
 identity infrastructure.
@@ -296,9 +296,9 @@ recovery clean?
 
 ---
 
-## 8. Reference Implementation — Dendra
+## 8. Reference Implementation — Postrule
 
-Brief description of Dendra:
+Brief description of Postrule:
 
 - Apache-2.0 Python library, zero required runtime deps beyond ONNX.
 - `@ml_switch` decorator API.
@@ -306,7 +306,7 @@ Brief description of Dendra:
 - Approval backends pluggable.
 - Cross-language portability via ONNX + native-code export.
 
-Repo: `https://github.com/b-tree-labs/dendra`
+Repo: `https://github.com/b-tree-labs/postrule`
 
 ---
 
@@ -348,7 +348,7 @@ What this paper changes for practitioners:
 Rule-to-ML graduation is a universal production pattern that has
 been left to per-project engineering effort. Formalized, it admits
 measurable transition curves, predictable depths, and bounded
-safety. The Dendra primitive + the transition-curve dataset give
+safety. The Postrule primitive + the transition-curve dataset give
 practitioners the first systematic answer to *when should a rule
 learn?*
 
@@ -358,18 +358,18 @@ learn?*
 
 - A: Rules per benchmark (full text).
 - B: Transition-curve per benchmark (raw data).
-- C: Dendra API reference.
+- C: Postrule API reference.
 - D: Reproducibility checklist.
 
 ---
 
 ## Outstanding TODOs (outline → paper)
 
-- [ ] Dendra v0.2.0 — Phase 1 (MODEL_SHADOW) implementation
-- [ ] Dendra v0.3.0 — Phase 3/4 (ML_SHADOW, ML_WITH_FALLBACK)
+- [ ] Postrule v0.2.0 — Phase 1 (MODEL_SHADOW) implementation
+- [ ] Postrule v0.3.0 — Phase 3/4 (ML_SHADOW, ML_WITH_FALLBACK)
 - [ ] Benchmark loaders for the four datasets (HuggingFace Datasets)
 - [ ] Reference rules per benchmark
-- [ ] `dendra bench` CLI — reproducible transition-curve runner
+- [ ] `postrule bench` CLI — reproducible transition-curve runner
 - [ ] Run transition-curve experiments on all four benchmarks
 - [ ] Category-taxonomy regression on transition depths
 - [ ] Safety-theorem formal write-up

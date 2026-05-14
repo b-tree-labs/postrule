@@ -4,7 +4,7 @@
 """Cold-start perf tests — package import, decorator-at-import,
 Switch subclass introspection.
 
-Measures the cost a user pays on the first ``import dendra`` and
+Measures the cost a user pays on the first ``import postrule`` and
 on every fresh process boot.
 """
 
@@ -19,19 +19,19 @@ from textwrap import dedent
 
 import pytest
 
-from dendra import Switch, ml_switch  # noqa: F401  (verifies cold-start ok)
+from postrule import Switch, ml_switch  # noqa: F401  (verifies cold-start ok)
 from tests.perf.conftest import perf_test  # noqa: TID252
 
 pytestmark = pytest.mark.perf
 
 
 # ---------------------------------------------------------------------------
-# 1. Package import time — `python -c "import dendra"`.
+# 1. Package import time — `python -c "import postrule"`.
 # ---------------------------------------------------------------------------
 
 
 @perf_test(tolerance=0.30)
-def test_import_dendra_cold(perf_record):
+def test_import_postrule_cold(perf_record):
     """Target: under 200ms (median of 5 fresh-interpreter runs).
 
     Spawns a fresh Python process for each sample so the import is
@@ -39,7 +39,7 @@ def test_import_dendra_cold(perf_record):
     """
     samples_ns: list[int] = []
     for _ in range(5):
-        # ``time python -c "import dendra"`` would also work, but the
+        # ``time python -c "import postrule"`` would also work, but the
         # subprocess-internal timer is more reliable than wall clock
         # because it excludes interpreter startup variance.
         out = subprocess.run(
@@ -47,7 +47,7 @@ def test_import_dendra_cold(perf_record):
                 sys.executable,
                 "-c",
                 "import time; t=time.perf_counter_ns(); "
-                "import dendra; "
+                "import postrule; "
                 "print(time.perf_counter_ns() - t)",
             ],
             capture_output=True,
@@ -59,7 +59,7 @@ def test_import_dendra_cold(perf_record):
     median = float(statistics.median(samples_ns))
     p95 = float(samples_ns[int(len(samples_ns) * 0.95) - 1])
     perf_record(
-        "import_dendra_cold",
+        "import_postrule_cold",
         {
             "median": median,
             "p95": p95,
@@ -69,7 +69,9 @@ def test_import_dendra_cold(perf_record):
         },
         target=200_000_000.0,  # 200ms in ns
     )
-    assert median < 200_000_000, f"import dendra median {median / 1e6:.1f}ms exceeds 200ms target."
+    assert median < 200_000_000, (
+        f"import postrule median {median / 1e6:.1f}ms exceeds 200ms target."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +79,7 @@ def test_import_dendra_cold(perf_record):
 # ---------------------------------------------------------------------------
 
 
-_DECORATOR_HEAVY_MODULE = "from dendra import ml_switch\n" + "".join(
+_DECORATOR_HEAVY_MODULE = "from postrule import ml_switch\n" + "".join(
     f'\n@ml_switch(labels=["a", "b"])\ndef fn_{i}(x):\n    return "a" if x else "b"\n'
     for i in range(100)
 )
@@ -101,7 +103,7 @@ def test_decorator_at_import_overhead(perf_record, tmp_path: Path):
                 sys.executable,
                 "-c",
                 f"import sys, time; sys.path.insert(0, {str(path.parent)!r}); "
-                "import dendra; "  # warm dendra so the delta is decorator-only
+                "import postrule; "  # warm postrule so the delta is decorator-only
                 "t=time.perf_counter_ns(); "
                 f"__import__({path.stem!r}); "
                 "print(time.perf_counter_ns() - t)",

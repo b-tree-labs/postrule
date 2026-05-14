@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import Label, LearnedSwitch
+from postrule import Label, LearnedSwitch
 
 pytestmark = pytest.mark.redteam
 
@@ -156,7 +156,7 @@ def test_label_log_injection_does_not_break_jsonl(tmp_path):
     """
     import json
 
-    from dendra.storage import FileStorage
+    from postrule.storage import FileStorage
 
     storage = FileStorage(base_path=tmp_path / "store")
     sw = LearnedSwitch(

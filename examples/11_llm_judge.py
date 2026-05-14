@@ -38,12 +38,12 @@ bias guardrail".
 
 from __future__ import annotations
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     ModelPrediction,
     Phase,
 )
-from dendra.verdicts import JudgeSource
+from postrule.verdicts import JudgeSource
 
 
 class _StubClassifier:

@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     LearnedSwitch,

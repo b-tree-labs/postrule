@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import ModelPrediction, Verdict
-from dendra.verdicts import (
+from postrule import ModelPrediction, Verdict
+from postrule.verdicts import (
     CallableVerdictSource,
     JudgeCommittee,
     JudgeSource,

@@ -47,7 +47,7 @@ class TestSklearnTextHeadMonoclass:
     """``SklearnTextHead`` trains a constant predictor on single-class data."""
 
     def test_fit_with_one_label_trains_monoclass_predictor(self, _require_sklearn):
-        from dendra.ml import SklearnTextHead
+        from postrule.ml import SklearnTextHead
 
         head = SklearnTextHead(min_outcomes=10)
         records = [_FakeRec(f"sample text {i}", "AddToPlaylist") for i in range(50)]
@@ -61,7 +61,7 @@ class TestSklearnTextHeadMonoclass:
         )
 
     def test_predict_after_monoclass_fit_returns_seen_label(self, _require_sklearn):
-        from dendra.ml import SklearnTextHead
+        from postrule.ml import SklearnTextHead
 
         head = SklearnTextHead(min_outcomes=10)
         records = [_FakeRec(f"sample {i}", "AddToPlaylist") for i in range(50)]
@@ -77,7 +77,7 @@ class TestSklearnTextHeadMonoclass:
 
     def test_two_label_fit_uses_logreg_not_monoclass(self, _require_sklearn):
         """Regression guard: the monoclass branch must not steal multi-class fits."""
-        from dendra.ml import SklearnTextHead
+        from postrule.ml import SklearnTextHead
 
         head = SklearnTextHead(min_outcomes=10)
         records = [_FakeRec(f"crash report {i}", "bug") for i in range(30)] + [
@@ -91,7 +91,7 @@ class TestSklearnTextHeadMonoclass:
         )
 
     def test_skipped_below_min_outcomes_stays_untrained(self, _require_sklearn):
-        from dendra.ml import SklearnTextHead
+        from postrule.ml import SklearnTextHead
 
         head = SklearnTextHead(min_outcomes=100)
         records = [_FakeRec(f"sample {i}", "AddToPlaylist") for i in range(50)]
@@ -101,7 +101,7 @@ class TestSklearnTextHeadMonoclass:
         assert head.model_version() == "sklearn-untrained"
 
     def test_no_correct_records_stays_untrained(self, _require_sklearn):
-        from dendra.ml import SklearnTextHead
+        from postrule.ml import SklearnTextHead
 
         head = SklearnTextHead(min_outcomes=10)
         # All records are 'incorrect' -> filtered out -> y is empty
@@ -116,7 +116,7 @@ class TestTfidfHeadsMonoclass:
     """The shared ``_fit_tfidf_head`` path covers every TF-IDF subclass."""
 
     def test_tfidf_linearsvc_monoclass_fit_and_predict(self, _require_sklearn):
-        from dendra.ml import TfidfLinearSVCHead
+        from postrule.ml import TfidfLinearSVCHead
 
         head = TfidfLinearSVCHead(min_outcomes=10)
         records = [_FakeRec(f"sample {i}", "AddToPlaylist") for i in range(50)]
@@ -129,7 +129,7 @@ class TestTfidfHeadsMonoclass:
         assert pred.confidence == 1.0
 
     def test_tfidf_multinomial_nb_monoclass_fit_and_predict(self, _require_sklearn):
-        from dendra.ml import TfidfMultinomialNBHead
+        from postrule.ml import TfidfMultinomialNBHead
 
         head = TfidfMultinomialNBHead(min_outcomes=10)
         records = [_FakeRec(f"sample {i}", "OnlyClass") for i in range(50)]

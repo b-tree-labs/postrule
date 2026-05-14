@@ -31,8 +31,8 @@ production:
 
 from __future__ import annotations
 
-from dendra import ModelPrediction
-from dendra.verdicts import JudgeCommittee
+from postrule import ModelPrediction
+from postrule.verdicts import JudgeCommittee
 
 
 class _StubJudge:

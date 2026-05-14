@@ -4,15 +4,15 @@
 """Tests for the @ml_switch decorator.
 
 Public decorator API is ``@ml_switch`` — brand-neutral so code readers
-don't have to learn "Dendra" to read the code. Brand identity lives at
-the import boundary (``from dendra import ml_switch``).
+don't have to learn "Postrule" to read the code. Brand identity lives at
+the import boundary (``from postrule import ml_switch``).
 """
 
 from __future__ import annotations
 
 import pytest
 
-from dendra import InMemoryStorage, LearnedSwitch, Phase, Verdict, ml_switch
+from postrule import InMemoryStorage, LearnedSwitch, Phase, Verdict, ml_switch
 
 # ---------------------------------------------------------------------------
 # Basic behavior

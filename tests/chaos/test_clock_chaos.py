@@ -12,7 +12,7 @@ import time
 
 from freezegun import freeze_time
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     LearnedSwitch,
@@ -20,7 +20,7 @@ from dendra import (
     SwitchConfig,
     Verdict,
 )
-from dendra.gates import McNemarGate
+from postrule.gates import McNemarGate
 
 
 def _rec(label: str, ts: float, outcome: str = Verdict.CORRECT.value) -> ClassificationRecord:
@@ -189,7 +189,7 @@ class TestFutureTimestamps:
         # Use tmp_path indirectly via fixture-less plain construction.
         import tempfile
 
-        from dendra import FileStorage
+        from postrule import FileStorage
 
         with tempfile.TemporaryDirectory() as td:
             store = FileStorage(td + "/store")

@@ -77,7 +77,7 @@ drift detector is for.**
 1. **Review the diff.** Confirm that the threshold change is
    intentional. (If unintentional, revert and re-evaluate.)
 2. **Re-confirm the hypothesis.** Open
-   `dendra/hypotheses/output_safety_rule.md`
+   `postrule/hypotheses/output_safety_rule.md`
    and either accept the existing claims (the new behavior is
    close enough to the old that the model may re-graduate similarly)
    or revise them with explanation. Either path is logged in git.
@@ -108,8 +108,8 @@ drift detector is for.**
 
 ---
 
-*Regenerate with `dendra report output_safety_rule`. Drift detected
+*Regenerate with `postrule report output_safety_rule`. Drift detected
 2026-04-28 14:23 UTC. Rollback executed 2026-04-29 03:11 UTC. Dated
-archive at `dendra/results/archive/output_safety_rule-2026-04-29.md`.*
+archive at `postrule/results/archive/output_safety_rule-2026-04-29.md`.*
 
 *Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*

@@ -26,16 +26,16 @@ import pytest
 
 
 class TestTfidfHeadBaseIsPublic:
-    def test_can_be_imported_from_dendra(self):
+    def test_can_be_imported_from_postrule(self):
         try:
-            from dendra import TfidfHeadBase
+            from postrule import TfidfHeadBase
         except ImportError:
-            pytest.fail("dendra.TfidfHeadBase not exported")
+            pytest.fail("postrule.TfidfHeadBase not exported")
         assert isinstance(TfidfHeadBase, type), "TfidfHeadBase must be a class"
 
     def test_subclassing_yields_a_working_head(self):
         pytest.importorskip("sklearn")
-        from dendra import MLHead, TfidfHeadBase
+        from postrule import MLHead, TfidfHeadBase
 
         class CustomLogRegHead(TfidfHeadBase):
             def _build_classifier(self):
@@ -54,7 +54,7 @@ class TestTfidfHeadBaseIsPublic:
 
 class TestMLHeadRegistry:
     def test_built_in_heads_pre_registered(self):
-        from dendra import available_ml_heads
+        from postrule import available_ml_heads
 
         names = set(available_ml_heads())
         # Every shipped head must be addressable by name.
@@ -71,20 +71,20 @@ class TestMLHeadRegistry:
 
     def test_make_returns_a_working_head(self):
         pytest.importorskip("sklearn")
-        from dendra import MLHead, make_ml_head
+        from postrule import MLHead, make_ml_head
 
         head = make_ml_head("tfidf_logreg")
         assert isinstance(head, MLHead)
 
     def test_unknown_head_raises(self):
-        from dendra import make_ml_head
+        from postrule import make_ml_head
 
         with pytest.raises(ValueError, match="unknown"):
             make_ml_head("not_a_real_head")
 
     def test_register_custom_head(self):
         pytest.importorskip("sklearn")
-        from dendra import (
+        from postrule import (
             MLHead,
             TfidfHeadBase,
             available_ml_heads,
@@ -107,12 +107,12 @@ class TestMLHeadRegistry:
             assert isinstance(head, MLHead)
         finally:
             # Clean up so the registry isn't polluted across tests.
-            from dendra.ml import _HEAD_REGISTRY  # type: ignore[attr-defined]
+            from postrule.ml import _HEAD_REGISTRY  # type: ignore[attr-defined]
 
             _HEAD_REGISTRY.pop("test_custom_head_12345", None)
 
     def test_duplicate_registration_raises(self):
-        from dendra import register_ml_head
+        from postrule import register_ml_head
 
         with pytest.raises(ValueError, match="already registered"):
             register_ml_head("tfidf_logreg", lambda: None)

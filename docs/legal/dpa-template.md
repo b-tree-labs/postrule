@@ -7,7 +7,7 @@
 This addendum (the "DPA") supplements the underlying service agreement
 between the Customer (the "Controller") and B-Tree Ventures, LLC, a
 Texas limited liability company doing business as B-Tree Labs (the
-"Processor"), under which the Processor makes the Dendra service
+"Processor"), under which the Processor makes the Postrule service
 available to the Controller. The DPA governs the Processor's
 processing of Personal Data on the Controller's behalf for the
 purposes set out in §3.
@@ -60,12 +60,12 @@ accidental or unlawful destruction, loss, alteration, unauthorised
 disclosure of, or access to, Personal Data transmitted, stored, or
 otherwise processed.
 
-1.8 **"Telemetry Event"** — a single record produced by the Dendra SDK
+1.8 **"Telemetry Event"** — a single record produced by the Postrule SDK
 at classification time and transmitted to the Processor's hosted API.
 The shape of a Telemetry Event is specified in
 [`telemetry-shape.md`](telemetry-shape.md) and in §5 below.
 
-1.9 **"Service"** — the Dendra hosted API, dashboard, and associated
+1.9 **"Service"** — the Postrule hosted API, dashboard, and associated
 SDK functionality made available to the Controller under the
 underlying service agreement.
 
@@ -253,7 +253,7 @@ timing-side-channel disclosure.
 7.5 **Wire-shape minimisation.** The SDK is designed so that
 classifier inputs, classifier outputs, and labels never enter the
 network send path. The wire shape is enforced in code at
-`src/dendra/cloud/verdict_telemetry.py::_build_payload`, which
+`src/postrule/cloud/verdict_telemetry.py::_build_payload`, which
 constructs the payload from a fixed allow-list of fields. The
 verifiable mechanism is documented in
 [`telemetry-shape.md`](telemetry-shape.md).
@@ -382,7 +382,7 @@ written request for cooperation under §11.1 within 30 days.
 
 11.4 **Current technical route.** The Processor's response to a
 Controller's cooperation request is currently a manual workflow
-initiated by email to `privacy@dendra.run`. The Processor commits to
+initiated by email to `privacy@postrule.ai`. The Processor commits to
 publishing a documented procedure for export and deletion in the
 Controller-facing dashboard by **2026-Q4** and to upgrading the manual
 workflow to a self-service route by **2027-Q2**. Until those features

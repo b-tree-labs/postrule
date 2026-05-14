@@ -6,7 +6,7 @@
 The ``@evidence_via_probe(field="probe_expr")`` decorator takes a
 STRING that the lifter splices into generated code. If the lifter
 ``eval``s or ``exec``s the string at lift time, it's a code-injection
-vulnerability when the user runs ``dendra init --auto-lift`` against
+vulnerability when the user runs ``postrule init --auto-lift`` against
 attacker-controlled annotation source.
 
 Defensive contract enforced here:
@@ -43,7 +43,7 @@ pytestmark = pytest.mark.redteam
 
 _HOSTILE_PROBES = [
     # Direct __import__ chain
-    "__import__('os').system('echo PWNED-via-probe > /tmp/dendra-probe-rce')",
+    "__import__('os').system('echo PWNED-via-probe > /tmp/postrule-probe-rce')",
     # File read
     "open('/etc/passwd').read()",
     # Conditional with side effect - would fire at lift time if eval'd
@@ -63,12 +63,12 @@ def test_probe_string_not_executed_during_lift(probe, tmp_path):
     extracts them. The defensive contract: lift-time is a STATIC
     analysis pass; no probe / lambda / annotation runs.
     """
-    sentinel = "/tmp/dendra-probe-rce"
+    sentinel = "/tmp/postrule-probe-rce"
     if os.path.exists(sentinel):
         os.unlink(sentinel)
 
-    from dendra.lifters.branch import LiftRefused
-    from dendra.lifters.evidence import lift_evidence
+    from postrule.lifters.branch import LiftRefused
+    from postrule.lifters.evidence import lift_evidence
 
     source = (
         f"@evidence_via_probe(charge_ok={probe!r})\n"
@@ -88,7 +88,7 @@ def test_probe_string_not_executed_during_lift(probe, tmp_path):
     assert not os.path.exists(sentinel), (
         f"Probe expression {probe!r} executed during lift - that's "
         "remote code execution against any user who runs "
-        "`dendra init --auto-lift` on attacker-source."
+        "`postrule init --auto-lift` on attacker-source."
     )
 
 
@@ -121,12 +121,12 @@ def test_probe_with_statements_silently_ignored():
     may not contain code referencing the dropped probe - what we
     forbid is silent execution of the statement.
     """
-    sentinel = "/tmp/dendra-probe-stmt-fired"
+    sentinel = "/tmp/postrule-probe-stmt-fired"
     if os.path.exists(sentinel):
         os.unlink(sentinel)
 
-    from dendra.lifters.branch import LiftRefused
-    from dendra.lifters.evidence import lift_evidence
+    from postrule.lifters.branch import LiftRefused
+    from postrule.lifters.evidence import lift_evidence
 
     source = (
         f"@evidence_via_probe(charge_ok=\"import os; os.system('touch {sentinel}')\")\n"
@@ -165,15 +165,15 @@ def test_hostile_probe_rejected_outright():
     clear "unsafe_probe" reason. The probe never reaches generated
     source.
     """
-    sentinel = "/tmp/dendra-probe-quarantine"
+    sentinel = "/tmp/postrule-probe-quarantine"
     if os.path.exists(sentinel):
         os.unlink(sentinel)
 
-    from dendra.lifters.branch import LiftRefused
-    from dendra.lifters.evidence import lift_evidence
+    from postrule.lifters.branch import LiftRefused
+    from postrule.lifters.evidence import lift_evidence
 
     source = (
-        "@evidence_via_probe(charge_ok=\"__import__('os').system('echo X > /tmp/dendra-probe-quarantine')\")\n"
+        "@evidence_via_probe(charge_ok=\"__import__('os').system('echo X > /tmp/postrule-probe-quarantine')\")\n"
         "def classify(req):\n"
         "    user = api.charge(req)\n"
         "    if user.ok:\n"
@@ -203,8 +203,8 @@ def test_hostile_probe_rejected_outright():
 )
 def test_forbidden_builtin_in_probe_rejected(probe):
     """Each forbidden builtin variant - at any AST depth - must be rejected."""
-    from dendra.lifters.branch import LiftRefused
-    from dendra.lifters.evidence import lift_evidence
+    from postrule.lifters.branch import LiftRefused
+    from postrule.lifters.evidence import lift_evidence
 
     source = (
         f"@evidence_via_probe(field={probe!r})\n"
@@ -222,7 +222,7 @@ def test_safe_probe_still_accepted():
     """A normal probe call (no forbidden builtins) must still work
     after the unsafe-probe check is in place. Regression guard.
     """
-    from dendra.lifters.evidence import lift_evidence
+    from postrule.lifters.evidence import lift_evidence
 
     source = (
         '@evidence_via_probe(charge_status="api.charge_probe(req)")\n'
@@ -248,17 +248,17 @@ def test_evidence_inputs_lambda_not_called_at_lift_time():
     ``kw.value.body`` (the AST of the lambda's body) - the lambda
     itself is never invoked.
     """
-    sentinel = "/tmp/dendra-lambda-fired-at-lift"
+    sentinel = "/tmp/postrule-lambda-fired-at-lift"
     if os.path.exists(sentinel):
         os.unlink(sentinel)
 
-    from dendra.lifters.branch import LiftRefused
-    from dendra.lifters.evidence import lift_evidence
+    from postrule.lifters.branch import LiftRefused
+    from postrule.lifters.evidence import lift_evidence
 
     # The lambda body looks dangerous, but the lifter only inspects the
     # AST, not the runtime behavior.
     source = (
-        '@evidence_inputs(role=lambda: __import__("os").system("touch /tmp/dendra-lambda-fired-at-lift"))\n'
+        '@evidence_inputs(role=lambda: __import__("os").system("touch /tmp/postrule-lambda-fired-at-lift"))\n'
         "def classify(req):\n"
         "    role = getattr(req, 'role')\n"
         "    if role == 'admin':\n"
@@ -286,7 +286,7 @@ def test_extract_probe_overrides_is_pure_extraction():
     """
     import inspect
 
-    from dendra.lifters import evidence
+    from postrule.lifters import evidence
 
     src = inspect.getsource(evidence._extract_probe_overrides)
     # Strip comments + docstring to focus on real code paths.
@@ -319,7 +319,7 @@ def test_lift_evidence_does_not_compile_or_exec_in_module_imports():
     """
     from pathlib import Path
 
-    from dendra.lifters import evidence
+    from postrule.lifters import evidence
 
     src = Path(evidence.__file__).read_text(encoding="utf-8")
     # Allow ast.parse / ast.dump / ast.unparse - those are safe.

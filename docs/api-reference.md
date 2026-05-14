@@ -1,4 +1,4 @@
-# Dendra API reference
+# Postrule API reference
 
 The required call sites, the optional affordances, and a pointer
 to the example that demonstrates each feature.
@@ -10,14 +10,14 @@ walkthroughs of individual features. This doc is the flat list.
 
 ## The headline usage — an ML-graduated action, taken
 
-Dendra's job isn't to produce a label. It's to route an input to
+Postrule's job isn't to produce a label. It's to route an input to
 the **right action**, graduating the routing logic from rule to
 model to ML as evidence accumulates — while preserving a safety
 floor at every step. The headline example therefore pairs labels
 with actions and uses `dispatch()`:
 
 ```python
-from dendra import ml_switch
+from postrule import ml_switch
 
 def send_to_engineering(ticket):  ...   # your real handler
 def send_to_product(ticket):      ...
@@ -67,7 +67,7 @@ The `@ml_switch` decorator imposes three structural constraints on the wrapped f
 
 - **Single positional input** at the v1.0 baseline. Multi-arg signatures lift via `auto_pack=True` (v1): the decorator inspects `inspect.signature(...)`, synthesizes a packed input dataclass, and unpacks at the call site. Type hints on every parameter are required for the LLM/ML head schema.
 - **Rule must return a known label name (string), statically determinable** from the function body. The labels passed to `labels=` (or the keys of the dict-form) are the only allowed return values. Returning a value not in the label set is a runtime error caught by the dispatcher.
-- **Rule purity** (input only, no side effects). Side effects belong in label-keyed handlers (`Label(on=...)`, dict-labels, or `_on_<label>` methods on a `dendra.Switch` subclass), not in the rule body. Auto-lift (Phases 2-3) extracts side effects mechanically; until then, the user does the extraction.
+- **Rule purity** (input only, no side effects). Side effects belong in label-keyed handlers (`Label(on=...)`, dict-labels, or `_on_<label>` methods on a `postrule.Switch` subclass), not in the rule body. Auto-lift (Phases 2-3) extracts side effects mechanically; until then, the user does the extraction.
 
 The full list of structural and semantic limitations, including hidden-state extraction, exception semantics, and dynamic-dispatch refusals, lives in [`limitations.md`](./limitations.md).
 
@@ -89,7 +89,7 @@ actions via dict-labels or `Label(on=...)`.
 ## The affordances — what else you get
 
 The decorator isn't just a rule-call wrapper. It exposes a small
-API that delivers the things that make Dendra *Dendra*: the
+API that delivers the things that make Postrule *Postrule*: the
 evidence log that drives graduation, the lifecycle you can
 observe, the gate that promotes the switch automatically, the
 breaker you can reset. Most real deployments use at least
@@ -288,7 +288,7 @@ never fires actions — it's pure.
 
 The rule function you pass to `rule=` MUST be:
 
-- **Pure** — input only, no side effects. Dendra re-runs the rule
+- **Pure** — input only, no side effects. Postrule re-runs the rule
   on every `classify()` for shadow comparison and fallback, so
   side effects fire multiple times in surprising places. If you
   want side effects, use `Label(on=...)` / dict-labels dispatch
@@ -317,7 +317,7 @@ traffic; head-to-head significance verdicts surface promote/hold
 recommendations.
 
 ```python
-from dendra import CandidateHarness, LearnedSwitch
+from postrule import CandidateHarness, LearnedSwitch
 
 sw = LearnedSwitch(rule=production_rule)
 harness = CandidateHarness(switch=sw, truth_oracle=truth_fn, alpha=0.05)
@@ -341,7 +341,7 @@ unanimity short-circuit when all candidates agree on every
 input (no significance test needed in that case).
 
 ```python
-from dendra import Tournament
+from postrule import Tournament
 
 t = Tournament(
     candidates={
@@ -371,15 +371,15 @@ in autoresearch loops that propose iterative refinements.
 other — common for picking among prompt variants or scoring
 formulas where there's no incumbent.
 
-## What Dendra does NOT do (today)
+## What Postrule does NOT do (today)
 
 - **Auto-graduate phases.** You set `starting_phase` explicitly;
   the McNemar transition gate is designed but not shipped.
-- **Learn the rule.** The rule is yours, written by you. Dendra
+- **Learn the rule.** The rule is yours, written by you. Postrule
   learns *around* the rule — when to augment it, when to route
   past it.
 - **Manage model-serving infrastructure.** You bring the language model
-  adapter / ML head; Dendra calls `classify()` / `predict()`.
+  adapter / ML head; Postrule calls `classify()` / `predict()`.
 - **Replace your observability stack.** The outcome log is
   structured and greppable; ship it to your metrics pipeline of
   choice.

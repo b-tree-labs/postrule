@@ -32,14 +32,14 @@ class TestSnipsLoader:
 
     def test_loader_is_importable(self):
         try:
-            from dendra.benchmarks.loaders import load_snips
+            from postrule.benchmarks.loaders import load_snips
         except ImportError:
-            pytest.fail("dendra.benchmarks.loaders.load_snips is not implemented yet")
+            pytest.fail("postrule.benchmarks.loaders.load_snips is not implemented yet")
         assert callable(load_snips)
 
     def test_loader_returns_benchmark_dataset(self):
-        from dendra.benchmarks import BenchmarkDataset
-        from dendra.benchmarks.loaders import load_snips
+        from postrule.benchmarks import BenchmarkDataset
+        from postrule.benchmarks.loaders import load_snips
 
         ds = load_snips()
         assert isinstance(ds, BenchmarkDataset)
@@ -48,7 +48,7 @@ class TestSnipsLoader:
         assert ds.citation, "citation must reference Coucke et al. 2018"
 
     def test_loader_returns_seven_canonical_intents(self):
-        from dendra.benchmarks.loaders import load_snips
+        from postrule.benchmarks.loaders import load_snips
 
         ds = load_snips()
         labels = set(ds.labels)
@@ -57,7 +57,7 @@ class TestSnipsLoader:
         )
 
     def test_train_and_test_pairs_have_string_text_and_known_labels(self):
-        from dendra.benchmarks.loaders import load_snips
+        from postrule.benchmarks.loaders import load_snips
 
         ds = load_snips()
         for text, label in (ds.train + ds.test)[:50]:
@@ -68,21 +68,21 @@ class TestSnipsLoader:
 @pytest.mark.benchmark
 class TestSnipsRegistration:
     """The CLI bench registry and the public ``__init__`` re-export
-    ``load_snips`` so it's reachable via ``dendra bench snips``."""
+    ``load_snips`` so it's reachable via ``postrule bench snips``."""
 
     def test_snips_in_public_init_exports(self):
-        import dendra.benchmarks as benchmarks_mod
+        import postrule.benchmarks as benchmarks_mod
 
         assert "load_snips" in getattr(benchmarks_mod, "__all__", []), (
-            "load_snips must be in dendra.benchmarks.__all__"
+            "load_snips must be in postrule.benchmarks.__all__"
         )
         assert hasattr(benchmarks_mod, "load_snips")
 
     def test_snips_in_cli_registry(self):
-        import dendra.cli as cli_mod
+        import postrule.cli as cli_mod
 
         # The bench command resolves a slug → loader name. Snips must
-        # be registered so ``dendra bench snips`` works.
+        # be registered so ``postrule bench snips`` works.
         registry = getattr(cli_mod, "_BENCH_LOADERS", None)
         if registry is None:
             registry = getattr(cli_mod, "BENCHMARKS", None)

@@ -17,12 +17,12 @@ hypothesis is the test. The statistical gate is the test runner.
 The graduation is the green test. The drift detector is the
 "refactor while green" loop that keeps it valid.
 
-Dendra is the substrate that implements TDPD for one specific class
+Postrule is the substrate that implements TDPD for one specific class
 of decision: **classification call sites that today route to an
 LLM**. Other classes of decision (UI variant choice, ranking, query
 routing, rate-limit policy) admit the same discipline; nothing in
-TDPD requires Dendra in particular. We've published TDPD as
-methodology so any team can adopt it; Dendra is the easiest path
+TDPD requires Postrule in particular. We've published TDPD as
+methodology so any team can adopt it; Postrule is the easiest path
 when the decision is classification-shaped.
 
 ## The cycle
@@ -66,7 +66,7 @@ A pre-registered hypothesis answers six questions:
    ≥10pp sustained over 20 verdicts.)
 
 Items 1–6 fit on a single screen of markdown per call site. Customers
-running `dendra init` get a draft populated from cohort-tuned defaults;
+running `postrule init` get a draft populated from cohort-tuned defaults;
 they review, edit, and commit before the switch ships.
 
 ## What separates TDPD from adjacent practices
@@ -96,16 +96,16 @@ them:
 
 ## The artifacts
 
-A team practicing TDPD on a Dendra-wrapped switch produces three
+A team practicing TDPD on a Postrule-wrapped switch produces three
 artifacts per site, all visible in their git history:
 
-1. **`dendra/hypotheses/<switch>.md`** — pre-registered claims.
-   Auto-drafted from cohort defaults at `dendra init`; customer
+1. **`postrule/hypotheses/<switch>.md`** — pre-registered claims.
+   Auto-drafted from cohort defaults at `postrule init`; customer
    reviews and commits before the switch sees real traffic.
-2. **`dendra/results/<switch>.md`** — the report card. Filled in
+2. **`postrule/results/<switch>.md`** — the report card. Filled in
    over time as outcomes accumulate. Shows the transition curve,
    the gate-fire moment, the hypothesis-vs-observed verdict, and
-   the cost trajectory. Regenerated with `dendra report <switch>`.
+   the cost trajectory. Regenerated with `postrule report <switch>`.
 3. **The audit chain** — every classify call records who decided,
    what was decided, and (when applicable) what the shadow path
    would have decided. Stored locally; signed if the customer wants
@@ -144,11 +144,11 @@ typical path:
 
 1. Pick one classification call site that costs you real money in
    LLM fees today.
-2. Wrap it: `dendra init src/<file>:<function> --auto-lift`.
+2. Wrap it: `postrule init src/<file>:<function> --auto-lift`.
 3. Review the auto-generated hypothesis at
-   `dendra/hypotheses/<switch>.md`. Edit if you disagree with the
+   `postrule/hypotheses/<switch>.md`. Edit if you disagree with the
    cohort prediction or the truth source.
-4. Ship. Watch evidence accumulate via `dendra report <switch>` over
+4. Ship. Watch evidence accumulate via `postrule report <switch>` over
    the next 2–4 weeks.
 5. When the gate fires: graduated. Cost drops; report card generates
    the audit-grade evidence; you move on.
@@ -158,7 +158,7 @@ traffic shapes. Total developer effort across that window: ~1 hour.
 
 ## Implementations
 
-Dendra is the reference implementation for TDPD applied to
+Postrule is the reference implementation for TDPD applied to
 classification call sites. Other implementations are welcome; the
 methodology is freely-citable and unencumbered. If you build a TDPD
 substrate for a different decision class (UI variant choice, ranking,
@@ -176,7 +176,7 @@ The minimum viable TDPD substrate for any decision class:
 5. An audit chain that records each gate evaluation with timestamp,
    p-value, and effect size.
 
-Dendra implements all five for classification. Other decision classes
+Postrule implements all five for classification. Other decision classes
 will need their own gate definitions — but the discipline transfers.
 
 ## Further reading
@@ -188,7 +188,7 @@ will need their own gate definitions — but the discipline transfers.
 - **The TDPD glossary**: [`tdpd-glossary.md`](./tdpd-glossary.md) for
   the vocabulary lock — Hypothesis, Shadow Phase, Gate, Graduation,
   Drift, Rule Floor, Regime, Pre-registration.
-- **The Dendra Insights page**: [`dendra.run/insights`](https://dendra.run/insights)
+- **The Postrule Insights page**: [`postrule.ai/insights`](https://postrule.ai/insights)
   for the cohort flywheel — pre-tuned defaults, public transparency
   dashboard, opt-in cohort participation.
 
@@ -197,6 +197,6 @@ will need their own gate definitions — but the discipline transfers.
 *This methodology is the work of [Benjamin Booth](https://github.com/benjaminbooth)
 at B-Tree Labs (a B-Tree Ventures, LLC DBA). First public statement
 2026. Cite as: Booth, B. (2026). "Test-Driven Product Development."
-[`dendra.run/methodology`](https://dendra.run/methodology).*
+[`postrule.ai/methodology`](https://postrule.ai/methodology).*
 
 *Licensed CC-BY 4.0. Reproduce with attribution.*

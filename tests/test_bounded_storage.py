@@ -9,7 +9,7 @@ import time
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     FileStorage,
@@ -65,7 +65,7 @@ class TestDefaultStorageWiring:
     def test_persist_true_uses_resilient_filestorage(self, tmp_path, monkeypatch):
         """persist=True wraps FileStorage in ResilientStorage by default
         so transient I/O failures do not take down classification."""
-        from dendra import ResilientStorage
+        from postrule import ResilientStorage
 
         monkeypatch.chdir(tmp_path)
         s = LearnedSwitch(

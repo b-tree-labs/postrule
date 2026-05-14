@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Security-angle tests — Dendra's properties that mitigate AI breaches.
+"""Security-angle tests — Postrule's properties that mitigate AI breaches.
 
 Each test demonstrates one architectural property that *prevents a
 class of real-world AI-related incident*:
@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     MLPrediction,
     ModelPrediction,
@@ -83,7 +83,7 @@ def _export_control_rule(query: str) -> str:
 
 class TestRuleFloorUnjailbreakability:
     """Samsung-ChatGPT-leak-class: LLM routing decision bypassed by
-    prompt injection. Dendra's rule-first architecture makes this
+    prompt injection. Postrule's rule-first architecture makes this
     category of incident impossible at the classification boundary."""
 
     def test_jailbroken_model_cannot_override_rule_in_shadow(self):
@@ -179,7 +179,7 @@ class TestSafetyCriticalCap:
 
 class TestCircuitBreakerBoundsMLFailure:
     """Prevents the Replit-agent-prompt-injection-class case: ML (or
-    LLM-based classifier) fails catastrophically. Dendra auto-reverts
+    LLM-based classifier) fails catastrophically. Postrule auto-reverts
     to the rule and stays there until an operator resets the breaker."""
 
     def test_ml_exception_trips_breaker_and_stays_tripped(self):
@@ -219,7 +219,7 @@ class TestCircuitBreakerBoundsMLFailure:
 class TestShadowCannotContaminate:
     """Prevents the shadow-deployment-leak incident: an LLM shadow
     observation leaks into the decision path via a race condition or
-    exception handler. Dendra's shadow is strictly observational."""
+    exception handler. Postrule's shadow is strictly observational."""
 
     def test_shadow_exception_never_reaches_caller(self):
         class CrashingLLM:
@@ -246,7 +246,7 @@ class TestShadowCannotContaminate:
 
 class TestAuditTrail:
     """Post-incident forensics require: who classified what, when, how
-    confident, with which source. Dendra's outcome log is the artifact."""
+    confident, with which source. Postrule's outcome log is the artifact."""
 
     def test_outcome_record_captures_forensic_context(self):
         s = LearnedSwitch(

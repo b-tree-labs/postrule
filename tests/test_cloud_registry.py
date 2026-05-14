@@ -12,7 +12,7 @@
 # Additional Use Grant: see LICENSE-BSL. Production use is
 # permitted; offering a competing hosted service is not.
 
-"""Tests for ``dendra.cloud.registry`` — anonymize + contribute to the public registry.
+"""Tests for ``postrule.cloud.registry`` — anonymize + contribute to the public registry.
 
 The anonymize path is pure data and tested directly. The contribute
 path is a thin HTTP wrapper; mocks the requests layer.
@@ -24,8 +24,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dendra import auth
-from dendra.cloud import NotLoggedInError, registry
+from postrule import auth
+from postrule.cloud import NotLoggedInError, registry
 
 
 @pytest.fixture()
@@ -37,8 +37,8 @@ def fake_home(tmp_path, monkeypatch):
 
 @pytest.fixture()
 def logged_in(fake_home, monkeypatch):
-    monkeypatch.setenv("DENDRA_CLOUD_API_BASE", "https://api.example.test/v1")
-    auth.save_credentials("dndr_live_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "user@example.com")
+    monkeypatch.setenv("POSTRULE_CLOUD_API_BASE", "https://api.example.test/v1")
+    auth.save_credentials("prul_live_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "user@example.com")
     yield
 
 
@@ -119,12 +119,12 @@ class TestContribute:
         mock_resp = MagicMock()
         mock_resp.ok = True
 
-        with patch("dendra.cloud.registry.requests.post", return_value=mock_resp) as post:
+        with patch("postrule.cloud.registry.requests.post", return_value=mock_resp) as post:
             ok = registry.contribute_anonymized({"rule": {"v": 1}})
 
         assert ok is True
         assert post.call_args.args[0] == "https://api.example.test/v1/registry/contribute"
-        assert post.call_args.kwargs["headers"]["Authorization"].startswith("Bearer dndr_live_")
+        assert post.call_args.kwargs["headers"]["Authorization"].startswith("Bearer prul_live_")
 
     def test_anonymizes_before_upload(self, logged_in):
         # contribute_anonymized must run anonymize() on the input before
@@ -133,7 +133,7 @@ class TestContribute:
         mock_resp.ok = True
         corpus_with_id = {"author": "alice", "rule": {"v": 1}}
 
-        with patch("dendra.cloud.registry.requests.post", return_value=mock_resp) as post:
+        with patch("postrule.cloud.registry.requests.post", return_value=mock_resp) as post:
             registry.contribute_anonymized(corpus_with_id)
 
         sent = post.call_args.kwargs["json"]
@@ -144,15 +144,15 @@ class TestContribute:
         mock_resp = MagicMock()
         mock_resp.ok = False
 
-        with patch("dendra.cloud.registry.requests.post", return_value=mock_resp):
+        with patch("postrule.cloud.registry.requests.post", return_value=mock_resp):
             assert registry.contribute_anonymized({"rule": {"v": 1}}) is False
 
     def test_uses_env_override_for_base_url(self, logged_in, monkeypatch):
-        monkeypatch.setenv("DENDRA_CLOUD_API_BASE", "http://localhost:8787/v1")
+        monkeypatch.setenv("POSTRULE_CLOUD_API_BASE", "http://localhost:8787/v1")
         mock_resp = MagicMock()
         mock_resp.ok = True
 
-        with patch("dendra.cloud.registry.requests.post", return_value=mock_resp) as post:
+        with patch("postrule.cloud.registry.requests.post", return_value=mock_resp) as post:
             registry.contribute_anonymized({"rule": {"v": 1}})
 
         assert post.call_args.args[0] == "http://localhost:8787/v1/registry/contribute"

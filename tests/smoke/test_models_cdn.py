@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Smoke: models.dendra.run serves the bundled GGUFs at correct sizes."""
+"""Smoke: models.postrule.ai serves the bundled GGUFs at correct sizes."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import pytest
 pytestmark = pytest.mark.smoke
 
 
-# Expected byte counts must match src/dendra/bundled.py:_REGISTRY.
+# Expected byte counts must match src/postrule/bundled.py:_REGISTRY.
 # When the registry updates (new model version), this list updates too.
 _EXPECTED_OBJECTS = [
     ("qwen2.5-7b-instruct-q4_k_m.gguf", 4_683_074_240),
@@ -22,7 +22,7 @@ _EXPECTED_OBJECTS = [
 
 def _head(url: str) -> dict:
     req = urllib.request.Request(
-        url, method="HEAD", headers={"User-Agent": "dendra-smoke-test/1.0"}
+        url, method="HEAD", headers={"User-Agent": "postrule-smoke-test/1.0"}
     )
     with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310 — HTTPS
         return {

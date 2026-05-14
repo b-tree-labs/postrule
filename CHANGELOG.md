@@ -1,8 +1,15 @@
 # Changelog
 
-All notable changes to Dendra are documented in this file. Format
+All notable changes to Postrule are documented in this file. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Version numbers follow [Semantic Versioning](https://semver.org).
+
+## [Renamed 2026-05-14] Dendra → Postrule
+
+The product previously called Dendra was renamed to Postrule on
+2026-05-14 to resolve a USPTO trademark conflict in IC 009 + IC 042
+(Dendra Dynamics Ltd., UK). Below entries pre-dating this note
+reference the prior name; they are kept as historical record.
 
 ## [Unreleased]
 

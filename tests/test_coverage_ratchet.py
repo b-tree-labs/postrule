@@ -61,9 +61,9 @@ class TestCheckMode:
     def test_green_when_all_above_floor(self, lab):
         tmp, write = lab
         write(
-            current={"src/dendra/a.py": 90.0, "src/dendra/b.py": 80.0},
+            current={"src/postrule/a.py": 90.0, "src/postrule/b.py": 80.0},
             total=85.0,
-            floors={"TOTAL": 85.0, "src/dendra/a.py": 90.0, "src/dendra/b.py": 80.0},
+            floors={"TOTAL": 85.0, "src/postrule/a.py": 90.0, "src/postrule/b.py": 80.0},
         )
         r = _run(tmp)
         assert r.returncode == 0, r.stderr
@@ -72,9 +72,9 @@ class TestCheckMode:
     def test_r1_regression_fails(self, lab):
         tmp, write = lab
         write(
-            current={"src/dendra/a.py": 80.0},  # dropped from 90
+            current={"src/postrule/a.py": 80.0},  # dropped from 90
             total=80.0,
-            floors={"TOTAL": 90.0, "src/dendra/a.py": 90.0},
+            floors={"TOTAL": 90.0, "src/postrule/a.py": 90.0},
         )
         r = _run(tmp)
         assert r.returncode == 1
@@ -85,9 +85,9 @@ class TestCheckMode:
         tmp, write = lab
         # cli.py at floor — needs floor + 5pp.
         write(
-            current={"src/dendra/cli.py": 48.53},
+            current={"src/postrule/cli.py": 48.53},
             total=48.53,
-            floors={"TOTAL": 48.53, "src/dendra/cli.py": 48.53},
+            floors={"TOTAL": 48.53, "src/postrule/cli.py": 48.53},
         )
         r = _run(tmp)
         assert r.returncode == 1
@@ -98,9 +98,9 @@ class TestCheckMode:
         tmp, write = lab
         # floor is 48.53, current is 53.53 — exactly at floor + 5.
         write(
-            current={"src/dendra/cli.py": 53.53},
+            current={"src/postrule/cli.py": 53.53},
             total=53.53,
-            floors={"TOTAL": 53.53, "src/dendra/cli.py": 48.53},
+            floors={"TOTAL": 53.53, "src/postrule/cli.py": 48.53},
         )
         r = _run(tmp)
         assert r.returncode == 0, r.stderr
@@ -110,9 +110,9 @@ class TestCheckMode:
         # 80% file with floor at 80%. R2 doesn't apply (floor >= 70).
         # R1 still passes — current == floor.
         write(
-            current={"src/dendra/a.py": 80.0},
+            current={"src/postrule/a.py": 80.0},
             total=80.0,
-            floors={"TOTAL": 80.0, "src/dendra/a.py": 80.0},
+            floors={"TOTAL": 80.0, "src/postrule/a.py": 80.0},
         )
         r = _run(tmp)
         assert r.returncode == 0, r.stderr
@@ -121,22 +121,22 @@ class TestCheckMode:
         tmp, write = lab
         # b.py is new (not in floors) and below 60%.
         write(
-            current={"src/dendra/a.py": 90.0, "src/dendra/b.py": 50.0},
+            current={"src/postrule/a.py": 90.0, "src/postrule/b.py": 50.0},
             total=70.0,
-            floors={"TOTAL": 70.0, "src/dendra/a.py": 90.0},
+            floors={"TOTAL": 70.0, "src/postrule/a.py": 90.0},
         )
         r = _run(tmp)
         assert r.returncode == 1
         assert "R3" in r.stderr
-        assert "src/dendra/b.py" in r.stderr
+        assert "src/postrule/b.py" in r.stderr
 
     def test_r3_new_file_at_minimum_passes(self, lab):
         tmp, write = lab
         # New file at exactly 60% — passes R3.
         write(
-            current={"src/dendra/a.py": 90.0, "src/dendra/b.py": 60.0},
+            current={"src/postrule/a.py": 90.0, "src/postrule/b.py": 60.0},
             total=75.0,
-            floors={"TOTAL": 75.0, "src/dendra/a.py": 90.0},
+            floors={"TOTAL": 75.0, "src/postrule/a.py": 90.0},
         )
         r = _run(tmp)
         assert r.returncode == 0, r.stderr
@@ -145,9 +145,9 @@ class TestCheckMode:
     def test_total_regression_fails(self, lab):
         tmp, write = lab
         write(
-            current={"src/dendra/a.py": 90.0},
+            current={"src/postrule/a.py": 90.0},
             total=70.0,  # dropped from 85
-            floors={"TOTAL": 85.0, "src/dendra/a.py": 90.0},
+            floors={"TOTAL": 85.0, "src/postrule/a.py": 90.0},
         )
         r = _run(tmp)
         assert r.returncode == 1
@@ -157,12 +157,12 @@ class TestCheckMode:
         tmp, write = lab
         # File in floors but not in current run (deleted file).
         write(
-            current={"src/dendra/a.py": 90.0},
+            current={"src/postrule/a.py": 90.0},
             total=90.0,
             floors={
                 "TOTAL": 85.0,
-                "src/dendra/a.py": 90.0,
-                "src/dendra/deleted.py": 80.0,
+                "src/postrule/a.py": 90.0,
+                "src/postrule/deleted.py": 80.0,
             },
         )
         r = _run(tmp)
@@ -182,9 +182,9 @@ class TestUpdateMode:
     def test_update_refuses_when_rules_violated(self, lab):
         tmp, write = lab
         write(
-            current={"src/dendra/cli.py": 48.0},  # below floor
+            current={"src/postrule/cli.py": 48.0},  # below floor
             total=48.0,
-            floors={"TOTAL": 50.0, "src/dendra/cli.py": 48.53},
+            floors={"TOTAL": 50.0, "src/postrule/cli.py": 48.53},
         )
         r = _run(tmp, "--update")
         assert r.returncode == 1
@@ -194,35 +194,35 @@ class TestUpdateMode:
         tmp, write = lab
         # cli.py at 60% — should record floor at 55 (60 - 5pp buffer).
         write(
-            current={"src/dendra/cli.py": 60.0, "src/dendra/a.py": 90.0},
+            current={"src/postrule/cli.py": 60.0, "src/postrule/a.py": 90.0},
             total=75.0,
-            floors={"TOTAL": 75.0, "src/dendra/cli.py": 48.53, "src/dendra/a.py": 90.0},
+            floors={"TOTAL": 75.0, "src/postrule/cli.py": 48.53, "src/postrule/a.py": 90.0},
         )
         r = _run(tmp, "--update")
         assert r.returncode == 0, r.stderr
         new_floors = json.loads((tmp / "coverage_floors.json").read_text())
-        assert new_floors["src/dendra/cli.py"] == 55.0
-        assert new_floors["src/dendra/a.py"] == 90.0
+        assert new_floors["src/postrule/cli.py"] == 55.0
+        assert new_floors["src/postrule/a.py"] == 90.0
 
     def test_update_no_lag_for_files_at_or_above_threshold(self, lab):
         tmp, write = lab
         # File at 70% — exactly at threshold. R2 doesn't apply. No lag.
         write(
-            current={"src/dendra/a.py": 70.0},
+            current={"src/postrule/a.py": 70.0},
             total=70.0,
-            floors={"TOTAL": 65.0, "src/dendra/a.py": 65.0},
+            floors={"TOTAL": 65.0, "src/postrule/a.py": 65.0},
         )
         r = _run(tmp, "--update")
         assert r.returncode == 0, r.stderr
         new = json.loads((tmp / "coverage_floors.json").read_text())
-        assert new["src/dendra/a.py"] == 70.0
+        assert new["src/postrule/a.py"] == 70.0
 
 
 class TestBootstrap:
     def test_bootstrap_seeds_when_no_snapshot_exists(self, lab):
         tmp, write = lab
         write(
-            current={"src/dendra/cli.py": 53.53, "src/dendra/a.py": 90.0},
+            current={"src/postrule/cli.py": 53.53, "src/postrule/a.py": 90.0},
             total=70.0,
             floors=None,  # no snapshot file
         )
@@ -230,17 +230,17 @@ class TestBootstrap:
         assert r.returncode == 0, r.stderr
         new = json.loads((tmp / "coverage_floors.json").read_text())
         # Low-cov file: lagged by 5pp.
-        assert new["src/dendra/cli.py"] == 48.53
+        assert new["src/postrule/cli.py"] == 48.53
         # High-cov file: no lag.
-        assert new["src/dendra/a.py"] == 90.0
+        assert new["src/postrule/a.py"] == 90.0
         assert new["TOTAL"] == 70.0
 
     def test_bootstrap_refuses_when_snapshot_exists(self, lab):
         tmp, write = lab
         write(
-            current={"src/dendra/a.py": 90.0},
+            current={"src/postrule/a.py": 90.0},
             total=90.0,
-            floors={"TOTAL": 90.0, "src/dendra/a.py": 90.0},
+            floors={"TOTAL": 90.0, "src/postrule/a.py": 90.0},
         )
         r = _run(tmp, "--bootstrap")
         assert r.returncode == 1
@@ -250,7 +250,7 @@ class TestBootstrap:
         tmp, write = lab
         # File at 30% — below R3's 60% bar. Bootstrap accepts it anyway.
         write(
-            current={"src/dendra/junk.py": 30.0},
+            current={"src/postrule/junk.py": 30.0},
             total=30.0,
             floors=None,
         )
@@ -258,4 +258,4 @@ class TestBootstrap:
         assert r.returncode == 0, r.stderr
         new = json.loads((tmp / "coverage_floors.json").read_text())
         # 30 - 5pp lag = 25.
-        assert new["src/dendra/junk.py"] == 25.0
+        assert new["src/postrule/junk.py"] == 25.0

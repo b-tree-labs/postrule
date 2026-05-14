@@ -1,15 +1,15 @@
-# Dendra FAQ
+# Postrule FAQ
 
 Answers to the questions people ask first. Updated 2026-05-11.
 
-## What is Dendra, in one sentence?
+## What is Postrule, in one sentence?
 
 A Python decorator that wraps a classification function and lets
 it graduate from rule → model-shadow → language model → ML-shadow → ML —
 with a paired-proportion statistical gate at every transition
 and the original rule retained as the safety floor.
 
-## How does Dendra know when a switch is ready to graduate?
+## How does Postrule know when a switch is ready to graduate?
 
 Every gate evaluation is a paired-McNemar test on accumulated
 correctness data. When the ML head's correct-vs-rule margin
@@ -26,8 +26,8 @@ threshold. The gate fires *because evidence justified it*.
 
 ## What does the report card show me?
 
-When a wrapped switch graduates (or hits a drift event), Dendra
-writes a markdown report card at `dendra/results/<switch>.md`. It
+When a wrapped switch graduates (or hits a drift event), Postrule
+writes a markdown report card at `postrule/results/<switch>.md`. It
 captures everything the gate saw and decided:
 
 - **Phase + graduation timestamp** — which lifecycle phase the
@@ -47,7 +47,7 @@ captures everything the gate saw and decided:
 - **Cost trajectory** — per-call cost over time, with a table
   showing pre/post-graduation reduction in $ and latency
 - **What-if** — re-run the cost numbers under a different LLM with
-  `dendra report <switch> --model claude-haiku-4.5` etc.
+  `postrule report <switch> --model claude-haiku-4.5` etc.
 - **Drift posture** — whether the drift detector is currently green,
   what the last check measured, and what would trigger a demotion
 
@@ -55,9 +55,9 @@ Three commands produce the evidence trilogy:
 
 | Command | Card |
 |---|---|
-| `dendra analyze --report` | initial-analysis discovery card — which sites are candidates for graduation |
-| `dendra report <switch>` | per-switch graduation card — what the gate saw and when it fired |
-| `dendra report --summary` | project rollup — cockpit view across every wrapped switch |
+| `postrule analyze --report` | initial-analysis discovery card — which sites are candidates for graduation |
+| `postrule report <switch>` | per-switch graduation card — what the gate saw and when it fired |
+| `postrule report --summary` | project rollup — cockpit view across every wrapped switch |
 
 Sample cards are committed in [`docs/sample-reports/`](sample-reports/)
 so reviewers can see the full evidence shape before installing.
@@ -67,7 +67,7 @@ so reviewers can see the full evidence shape before installing.
 After every gate evaluation. Default config evaluates on every 50th
 outcome, so on a switch seeing 1,000 verdicts/day the card updates
 ~20 times per day. The card is always current with the most recent
-audit-chain state — re-run `dendra report <switch>` any time, or
+audit-chain state — re-run `postrule report <switch>` any time, or
 let CI re-render it on a schedule (the `aggregator.yml` workflow
 template does this nightly).
 
@@ -82,10 +82,10 @@ For some classifiers, yes — and we'll say so directly.
 
 If your classifier has 3-5 stable cases, no meaningful drift,
 no audit requirement, and lives in a non-critical path, **you
-probably don't need Dendra**. A plain if/else block is the
+probably don't need Postrule**. A plain if/else block is the
 right tool. We'd rather you ship that.
 
-Dendra is for classifiers where one of these is true:
+Postrule is for classifiers where one of these is true:
 
 - **Outcome data is accumulating and you're not using it.**
   Every day your rule misclassifies and the data sits
@@ -102,7 +102,7 @@ Dendra is for classifiers where one of these is true:
   `CandidateHarness` is the missing deployment substrate.
 
 If none of the above match your classifier, keep your if/else.
-We mean it. Dendra is opinionated about being a primitive for
+We mean it. Postrule is opinionated about being a primitive for
 production-grade classification — not a general-purpose
 dispatcher.
 
@@ -112,15 +112,15 @@ Some shapes of code look like classification but aren't, or have constraints tha
 
 - **pytest tests, fixtures, validators, setup code.** No labels, no production routing decision. The analyzer filters these out by default.
 - **Async generators** (`async def f(): yield ...`). The classifier protocol expects a label return, not a stream. Async coroutines that return a label work via the async API peers (`aclassify`, `adispatch`).
-- **Classes used as callables** (`MyClass(input)` where `__call__` runs classification). Wrap the `__call__` body in a `@ml_switch` function, or migrate to the native `dendra.Switch` class authoring pattern (v1).
+- **Classes used as callables** (`MyClass(input)` where `__call__` runs classification). Wrap the `__call__` body in a `@ml_switch` function, or migrate to the native `postrule.Switch` class authoring pattern (v1).
 - **Multi-positional + `**kwargs` without clean signatures.** Multi-arg auto-packing (v1) requires `inspect.signature(...)` to recover parameter names and types. Functions assembled dynamically (`functools.partial` chains, `*args` only with no type hints) need an explicit signature before they can lift.
-- **Decisions that need hidden out-of-process state we can't see.** If the rule consults a remote service or database state, that state has to be exposed as evidence (auto-lift, or `@evidence_inputs`). If the state can't be exposed, the LLM/ML head can never see what the rule saw, and Dendra refuses with a specific diagnostic.
+- **Decisions that need hidden out-of-process state we can't see.** If the rule consults a remote service or database state, that state has to be exposed as evidence (auto-lift, or `@evidence_inputs`). If the state can't be exposed, the LLM/ML head can never see what the rule saw, and Postrule refuses with a specific diagnostic.
 
 The full list, with version tags and the path forward for each item, is in [`limitations.md`](./limitations.md).
 
 ## Does it work with LangChain agents (and the other broker frameworks)?
 
-Yes. The classification sites that Dendra wraps live inside the
+Yes. The classification sites that Postrule wraps live inside the
 framework code, not your code. We've already run the v1 analyzer
 against the eight largest LLM-broker libraries (LangChain,
 LlamaIndex, Haystack, AutoGen, CrewAI, DSPy, LiteLLM, Instructor)
@@ -128,13 +128,13 @@ and surfaced 919 classification sites across 10,889 Python files.
 Most of the high-fit sites sit on class methods, which the v1.5
 lifters reach.
 
-You don't replace the framework. You point Dendra at your
+You don't replace the framework. You point Postrule at your
 project's import surface or at the framework you depend on; the
 wrapping is opt-in and per-site. To see the breakdown for any of
 these libraries on your machine, clone the repo and run
-`dendra analyze .` against it.
+`postrule analyze .` against it.
 
-## Will `dendra init --auto-lift` break my agent graph?
+## Will `postrule init --auto-lift` break my agent graph?
 
 No, by construction. `--auto-lift` writes opt-in lifters that
 live alongside the original function and apply via decorator.
@@ -145,9 +145,9 @@ traffic.
 If a candidate site looks unsafe to lift (hidden state, side
 effects inside a branch, non-pure rule), the analyzer refuses
 with a specific diagnostic instead of silently lifting. The
-drift detector (`dendra refresh --check`) tells you if the
+drift detector (`postrule refresh --check`) tells you if the
 underlying function changed since the lift was written, and
-`dendra doctor` reports any site whose AST hash no longer
+`postrule doctor` reports any site whose AST hash no longer
 matches.
 
 The first thing to do after `--auto-lift` runs is your existing
@@ -157,7 +157,7 @@ read in one sitting.
 
 ## Why not just use shadow mode / A-B testing / a feature flag?
 
-Shadow mode says "run both, log both." Dendra says "run both,
+Shadow mode says "run both, log both." Postrule says "run both,
 log both, **and tell me when the evidence is strong enough to
 switch**." The statistical transition gate is the load-bearing
 piece — without it, teams either switch too early (regression
@@ -223,7 +223,7 @@ Because the language model is a borrowed brain.
 
 The language model `M` (Phase 2's primary) is a generic LLM. You did not train it on your verdict log. You cannot improve its calibration by feeding it more outcomes. Its low-confidence outputs on long-tail inputs are inherently more dangerous than just "statistically uncertain" — they're hallucination / jailbreak territory. The confidence threshold on M is a permanent guardrail, not a transition state.
 
-The trained ML head `H` is yours. H trains on the verdict log Dendra collects. As outcomes accumulate, H's calibration improves *specifically on your distribution*. The McNemar gate at P4 → P5 fires when H is reliably better than M even on the rows where H itself reported low confidence. That gate has actual evidentiary content because verdict data tightens H's calibration. There's no analogous gate for M because no analogous evidence exists — verdicts don't change M.
+The trained ML head `H` is yours. H trains on the verdict log Postrule collects. As outcomes accumulate, H's calibration improves *specifically on your distribution*. The McNemar gate at P4 → P5 fires when H is reliably better than M even on the rows where H itself reported low confidence. That gate has actual evidentiary content because verdict data tightens H's calibration. There's no analogous gate for M because no analogous evidence exists — verdicts don't change M.
 
 The deeper rule: **you can only remove a confidence threshold for a tier you own and can train.** The lifecycle never trusts a tier with no learning loop end-to-end.
 
@@ -235,7 +235,7 @@ This is the classic distillation question every reviewer asks. The answer depend
 
 **Case 1 — real-world feedback as truth.** A human reviewer, a downstream success signal ("did the user click", "did the ticket get reopened"), a business outcome — these record verdicts independently of the language model. H trains on `(input, true_label)` pairs; the language model was just keeping production running while ground-truth data accumulated. H exceeding M is unsurprising — H learns the true function, M was the stand-in.
 
-**Case 2 — the `JudgeCommittee` is the oracle.** When human labels aren't available, Dendra supports LLM-as-judge: a `JudgeCommittee` (multiple model calls, voted) records the verdicts. H's training labels come from the model itself. This is the case the question implicitly asks about. Five mechanisms make it work:
+**Case 2 — the `JudgeCommittee` is the oracle.** When human labels aren't available, Postrule supports LLM-as-judge: a `JudgeCommittee` (multiple model calls, voted) records the verdicts. H's training labels come from the model itself. This is the case the question implicitly asks about. Five mechanisms make it work:
 
 1. **Smoothing over teacher noise.** M's per-call output is stochastic (sampling temperature, prompt-position effects, reasoning-chain variance). H trained over many calls learns the *modal* behavior and discards per-call noise. M's mistakes are themselves noisy and partially average out.
 
@@ -290,7 +290,7 @@ Yes. The same paired-McNemar machinery that promotes a tier can also demote it.
 
 When `auto_demote=True` (the v1 default), every $N$ verdicts the switch evaluates the *reverse-direction* gate: "is the rule reliably better than the current decision-maker on the recent paired-correctness evidence?" If that gate fires, the lifecycle steps back **one phase**. Multi-step retreats accumulate across successive cycles if drift persists.
 
-This is how Dendra handles concept drift on the accuracy axis: not as a separate detector with its own thresholds, but as the same gate primitive called with the rule as the comparison target. Type-I error is bounded by the same α as the advancement direction.
+This is how Postrule handles concept drift on the accuracy axis: not as a separate detector with its own thresholds, but as the same gate primitive called with the rule as the comparison target. Type-I error is bounded by the same α as the advancement direction.
 
 The rule R is always reachable, structurally, from any phase. There is no point in the lifecycle where the operator cannot return to "your code, deterministic" by demoting back to P0.
 
@@ -301,19 +301,19 @@ The paper's §10.5 (Future Work) flags empirical characterization of demotion ti
 ## How is this different from Vowpal Wabbit / online learning?
 
 Vowpal Wabbit is continuous adaptation with no rule floor and no
-formal phase vocabulary. Dendra is specifically about the
+formal phase vocabulary. Postrule is specifically about the
 *migration* from human-authored classifier to learned classifier,
 with the migration gated by evidence and the human-authored
 version preserved throughout. Different problem.
 
-## Is Dendra "machine learning"?
+## Is Postrule "machine learning"?
 
-Strictly, no. Dendra is an **MLOps framework** — an
+Strictly, no. Postrule is an **MLOps framework** — an
 orchestration runtime for graduating production classifiers
 from rule to language model to learned ML, with paired-statistical gates
 and a rule safety floor. The ML happens *inside* the switch
 (your sklearn pipeline, your language-model adapter, your fine-tuned
-model); Dendra is the deployment scaffold around it.
+model); Postrule is the deployment scaffold around it.
 
 The closest formal ML subfield is **online model selection /
 cascade routing** (FrugalGPT lineage, Dekoninck et al.). The
@@ -321,7 +321,7 @@ statistical machinery (paired McNemar, two-sided exact-binomial
 on discordant pairs) is **classical sequential hypothesis
 testing**, not ML proper.
 
-Calling Dendra "ML" overclaims. Calling it "the deployment
+Calling Postrule "ML" overclaims. Calling it "the deployment
 runtime that ML ships into" is precise.
 
 ## How is this different from AutoML / H2O / Sagemaker Autopilot?
@@ -329,21 +329,21 @@ runtime that ML ships into" is precise.
 AutoML platforms search the model-and-hyperparameter space
 **offline**, against a static labeled dataset, and output "the
 best model." That's a useful tool for kicking off a greenfield
-ML project. It's a different problem from what Dendra solves.
+ML project. It's a different problem from what Postrule solves.
 
-Dendra is the **online** companion: candidates flow in (from
+Postrule is the **online** companion: candidates flow in (from
 AutoML output, from an autoresearch loop, from a human running
-experiments), Dendra shadows them against live production
+experiments), Postrule shadows them against live production
 traffic, runs a head-to-head significance test on the same
 inputs against a truth oracle, and tells you which candidates
 statistically clear the bar. The rule safety floor protects production from bad
 candidates throughout. A useful one-liner:
 
 > **AutoML automates offline model selection.**
-> **Dendra automates online model promotion.**
+> **Postrule automates online model promotion.**
 
-Where AutoML stops — at "here's the best candidate" — Dendra
-picks up. The two compose: AutoML finds candidates; Dendra
+Where AutoML stops — at "here's the best candidate" — Postrule
+picks up. The two compose: AutoML finds candidates; Postrule
 gates their deployment.
 
 See [`docs/autoresearch.md`](autoresearch.md) and
@@ -356,7 +356,7 @@ Routing picks which LLM to call for a given request. Every
 routed call is still a remote LLM call; the savings come from
 sending cheaper or smaller calls when the input allows it.
 
-Dendra graduates the *site* off LLMs entirely once a small
+Postrule graduates the *site* off LLMs entirely once a small
 in-process head has earned it. Once the paired-McNemar gate
 fires for that site, the call drops from "LLM round-trip" to
 "sub-millisecond local inference," and the per-call cost line
@@ -369,7 +369,7 @@ call. Graduation removes the unit.
 
 ## How does this relate to Karpathy's "autoresearch" loop pattern?
 
-> **Autoresearch tells you what to try. Dendra tells you when it worked.**
+> **Autoresearch tells you what to try. Postrule tells you when it worked.**
 
 The autoresearch pattern is a *discovery* primitive: a language model (or
 agent) proposes candidate classifiers / prompts / gating
@@ -379,8 +379,8 @@ the eval set" to "deployed in production with statistical
 confidence." Teams duct-tape evals harnesses around their loops
 and call it MLOps.
 
-Dendra is the missing substrate. We ship a
-[`CandidateHarness`](../src/dendra/autoresearch.py) that wraps a
+Postrule is the missing substrate. We ship a
+[`CandidateHarness`](../src/postrule/autoresearch.py) that wraps a
 live `LearnedSwitch`, lets an external loop register candidates,
 shadows them against production traffic, and returns paired-
 McNemar verdicts on whether each candidate beats the live
@@ -389,7 +389,7 @@ decision. The autoresearch loop reads
 switch protects production from bad proposals throughout.
 
 ```python
-from dendra import CandidateHarness, LearnedSwitch
+from postrule import CandidateHarness, LearnedSwitch
 
 sw = LearnedSwitch(rule=production_rule, ...)
 
@@ -409,9 +409,9 @@ if report.recommend_promote:
 ```
 
 Every primitive an autoresearch loop needs lines up with what
-Dendra already ships:
+Postrule already ships:
 
-| Autoresearch needs | Dendra ships |
+| Autoresearch needs | Postrule ships |
 |---|---|
 | A way to evaluate candidates against real traffic | `CandidateHarness.observe()` + shadow phases |
 | A statistical bar for "this candidate is better" | Head-to-head evidence gate at configurable `alpha` (`McNemarGate` by default) |
@@ -434,7 +434,7 @@ absolute terms.
 
 At Phase.MODEL_PRIMARY (model verifier stubbed): 1.46 µs p50.
 At Phase.ML_PRIMARY (ML head stubbed): 1.50 µs p50. Real-LLM and
-real-ML latency is dominated by the model, not by Dendra — for
+real-ML latency is dominated by the model, not by Postrule — for
 the shipped local default `qwen2.5:7b` via Ollama, ~481 ms p50.
 
 Storage: `BoundedInMemoryStorage` (default for ephemeral state)
@@ -454,7 +454,7 @@ model calls: the API bill for whatever provider you point at.
 ML calls: TF-IDF + LR is CPU-cheap and scikit-learn-shaped;
 sentence-transformer heads cost more but are still local.
 
-## Does Dendra call language models on my behalf without asking?
+## Does Postrule call language models on my behalf without asking?
 
 No. You configure an adapter (`OpenAIAdapter` / `AnthropicAdapter` /
 `OllamaAdapter` / `LlamafileAdapter`) with your own credentials
@@ -467,28 +467,28 @@ decision unless confidence is below a configured threshold.
 
 By default, nothing leaves your process. Verdict records go to
 whatever storage backend you configure — `InMemoryStorage`,
-`FileStorage`, or a custom `Storage` implementation. No Dendra
+`FileStorage`, or a custom `Storage` implementation. No Postrule
 cloud, no telemetry home-call, no phone-home.
 
-When Dendra Cloud ships (Q2 2026), opt-in hosted storage will
+When Postrule Cloud ships (Q2 2026), opt-in hosted storage will
 be a separate tier. The OSS library will never call home.
 
 ## What's the licensing situation?
 
-Dendra is split-licensed:
+Postrule is split-licensed:
 
 - **Client SDK** (what you `import` — decorator, storage,
   adapters, telemetry, viz, benchmarks): **Apache License 2.0**.
   Free for any commercial use, including embedding in your own
   SaaS and selling it.
-- **Dendra-operated components** (analyzer, ROI reporter,
+- **Postrule-operated components** (analyzer, ROI reporter,
   research/graduation tooling, CLI, future hosted surfaces):
   **Business Source License 1.1** with Change Date 2030-05-01
   auto-converting to Apache 2.0. You can use them in your own
   organization for any purpose (the Additional Use Grant
   explicitly permits production use against your own code);
   the only prohibited use is offering a hosted
-  Dendra-derivative service to third parties.
+  Postrule-derivative service to third parties.
 
 See `LICENSE.md` and `LICENSING.md` for the developer-facing
 breakdown. Commercial licensing that removes the BSL
@@ -514,8 +514,8 @@ No. Every Apache 2.0 client-SDK user automatically gets a
 perpetual patent license via the Apache 2.0 patent grant
 (Section 3 of the license). The patent's commercial use is
 against third parties who (a) don't use the code, and (b) try
-to offer a competing Dendra-derivative as a paid service.
-Individual developers and companies using Dendra have nothing
+to offer a competing Postrule-derivative as a paid service.
+Individual developers and companies using Postrule have nothing
 to worry about.
 
 ## What counts as a "competing hosted service"? Can I run the analyzer internally?
@@ -526,25 +526,25 @@ Grant in `LICENSE-BSL`. The grant language:
 > Internal use within Your organization, including use by Your
 > affiliates under common control, is not a competing offering.
 
-The prohibited pattern is: taking Dendra's analyzer (or ROI
+The prohibited pattern is: taking Postrule's analyzer (or ROI
 reporter, or future hosted surfaces), wrapping them in a UI,
 and selling access to third parties as a service that competes
 with what we plan to ship. If you're not sure whether your use
 case crosses the line, email `licensing@b-treeventures.com` and
 we'll tell you plainly.
 
-## Can I depend on Dendra in a commercial library I ship to customers?
+## Can I depend on Postrule in a commercial library I ship to customers?
 
 Short answer: **yes**, almost certainly without preconditions.
 The SDK is Apache 2.0 — ship it freely, including in proprietary
 commercial libraries. The four BSL 1.1 files
-([`analyzer.py`](../src/dendra/analyzer.py),
-[`cli.py`](../src/dendra/cli.py),
-[`research.py`](../src/dendra/research.py),
-[`roi.py`](../src/dendra/roi.py))
+([`analyzer.py`](../src/postrule/analyzer.py),
+[`cli.py`](../src/postrule/cli.py),
+[`research.py`](../src/postrule/research.py),
+[`roi.py`](../src/postrule/roi.py))
 carry an explicit "production self-hosted use is permitted" carve-
 out via the Additional Use Grant in `LICENSE-BSL`. The only
-prohibited use case is operating a hosted Dendra-clone service to
+prohibited use case is operating a hosted Postrule-clone service to
 third parties.
 
 Keep three concerns separate (they have separate remedies and
@@ -554,11 +554,11 @@ shouldn't blur together):
 2. **Patent** (US provisional filed 2026-04-21) covers the
    graduated-autonomy primitive itself. Apache 2.0 §3 grants
    downstream users an implicit patent license **when they
-   implement through Dendra**. Re-implementing the same primitive
+   implement through Postrule**. Re-implementing the same primitive
    from scratch is exposed.
-3. **Trademark** (DENDRA, pending USPTO) covers the name.
-   Nominative fair use ("my-lib integrates Dendra") is fine;
-   brand-prominent use (`DendraPro`, `Dendra-Enterprise`) needs
+3. **Trademark** (POSTRULE, pending USPTO) covers the name.
+   Nominative fair use ("my-lib integrates Postrule") is fine;
+   brand-prominent use (`PostrulePro`, `Postrule-Enterprise`) needs
    permission — see [`TRADEMARKS.md`](../TRADEMARKS.md).
 
 **Three reseller patterns + their exposure:**
@@ -569,8 +569,8 @@ shouldn't blur together):
 - **B — Build/dev-time analyzer/CLI use.** Fine; the BSL
   Additional Use Grant covers production self-hosted use. Only
   blocked: building a hosted analyzer-as-a-service.
-- **C — Re-export of Dendra surface.** Copyright fine; trademark
-  is the gotcha — you can't brand it as "Dendra-something."
+- **C — Re-export of Postrule surface.** Copyright fine; trademark
+  is the gotcha — you can't brand it as "Postrule-something."
 
 **Attribution required for any redistribution:**
 
@@ -582,21 +582,21 @@ shouldn't blur together):
   modify the per-file SPDX identifiers.
 
 The three things a reseller could plausibly get a letter about:
-operating a hosted SaaS that replicates Dendra's cloud surface
+operating a hosted SaaS that replicates Postrule's cloud surface
 (BSL); stripping `NOTICE`/attribution and reshipping (Apache §4);
-or using the DENDRA mark in a brand-prominent / endorsement-
+or using the POSTRULE mark in a brand-prominent / endorsement-
 implying way (trademark). Everything else: ship freely. Friction-
 case commercial licensing is available — contact
 `licensing@b-treeventures.com`.
 
-## What happens if my Dendra-using product gets acquired?
+## What happens if my Postrule-using product gets acquired?
 
 For the overwhelming majority of acquisitions, **nothing
-changes**. The Dendra dependency shows up as one SBOM line item
+changes**. The Postrule dependency shows up as one SBOM line item
 during diligence:
 
 ```
-dendra==X.Y.Z  Apache-2.0 (SDK) + LicenseRef-BSL-1.1 (4 files)
+postrule==X.Y.Z  Apache-2.0 (SDK) + LicenseRef-BSL-1.1 (4 files)
 ```
 
 For ~95% of acquirers this is a green-light find — preserve
@@ -611,7 +611,7 @@ Three "ignore" senses, three different answers:
    us, notify us, or renew anything.
 2. **Invisible in the acquired stack?** No — it'll appear as a
    line item in SBOM diligence. Usually green-light.
-3. **Can the acquirer rip Dendra out?** Legally yes, economically
+3. **Can the acquirer rip Postrule out?** Legally yes, economically
    usually negative-ROI (losing the Apache 2.0 §3 patent grant,
    re-implementing 6–12 engineer-months of SDK, losing cloud-
    feature compatibility).
@@ -630,12 +630,12 @@ Three "ignore" senses, three different answers:
    research/ROI are dev tools, not runtime).
 3. **Acquirer wants to white-label and brand-prominently re-skin.**
    Trademark gate, separate from copyright. Nominative use
-   ("based on Dendra") stays free; brand-prominent rebranding
+   ("based on Postrule") stays free; brand-prominent rebranding
    needs a trademark license.
 
 The clean pitch-deck line for an acquisition-aware customer:
 
-> "LibX depends on Dendra (Apache 2.0 SDK + per-file BSL 1.1 on
+> "LibX depends on Postrule (Apache 2.0 SDK + per-file BSL 1.1 on
 > CLI/analyzer/dev tools, with a production self-hosted carve-
 > out). In an acquisition this shows up as a green-light SBOM
 > line item for ~95% of acquirers. The exceptions: if the
@@ -655,8 +655,8 @@ are all public classification corpora; the rules are
 hand-written (or straightforward extractions from the training
 set); the ML heads are scikit-learn defaults; the paired
 McNemar tests use the full evaluation sets. The benchmark
-loaders and rule definitions are in `src/dendra/benchmarks/`
-for anyone to inspect and reproduce with `dendra bench
+loaders and rule definitions are in `src/postrule/benchmarks/`
+for anyone to inspect and reproduce with `postrule bench
 <dataset>`.
 
 ## Why are you publishing this now?
@@ -671,13 +671,13 @@ now.
 
 We have a three-year business plan and a year-one revenue
 target that is bootstrap-sustainable. The founder is working
-full-time on Dendra. The structural commitment we can put in
+full-time on Postrule. The structural commitment we can put in
 the open repo: if we can't sustain the business, the BSL code
 automatically converts to Apache 2.0 on 2030-05-01 —
 regardless of whether B-Tree Ventures exists by then, the
 code is still there for the community.
 
-## Who's behind Dendra?
+## Who's behind Postrule?
 
 Benjamin Booth, sole inventor and sole operator of B-Tree
 Ventures, LLC (dba B-Tree Labs). Clean B-Tree Ventures work, no
@@ -686,8 +686,8 @@ academic or institutional co-ownership.
 ## How do I try it?
 
 ```bash
-pip install dendra
-dendra analyze /path/to/your/python/code
+pip install postrule
+postrule analyze /path/to/your/python/code
 ```
 
 Gallery of runnable examples in

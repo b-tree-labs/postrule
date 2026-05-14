@@ -5,7 +5,7 @@
 
 Uses ``tracemalloc`` for allocation tracking (more deterministic than
 RSS) and ``/dev/fd`` for file-descriptor leak detection (POSIX; the
-suite is macOS / Linux only by construction — Dendra's Windows
+suite is macOS / Linux only by construction — Postrule's Windows
 support has its own perf envelope).
 """
 
@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     ClassificationRecord,
     FileStorage,

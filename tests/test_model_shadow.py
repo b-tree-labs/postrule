@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from dendra import (
+from postrule import (
     ClassificationRecord,
     ClassificationResult,
     InMemoryStorage,

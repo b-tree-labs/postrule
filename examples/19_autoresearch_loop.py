@@ -55,7 +55,7 @@ from __future__ import annotations
 import random
 from collections.abc import Callable
 
-from dendra import (
+from postrule import (
     CandidateHarness,
     CandidateReport,
     LearnedSwitch,

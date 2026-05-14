@@ -7,9 +7,9 @@
 # Setup (one-time, on PyPI):
 #   1. https://pypi.org/manage/account/publishing/
 #   2. Add a new pending publisher with:
-#        Project name:      dendra
+#        Project name:      postrule
 #        Owner:             b-tree-labs
-#        Repository name:   dendra
+#        Repository name:   postrule
 #        Workflow filename: release.yml          ← matches THIS file
 #        Environment name:  pypi
 #
@@ -63,10 +63,10 @@ jobs:
     # `pypi` matches the environment name in the trusted-publisher
     # binding above. The environment also gates on any branch /
     # protection rules you choose to add at github.com/b-tree-labs/
-    # dendra/settings/environments/pypi.
+    # postrule/settings/environments/pypi.
     environment:
       name: pypi
-      url: https://pypi.org/p/dendra
+      url: https://pypi.org/p/postrule
     permissions:
       # Required for OIDC-based PyPI auth. Do NOT add `contents: write`
       # or `actions: write` here — publish should not touch the repo.

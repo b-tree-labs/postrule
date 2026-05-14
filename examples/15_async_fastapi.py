@@ -12,7 +12,7 @@ request. `await sw.aclassify(x)` hands the event loop back during
 any underlying I/O (storage writes, model calls) and cooperates
 naturally with other in-flight requests.
 
-Dendra doesn't hard-depend on FastAPI — this file only imports it
+Postrule doesn't hard-depend on FastAPI — this file only imports it
 inside the module-level try/except so the example is still
 inspectable without the extra install.
 """
@@ -33,7 +33,7 @@ except ImportError:
     )
     raise SystemExit(1) from None
 
-from dendra import LearnedSwitch, ml_switch
+from postrule import LearnedSwitch, ml_switch
 
 
 @ml_switch(labels=["bug", "feature_request", "question"])
@@ -47,7 +47,7 @@ def triage_rule(ticket: dict) -> str:
 
 
 sw: LearnedSwitch = triage_rule.switch
-app = FastAPI(title="Dendra FastAPI example")
+app = FastAPI(title="Postrule FastAPI example")
 
 
 @app.post("/classify")

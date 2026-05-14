@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import asyncio
 
-from dendra import (
+from postrule import (
     BulkVerdict,
     LearnedSwitch,
     ModelPrediction,
     SwitchConfig,
     Verdict,
 )
-from dendra.verdicts import (
+from postrule.verdicts import (
     CallableVerdictSource,
     JudgeCommittee,
     JudgeSource,

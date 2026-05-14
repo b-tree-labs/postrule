@@ -9,7 +9,7 @@ import time
 
 import pytest
 
-from dendra import ClassificationRecord, FileStorage, InMemoryStorage
+from postrule import ClassificationRecord, FileStorage, InMemoryStorage
 
 
 def _record(**overrides) -> ClassificationRecord:

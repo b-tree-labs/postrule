@@ -1,19 +1,19 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Drift detection round-trip — what `dendra refresh` and `dendra
+"""Drift detection round-trip — what `postrule refresh` and `postrule
 doctor` actually do.
 
-Auto-lifters in v1 emit Switch subclasses into ``__dendra_generated__/``
+Auto-lifters in v1 emit Switch subclasses into ``__postrule_generated__/``
 sibling directories. Each generated file carries two hashes in its
 header:
 
 - The AST hash of the source function at generation time.
 - The content hash of the generated body at generation time.
 
-When the user later edits the source function, ``dendra refresh
+When the user later edits the source function, ``postrule refresh
 --check`` exits non-zero (CI gate). When they edit the generated file
-by hand, ``dendra refresh`` refuses to overwrite without ``--force``.
+by hand, ``postrule refresh`` refuses to overwrite without ``--force``.
 
 This script walks the cycle directly via the Python API so you can
 read the contract end-to-end without a real lifter run.
@@ -28,7 +28,7 @@ import textwrap
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from dendra.refresh import (
+from postrule.refresh import (
     DriftStatus,
     ast_hash,
     detect_drift,
@@ -64,7 +64,7 @@ SOURCE_V2 = textwrap.dedent(
 
 GENERATED_BODY = textwrap.dedent(
     """\
-    from dendra import Switch
+    from postrule import Switch
 
     class RouteTicketSwitch(Switch):
         def _evidence_text_lower(self, text: str) -> str:
@@ -92,7 +92,7 @@ def main() -> None:
     with TemporaryDirectory() as td:
         root = Path(td)
         src = root / "myapp" / "routing.py"
-        gen = root / "myapp" / "__dendra_generated__" / "routing__route_ticket.py"
+        gen = root / "myapp" / "__postrule_generated__" / "routing__route_ticket.py"
 
         section("1. Initial state — write the source + generate the wrapper")
         src.parent.mkdir(parents=True)
@@ -103,7 +103,7 @@ def main() -> None:
             source_function="route_ticket",
             source_ast_hash=ast_hash(SOURCE_V1),
             content=GENERATED_BODY,
-            dendra_version="1.0.0",
+            postrule_version="1.0.0",
         )
         status = detect_drift(src, "route_ticket", gen)
         print(f"  detect_drift -> {status.value}")
@@ -114,7 +114,7 @@ def main() -> None:
         status = detect_drift(src, "route_ticket", gen)
         print(f"  detect_drift -> {status.value}")
         assert status is DriftStatus.SOURCE_DRIFT
-        print("  CI would fail with `dendra refresh --check` (exit 1).")
+        print("  CI would fail with `postrule refresh --check` (exit 1).")
 
         section("3. Re-generate — lifter would rewrite the file with the new hash")
         # Stand in for the real lifter run with a manual rewrite.
@@ -124,7 +124,7 @@ def main() -> None:
             source_function="route_ticket",
             source_ast_hash=ast_hash(SOURCE_V2),
             content=GENERATED_BODY,  # body would change too, in real lifter run
-            dendra_version="1.0.0",
+            postrule_version="1.0.0",
         )
         status = detect_drift(src, "route_ticket", gen)
         print(f"  detect_drift -> {status.value}")
@@ -135,14 +135,14 @@ def main() -> None:
         status = detect_drift(src, "route_ticket", gen)
         print(f"  detect_drift -> {status.value}")
         assert status is DriftStatus.USER_EDITED
-        print("  `dendra refresh` would refuse without --force.")
+        print("  `postrule refresh` would refuse without --force.")
 
         section("5. Source function deleted entirely (orphan)")
         src.write_text("# all the routing functions moved to another module\n")
         status = detect_drift(src, "route_ticket", gen)
         print(f"  detect_drift -> {status.value}")
         assert status is DriftStatus.ORPHANED
-        print("  `dendra doctor` would flag this so the user can delete the generated file.")
+        print("  `postrule doctor` would flag this so the user can delete the generated file.")
 
         section("6. Generated file deleted (missing)")
         gen.unlink()
@@ -151,7 +151,7 @@ def main() -> None:
         status = detect_drift(src, "route_ticket", gen)
         print(f"  detect_drift -> {status.value}")
         assert status is DriftStatus.MISSING_GENERATED
-        print("  `dendra refresh` would regenerate from the source.")
+        print("  `postrule refresh` would regenerate from the source.")
 
         section("7. Header inspection")
         # Re-create a generated file so we can read its header back.
@@ -161,11 +161,11 @@ def main() -> None:
             source_function="route_ticket",
             source_ast_hash=ast_hash(SOURCE_V2),
             content=GENERATED_BODY,
-            dendra_version="1.0.0",
+            postrule_version="1.0.0",
         )
         header = parse_generated_header(gen.read_text())
         print(f"  Source: {header.source_module}:{header.source_function}")
-        print(f"  Dendra version: {header.dendra_version}")
+        print(f"  Postrule version: {header.postrule_version}")
         print(f"  AST hash: {header.source_ast_hash[:16]}...")
         print(f"  Content hash: {header.generated_content_hash[:16]}...")
 

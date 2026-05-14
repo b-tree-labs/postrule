@@ -1,4 +1,4 @@
-# Dendra test sandbox
+# Postrule test sandbox
 
 This directory's `conftest.py` installs a sandbox harness so that
 `pytest tests/` (including the chaos / red-team / perf suites that
@@ -13,8 +13,8 @@ no test has to opt in to be protected.
 1. **HOME redirect.** `Path.home()` returns the test's `tmp_path`.
    `HOME`, `USERPROFILE`, `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`, and
    `XDG_DATA_HOME` are pointed at directories under `tmp_path`. A
-   test that writes to `~/.dendra/...` ends up writing under
-   `tmp_path/.dendra/...` and is cleaned up automatically.
+   test that writes to `~/.postrule/...` ends up writing under
+   `tmp_path/.postrule/...` and is cleaned up automatically.
 
 2. **Outbound network block.** `socket.socket.connect` raises
    `RuntimeError("network access blocked in sandbox; ...")` for any
@@ -73,7 +73,7 @@ def test_reads_real_repo_files():
 ```python
 def test_leaks_to_real_home():
     # Raises RuntimeError: external write blocked in sandbox.
-    Path.home().joinpath(".dendra/state.toml").write_text("oops")
+    Path.home().joinpath(".postrule/state.toml").write_text("oops")
 
 def test_calls_real_internet():
     # Raises RuntimeError: network access blocked in sandbox.

@@ -16,13 +16,13 @@ import time
 
 import pytest
 
-from dendra import (
+from postrule import (
     BoundedInMemoryStorage,
     LearnedSwitch,
     Phase,
     SwitchConfig,
 )
-from dendra.models import ModelPrediction
+from postrule.models import ModelPrediction
 
 # ---------------------------------------------------------------------------
 # Stub model that misbehaves on demand
@@ -223,7 +223,7 @@ class TestAdapterValidation:
         # the timeout-validation runs BEFORE the SDK call... actually,
         # the SDK import is first. Skip if not available.
         try:
-            from dendra.models import OpenAIAdapter
+            from postrule.models import OpenAIAdapter
         except ImportError:
             pytest.skip("openai SDK not installed")
         try:
@@ -236,7 +236,7 @@ class TestAdapterValidation:
 
     def test_ollama_adapter_negative_timeout_rejected(self):
         try:
-            from dendra.models import OllamaAdapter
+            from postrule.models import OllamaAdapter
         except ImportError:
             pytest.skip("httpx not installed")
         try:

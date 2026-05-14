@@ -35,7 +35,7 @@ For each candidate model we measure:
 
 Apple M5 / 24 GB / Ollama localhost (port 11434) for Ollama
 models; raw llamafile (port 8080) for Bonsai. Default prompt
-template (`_DEFAULT_JUDGE_PROMPT` in `src/dendra/verdicts.py`).
+template (`_DEFAULT_JUDGE_PROMPT` in `src/postrule/verdicts.py`).
 
 Sorted by **above-chance** (the picker), latency-feasibility
 flagged in the rightmost column.
@@ -66,7 +66,7 @@ are the load-bearing metric we picked on.
 The multiplicative composite (`format × acc`) treats a 95%-
 format / 50%-accuracy judge as equivalent to a 50%-format /
 95%-accuracy judge — both score 0.475. **This is measurably
-wrong.** The first floods Dendra's gate with confident coin
+wrong.** The first floods Postrule's gate with confident coin
 flips; the second says "I don't know" half the time but the
 verdicts it does give are reliable.
 
@@ -94,7 +94,7 @@ correctness is non-substitutable.
 ### Judge / `verifier=` → `qwen2.5:7b`
 
 Best signal among latency-feasible candidates. 85% accuracy
-on judged rows means verdicts entering Dendra's gate are real
+on judged rows means verdicts entering Postrule's gate are real
 information, not coin flips. 481 ms p50 is comfortably under
 the 1 s feasibility line. 4.7 GB on disk is the cost.
 

@@ -1,7 +1,7 @@
 # Why your autoresearch loop needs a deployment substrate
 
 > **Autoresearch tells you what to try.**
-> **Dendra tells you when it worked.**
+> **Postrule tells you when it worked.**
 
 ## The problem
 
@@ -28,11 +28,11 @@ deployment bar. The deployment bar is **paired statistical
 significance against live production traffic, with a rollback
 path that survives the candidate going wrong.**
 
-That's the gap Dendra fills.
+That's the gap Postrule fills.
 
 ## The pattern
 
-Dendra ships a `CandidateHarness` that wraps a production
+Postrule ships a `CandidateHarness` that wraps a production
 `LearnedSwitch`. An external loop — autoresearch agent, A/B
 harness, human running experiments — registers candidate
 classifiers with the harness. Every observed input runs through
@@ -45,7 +45,7 @@ swappable via the `Gate` protocol), and returns a
 `CandidateReport` with a recommendation.
 
 ```python
-from dendra import CandidateHarness, LearnedSwitch
+from postrule import CandidateHarness, LearnedSwitch
 
 # The production switch.
 sw = LearnedSwitch(rule=production_rule, ...)
@@ -77,16 +77,16 @@ if report.recommend_promote:
 ```
 
 The harness is the loop's substrate. The loop's job is to
-propose; Dendra's job is to gate.
+propose; Postrule's job is to gate.
 
 ## Why every primitive lines up
 
 Autoresearch loops need infrastructure they typically don't
-have. Dendra was built for a different stated reason — graduated
+have. Postrule was built for a different stated reason — graduated
 ML adoption — but every primitive turns out to be exactly what
 the loop needs:
 
-| Autoresearch needs | Dendra ships |
+| Autoresearch needs | Postrule ships |
 |---|---|
 | A way to evaluate candidates against real traffic | `CandidateHarness.observe()` + the switch's shadow phases |
 | A statistical bar for "this candidate is better" | Head-to-head evidence gate at configurable `alpha` (`McNemarGate` by default) |
@@ -149,12 +149,12 @@ agent code; the harness handles the gating.
 
 ## Where this fits in the roadmap
 
-`CandidateHarness` ships in v1 of the Dendra Python library
-(`pip install dendra`). The eval-loop primitives are sync
+`CandidateHarness` ships in v1 of the Postrule Python library
+(`pip install postrule`). The eval-loop primitives are sync
 today; an async peer using the existing `aclassify` /
 `abulk_record_verdicts_from_source` surface lands in v1.1. Both
 sit on top of the existing `LearnedSwitch` and `Gate` protocols
-— if you're already using Dendra for graduated ML adoption, the
+— if you're already using Postrule for graduated ML adoption, the
 harness slots in alongside without disturbing your current
 switches.
 
@@ -164,7 +164,7 @@ interesting integrations — Anthropic Claude agents,
 LangGraph / LlamaIndex flows, custom proposal-eval loops in
 research labs — to wire `CandidateHarness` as their evals
 substrate. If you're shipping one, [we'd like to hear about it
-on GitHub](https://github.com/b-tree-labs/dendra/issues).
+on GitHub](https://github.com/b-tree-labs/postrule/issues).
 
 ## See also
 
@@ -178,5 +178,5 @@ on GitHub](https://github.com/b-tree-labs/dendra/issues).
   judge / committee. The harness sync API today; async peer in v1.1.
 - [`examples/19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py) —
   runnable end-to-end loop.
-- The paper at [arXiv: Dendra — When Should a Rule Learn?](#) (link
+- The paper at [arXiv: Postrule — When Should a Rule Learn?](#) (link
   on launch day) covers the statistical machinery the harness uses.

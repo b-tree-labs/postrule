@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import time
 
-from dendra import (
+from postrule import (
     ClassificationRecord,
     InMemoryStorage,
     LearnedSwitch,
     ModelPrediction,
 )
-from dendra.research import train_ml_from_model_outcomes
+from postrule.research import train_ml_from_model_outcomes
 
 
 class _FakeMLHead:

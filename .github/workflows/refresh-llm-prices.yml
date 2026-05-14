@@ -55,7 +55,7 @@ jobs:
             Source: https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json
 
             **What changed:** see the diff below. Pricing data feeds the
-            public calculator on `dendra.run/#pricing` and the analyzer-demo
+            public calculator on `postrule.ai/#pricing` and the analyzer-demo
             ROI section, so eyeball before merge.
 
             To curate the provider list, edit `CURATED` at the top of

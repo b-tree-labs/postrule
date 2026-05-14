@@ -1,4 +1,4 @@
-# Strengthening the Dendra Study — Rigor Plan
+# Strengthening the Postrule Study — Rigor Plan
 
 **Companion to:** `findings.md`.
 **Audience:** paper reviewers, internal validators.
@@ -30,7 +30,7 @@ quote "ML beats rule on N more examples than it loses on, p < X."
 
 ### A2. Multiple training-order seeds (reproducibility)
 **Gap:** Each benchmark was run with one ordering of the training
-stream. Dendra outcomes could be sensitive to order.
+stream. Postrule outcomes could be sensitive to order.
 **Fix:** run each benchmark 5× with different shuffles of the
 training list, fixed seeds (`seed={1..5}`). Report transition depth
 and final accuracy as **mean ± stddev**.
@@ -135,7 +135,7 @@ task family.
 ### B7. Add production case study (Axiom turn-intent classifier)
 **Gap:** Only public data. Reviewers love internal case studies.
 **Fix:** integration currently in flight (see parent session). Run
-Dendra on the classroom turn classifier for 30 days of production
+Postrule on the classroom turn classifier for 30 days of production
 traffic, report a production transition curve.
 **Cost:** integration + 30-day observation window.
 **Impact:** "we tested this on our own product" = major credibility
@@ -171,7 +171,7 @@ Report R² and residuals.
 
 ### C6. Adversarial / poisoning robustness
 What happens when the outcome stream is intentionally corrupted?
-Does Dendra's safety theorem hold? Quantify.
+Does Postrule's safety theorem hold? Quantify.
 
 ---
 
@@ -194,7 +194,7 @@ content of paper 2 (2027).
 - The two-regime conclusion is robust (seed-size sensitivity done).
 - The six-phase lifecycle is stable — no reviewer has cause to
   complain about taxonomy choices given the paper's clarity.
-- Apache-2.0 license + Dendra as reference implementation is
+- Apache-2.0 license + Postrule as reference implementation is
   uncontroversial.
 - The dataset choice (Banking77/CLINC150/HWU64/ATIS) is standard;
   reviewers will not ask for more intent-classification benchmarks.

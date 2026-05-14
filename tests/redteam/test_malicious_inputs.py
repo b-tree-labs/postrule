@@ -19,7 +19,7 @@ import pickle
 
 import pytest
 
-from dendra import LearnedSwitch, ModelPrediction
+from postrule import LearnedSwitch, ModelPrediction
 
 pytestmark = pytest.mark.redteam
 
@@ -107,7 +107,7 @@ def test_unicode_input_dispatches_cleanly(vector):
 
 class _SnitchModel:
     """Fake LLM adapter. Records the input it receives so we can assert
-    Dendra didn't AMPLIFY a prompt-injection payload.
+    Postrule didn't AMPLIFY a prompt-injection payload.
     """
 
     def __init__(self):
@@ -116,7 +116,7 @@ class _SnitchModel:
     def classify(self, input, labels):
         self.calls.append(input)
         # Simulate a model that 'falls' for the injection: it returns a
-        # label outside the legal set. Dendra must NOT route this to
+        # label outside the legal set. Postrule must NOT route this to
         # any handler whose name matches the injected text - only the
         # rule output gets propagated.
         return ModelPrediction(label="PWNED", confidence=0.99)
@@ -124,10 +124,10 @@ class _SnitchModel:
 
 def test_prompt_injection_input_not_amplified():
     """Prompt-injection payloads in the input flow to the model adapter
-    untransformed. Dendra must not interpret the model's response as
+    untransformed. Postrule must not interpret the model's response as
     code; an out-of-vocabulary label is just an unmatched label.
     """
-    from dendra import Phase
+    from postrule import Phase
 
     snitch = _SnitchModel()
     payload = (
@@ -143,7 +143,7 @@ def test_prompt_injection_input_not_amplified():
     )
     result = sw.dispatch(payload)
 
-    # The model saw the payload verbatim - Dendra didn't execute or
+    # The model saw the payload verbatim - Postrule didn't execute or
     # transform it. The model's "PWNED" response is observed as a
     # shadow but does NOT become the user-visible label.
     assert snitch.calls == [payload]
@@ -165,14 +165,14 @@ class _PickleBomb:
     def __reduce__(self):
         import os
 
-        return (os.system, ("echo PWNED > /tmp/dendra-pickle-bomb-fired",))
+        return (os.system, ("echo PWNED > /tmp/postrule-pickle-bomb-fired",))
 
 
 def test_dispatch_does_not_unpickle_input():
-    """Pickled-bytes input must NOT be deserialized by Dendra.
+    """Pickled-bytes input must NOT be deserialized by Postrule.
 
     The rule receives the bytes verbatim; if the rule ignores them,
-    nothing dangerous happens. Even if dendra logs the input, it must
+    nothing dangerous happens. Even if postrule logs the input, it must
     not call ``pickle.loads`` on it.
     """
     bomb_bytes = pickle.dumps(_PickleBomb())
@@ -192,19 +192,19 @@ def test_dispatch_does_not_unpickle_input():
     # Sentinel file must NOT have been written.
     import os
 
-    assert not os.path.exists("/tmp/dendra-pickle-bomb-fired")
+    assert not os.path.exists("/tmp/postrule-pickle-bomb-fired")
 
 
 def test_pickle_dump_records_do_not_re_unpickle():
     """If a storage backend were to pickle-serialize a record (it
-    shouldn't - Dendra uses JSON), an attacker who supplies
+    shouldn't - Postrule uses JSON), an attacker who supplies
     bytes-as-input must not get those bytes round-tripped through
-    pickle.loads on read. Confirm Dendra uses JSON, not pickle, for
+    pickle.loads on read. Confirm Postrule uses JSON, not pickle, for
     record persistence.
     """
     from pathlib import Path
 
-    from dendra import storage
+    from postrule import storage
 
     # The serializer's name must not contain "pickle". Storage uses
     # JSON-lines for the record format.

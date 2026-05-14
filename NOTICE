@@ -1,4 +1,4 @@
-Dendra
+Postrule
 Copyright (c) 2026 B-Tree Ventures, LLC (dba B-Tree Labs)
 
 This product is split-licensed. Different source files carry
@@ -8,20 +8,20 @@ different licenses; each file's own header is authoritative.
   configuration, storage, logger, LLM / ML adapters, telemetry,
   visualization, and benchmarks modules. The full Apache 2.0
   text is in LICENSE-APACHE.
-- Business Source License 1.1 applies to Dendra-operated
+- Business Source License 1.1 applies to Postrule-operated
   components — the analyzer, ROI reporter, research /
   graduation tooling, CLI, and any hosted-surface components.
-  The full BSL 1.1 text, with Dendra's Parameters (Licensor,
+  The full BSL 1.1 text, with Postrule's Parameters (Licensor,
   Licensed Work, Additional Use Grant, Change Date 2030-05-01,
   Change License Apache 2.0), is in LICENSE-BSL.
 
 See LICENSE.md for the developer-oriented split map and
 LICENSING.md for a plain-English "can I use this?" guide.
 
-The DENDRA and B-Tree Labs names and logos are trademarks of
+The POSTRULE and B-Tree Labs names and logos are trademarks of
 B-Tree Ventures, LLC. The licenses above do not grant rights to
 use these marks; see TRADEMARKS.md.
 
 Commercial licensing that removes the BSL restrictions
-(e.g., to offer a hosted Dendra-derivative service) is
+(e.g., to offer a hosted Postrule-derivative service) is
 available. Contact licensing@b-treeventures.com.

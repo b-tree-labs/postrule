@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from dendra import LearnedSwitch, SwitchConfig
-from dendra.autoresearch import CandidateHarness, CandidateReport
+from postrule import LearnedSwitch, SwitchConfig
+from postrule.autoresearch import CandidateHarness, CandidateReport
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -297,7 +297,7 @@ class TestCandidateReport:
 # ---------------------------------------------------------------------------
 
 
-from dendra import Tournament  # noqa: E402
+from postrule import Tournament  # noqa: E402
 
 
 def _perfect(input: int) -> str:

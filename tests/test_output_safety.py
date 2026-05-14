@@ -1,9 +1,9 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Output-safety demonstration — Dendra applied to LLM output classification.
+"""Output-safety demonstration — Postrule applied to LLM output classification.
 
-Proves that output-safety filtering is Dendra's primitive applied to
+Proves that output-safety filtering is Postrule's primitive applied to
 a new input class (LLM-generated text rather than user input). No
 API change, no new feature — the same :func:`ml_switch` decorator,
 the same phase progression, the same ``safety_critical=True`` cap.
@@ -30,7 +30,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     ModelPrediction,
     Phase,
@@ -225,7 +225,7 @@ class TestSafetyCriticalCap:
 
     def test_ml_with_fallback_is_the_cap(self):
         # safety_critical + Phase 4 is the intended "graduated" state.
-        from dendra import MLPrediction
+        from postrule import MLPrediction
 
         class FakeML:
             def fit(self, records): ...
@@ -274,6 +274,6 @@ class TestDecoratorWiring:
         # Invoke like a normal function — no API shape change.
         assert gate("all good here") == "safe"
         assert gate("you can reach me at 555-123-4567") == "pii"
-        # Dendra affordances available on the wrapper.
+        # Postrule affordances available on the wrapper.
         assert gate.switch.author == "@safety:output-gate"
         assert gate.phase() is Phase.RULE

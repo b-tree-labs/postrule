@@ -5,7 +5,7 @@ The switch classifies; a `VerdictSource` judges whether the
 classification was correct. The verdict lands in the outcome log
 with a stable source stamp the audit chain can filter on.
 
-Dendra ships five built-in sources and the `VerdictSource`
+Postrule ships five built-in sources and the `VerdictSource`
 protocol so you can add your own.
 
 ## Decision matrix
@@ -51,7 +51,7 @@ outputs even when wrong, biasing verdicts toward the
 classifier's own errors.
 
 Both `JudgeSource` and `JudgeCommittee` accept
-`require_distinct_from=<classifier>`. At construction, Dendra
+`require_distinct_from=<classifier>`. At construction, Postrule
 checks `judge is classifier` **and** `(class_name,
 model_string)` — which catches the "two separate
 `OpenAIAdapter(model='gpt-4o-mini')` instances" case. If they
@@ -65,7 +65,7 @@ accepts the bias risk and has their own mitigation.
 ### CallableVerdictSource
 
 ```python
-from dendra import CallableVerdictSource, Verdict
+from postrule import CallableVerdictSource, Verdict
 
 def oracle(input, label):
     return Verdict.CORRECT if label == _ground_truth_for(input) else Verdict.INCORRECT
@@ -81,7 +81,7 @@ so a mistyped return doesn't silently poison the log.
 ### JudgeSource
 
 ```python
-from dendra import OpenAIAdapter, AnthropicAdapter, JudgeSource
+from postrule import OpenAIAdapter, AnthropicAdapter, JudgeSource
 
 classifier = OpenAIAdapter(model="gpt-4o-mini")
 judge_model = AnthropicAdapter(model="claude-haiku-4-5")
@@ -97,7 +97,7 @@ breaks the caller's audit loop.
 ### JudgeCommittee
 
 ```python
-from dendra import JudgeCommittee
+from postrule import JudgeCommittee
 
 committee = JudgeCommittee(
     [OpenAIAdapter(model="gpt-4o-mini"),
@@ -122,7 +122,7 @@ Modes:
 ### WebhookVerdictSource
 
 ```python
-from dendra import WebhookVerdictSource
+from postrule import WebhookVerdictSource
 import os
 
 src = WebhookVerdictSource(
@@ -153,7 +153,7 @@ instead of wiring a `WebhookVerdictSource`.
 ### HumanReviewerSource
 
 ```python
-from dendra import HumanReviewerSource
+from postrule import HumanReviewerSource
 import queue
 
 pending = queue.Queue()
@@ -195,7 +195,7 @@ class RedisReviewerSource(HumanReviewerSource):
 Implement the `VerdictSource` protocol on any object:
 
 ```python
-from dendra import Verdict, VerdictSource
+from postrule import Verdict, VerdictSource
 
 class MyCustomSource:
     source_name = "custom:my-pipeline"

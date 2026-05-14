@@ -52,21 +52,21 @@ def _records_with_n_labels(n_labels: int, samples_per_class: int = 100) -> list[
 class TestMLHeadStrategyProtocol:
     def test_protocol_is_importable(self):
         try:
-            from dendra.ml_strategy import MLHeadStrategy  # noqa: F401
+            from postrule.ml_strategy import MLHeadStrategy  # noqa: F401
         except ImportError:
-            pytest.fail("dendra.ml_strategy.MLHeadStrategy not implemented yet")
+            pytest.fail("postrule.ml_strategy.MLHeadStrategy not implemented yet")
 
     def test_default_strategy_is_importable(self):
         try:
-            from dendra.ml_strategy import CardinalityMLHeadStrategy  # noqa: F401
+            from postrule.ml_strategy import CardinalityMLHeadStrategy  # noqa: F401
         except ImportError:
-            pytest.fail("dendra.ml_strategy.CardinalityMLHeadStrategy not implemented yet")
+            pytest.fail("postrule.ml_strategy.CardinalityMLHeadStrategy not implemented yet")
 
     def test_fixed_strategy_is_importable(self):
         try:
-            from dendra.ml_strategy import FixedMLHeadStrategy  # noqa: F401
+            from postrule.ml_strategy import FixedMLHeadStrategy  # noqa: F401
         except ImportError:
-            pytest.fail("dendra.ml_strategy.FixedMLHeadStrategy not implemented yet")
+            pytest.fail("postrule.ml_strategy.FixedMLHeadStrategy not implemented yet")
 
 
 # ---------------------------------------------------------------------------
@@ -77,8 +77,8 @@ class TestMLHeadStrategyProtocol:
 class TestCardinalityStrategyDefaults:
     def test_high_cardinality_picks_multinomial_nb(self):
         pytest.importorskip("sklearn")
-        from dendra.ml import TfidfMultinomialNBHead
-        from dendra.ml_strategy import CardinalityMLHeadStrategy
+        from postrule.ml import TfidfMultinomialNBHead
+        from postrule.ml_strategy import CardinalityMLHeadStrategy
 
         # 150 labels, 30 samples each — CLINC150 shape; NB should win
         records = _records_with_n_labels(150, samples_per_class=30)
@@ -90,8 +90,8 @@ class TestCardinalityStrategyDefaults:
 
     def test_mid_cardinality_picks_linear_svc(self):
         pytest.importorskip("sklearn")
-        from dendra.ml import TfidfLinearSVCHead
-        from dendra.ml_strategy import CardinalityMLHeadStrategy
+        from postrule.ml import TfidfLinearSVCHead
+        from postrule.ml_strategy import CardinalityMLHeadStrategy
 
         # 50 labels, 200 samples each — HWU64/Banking77 shape; LinearSVC
         records = _records_with_n_labels(50, samples_per_class=200)
@@ -102,8 +102,8 @@ class TestCardinalityStrategyDefaults:
 
     def test_low_cardinality_picks_logreg(self):
         pytest.importorskip("sklearn")
-        from dendra.ml import SklearnTextHead
-        from dendra.ml_strategy import CardinalityMLHeadStrategy
+        from postrule.ml import SklearnTextHead
+        from postrule.ml_strategy import CardinalityMLHeadStrategy
 
         # 7 labels, 200 samples each — Snips shape; LogReg (incumbent) holds
         records = _records_with_n_labels(7, samples_per_class=200)
@@ -121,8 +121,8 @@ class TestCardinalityStrategyDefaults:
 class TestFixedStrategy:
     def test_returns_constructed_head(self):
         pytest.importorskip("sklearn")
-        from dendra.ml import TfidfMultinomialNBHead
-        from dendra.ml_strategy import FixedMLHeadStrategy
+        from postrule.ml import TfidfMultinomialNBHead
+        from postrule.ml_strategy import FixedMLHeadStrategy
 
         head = TfidfMultinomialNBHead()
         strat = FixedMLHeadStrategy(head)
@@ -139,8 +139,8 @@ class TestFixedStrategy:
 class TestCardinalityStrategyThresholdOverrides:
     def test_custom_high_cardinality_threshold(self):
         pytest.importorskip("sklearn")
-        from dendra.ml import TfidfMultinomialNBHead
-        from dendra.ml_strategy import CardinalityMLHeadStrategy
+        from postrule.ml import TfidfMultinomialNBHead
+        from postrule.ml_strategy import CardinalityMLHeadStrategy
 
         # Lower the high-cardinality threshold to 30, so a 50-label /
         # 30-samples-per-class dataset now triggers NB instead of
@@ -155,8 +155,8 @@ class TestCardinalityStrategyThresholdOverrides:
 
     def test_custom_mid_cardinality_threshold(self):
         pytest.importorskip("sklearn")
-        from dendra.ml import SklearnTextHead, TfidfLinearSVCHead
-        from dendra.ml_strategy import CardinalityMLHeadStrategy
+        from postrule.ml import SklearnTextHead, TfidfLinearSVCHead
+        from postrule.ml_strategy import CardinalityMLHeadStrategy
 
         # Raise mid-cardinality minimum to 30. A 25-label dataset is
         # now below the cutoff and should fall to LogReg.
@@ -175,15 +175,15 @@ class TestCardinalityStrategyThresholdOverrides:
 
 
 class TestPublicExports:
-    def test_exported_from_dendra_top_level(self):
-        import dendra
+    def test_exported_from_postrule_top_level(self):
+        import postrule
 
         for name in (
             "MLHeadStrategy",
             "CardinalityMLHeadStrategy",
             "FixedMLHeadStrategy",
         ):
-            assert hasattr(dendra, name), (
-                f"dendra.{name} must be exported at the top level for "
+            assert hasattr(postrule, name), (
+                f"postrule.{name} must be exported at the top level for "
                 f"easy use in switch construction"
             )

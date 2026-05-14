@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Security benchmarks — quantified claims for Dendra's threat model.
+"""Security benchmarks — quantified claims for Postrule's threat model.
 
 Earlier ``tests/test_security.py`` proves the architectural
 properties hold. These tests **quantify** them against corpora and
@@ -37,7 +37,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     MLPrediction,
     ModelPrediction,
@@ -352,15 +352,15 @@ class TestJailbreakCorpus:
         )
 
     @pytest.mark.skipif(
-        os.environ.get("DENDRA_JAILBREAK_LIVE") != "1",
+        os.environ.get("POSTRULE_JAILBREAK_LIVE") != "1",
         reason=(
             "Live-provider jailbreak run is opt-in — no network / no "
-            "API keys consumed by default. Set DENDRA_JAILBREAK_LIVE=1 "
+            "API keys consumed by default. Set POSTRULE_JAILBREAK_LIVE=1 "
             "to enable."
         ),
     )
     def test_rule_floor_holds_on_all_jailbreaks_live_provider(self):
-        """Opt-in live-provider sweep. Requires DENDRA_JAILBREAK_LIVE=1.
+        """Opt-in live-provider sweep. Requires POSTRULE_JAILBREAK_LIVE=1.
 
         Points a configured adapter at every corpus payload. The
         architectural claim is the same as the sandboxed test: the
@@ -370,18 +370,18 @@ class TestJailbreakCorpus:
         Needs provider credentials via env + the matching extras
         installed. Skipped in CI by design.
         """
-        adapter = os.environ.get("DENDRA_JAILBREAK_ADAPTER", "openai")
-        model_name = os.environ.get("DENDRA_JAILBREAK_MODEL", "gpt-4o-mini")
+        adapter = os.environ.get("POSTRULE_JAILBREAK_ADAPTER", "openai")
+        model_name = os.environ.get("POSTRULE_JAILBREAK_MODEL", "gpt-4o-mini")
         if adapter == "openai":
-            from dendra.models import OpenAIAdapter
+            from postrule.models import OpenAIAdapter
 
             model = OpenAIAdapter(model=model_name)
         elif adapter == "anthropic":
-            from dendra.models import AnthropicAdapter
+            from postrule.models import AnthropicAdapter
 
             model = AnthropicAdapter(model=model_name)
         elif adapter == "ollama":
-            from dendra.models import OllamaAdapter
+            from postrule.models import OllamaAdapter
 
             model = OllamaAdapter(model=model_name)
         else:
@@ -535,7 +535,7 @@ class TestCompoundAttack:
 
 
 class TestLatencyUnderAdversarialLoad:
-    """A shadow LLM that takes 100× longer than budget. Dendra should
+    """A shadow LLM that takes 100× longer than budget. Postrule should
     still return the rule's answer in the rule's envelope — the shadow
     observation is attempted but swallowed on timeout."""
 
@@ -543,7 +543,7 @@ class TestLatencyUnderAdversarialLoad:
         class SlowLLM:
             def classify(self, input, labels):
                 # Simulate an inference that "hangs" — we raise an
-                # exception that the Dendra shadow path swallows. The
+                # exception that the Postrule shadow path swallows. The
                 # real integration would impose a deadline and raise
                 # TimeoutError; semantically equivalent for us.
                 time.sleep(0.005)  # 5ms "hang"
@@ -664,7 +664,7 @@ class TestCircuitBreakerStress:
 def test_print_security_summary():
     """Emit one-line summary of quantified security claims for citation."""
     print(
-        "\n[dendra-security-benchmarks] "
+        "\n[postrule-security-benchmarks] "
         f"JB={len(_JAILBREAK_CORPUS)} patterns rule-floor preserved; "
         f"PII recall≥80% precision≥85% on {len(_PII_CORPUS)}-item corpus; "
         f"adversarial-shadow p95<50ms; "

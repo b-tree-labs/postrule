@@ -13,8 +13,8 @@ A valid hypothesis names six things: unit of decision, gate
 criterion, expected n, expected effect size, truth source, and
 rollback rule.
 
-In Dendra: lives at `dendra/hypotheses/<switch>.md`. Auto-drafted by
-`dendra init` from cohort-tuned defaults; customer reviews and
+In Postrule: lives at `postrule/hypotheses/<switch>.md`. Auto-drafted by
+`postrule init` from cohort-tuned defaults; customer reviews and
 commits before the switch ships.
 
 ## Shadow Phase
@@ -25,7 +25,7 @@ both produce a label; only the incumbent's label takes effect. The
 shadow's labels accumulate in the audit chain for later paired-
 correctness comparison.
 
-In Dendra's six-phase lifecycle: `MODEL_SHADOW` and `ML_SHADOW` are
+In Postrule's six-phase lifecycle: `MODEL_SHADOW` and `ML_SHADOW` are
 the explicit shadow phases.
 
 ## Gate
@@ -35,7 +35,7 @@ Evaluated continuously (or at scheduled checkpoints) against
 accumulated paired-correctness evidence. Fires when evidence clears
 the pre-registered α threshold.
 
-Default gate in Dendra: `McNemarGate` with α = 0.01 and a minimum
+Default gate in Postrule: `McNemarGate` with α = 0.01 and a minimum
 30 paired samples. Other gates ship: `AccuracyMarginGate`,
 `MinVolumeGate`, `CompositeGate`, `ManualGate`. Customers can
 implement their own; the protocol is two methods.
@@ -58,8 +58,8 @@ function's source changed (AST hash mismatch). Less common: traffic
 distribution shifted; label space added a new class; verdict source
 quality dropped.
 
-Dendra ships an AST-hash drift detector by default; it runs on
-`dendra refresh --check`. Custom drift detectors can be plugged in
+Postrule ships an AST-hash drift detector by default; it runs on
+`postrule refresh --check`. Custom drift detectors can be plugged in
 through the same protocol.
 
 ## Rule Floor
@@ -69,14 +69,14 @@ The architectural invariant that a deterministic fallback (the
 The rule floor is what makes TDPD safer than free-form deployment:
 gate failure mode is "fall back to rule," not "show a broken thing."
 
-In Dendra: `safety_critical=True` on `SwitchConfig` enforces the rule
+In Postrule: `safety_critical=True` on `SwitchConfig` enforces the rule
 floor at construction. The circuit breaker auto-reverts ML decisions
 to the rule when the candidate fails (exception, timeout, drift).
 
 ## Regime
 
 A coarse classification of the *decision-space shape* that determines
-how long the gate typically takes to fire. Three regimes in Dendra:
+how long the gate typically takes to fire. Three regimes in Postrule:
 
 - **narrow**: cardinality < 30 labels. Rule is a usable day-zero
   baseline; graduation typically by ~250 outcomes.
@@ -84,7 +84,7 @@ how long the gate typically takes to fire. Three regimes in Dendra:
   graduation timeline depends on verdict rate.
 - **high**: cardinality > 60 labels. Rule is symbolic; production
   teams typically start at Phase 2 with a zero-shot LLM and
-  accumulate outcome data via Dendra's logging.
+  accumulate outcome data via Postrule's logging.
 
 Regime is computed from the analyzer's static read of the call site.
 Cohort-tuned defaults are regime-keyed; the report card's predicted
@@ -103,14 +103,14 @@ git history is the audit trail; revisions are visible and dated.
 
 ## Cohort
 
-The set of public, opted-in Dendra Insights participants whose
+The set of public, opted-in Postrule Insights participants whose
 shape-only telemetry contributes to tuned defaults and predicted
 graduation intervals. Receiving cohort wisdom does NOT require
 contributing to it (asymmetric by design). Contributing requires
-opt-in via `dendra insights enroll`.
+opt-in via `postrule insights enroll`.
 
 The cohort exists at the methodology level too — anyone running
-TDPD-style experiments outside Dendra is part of the broader cohort
+TDPD-style experiments outside Postrule is part of the broader cohort
 of TDPD practitioners. Cite each other; build the field.
 
 ## Audit Chain
@@ -128,7 +128,7 @@ this site at 312 outcomes" is a claim. With it, it's evidence.
 ## Verdict Source
 
 The mechanism that says whether the user-visible label was right.
-Five built-in source types in Dendra: callable (synchronous Python
+Five built-in source types in Postrule: callable (synchronous Python
 function), LLM judge, LLM committee, webhook (async HTTP), human
 reviewer. Each source has a documented bias profile (e.g., LLMs have
 a self-judgment bias when judging their own outputs; the

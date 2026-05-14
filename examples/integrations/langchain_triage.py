@@ -1,15 +1,15 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
-"""Dendra + LangChain — wrap an agent's routing decision.
+"""Postrule + LangChain — wrap an agent's routing decision.
 
 LangChain's pattern: an LLM picks one of N tools / retrievers / paths
 based on the user query. The "which path?" decision is exactly what
-Dendra graduates: today it's an LLM (slow, expensive, drifts); after
+Postrule graduates: today it's an LLM (slow, expensive, drifts); after
 ~250 logged outcomes a paired-McNemar gate fires and an in-process
 sklearn head replaces the LLM for the easy cases. The LangChain
 pipeline downstream of the routing decision doesn't change.
 
-Pattern: wrap the routing function; Dendra logs every (input, label)
+Pattern: wrap the routing function; Postrule logs every (input, label)
 the LLM produces; the gate decides when the head is good enough to
 take over. The rule (whatever fallback you want) is the safety floor.
 
@@ -19,7 +19,7 @@ LangChain optional — falls back to a stub so the example runs offline.
 
 from __future__ import annotations
 
-from dendra import ml_switch
+from postrule import ml_switch
 
 # LangChain is optional; fall back to a stub so this file is runnable
 # without the dependency installed. Production users have it.

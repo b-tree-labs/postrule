@@ -11,14 +11,14 @@ call is needed.
 
 Production swap-ins for the verifier (any one works):
 
-    from dendra import default_verifier
+    from postrule import default_verifier
     verifier = default_verifier()
     # Auto-detects a running local Ollama; raises if not reachable.
 
-    from dendra import JudgeSource, OllamaAdapter
+    from postrule import JudgeSource, OllamaAdapter
     verifier = JudgeSource(OllamaAdapter(model="qwen2.5:7b"))
 
-    from dendra import JudgeSource, OpenAIAdapter
+    from postrule import JudgeSource, OpenAIAdapter
     verifier = JudgeSource(OpenAIAdapter(model="gpt-4o-mini"))
 
 The example uses ``FakeJudgeLM`` from ``_stubs.py`` to keep
@@ -33,7 +33,7 @@ What ``verifier=`` buys you, in one line each:
   calendar-time-to-``ML_PRIMARY`` over typical reviewer-
   queue verdict rates.
 - *Format compliance of the shipped default:* 97% on
-  Dendra's verdict task (n=30,
+  Postrule's verdict task (n=30,
   ``docs/benchmarks/slm-verifier-results.md``). Failures
   log as ``UNKNOWN``; the rule floor is unaffected.
 
@@ -45,7 +45,7 @@ from __future__ import annotations
 
 from _stubs import FakeJudgeLM
 
-from dendra import JudgeSource, LearnedSwitch, Verdict
+from postrule import JudgeSource, LearnedSwitch, Verdict
 
 
 def production_rule(ticket: dict) -> str:

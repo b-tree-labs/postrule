@@ -11,8 +11,8 @@ Latency claims we verify here:
 
 1. Rule call is **sub-microsecond** per input (pure Python keyword match).
 2. ML call is **hundreds of microseconds** per input (sklearn pipeline).
-3. Dendra switch overhead is **negligible** at Phase 0.
-4. Dendra at Phase 4 (ML_WITH_FALLBACK) sees ML latency when confident,
+3. Postrule switch overhead is **negligible** at Phase 0.
+4. Postrule at Phase 4 (ML_WITH_FALLBACK) sees ML latency when confident,
    rule latency on fallback → blended latency is dominated by ML.
 
 Skipped by default — pytest collects but marks ``benchmark`` so CI
@@ -26,7 +26,7 @@ from collections.abc import Callable
 
 import pytest
 
-from dendra import (
+from postrule import (
     LearnedSwitch,
     MLPrediction,
     Phase,
@@ -138,8 +138,8 @@ class TestRawComponentLatency:
         assert stats["p50_us"] < 2_000
 
 
-class TestDendraSwitchOverhead:
-    """Dendra adds phase-routing + outcome buffering. Quantify overhead."""
+class TestPostruleSwitchOverhead:
+    """Postrule adds phase-routing + outcome buffering. Quantify overhead."""
 
     def test_phase_rule_overhead_is_small(self):
         sw = LearnedSwitch(
@@ -215,9 +215,9 @@ class TestThroughputProjection:
             f"  llm-only:    {model_only_sec_per_day:>10,.1f} CPU-sec/day "
             f"(= {model_only_sec_per_day / 3600:.2f} CPU-hours)"
         )
-        print("  dendra Phase 0: same as rule")
+        print("  postrule Phase 0: same as rule")
         print(
-            f"  dendra Phase 2 (20% LLM fallback): "
+            f"  postrule Phase 2 (20% LLM fallback): "
             f"~{0.8 * rule_only_sec_per_day + 0.2 * model_only_sec_per_day:,.0f} "
             f"CPU-sec/day"
         )

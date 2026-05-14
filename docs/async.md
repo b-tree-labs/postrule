@@ -57,7 +57,7 @@ instead of `classify(input, labels)`. Use them with
 ```python
 import asyncio
 
-from dendra import (
+from postrule import (
     OpenAIAsyncAdapter,
     AnthropicAsyncAdapter,
     OllamaAsyncAdapter,

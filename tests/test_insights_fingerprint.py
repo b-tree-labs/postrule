@@ -1,13 +1,13 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for dendra.insights.fingerprint."""
+"""Tests for postrule.insights.fingerprint."""
 
 from __future__ import annotations
 
 import pytest
 
-from dendra.insights.fingerprint import (
+from postrule.insights.fingerprint import (
     fingerprint_function,
     fingerprint_repo_files,
 )

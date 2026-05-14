@@ -59,14 +59,14 @@ gantt
 | Latency p50 | 280 ms | <1 ms |
 
 > **No graduation has fired yet.** Cost-reduction figures above are
-> projections. Use `dendra report severity_classifier --pro-forma` to
+> projections. Use `postrule report severity_classifier --pro-forma` to
 > see modelled outcomes if you graduate this site under different
 > traffic shapes.
 
 ## Hypothesis evidence (in-flight)
 
 The pre-registered hypothesis at
-`dendra/hypotheses/severity_classifier.md`
+`postrule/hypotheses/severity_classifier.md`
 predicted graduation at outcome 250–500, effect size ≥ 3 pp.
 
 | Predicted | Observed-so-far | Verdict |
@@ -91,8 +91,8 @@ which would be a signal to re-examine the rule + ML head choice).
 
 ---
 
-*Regenerate with `dendra report severity_classifier`. Last drift check:
+*Regenerate with `postrule report severity_classifier`. Last drift check:
 2026-04-29 22:14 UTC, no drift detected. Dated archive at
-`dendra/results/archive/severity_classifier-2026-04-29.md`.*
+`postrule/results/archive/severity_classifier-2026-04-29.md`.*
 
 *Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*

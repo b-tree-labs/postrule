@@ -18,7 +18,7 @@ pytestmark = pytest.mark.smoke
 def test_collector_health_returns_200(smoke_collector_target: str) -> None:
     req = urllib.request.Request(
         smoke_collector_target + "/health",
-        headers={"User-Agent": "dendra-smoke-test/1.0"},
+        headers={"User-Agent": "postrule-smoke-test/1.0"},
     )
     with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310 — HTTPS
         assert resp.status == 200
@@ -31,7 +31,7 @@ def test_collector_health_returns_200(smoke_collector_target: str) -> None:
 def test_collector_returns_404_for_unknown_routes(smoke_collector_target: str) -> None:
     req = urllib.request.Request(
         smoke_collector_target + "/unknown-route",
-        headers={"User-Agent": "dendra-smoke-test/1.0"},
+        headers={"User-Agent": "postrule-smoke-test/1.0"},
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
@@ -82,7 +82,7 @@ def test_collector_post_synthetic_event(smoke_collector_target: str, is_producti
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "content-type": "application/json",
-            "user-agent": "dendra-smoke-test/1.0",
+            "user-agent": "postrule-smoke-test/1.0",
         },
         method="POST",
     )
@@ -183,7 +183,7 @@ def test_collector_leads_post_synthetic(smoke_collector_target: str, is_producti
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "content-type": "application/json",
-            "user-agent": "dendra-smoke-test/1.0",
+            "user-agent": "postrule-smoke-test/1.0",
         },
         method="POST",
     )
@@ -207,7 +207,7 @@ def test_collector_leads_rejects_bad_email(
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "content-type": "application/json",
-            "user-agent": "dendra-smoke-test/1.0",
+            "user-agent": "postrule-smoke-test/1.0",
         },
         method="POST",
     )

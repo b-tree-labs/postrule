@@ -1,6 +1,6 @@
 # Performance baselines — 2026-05-01
 
-The authoritative numbers Dendra documents about itself. Every public
+The authoritative numbers Postrule documents about itself. Every public
 surface (README, FAQ, landing, brand/messaging.md) cites this file.
 
 ## How to reproduce
@@ -27,12 +27,12 @@ Re-render this doc after a meaningful regen.
 
 Numbers reflect framework overhead with stub model classifiers
 (no I/O, no real ML). Real-LLM or real-ML latency is dominated by
-the model's own inference time, not by Dendra.
+the model's own inference time, not by Postrule.
 
 ## SDK hot-path latency
 
 From `tests/perf/baselines/` (the structured perf suite). Per-call
-overhead in Dendra's classify / dispatch path, model-stubbed so we
+overhead in Postrule's classify / dispatch path, model-stubbed so we
 measure the framework itself.
 
 | Operation | p50 | p95 | Notes |
@@ -47,7 +47,7 @@ measure the framework itself.
 **Framework tax:** ~24× a bare Python call. In absolute terms ~1 µs
 — fast enough that any production hot path is dominated by the
 caller's own logic and (when phases beyond RULE engage) by the
-model's inference, not by Dendra.
+model's inference, not by Postrule.
 
 ## End-to-end latency (with realistic model stubs)
 
@@ -103,7 +103,7 @@ governed by Workers + D1 limits, not Worker code.
 
 **Day-1 scale assumption.** Public launch + initial paid-tier
 cohort: ~10 deployments enrolled, each emitting 1 `analyze` event
-per `dendra analyze` invocation (~1 per dev session per day) plus
+per `postrule analyze` invocation (~1 per dev session per day) plus
 sparse `init_attempt` / `bench_phase_advance` events. Total ~100
 events/day across the cohort. Effective load on the Worker is
 microscopic.
@@ -130,12 +130,12 @@ this doc until measured:
   measured at ~481 ms p50 in
   [`docs/benchmarks/slm-verifier-results.md`](slm-verifier-results.md);
   needs re-measurement on launch hardware.
-- **Cold-start cost of `pip install dendra` + first-call.** Cohort
+- **Cold-start cost of `pip install postrule` + first-call.** Cohort
   traffic is the wedge — measure post-launch with real installs.
 - **Multi-process FileStorage contention.** The current 4-thread
   test stays in a single process; the inter-process flock contention
   ceiling needs a multi-process probe.
-- **CDN cache hit rate on `models.dendra.run`** for bundled-model
+- **CDN cache hit rate on `models.postrule.ai`** for bundled-model
   downloads. Worth measuring after first 100 downloads.
 
 Each of these resolves into a perf-suite test and a paragraph in

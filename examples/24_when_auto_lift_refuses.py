@@ -1,9 +1,9 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""When `dendra init --auto-lift` refuses, and how to fix the source.
+"""When `postrule init --auto-lift` refuses, and how to fix the source.
 
-Phase 5 of Dendra's analyzer is prescriptive: for each candidate site,
+Phase 5 of Postrule's analyzer is prescriptive: for each candidate site,
 it tells you what's blocking auto-lifting and the minimum diff that
 would unblock it. This script walks five categories of refusal so you
 can see the diagnostics before they show up in your own analyzer
@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import textwrap
 
-from dendra.analyzer import analyze_function_source
+from postrule.analyzer import analyze_function_source
 
 CASES = [
     (
@@ -109,7 +109,7 @@ def main() -> None:
 
     print(f"\n{'=' * 70}")
     print("Each refusal points at a specific line + a specific fix.")
-    print("Run `dendra analyze --suggest-refactors` on your repo for the")
+    print("Run `postrule analyze --suggest-refactors` on your repo for the")
     print("same diagnostics across every candidate site.")
 
 

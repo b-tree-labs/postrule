@@ -1,7 +1,7 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 
-"""Sandbox harness for the Dendra test suite.
+"""Sandbox harness for the Postrule test suite.
 
 This conftest installs three autouse guards so that tests cannot
 escape into the developer's real local environment. The guards are
@@ -214,12 +214,12 @@ def _sandbox_home(request, tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / ".local" / "share"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     # Disable the cohort-defaults async refresh during tests.
-    # The fetch fires when `dendra analyze` runs; without this guard
-    # the daemon thread tries to reach dendra.run, the sandbox blocks
+    # The fetch fires when `postrule analyze` runs; without this guard
+    # the daemon thread tries to reach postrule.ai, the sandbox blocks
     # the connect, and the unraised exception leaks into pytest as
     # a PytestUnraisableExceptionWarning. The CLI smoke tests don't
     # care about cohort defaults; opt out unconditionally.
-    monkeypatch.setenv("DENDRA_NO_INSIGHTS_FETCH", "1")
+    monkeypatch.setenv("POSTRULE_NO_INSIGHTS_FETCH", "1")
 
 
 @pytest.fixture(autouse=True, scope="session")

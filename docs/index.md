@@ -1,6 +1,6 @@
-# Dendra docs
+# Postrule docs
 
-Welcome. Dendra is a graduated-autonomy classification primitive
+Welcome. Postrule is a graduated-autonomy classification primitive
 for production Python systems. Pick the entry point that matches
 where you are:
 
@@ -98,15 +98,15 @@ self-contained, runs without API keys, and walks one concept.
 | [`14_human_reviewer_queue.py`](../examples/14_human_reviewer_queue.py) | Queue-backed human-in-the-loop. |
 | [`15_async_fastapi.py`](../examples/15_async_fastapi.py) | FastAPI integration. |
 | [`16_async_committee.py`](../examples/16_async_committee.py) | `asyncio.gather` over model judges. |
-| [`17_exception_handling.py`](../examples/17_exception_handling.py) | Dendra as a try/except-tree replacement. |
+| [`17_exception_handling.py`](../examples/17_exception_handling.py) | Postrule as a try/except-tree replacement. |
 | [`18_system_defaults_tuning.py`](../examples/18_system_defaults_tuning.py) | Post-install tuning of system defaults. |
-| [`19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py) | End-to-end autoresearch + Dendra. |
+| [`19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py) | End-to-end autoresearch + Postrule. |
 
 ## Help + community
 
-- **GitHub issues:** <https://github.com/b-tree-labs/dendra/issues>
-- **Security disclosures:** `security@dendra.run`
-- **Hosted-beta waitlist:** [dendra.run](https://dendra.run)
+- **GitHub issues:** <https://github.com/b-tree-labs/postrule/issues>
+- **Security disclosures:** `security@postrule.ai`
+- **Hosted-beta waitlist:** [postrule.ai](https://postrule.ai)
 
 ## License
 
