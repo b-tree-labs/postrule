@@ -3,10 +3,12 @@
 
 == Abstract
 <abstract>
-Production classification sites cross a paired-McNemar gate at α = 0.01
-within 250 to 500 outcomes on seven of eight public benchmarks (2,000
-on the eighth, Snips), even when the day-zero rule is a 100-example
-keyword auto-build at chance accuracy. We formalize the rule-to-ML migration as a
+Across eight public classification benchmarks, the paired-McNemar
+gate at α = 0.01 fires within 250 to 1,000 outcomes on seven (2,000
+on the eighth, Snips). This holds even when the day-zero rule starts
+at chance accuracy: a 100-example keyword auto-build that collapses
+to modal-fallback on five of the eight benchmarks (HWU64, Banking77,
+CLINC150, Snips, AG News). We formalize the rule-to-ML migration as a
 #emph[graduated-autonomy lifecycle] (`RULE` → `MODEL_SHADOW` →
 `MODEL_PRIMARY` → `ML_SHADOW` → `ML_WITH_FALLBACK` → `ML_PRIMARY`),
 prove a per-step Type-I bound (the marginal probability of a
@@ -16,17 +18,19 @@ classification (ATIS, HWU64, Banking77, CLINC150, Snips), question
 categorization (TREC-6), news topic classification (AG News), and
 programming-language detection (codelangs).
 
-We report transition curves under three rule constructions on Banking77,
-the most-cited intent benchmark in the suite. A 100-example keyword
-auto-rule is sensitive to training-stream order: on the as-shipped
-HuggingFace split it reduces to predict-modal at 1.3% (chance), and
-under random shuffles of the training stream recovers to a median of
-24.4% (range 21 to 30 across 10 seeds). A hand-written keyword regex of
-\~35 patterns reaches 14.6%. A locally-served 22M-parameter
-embedding-cosine baseline reaches 62.2%. Each of these graduates to the
-same ML asymptote at 87.7% by training-corpus exhaustion; the McNemar
-gate fires within 250 to 500 outcomes regardless of starting point, with
-effect size dominating the gate decision.
+We report transition-curve behavior under the canonical
+100-example keyword auto-rule on the as-shipped HuggingFace split for
+each benchmark. On Banking77, the most-cited intent benchmark in the
+suite, the auto-rule's seed window is captured by a single class and
+the rule reduces to predict-modal at 1.3% (chance); it nonetheless
+graduates to an ML asymptote of 87.7% by training-corpus exhaustion,
+with the McNemar gate firing after the rule's modal-fallback floor is
+overtaken and effect size dominating the gate decision. The rule is
+sensitive to training-stream order. Random shuffles redraw the seed
+window from across the label space and produce a substantially
+different rule, but quantifying that sensitivity across the suite
+requires multi-seed runs deferred to the next revision (see Appendix
+B).
 
 We release the reference implementation (the Dendra library), the full
 transition-curve dataset, the benchmark harness, and an `MLHead`
@@ -108,7 +112,7 @@ site graduates by the same contract.
 <contribution>
 We make four contributions:
 
-+ #strong[A six-phase graduated-autonomy lifecycle] (Table 1) with
++ #strong[A six-phase graduated-autonomy lifecycle] (Table 2) with
   formal transition criteria. The rule is the structural safety floor at
   every phase; the lifecycle is closed under failure recovery.
 
@@ -125,9 +129,10 @@ We make four contributions:
   (CIFAR-10, §5.7) demonstrating the lifecycle generalizes beyond text.
   Three regimes emerge: #emph[rule near-optimum] (codelangs), #emph[rule
   usable] (ATIS, TREC-6), #emph[rule modal-fallback under sorted splits]
-  (Banking77, HWU64, CLINC150, Snips). The third regime is partially a
+  (Banking77, HWU64, CLINC150, Snips, AG News). The third regime is partially a
   property of HuggingFace split ordering rather than benchmark
-  intrinsics; we report shuffle-sensitivity in §5.3 (Table 4b). Under
+  intrinsics; the shuffle-sensitivity quantification is deferred to
+  the next revision (see Appendix B). Under
   the paired McNemar gate at $alpha = 0.01$, transition depths in the
   suite range from 250 outcomes to 2000. §5 reports the curves; §6 lays
   out the regime taxonomy.
@@ -167,7 +172,7 @@ LLM cascade. #emph[FrugalGPT] (Chen, Zaharia, & Zou, 2024) introduced
 the #emph[weakest-model-first, escalate-on-low-confidence] pattern that
 reduces cost while preserving quality on benchmark suites.
 #emph[RouteLLM] (Ong et al., 2024) extended cascading to #emph[learned]
-routing from preference data, recovering 95% of GPT-4 quality at 15% of
+routing from preference data, recovering 95% of GPT-4 quality at 14% of
 the cost on MT-Bench. #emph[A Unified Approach to Routing and Cascading
 for LLMs] (Dekoninck et al., 2025) provided a theoretical unification,
 framing both as instances of a meta-classifier over a model pool with
@@ -350,8 +355,8 @@ A learned switch is one object that holds three optional decision-makers
 (the rule, an LLM-style model, and a trained ML head) plus a phase
 counter that tracks which decision-maker is currently routing
 classifications. The phase counter steps forward, or back, as the gates
-introduced in §3.2 and §3.3 fire on accumulated outcome evidence; the
-routing logic at each phase is shown in Table 1 below.
+introduced in §3.2 and §3.3 fire on accumulated outcome evidence.
+Table 2 shows the routing logic at each phase.
 
 Formally, we define a #emph[learned switch] over a label set $cal(L)$ as
 a tuple $S = \( R \, M \, H \, phi.alt \)$ where
@@ -384,7 +389,7 @@ The decision function is:
   , kind: table
   )
 
-#strong[Table 1.] #emph[The six-phase graduated-autonomy lifecycle.]
+#strong[Table 2.] #emph[The six-phase graduated-autonomy lifecycle.]
 Three transitions ($P_2 arrow.l P_1$, $P_4 arrow.l P_3$,
 $P_5 arrow.l P_4$) are statistically gated; two ($P_1 arrow.l P_0$,
 $P_3 arrow.l P_2$) are operator- or construction-driven (shadow modes
@@ -541,7 +546,7 @@ $alpha \/ 2$. The marginal advance probability is therefore at most
 $alpha$. $square.filled.medium$
 
 #strong[Corollary (lifecycle safety).] With three statistically-gated
-transitions (as in Table 1), each guarded at $alpha$, the per-switch
+transitions (as in Table 2), each guarded at $alpha$, the per-switch
 worst-case probability of #emph[any] worse-than-rule advance is bounded
 by $3 alpha$ (union bound), and exactly $alpha$ for the single canonical
 transition the field most cares about ($P_4 arrow.r P_5$). At
@@ -631,7 +636,7 @@ cardinality and domain breadth:
   , kind: table
   )
 
-#strong[Table 2.] #emph[Headline benchmarks.] All are public,
+#strong[Table 3.] #emph[Headline benchmarks.] All are public,
 leaderboarded, and reproducible. CLINC150 includes an out-of-scope (OOS)
 class which is a known stress test for keyword rules. §5.1 reports the
 full eight-benchmark suite (these four plus Snips, TREC-6, AG News,
@@ -727,13 +732,13 @@ computation in `src/dendra/gates.py::McNemarGate`.
 We measure transition curves on eight public text benchmarks spanning
 four domains (intent classification, question categorization, news
 topics, programming-language detection) plus one image bench (CIFAR-10)
-reported separately in §5.7. Table 3 reports the headline numbers.
+reported separately in §5.7. Table 4 reports the headline numbers.
 
 #figure(
   align(center)[#text(size: 8pt)[#table(
     columns: (12%, 16%, 7%, 9%, 10%, 8%, 9%, 11%, 18%),
     align: (left,left,right,right,right,right,right,right,right,),
-    table.header([Benchmark], [Domain], [Labels], [Rule acc], [ML first clear], [ML \@ 1k], [ML final], [First clear ($p < 0.01$)], [Outcomes to ML final],),
+    table.header([Benchmark], [Domain], [Labels], [Rule acc], [ML first clear], [ML \@ 1k], [ML final], [First clear ($p < 0.01$)#footnote[#emph[First clear] reports the smallest checkpoint at which $b > c$ and $p < alpha$. The production gate (`McNemarGate` in `src/dendra/gates.py`) additionally requires $n_"paired" >= n_min$, which can be satisfied later than this column shows on small test sets or under extreme effect sizes. With $n_min = 200$ enforced, the first-clear depths shift to: codelangs never (139-row test set never reaches $n_"paired" = 200$), ATIS 250, TREC-6 250, AG News 1,000, Snips 3,000, HWU64 2,250, Banking77 1,000, CLINC150 750. Path (c) of the V1 review, re-running the column under the production gate, is deferred to a follow-up revision.]], [Outcomes to ML final],),
     table.hline(),
     [#strong[codelangs]], [code], [12], [87.8%], [97.1%], [#emph[\(extract)]], [#strong[97.8%]], [#strong[400]], [553],
     [#strong[ATIS]], [flight booking], [26], [70.0%], [75.6%], [81.9%], [#strong[88.7%]], [#strong[250]], [4,978],
@@ -747,7 +752,7 @@ reported separately in §5.7. Table 3 reports the headline numbers.
   , kind: table
   )
 
-#strong[Table 3.] #emph[Headline transition-curve results across the
+#strong[Table 4.] #emph[Headline transition-curve results across the
 eight-benchmark suite.] Sorted by descending rule baseline. Every
 benchmark crosses paired-McNemar significance at $alpha = 0.01$.
 Column key: #emph[Rule acc] is at seed=100, no shuffle; #emph[ML first
@@ -759,10 +764,12 @@ Snips (Coucke et al. 2018); HWU64 (Liu et al. 2019); Banking77
 (Casanueva et al. 2020); CLINC150 (Larson et al. 2019). Banking77, HWU64, CLINC150, and Snips at
 seed=100 with the as-shipped HuggingFace split produce single-label
 (modal-fallback) rules. Their `Rule acc` column equals chance (1/k).
-Under random shuffling of the training stream the rule recovers to 17 to
-75 percent depending on benchmark (Table 4b). The chance-accuracy floor
-on these four rows is therefore a property of stream ordering at
-seed=100, not of the benchmark itself. Snips is the one outlier on
+Under random shuffling of the training stream the seed window is
+redrawn from across the label space and the rule changes substantially;
+quantifying that sensitivity across the suite is deferred to the next
+revision (see Appendix B). The chance-accuracy floor on these four
+rows is therefore a property of stream ordering at seed=100, not of
+the benchmark itself. Snips is the one outlier on
 first-clear depth: the as-shipped rule's 14.3% accuracy beats the ML
 head at the 250-outcome checkpoint, and the advance gate fires only at
 2,000 outcomes after ML overtakes. The Snips `ML \@ 1k` cell equals
@@ -785,8 +792,8 @@ Two views of the data are useful and pull complementary signals.
     Snips, HWU64, Banking77, CLINC150. Rule accuracy (grey, flat) and
     ML-head accuracy (blue, rising) on a log x-axis; the dashed red
     vertical marks the first paired-McNemar gate fire at p \< 0.01.
-    Shuffle-sensitivity for the bottom-row rules is reported in Table
-    4b.
+    Shuffle-sensitivity for the bottom-row rules is deferred to a
+    follow-up revision (see Appendix B).
   ]
 )
 
@@ -801,11 +808,10 @@ Two views of the data are useful and pull complementary signals.
 
 === 5.2 Three regimes by cardinality and rule-keyword affinity
 <three-regimes-by-cardinality-and-rule-keyword-affinity>
-Reading Table 3 by rule baseline alone separates the suite into three
-operationally meaningful regimes that are governed by #emph[two] axes:
-label cardinality, and how cleanly the label boundary admits stable
-lexical signals (rule-keyword affinity, reported relative to chance
-accuracy $1 \/ k$).
+The suite splits into three operationally meaningful regimes when read
+by rule baseline alone. Two axes govern them: label cardinality, and
+how cleanly the label boundary admits stable lexical signals
+(rule-keyword affinity, reported relative to chance accuracy $1 \/ k$).
 
 #strong[Regime I, #emph[rule near optimum] (codelangs).] With 12
 programming-language labels and rigid syntactic keywords (`def`,
@@ -833,10 +839,11 @@ lifecycle was designed for.
 Banking77, CLINC150 at high cardinality; Snips, AG News, when the
 as-shipped split is sorted by label).] At seed=100 with these splits the
 auto-rule's seed window is captured by a single class and the rule
-reduces to predict-modal. With shuffled training streams the rule
-recovers; on Snips, the recovery is dramatic (75 percent on the test
-set, vs 14 percent under the as-shipped order). The lifecycle handles
-both cases the same way: the rule is the audit floor regardless of its
+reduces to predict-modal. With shuffled training streams the rule is
+redrawn from a different cross-class seed and the construction
+generally yields a higher baseline (multi-seed quantification deferred
+to the next revision; see Appendix B). The lifecycle handles both
+cases the same way: the rule is the audit floor regardless of its
 accuracy. Practitioners deciding whether to ship a rule on day one
 should not infer "this benchmark is hopeless for keyword rules" from the
 as-shipped baseline alone. Two distinct paths get a benchmark into this
@@ -856,9 +863,13 @@ regime:
   a single distinguishing word the auto-rule's TF-IDF keyword pass can
   reach for in the seed window. AG News at 4 labels and 25.9% rule
   (chance = 25%) is the same shape: the rule barely exceeds
-  always-predict-the-modal-class. Under random shuffles of the training
-  stream the Snips rule recovers to 75% (Table 4b); the as-shipped floor
-  is an artifact, not an intrinsic of the benchmark.
+  always-predict-the-modal-class. Random shuffles of the training
+  stream redraw the seed window away from the single-class capture and
+  produce a substantially higher-accuracy rule on Snips; multi-seed
+  quantification is deferred to the next revision (see Appendix B).
+  The as-shipped floor is plausibly an artifact rather than an
+  intrinsic of the benchmark, but the regenerated data is the test of
+  that claim.
 
 The "transition depth" metric loses its narrative force in Regime III:
 the rule was never a viable baseline, and no team could have shipped a
@@ -921,7 +932,7 @@ that escapes the floor. We re-ran the four headline benchmarks with a
   , kind: table
   )
 
-#strong[Table 4.] #emph[Rule sensitivity to seed size.] Even with 10×
+#strong[Table 5.] #emph[Rule sensitivity to seed size.] Even with 10×
 more examples to inspect, the high-cardinality rules remain 75 to 85
 percentage points below the ML ceiling. #emph[Label cardinality], not
 engineer effort, is the dominant variable for the high-cardinality cell
@@ -930,39 +941,20 @@ keyword affinity] rather than cardinality, would not be helped by more
 examples either: the issue is that the label boundary doesn't reduce to
 lexical signals at all in the as-shipped order.)
 
-A second sensitivity axis applies to the same rule construction. The
+A second sensitivity axis applies to the same rule construction: the
 auto-rule's seed window is the first 100 (text, label) pairs in the
 training stream, so its content depends on training-stream order. On
 HuggingFace splits sorted by label, the seed window is captured by a
-single class. Re-shuffling the training stream redraws the window from
-across the label space and changes the rule:
-
-#figure(
-  align(center)[#text(size: 8pt)[#table(
-    columns: (16%, 10%, 16%, 16%, 12%, 12%, 18%),
-    align: (left,right,right,right,right,right,right,),
-    table.header([Benchmark], [Labels], [Paper rule (no shuffle)], [Shuffle median], [min], [max], [Δ],),
-    table.hline(),
-    [HWU64], [64], [1.8%], [27.1%], [23.2%], [31.9%], [+25.4 pp],
-    [Banking77], [77], [1.3%], [24.4%], [21.0%], [29.6%], [+23.1 pp],
-    [CLINC150], [151], [0.5%], [16.6%], [15.4%], [23.8%], [+16.1 pp],
-    [Snips], [7], [14.3%], [#strong[75.3%]], [68.8%], [77.3%], [#strong[\+61.0 pp]],
-    [AG News], [4], [25.9%], [40.0%], [37.0%], [46.1%], [+14.1 pp],
-    [TREC-6], [6], [43.0%], [38.6%], [17.6%], [48.2%], [-4.4 pp],
-  )]]
-  , kind: table
-  )
-
-#strong[Table 4b.] #emph[Rule sensitivity to training-stream order.] Ten
-random shuffles per benchmark, seed=100. Five of six benchmarks where
-the as-shipped rule was at chance recover meaningfully under shuffling;
-Snips recovers from 14.3% to 75.3%. TREC-6 is noisier under shuffle
-(range 17.6% to 48.2%) because TREC-6's natural ordering happens to be
-favorable. The as-shipped paper rule is not the only rule a practitioner
-would build; it is the rule that the canonical 100-example seed produces
-under the canonical HuggingFace download order. Practitioners with
-control over the seed should expect substantially higher rule baselines
-on the high-cardinality cluster.
+single class; re-shuffling the training stream redraws the window from
+across the label space and changes the rule. Quantifying this axis
+properly requires multi-seed runs across the six relevant benchmarks
+(`dendra bench <name> --shuffle-seed N` over $N in 1..10$); those runs
+are deferred to the next revision and the corresponding sensitivity
+table is not included here (see Appendix B). The qualitative point stands
+as a falsifiable claim awaiting the regenerated data: that the
+as-shipped paper rule is not the only rule a practitioner would build,
+and that practitioners with control over the seed should expect higher
+rule baselines on the high-cardinality cluster.
 
 === 5.4 Paired vs unpaired test
 <paired-vs-unpaired-test>
@@ -986,7 +978,7 @@ pooled-variance) on the same paired-correctness arrays gives:
   , kind: table
   )
 
-#strong[Table 5.] #emph[Paired vs unpaired transition depth at
+#strong[Table 6.] #emph[Paired vs unpaired transition depth at
 checkpoint resolution 250.] The paired test is at-least-as-tight on
 every benchmark. Only HWU64 shows a measurable empirical gap at this
 resolution (one checkpoint, equivalent to 2× tightening). On the other
@@ -1052,7 +1044,7 @@ default prompt.
   , kind: table
   )
 
-#strong[Table 6.] #emph[Zero-shot Phase-1 accuracy across model size and
+#strong[Table 7.] #emph[Zero-shot Phase-1 accuracy across model size and
 benchmark cardinality.] 100-row test sample per cell, default prompt,
 locally-hosted via Ollama.
 
@@ -1124,7 +1116,7 @@ otherwise the incumbent is held.
   , kind: table
   )
 
-#strong[Table 7.] #emph[Autoresearch winners by benchmark.] Three
+#strong[Table 8.] #emph[Autoresearch winners by benchmark.] Three
 patterns emerge. First, mid-cardinality benchmarks (26 ≤ k ≤ 100)
 consistently favor `TfidfLinearSVC`. Second, the highest-cardinality
 benchmark favors `TfidfMultinomialNB` (the Bayesian prior helps when
@@ -1151,7 +1143,7 @@ function of data shape (cardinality, samples-per-class density,
 class-balance skew). The reference implementation exposes this as a
 configurable strategy: `dendra.MLHeadStrategy` is a Protocol,
 `CardinalityMLHeadStrategy` is the shipped default with thresholds
-informed by Table 7, and `head_strategy=` plumbs into `LearnedSwitch` so
+informed by Table 8, and `head_strategy=` plumbs into `LearnedSwitch` so
 the strategy is consulted lazily on first ML-head access. The strategy
 is itself a Dendra rule applied to Dendra: a hand-coded threshold rule
 today, with a clear graduation path (gate-driven head-selection learned
@@ -1160,15 +1152,15 @@ over the autoresearch trajectory) as the v1.x story.
 === 5.7 Beyond text: image-classification bench (CIFAR-10)
 <beyond-text-image-classification-bench-cifar-10>
 All eight benchmarks above are text-shaped. The lifecycle, gates, and
-theorem are modality-agnostic by construction (the gate operates on
+theorem are modality-agnostic by construction: the gate operates on
 paired-correctness arrays, which are produced by #emph[any] classifier
-the user chooses), so the question of generalization to other media
-reduces to a question of available #emph[rule] and #emph[MLHead]
-implementations. We ship one image-modality bench in v1.0 to demonstrate
-the mechanism transfers; pretrained-embedding heads (CLIP, ViT, ResNet)
-and richer modalities (audio, video) are deferred to a companion paper
-because they require dependencies and compute budgets out of scope for
-the v1.0 reference implementation.
+the user chooses. Generalization to other media reduces to a question
+of available #emph[rule] and #emph[MLHead] implementations. We ship one
+image-modality bench in v1.0 to demonstrate the mechanism transfers;
+pretrained-embedding heads (CLIP, ViT, ResNet) and richer modalities
+(audio, video) are deferred to a companion paper because they require
+dependencies and compute budgets out of scope for the v1.0 reference
+implementation.
 
 The CIFAR-10 setup uses two pieces shipped in v1.0:
 
@@ -1183,8 +1175,8 @@ The CIFAR-10 setup uses two pieces shipped in v1.0:
   dependency on the v1.0 install path.
 
 Both objects satisfy the same protocols the text path uses; no lifecycle
-or gate code knows it is operating on images. The bench (1000 train rows
-\+ 200 test rows, deterministic seed) reports:
+or gate code knows it is operating on images. The bench (4,000 train rows
+\+ 500 test rows, deterministic seed) reports:
 
 #figure(
   align(center)[#table(
@@ -1204,7 +1196,7 @@ or gate code knows it is operating on images. The bench (1000 train rows
   , kind: table
   )
 
-#strong[Table 8.] #emph[CIFAR-10 transition curve.] The paired McNemar
+#strong[Table 9.] #emph[CIFAR-10 transition curve.] The paired McNemar
 gate first clears $alpha = 0.01$ at the 250-outcome checkpoint. The
 absolute accuracy numbers are modest (28.2% on a 10-class problem with
 raw pixels and a linear model is well below SOTA); the curve
@@ -1334,34 +1326,35 @@ that suite.
 <safety-and-governance>
 === 7.1 Safety-critical caps
 <safety-critical-caps>
-For classification sites where the rule is a regulatory contract
-(content moderation under HIPAA-bound clinical decisions, authorization
-decisions, export-control labeling, identity-verification routing), the
-lifecycle caps at $P_4$ (`ML_WITH_FALLBACK`). The reference
-implementation refuses the $P_4 arrow.r P_5$ transition at construction
-time when `safety_critical=True` is set, and the `Gate` protocol cannot
-be subverted by an operator without modifying source code.
+Some classification sites have a rule that is itself a regulatory
+contract: content moderation under HIPAA-bound clinical decisions,
+authorization decisions, export-control labeling, identity-verification
+routing. For those sites, the lifecycle caps at $P_4$
+(`ML_WITH_FALLBACK`). The reference implementation refuses the
+$P_4 arrow.r P_5$ transition at construction time when
+`safety_critical=True` is set, and the `Gate` protocol cannot be
+subverted by an operator without modifying source code.
 
 The construction-time refusal is a deliberate ergonomic choice: the
 operator who would otherwise reach for `force_advance(P_5)` at 3 AM
 under incident pressure cannot. The contract is enforced by the type
 system, not by discipline.
 
-=== 7.2 Approval backends and audit chain
-<approval-backends-and-audit-chain>
-Phase transitions emit signed #emph[advance proposals]:
-content-addressed JSON artifacts containing the proposing gate's name,
-the McNemar statistics, the $b \/ c$ counts, the test set hash, the ML
-head version, and a UTC timestamp. The proposal is logged before the
-transition takes effect. An `ApprovalBackend` protocol allows the
-proposal to be reviewed by an external system (a manual queue, a
-conservative auto-approver, a strict policy engine) before the
-transition is committed.
+=== 7.2 Audit chain
+<audit-chain>
+Phase transitions are persisted as audit records via the configured
+`Storage` backend: the proposing gate's name, the McNemar statistics,
+the $b \/ c$ counts, the ML head version, and a UTC timestamp are
+written before the transition takes effect. The audit chain is
+append-only by convention (POSIX `flock` + atomic rotate;
+cryptographic tamper-evidence is left for v2). Every classification,
+every verdict, and every gate-decision call is in the log.
 
-The audit chain is append-only by convention (POSIX `flock` + atomic
-rotate; cryptographic tamper-evidence is left for v2). Every
-classification, every verdict, every advance proposal, every
-gate-decision call is in the log.
+External approval workflows wire in by intercepting `LearnedSwitch`'s
+advance path (a manual queue, a conservative auto-approver, or a
+strict policy engine can hold or block transitions before they
+commit); the gate emits the same evidence the audit record carries,
+so an external approver sees exactly what the in-process gate saw.
 
 This is the substrate on which compliance frameworks (HIPAA, SOC 2, the
 EU AI Act's high-risk classifier audit requirements) build their
@@ -1452,11 +1445,10 @@ interoperates across them. The design decisions worth surfacing:
 
 === 9.1 The `@ml_switch` decorator
 <the-ml_switch-decorator>
-How do you wire classification, dispatch, and the eventual rule-to-ML
-migration through a single call site, so the same
-`classify_content(post)` invocation is what production code calls on day
-one and on day thirty? The simplest invocation is a decorator over the
-rule function:
+Production code should call `classify_content(post)` the same way on
+day one and on day thirty, even as the decision-maker underneath
+migrates from rule to ML. The decorator is how the call site stays
+fixed while the internals graduate. Wrap the rule function once:
 
 ```python
 from dendra import ml_switch
@@ -1488,8 +1480,10 @@ together at the decorator.
 Later, when downstream signals reveal whether the routing was right (a
 successful user appeal, a moderator override on the review queue, an
 external takedown notice, a regulator inquiry),
-`classify_content.switch.record_verdict(record_id, Verdict.CORRECT)`
-registers an outcome. The gate fires automatically every $N$ verdicts
+`classify_content.switch.record_verdict(input=post, label=decision, outcome="correct")`
+registers an outcome (the fluent `result.mark_correct()` path is the
+idiomatic alternative when the caller still holds the
+`ClassificationResult`). The gate fires automatically every $N$ verdicts
 and graduates the underlying classifier when evidence justifies it. The
 work §1 listed as the typical cost of replacing a rule by hand (outcome
 plumbing, feature pipelines, training, deployment, shadow evaluation,
@@ -1535,9 +1529,10 @@ rule's specific starting point.
 
 Other dimensions ride along. #strong[Latency] drops from LLM-class
 (hundreds of milliseconds to seconds at Phase 1 / Phase 2, dominated by
-API round-trip and decode) to ML-class (under 2 ms at Phase 5,
-in-process sklearn predict): a two-to-three-orders-of-magnitude
-reduction at the call site, measured on the reference implementation.
+API round-trip and decode) to ML-class (single-digit µs at Phase 5,
+in-process sklearn predict; see §10.3 for the measurement detail): a
+two-to-three-orders-of-magnitude reduction at the call site, measured
+on the reference implementation.
 #strong[Per-call cost] ranges from $\$ 10^(- 4)$ to $\$ 10^(- 2)$ per
 LLM inference and drops to essentially zero per ML-head call once the
 gate clears P5; §10.3 lays out the at-scale extrapolation. #strong[Drift detection]
@@ -1551,23 +1546,23 @@ $S = \( R \, M \, H \, phi.alt \)$ of §3.1) is what evolves.
 <storage-and-durability>
 The default storage is a bounded in-memory rotator (10,000 records
 FIFO). Production deployments pass `persist=True` to switch to a
-resilient file-backed store (`FileStorage`) wrapped in an in-memory
-fallback (`ResilientStorage`) that buffers on disk failure and drains on
-recovery. A `SqliteStorage` backend ships for concurrent multi-process
-write workloads. The storage layer is pluggable via the `Storage`
-protocol; users with existing audit infrastructure (Kafka, Redshift,
-Snowflake) can plug those in.
+resilient file-backed store: `FileStorage` wrapped in `ResilientStorage`,
+which buffers on disk failure and drains on recovery. A `SqliteStorage`
+backend ships for concurrent multi-process write workloads. The storage
+layer is pluggable via the `Storage` protocol; users with existing audit
+infrastructure (Kafka, Redshift, Snowflake) can plug those in.
 
 === 9.3 The verifier slot
 <the-verifier-slot>
 Verdict acquisition is the rate-limiting step in production graduation:
 the McNemar gate cannot fire on outcomes that haven't been collected.
 The library ships an autonomous-verifier default
-(`verifier=default_verifier()`) that auto-detects a local Ollama model
-(`qwen2.5:7b` by default; the verdict-quality frontier across small-LLM
-judges is the subject of a companion write-up in preparation) or an
-OpenAI/Anthropic API key, and uses the LLM-as-judge pattern (Liu et al.,
-2023; Zheng et al., 2023) to produce verdicts for every classification.
+(`verifier=default_verifier()`) that produces a verdict for every
+classification via the LLM-as-judge pattern (Liu et al., 2023; Zheng et
+al., 2023). It auto-detects a local Ollama model (`qwen2.5:7b` by
+default) or an OpenAI/Anthropic API key. The verdict-quality frontier
+across small-LLM judges is the subject of a companion write-up in
+preparation.
 
 The same-LLM-as-classifier-and-judge bias is enforced at construction
 time: the `JudgeSource` constructor refuses a judge model that resolves
@@ -1575,7 +1570,7 @@ to the same identity as the classifier, with a pointer to the bias
 literature in the error message. Other verdict sources include
 `WebhookVerdictSource`, `HumanReviewerSource` (for cold-start labeling
 and periodic-drain workflows; refused on the inline classify hot path
-because of its blocking semantics), and `LLMCommitteeSource` for
+because of its blocking semantics), and `JudgeCommittee` for
 ensemble verdicts.
 
 === 9.4 MLHead strategy and factory registry
@@ -1667,9 +1662,9 @@ either advances the candidate or holds, and the audit chain records the
 McNemar statistics for every decision either way.
 
 The harness is the unsexy plumbing (outcome logging, paired-correctness
-tracking, gate evaluation, signed advance proposals) that makes
-agent-driven model search production-safe at the classification
-primitive. Trivedy's (2026) #emph[harness hill-climbing] framing is the
+tracking, gate evaluation, audit-chain persistence of every gate
+decision) that makes agent-driven model search production-safe at the
+classification primitive. Trivedy's (2026) #emph[harness hill-climbing] framing is the
 methodology that operates #emph[on top of] the harness; ours is the
 substrate underneath.
 
@@ -1722,11 +1717,11 @@ survives operator turnover.
 <what-this-paper-does-not-change>
 We do not claim to solve verdict acquisition. The McNemar gate eats
 verdicts; it cannot generate them. The autonomous-verifier default
-raises the verdict-rate ceiling significantly (a human-reviewer queue
-typically labels a single-digit-percent sample of production traffic; an
-LLM judge can label every classification), but the underlying problem of
-verdict #emph[quality] is a research direction in itself; we treat it as
-a follow-on rather than a solved problem.
+raises the verdict-rate ceiling significantly: a human-reviewer queue
+typically labels a single-digit-percent sample of production traffic,
+while an LLM judge can label every classification. The underlying
+problem of verdict #emph[quality], though, is a research direction in
+itself; we treat it as a follow-on rather than a solved problem.
 
 We do not claim to solve drift in full. v1 handles one specific kind:
 slow accuracy degradation of the deployed classifier relative to the
@@ -1755,27 +1750,32 @@ where they fit better.
 === 10.3 Cost and latency at scale: graduation as economic optimization
 <cost-and-latency-at-scale-graduation-as-economic-optimization>
 The accuracy story §5 reports has an economic counterpart that is
-structurally identical and operationally larger at scale. The
-lifecycle's transition from a model-classifier slot (Phase 1 / Phase 2:
-an LLM, hosted or local) to a trained ML head (Phase 4 / Phase 5: a
-sklearn pipeline) is a transition between two regimes of inference
-economics, not just two regimes of accuracy. Production teams that adopt
-Dendra inherit #emph[both] graduations: the gate-validated accuracy lift
-the paper measures, and a per-call cost-and-latency drop the paper has
-not yet emphasized.
+structurally identical and operationally larger at scale. The lifecycle
+moves the decision-maker from an LLM (Phase 1 / Phase 2, hosted or
+local) to a trained ML head (Phase 4 / Phase 5, a sklearn pipeline).
+That is a transition between two regimes of inference economics, not
+just two regimes of accuracy. Production teams that adopt Dendra
+inherit #emph[both] graduations: the gate-validated accuracy lift the
+paper measures, and a per-call cost-and-latency drop the paper has not
+yet emphasized.
 
 #strong[Latency.] A model-classifier slot routes through a hosted LLM
 API or a local LLM runtime. Production p50 latency for these services is
 dominated by network round-trip plus per-token decode; for a 100-token
 classification, typical figures are roughly 200 ms (a local Ollama 7B
 model on commodity CPU) to 1--3 s (frontier APIs at typical batch
-sizes). The trained ML head runs in-process: the reference
-implementation's `SklearnTextHead` shows p50 predict time under 2 ms
-(`tests/test_latency.py`); switch overhead at `ML_WITH_FALLBACK` and
-`ML_PRIMARY` is on the order of 1--5 µs
-(`tests/test_latency_pinned.py`). The transition from a Phase-2 LLM to a
-Phase-5 ML head is therefore a #strong[two-to-three-orders-of-magnitude
-latency reduction] at the call site, for the same classification.
+sizes). The trained ML head runs in-process: the synthetic ML-head
+upper-bound probe in `tests/test_latency.py` (a `_FakeFastMLHead`
+stand-in for the TF-IDF + LogReg shape) shows p50 predict time of
+1.79 µs against an assertion ceiling of 2 ms
+(`docs/benchmarks/perf-baselines-2026-05-01.md`); switch overhead at
+`ML_WITH_FALLBACK` is on the order of 1--5 µs
+(`tests/test_latency_pinned.py::test_classify_phase_ml_with_fallback`,
+observed p99 = 1.00 µs against a 5 µs ceiling). `ML_PRIMARY` removes
+the predecessor-cascade fallback and is structurally faster than
+`ML_WITH_FALLBACK`. The transition from a Phase-2 LLM to a Phase-5 ML
+head is therefore a #strong[two-to-three-orders-of-magnitude latency
+reduction] at the call site, for the same classification.
 
 #strong[Cost.] Per-call inference cost mirrors latency. A frontier-API
 call at typical 100-token inputs costs $approx \$ 10^(- 4)$ to
@@ -1840,11 +1840,17 @@ this section emphasizes.
 <implications-for-the-cascade-routing-literature>
 The cascade and routing literature (FrugalGPT, RouteLLM, Dekoninck et
 al.) optimizes inference-time routing among already-trained models. Our
-work generalizes the question to the #emph[lifecycle in which models are
-introduced and retired]: a `MODEL_PRIMARY` phase is structurally
-identical to a FrugalGPT cascade with two stages (rule + LLM), and the
-$P_4 arrow.r P_5$ transition is the moment when the cascade's escalation
-tier becomes unnecessary.
+work generalizes the question to the #emph[lifecycle in which models
+are introduced and retired]. A `MODEL_PRIMARY` phase is structurally
+analogous to a two-stage cascade in the FrugalGPT lineage (LLM
+classifier with rule fallback), but the cascade direction is reversed:
+FrugalGPT escalates cheap→expensive on uncertainty, where Dendra's
+`MODEL_PRIMARY` falls back expensive→cheap. The gating optimization in
+our setting is on the cheap fallback (the rule, which is structurally
+preserved) rather than on the expensive primary (the LLM). Both
+arrangements share the escalation-on-low-confidence pattern, and the
+$P_4 arrow.r P_5$ transition is the moment when the expensive tier
+becomes unnecessary altogether.
 
 A future synthesis would treat the cascade and the lifecycle as
 instances of the same meta-decision-process, with the rule floor as a
@@ -2181,8 +2187,19 @@ rules per benchmark in
 - ✓ Compute requirements: \~30 minutes per benchmark on a 2024-vintage
   laptop CPU.
 - ✓ All benchmark JSONLs and `paired_mcnemar_summary.json` released.
-- ✓ Benchmark harness reproduces the result:
-  `dendra bench {atis,banking77,clinc150,hwu64,snips,trec6,ag_news,codelangs}`.
+- ✓ Benchmark harness reproduces Table 4 (as-shipped HuggingFace splits;
+  the `--no-shuffle` flag opts out of the v1.0 default seed-window
+  shuffle and recovers the v0.x paper-as-shipped behavior):
+  `dendra bench --no-shuffle {atis,banking77,clinc150,hwu64,snips,trec6,ag_news,codelangs}`.
+
+#strong[Deferred to the next revision: shuffle-sensitivity table.] The
+shuffle-sensitivity multi-seed runs that would back a Regime III
+shuffle-recovery table are slated for the next paper revision once the
+regeneration sweep has been done. The CLI is `dendra bench <name>
+--shuffle-seed N` with `N in 1..10` across the six benchmarks in the
+at-chance cluster (HWU64, Banking77, CLINC150, Snips, AG News, plus
+TREC-6 as a control); per the v1.0 README estimate, the sweep is
+roughly $6 times 10 times 30$ minutes $approx 30$ CPU-hours total.
 
 == Appendix C: Code listings
 <appendix-c-code-listings>
