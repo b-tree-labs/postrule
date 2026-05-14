@@ -10,6 +10,14 @@ Neither the Apache 2.0 license nor the Business Source License
 these marks. Trademark rights are separate from copyright and
 patent rights.
 
+## Filing status
+
+**POSTRULE** word mark — USPTO Serial **99824452**, filed
+2026-05-14 (1(b) Intent to Use), in International Class 009
+(downloadable software) and Class 042 (software as a service).
+Owner: B-Tree Ventures, LLC (Wyoming). Track status at
+[TSDR](https://tsdr.uspto.gov/) by serial number.
+
 ## Fair use — no permission needed
 
 You may use the POSTRULE name and the `@ml_switch` decorator name
