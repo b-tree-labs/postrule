@@ -229,6 +229,30 @@ The deeper rule: **you can only remove a confidence threshold for a tier you own
 
 If you fine-tune a per-task language model on your verdict log, *that* object is structurally an `H`-shaped object (yours, trainable on outcomes), not an `M`-shaped object, and the lifecycle will treat it accordingly.
 
+## How can the ML head exceed the language model, when its labels came from the language model?
+
+This is the classic distillation question every reviewer asks. The answer depends on which truth-oracle posture you're in.
+
+**Case 1 — real-world feedback as truth.** A human reviewer, a downstream success signal ("did the user click", "did the ticket get reopened"), a business outcome — these record verdicts independently of the language model. H trains on `(input, true_label)` pairs; the language model was just keeping production running while ground-truth data accumulated. H exceeding M is unsurprising — H learns the true function, M was the stand-in.
+
+**Case 2 — the `JudgeCommittee` is the oracle.** When human labels aren't available, Dendra supports LLM-as-judge: a `JudgeCommittee` (multiple model calls, voted) records the verdicts. H's training labels come from the model itself. This is the case the question implicitly asks about. Five mechanisms make it work:
+
+1. **Smoothing over teacher noise.** M's per-call output is stochastic (sampling temperature, prompt-position effects, reasoning-chain variance). H trained over many calls learns the *modal* behavior and discards per-call noise. M's mistakes are themselves noisy and partially average out.
+
+2. **Inductive bias as regularization.** H is a small classifier (sklearn pipeline, gradient-boosted trees, small transformer). For tasks where the true function is simpler than M's free-form reasoning — most production classification: intent, sentiment, routing, tagging — H converges to a cleaner approximation. M is *too expressive* for the actual task.
+
+3. **Dark-knowledge distillation.** Even with hard labels only, the aggregate distribution of M's calls carries soft information: it gets borderline cases right 60% / wrong 40%, but consistently. H learns from the *consistency*, not the per-call answer. If you preserve judge confidences from the `JudgeCommittee`, distillation matches or beats teacher accuracy on held-out data — the DistilBERT-and-descendants result.
+
+4. **The gate's criterion is equivalence, not dominance.** Paired McNemar at ML_SHADOW → ML_WITH_FALLBACK asks "do H and M agree on the population, with statistical confidence?" — not "is H strictly better?". On a task where M's labels are consistent, the gate fires because H matches. On a task where M's labels are inconsistent, H never graduates. The framework only promotes H when the equivalence is real.
+
+5. **Production wants the dominant answer.** Query M on the same input 100 times with slight prompt variations — you'll get 100 different answers. H emits the dominant one deterministically. For consistency and user trust, that's usually what production actually wants, even when individual M calls occasionally outperform.
+
+**The clean framing for Case 2:**
+
+> ML_PRIMARY isn't "we got better than the language model in some absolute sense." It's "we identified the language model's *consistent* function on this task and replaced the language model with a 1000×-cheaper, 1000×-faster implementation of that function."
+
+The inevitable follow-up — *"isn't this just distillation?"* — yes, plus a statistical gate that decides *when* the distillation is good enough to take the teacher offline. The novelty isn't the distillation; it's the gate plus the lifecycle that lets a switch go from "no labels yet" to "production ML running unsupervised" through six phases, each with their own stop conditions.
+
 ## What is H, physically? What's actually stored and executing?
 
 In the v1 reference (`SklearnTextHead`), H is a scikit-learn `Pipeline` held in memory with two stages:
