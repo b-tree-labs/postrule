@@ -105,7 +105,7 @@ self-contained, runs without API keys, and walks one concept.
 ## Help + community
 
 - **GitHub issues:** <https://github.com/b-tree-labs/dendra/issues>
-- **Security disclosures:** `security@b-treeventures.com`
+- **Security disclosures:** `security@dendra.run`
 - **Hosted-beta waitlist:** [dendra.run](https://dendra.run)
 
 ## License

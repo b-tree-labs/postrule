@@ -201,6 +201,6 @@ under the §"Notice and objection" mechanism.
 
 - Sub-processor questions: `licensing@b-treeventures.com`.
 - Security-related concerns about Sub-processors:
-  `security@b-treeventures.com`.
+  `security@dendra.run`.
 
 *Last updated 2026-05-11. Not legal advice.*

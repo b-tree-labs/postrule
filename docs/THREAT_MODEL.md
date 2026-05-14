@@ -204,7 +204,7 @@ in `docs/storage-backends.md`.
 ## Reporting a vulnerability
 
 Per [`SECURITY.md`](../SECURITY.md): privately email
-**`security@b-treeventures.com`** — do not open a public GitHub issue for
+**`security@dendra.run`** — do not open a public GitHub issue for
 security-sensitive findings. Acknowledgement within 72 hours; triage
 decision within 5 business days; patch timeline tiered by severity
 (7-day target for critical, 14-day for high, next scheduled release

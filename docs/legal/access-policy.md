@@ -221,7 +221,7 @@ covering 2026.
 ## 7. Vulnerability disclosure
 
 7.1 **Channel.** Security findings are reported by email to
-`security@b-treeventures.com`. The full process is documented in
+`security@dendra.run`. The full process is documented in
 [`SECURITY.md`](../../SECURITY.md).
 
 7.2 **Acknowledgement.** Acknowledgement of receipt within 72 hours,
@@ -273,7 +273,7 @@ The list is updated when an item moves from "not held" to "held."
 ## 9. Contact
 
 - Security incidents and vulnerability reports:
-  `security@b-treeventures.com`. PGP key published at
+  `security@dendra.run`. PGP key published at
   <https://dendra.run/.well-known/security.txt> (in progress —
   targeted 2026-Q3).
 - Compliance documents and DPA execution:
