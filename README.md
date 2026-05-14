@@ -3,7 +3,7 @@
   <img src="brand/logo/postrule-wordmark-horizontal.svg" alt="Postrule" width="420">
 </picture>
 
-# Software that's smarter every month than the day you shipped it.
+# Self-taught classifiers.
 
 **Drop a rule. Drop a verifier. Watch your classifier get smarter automatically.**
 
