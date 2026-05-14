@@ -4,10 +4,9 @@ Answers to the questions people ask first. Updated 2026-05-11.
 
 ## What is Postrule, in one sentence?
 
-A Python decorator that wraps a classification function and lets
-it graduate from rule → model-shadow → language model → ML-shadow → ML —
-with a paired-proportion statistical gate at every transition
-and the original rule retained as the safety floor.
+The graduated-autonomy primitive for production classification:
+rules earn their way to ML through statistically-gated phase
+transitions, with the rule preserved as the safety floor.
 
 ## How does Postrule know when a switch is ready to graduate?
 
