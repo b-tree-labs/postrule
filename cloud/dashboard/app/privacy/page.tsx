@@ -58,7 +58,7 @@ export default function PrivacyPage() {
         <h2>Who we are</h2>
         <p>
           Postrule is a product of <strong>B-Tree Labs</strong>, a DBA of
-          B-Tree Ventures, LLC, registered in Texas, USA. Throughout this
+          B-Tree Ventures, LLC, registered in Wyoming, USA. Throughout this
           policy, &ldquo;we&rdquo; / &ldquo;our&rdquo; refers to B-Tree
           Labs.
         </p>

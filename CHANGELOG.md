@@ -82,7 +82,7 @@ pair with the Snips-rerun + paper-polish work.
   `/v1/verdicts` serial p99=14 ms; concurrent p99=304 ms (contention
   on usage_metrics UPSERT, not the new auto-unarchive DELETE).
 - **Procurement-readiness artifacts under `docs/legal/`** (#47).
-  DPA template (GDPR Art. 28 + Module 2 SCCs by reference + Texas
+  DPA template (GDPR Art. 28 + Module 2 SCCs by reference + Wyoming
   governing law), sub-processors list (Cloudflare/Clerk/Stripe/GitHub
   with role-allocation honesty on BYOK), access policy (24h
   compelled-disclosure notice + 72h breach SLA + transparency-report

@@ -91,7 +91,7 @@ the drift posture going forward.
 
 Excerpt from `postrule/results/triage_rule.md` — a sample card
 generated 2026-04-29 (full sample in
-[`docs/sample-reports/triage_rule.md`](docs/sample-reports/triage_rule.md)):
+[`docs/sample-reports/triage_rule.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/sample-reports/triage_rule.md)):
 
 > **Phase: `ML_PRIMARY`** — graduated 2026-04-25 at outcome 312.
 > Gate (`McNemarGate`, α = 0.01) fired with p = **4.2 × 10⁻⁴**.
@@ -103,13 +103,13 @@ Three commands produce the evidence trilogy:
 
 - `postrule analyze --report` — initial-analysis discovery card. Which
   sites would graduate, projected savings, recommended order.
-  ([sample](docs/sample-reports/_initial-analysis.md))
+  ([sample](https://github.com/b-tree-labs/postrule/blob/main/docs/sample-reports/_initial-analysis.md))
 - `postrule report <switch>` — per-switch graduation card. Transition
   curve, p-value trajectory, cost trajectory, drift checks.
-  ([sample](docs/sample-reports/triage_rule.md))
+  ([sample](https://github.com/b-tree-labs/postrule/blob/main/docs/sample-reports/triage_rule.md))
 - `postrule report --summary` — project rollup. Cockpit view across
   every wrapped switch with phase distribution and aggregate
-  reduction. ([sample](docs/sample-reports/_summary.md))
+  reduction. ([sample](https://github.com/b-tree-labs/postrule/blob/main/docs/sample-reports/_summary.md))
 
 The cards are markdown — they live in your repo, diff in PRs, ship
 in releases. **The report card *is* the audit trail**: the same
@@ -119,7 +119,7 @@ no SaaS lock-in for the evidence.
 
 ## Status & limitations
 
-v1.0 ships the full decorator path (`@ml_switch`), the native `postrule.Switch` class authoring pattern, multi-arg signatures via auto-packing, full auto-lift across globals / `self.attr` / mid-function I/O / closures, drift detection, the prescriptive analyzer, the account system, the `propagate_action_exceptions` knob, and the MCP server. The classifier function returns a label name (string), not a structured value; tests, fixtures, validators, and order-dependent state machines are not classification sites; dynamic dispatch (`getattr` with runtime keys) requires explicit `@evidence_inputs` annotation; `eval` / `exec` is refused. Deep IDE plugins, A2A integration, and runtime AST mode are out of v1. The full list, version-tagged with the path forward for each item, lives in [`docs/limitations.md`](docs/limitations.md).
+v1.0 ships the full decorator path (`@ml_switch`), the native `postrule.Switch` class authoring pattern, multi-arg signatures via auto-packing, full auto-lift across globals / `self.attr` / mid-function I/O / closures, drift detection, the prescriptive analyzer, the account system, the `propagate_action_exceptions` knob, and the MCP server. The classifier function returns a label name (string), not a structured value; tests, fixtures, validators, and order-dependent state machines are not classification sites; dynamic dispatch (`getattr` with runtime keys) requires explicit `@evidence_inputs` annotation; `eval` / `exec` is refused. Deep IDE plugins, A2A integration, and runtime AST mode are out of v1. The full list, version-tagged with the path forward for each item, lives in [`docs/limitations.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/limitations.md).
 
 ## Install
 
@@ -157,7 +157,7 @@ same weights). Inference runs locally via `llama-cpp-python` —
 no Ollama daemon, no third-party hosting at runtime, works the
 same on macOS / Linux / Windows. Model picks are
 benchmark-justified — see
-[`docs/benchmarks/slm-verifier-results.md`](docs/benchmarks/slm-verifier-results.md).
+[`docs/benchmarks/slm-verifier-results.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/benchmarks/slm-verifier-results.md).
 
 ### C. Axiom OS (shared local LM runtime for other tools)
 
@@ -185,7 +185,7 @@ postrule quickstart           # copies a working example into the cwd and runs i
 postrule quickstart --list    # see the menu (hello / tournament / autoresearch / ...)
 ```
 
-Runnable examples in [`examples/`](./examples/) — each file is
+Runnable examples in [`examples/`](https://github.com/b-tree-labs/postrule/tree/main/examples) — each file is
 self-contained (no API keys, no external services) and walks one
 concept end-to-end. Python 3.10+.
 
@@ -193,7 +193,7 @@ concept end-to-end. Python 3.10+.
 > the default storage is in-memory and dies with the process.
 > Below ~2% verdict rate, in-mem also evicts verdicts before the
 > gate has enough paired evidence to advance. See
-> [`docs/storage-backends.md`](./docs/storage-backends.md#low-verdict-rate-footgun)
+> [`docs/storage-backends.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/storage-backends.md#low-verdict-rate-footgun)
 > for the math.
 
 ## The six phases
@@ -227,7 +227,7 @@ transitions, `min_paired=200`):
 The autonomous verifier (default) closes the loop dramatically.
 Without it, reviewer throughput is the gating constraint — which
 is the whole reason `verifier=default_verifier()` is on by
-default. See [`docs/getting-started.md`](./docs/getting-started.md#4-graduation--automatic-3-minutes)
+default. See [`docs/getting-started.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/getting-started.md#4-graduation--automatic-3-minutes)
 for the math.
 
 ## Autoresearch + agent loops
@@ -268,9 +268,9 @@ if report.recommend_promote:
 > **Autoresearch tells you what to try.**
 > **Postrule tells you when it worked.**
 
-Full walkthrough in [`docs/autoresearch.md`](docs/autoresearch.md);
+Full walkthrough in [`docs/autoresearch.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/autoresearch.md);
 runnable end-to-end loop in
-[`examples/19_autoresearch_loop.py`](examples/19_autoresearch_loop.py).
+[`examples/19_autoresearch_loop.py`](https://github.com/b-tree-labs/postrule/blob/main/examples/19_autoresearch_loop.py).
 
 ## CLIs
 
@@ -313,7 +313,7 @@ panels.
 
 Measured latency (Apple M5 / Python 3.13 / macOS 26 — full
 methodology + reproduce instructions in
-[`docs/benchmarks/perf-baselines-2026-05-01.md`](docs/benchmarks/perf-baselines-2026-05-01.md)):
+[`docs/benchmarks/perf-baselines-2026-05-01.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/benchmarks/perf-baselines-2026-05-01.md)):
 
 - **`classify` at Phase.RULE:** 0.96 µs p50 / 1.04 µs p95.
 - **`dispatch` at Phase.RULE:** 1.00 µs p50 / 1.08 µs p95.
@@ -331,7 +331,7 @@ methodology + reproduce instructions in
   workloads): 28K writes/sec, ~36 µs per write.
 - Local SLM verifier (shipped default `qwen2.5:7b` via Ollama):
   ~481 ms p50 — see
-  [`docs/benchmarks/slm-verifier-results.md`](docs/benchmarks/slm-verifier-results.md).
+  [`docs/benchmarks/slm-verifier-results.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/benchmarks/slm-verifier-results.md).
 
 **Framework tax** at Phase.RULE: ~24× a bare Python call
 (42 ns → 1 µs). In absolute terms ~1 µs is fast enough that any
@@ -339,9 +339,9 @@ production hot path is dominated by the caller's own logic and
 (when later phases engage) by the model's inference, not by Postrule.
 
 Raw numbers + JSONL benchmark data:
-[`docs/benchmarks/v1-audit-benchmarks.md`](docs/benchmarks/v1-audit-benchmarks.md).
+[`docs/benchmarks/v1-audit-benchmarks.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/benchmarks/v1-audit-benchmarks.md).
 Regression-guard tests:
-[`tests/test_latency_pinned.py`](tests/test_latency_pinned.py).
+[`tests/test_latency_pinned.py`](https://github.com/b-tree-labs/postrule/blob/main/tests/test_latency_pinned.py).
 
 ## Where truth comes from
 
@@ -369,7 +369,7 @@ Bulk ingestion primitives (`bulk_record_verdicts`,
 `export_for_review` / `apply_reviews`,
 `bulk_record_verdicts_from_source`) handle cold-start preload +
 periodic reviewer round-trips. See
-[`docs/verdict-sources.md`](docs/verdict-sources.md) for the
+[`docs/verdict-sources.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/verdict-sources.md) for the
 decision matrix.
 
 ## Async API
@@ -381,12 +381,12 @@ Every sync entry point has an `a`-prefixed coroutine peer:
 `OllamaAsyncAdapter`, `LlamafileAsyncAdapter`. FastAPI / LangGraph
 / LlamaIndex callers can `await sw.aclassify(input)` directly.
 Worked example in
-[`examples/15_async_fastapi.py`](examples/15_async_fastapi.py)
+[`examples/15_async_fastapi.py`](https://github.com/b-tree-labs/postrule/blob/main/examples/15_async_fastapi.py)
 and the parallel-committee benchmark in
-[`examples/16_async_committee.py`](examples/16_async_committee.py)
+[`examples/16_async_committee.py`](https://github.com/b-tree-labs/postrule/blob/main/examples/16_async_committee.py)
 (3× speedup on a 3-judge committee).
 
-Full surface + interop contract: [`docs/async.md`](docs/async.md).
+Full surface + interop contract: [`docs/async.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/async.md).
 
 ## Security properties
 
@@ -463,7 +463,7 @@ used = train_ml_from_llm_outcomes(
 )
 ```
 
-See [`examples/07_llm_as_teacher.py`](examples/07_llm_as_teacher.py)
+See [`examples/07_llm_as_teacher.py`](https://github.com/b-tree-labs/postrule/blob/main/examples/07_llm_as_teacher.py)
 for a runnable demo.
 
 ## Project structure
@@ -507,9 +507,9 @@ Rule-to-ML Graduation"* — companion paper, arXiv submission
 targeted for ~2026-05-22 (a few days after the v1.0 launch, once
 the Snips-rerun + paper-polish work is in). Outline + reproducible
 benchmark results at
-[`docs/papers/2026-when-should-a-rule-learn/`](docs/papers/2026-when-should-a-rule-learn/).
+[`docs/papers/2026-when-should-a-rule-learn/`](https://github.com/b-tree-labs/postrule/blob/main/docs/papers/2026-when-should-a-rule-learn/).
 Annotated bibliography of related work at
-[`related-work-bibliography.md`](docs/papers/2026-when-should-a-rule-learn/related-work-bibliography.md).
+[`related-work-bibliography.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/papers/2026-when-should-a-rule-learn/related-work-bibliography.md).
 
 ## Licensing
 
@@ -529,19 +529,19 @@ Postrule is split-licensed:
 **The split lives at the per-file level inside `src/postrule/`**, not
 at the directory level. Most files in `src/postrule/` are Apache 2.0;
 the four BSL-licensed exceptions are
-[`src/postrule/analyzer.py`](src/postrule/analyzer.py),
-[`src/postrule/cli.py`](src/postrule/cli.py),
-[`src/postrule/research.py`](src/postrule/research.py), and
-[`src/postrule/roi.py`](src/postrule/roi.py). Tests for those four files
+[`src/postrule/analyzer.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/analyzer.py),
+[`src/postrule/cli.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/cli.py),
+[`src/postrule/research.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/research.py), and
+[`src/postrule/roi.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/roi.py). Tests for those four files
 mirror the BSL identifier; everything else is Apache. Each source
 file's `SPDX-License-Identifier:` header is authoritative when in
 doubt — the `.github/workflows/license-check.yml` workflow enforces
 the split on every PR.
 
-See [`LICENSE.md`](LICENSE.md) for the split map,
-[`LICENSING.md`](LICENSING.md) for developer-facing Q&A,
-[`LICENSE-APACHE`](LICENSE-APACHE) for the canonical Apache 2.0
-text, and [`LICENSE-BSL`](LICENSE-BSL) for the canonical BSL 1.1
+See [`LICENSE.md`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE.md) for the split map,
+[`LICENSING.md`](https://github.com/b-tree-labs/postrule/blob/main/LICENSING.md) for developer-facing Q&A,
+[`LICENSE-APACHE`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-APACHE) for the canonical Apache 2.0
+text, and [`LICENSE-BSL`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-BSL) for the canonical BSL 1.1
 text + the Additional Use Grant. Commercial licensing that removes
 the BSL restrictions is available — contact
 `licensing@b-treeventures.com`.
@@ -571,7 +571,7 @@ VS Code extension (early v1.1) ✓
 Wave 2 (cloud features + hosted analyzer + dashboards) — rolling
 through 2026; waitlist on [postrule.ai](https://postrule.ai).
 PyCharm plugin + benchmark/report harness + branch-lifter relaxation —
-v1.5 / v1.x. See [`docs/limitations.md`](docs/limitations.md) for the
+v1.5 / v1.x. See [`docs/limitations.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/limitations.md) for the
 versioned roadmap.
 
 ## Dev setup
@@ -597,18 +597,18 @@ company carries the work, not any single person.
 - Maintainer: Benjamin Booth ([@benjaminbooth](https://github.com/benjaminbooth))
 - Trademark / licensing inquiries — `trademarks@b-treeventures.com`,
   `licensing@b-treeventures.com`
-- Procurement-ready documents: [DPA template](docs/legal/dpa-template.md),
-  [sub-processors](docs/legal/sub-processors.md),
-  [access policy](docs/legal/access-policy.md),
-  [telemetry wire spec](docs/legal/telemetry-shape.md).
+- Procurement-ready documents: [DPA template](https://github.com/b-tree-labs/postrule/blob/main/docs/legal/dpa-template.md),
+  [sub-processors](https://github.com/b-tree-labs/postrule/blob/main/docs/legal/sub-processors.md),
+  [access policy](https://github.com/b-tree-labs/postrule/blob/main/docs/legal/access-policy.md),
+  [telemetry wire spec](https://github.com/b-tree-labs/postrule/blob/main/docs/legal/telemetry-shape.md).
 
 ---
 
 _Copyright © 2026 B-Tree Labs (dba B-Tree Labs).
 Split-licensed — Apache 2.0 on the client SDK, BSL 1.1 on
-Postrule-operated components; see [`LICENSE.md`](LICENSE.md).
+Postrule-operated components; see [`LICENSE.md`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE.md).
 Postrule and B-Tree Labs are trademarks (or pending trademarks) of
 B-Tree Labs. Neither the Apache 2.0 license nor the
 BSL 1.1 license grants any right to use these marks — see
-[`TRADEMARKS.md`](TRADEMARKS.md) for the project's fair-use
+[`TRADEMARKS.md`](https://github.com/b-tree-labs/postrule/blob/main/TRADEMARKS.md) for the project's fair-use
 position._

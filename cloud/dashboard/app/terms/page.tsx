@@ -41,7 +41,7 @@ export default function TermsPage() {
         <p>
           Postrule is a graduated-autonomy classification primitive provided
           by <strong>B-Tree Labs</strong> (a DBA of B-Tree Ventures, LLC,
-          Texas, USA). It comprises:
+          Wyoming, USA). It comprises:
         </p>
         <ul>
           <li>
@@ -166,10 +166,10 @@ export default function TermsPage() {
 
         <h2>10. Governing law</h2>
         <p>
-          These Terms are governed by the laws of the State of Texas,
+          These Terms are governed by the laws of the State of Wyoming,
           USA, without regard to conflict-of-law principles. Disputes
-          will be resolved in the state or federal courts of Travis
-          County, Texas.
+          will be resolved in the state or federal courts of Laramie
+          County, Wyoming.
         </p>
 
         <h2>11. Changes</h2>
