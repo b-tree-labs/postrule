@@ -26,7 +26,11 @@ custom_domain = true
 # D1 binding — the Worker accesses the events database via env.DB.
 [[d1_databases]]
 binding = "DB"
-database_name = "postrule-events-staging"
+# Remote D1 is still named `dendra-events-staging` in CF — rename
+# deferred post-launch (would require create-new + copy-data + flip
+# bindings). `database_id` is the authoritative identifier; wrangler
+# resolves by UUID regardless of label.
+database_name = "dendra-events-staging"
 database_id = "77ac4e6c-a09f-486a-9f40-bed39d209e2c"
 migrations_dir = "migrations"
 
@@ -49,7 +53,9 @@ custom_domain = true
 
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "postrule-events"
+# Remote D1 is still named `dendra-events` in CF — see staging block
+# above for the post-launch rename plan.
+database_name = "dendra-events"
 database_id = "d8f78857-de29-4ee2-a449-b78c95c6ad67"
 migrations_dir = "migrations"
 
