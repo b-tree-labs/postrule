@@ -8,7 +8,7 @@ name: refresh-llm-prices
 on:
   schedule:
     # Mondays at 14:00 UTC (~9 AM Central) — early in the week so a PR
-    # sits long enough for Ben to look at it before the weekend.
+    # sits long enough for the maintainer to look at it before the weekend.
     - cron: "0 14 * * 1"
   workflow_dispatch: {}
 
