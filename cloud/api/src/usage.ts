@@ -27,6 +27,11 @@ export const TIER_MONTHLY_CAP: Record<AuthContext['tier'], number | null> = {
   pro: 250_000,
   scale: 5_000_000,
   business: 25_000_000,
+  // `comp` matches scale-tier cap. Hard-capped (see TIER_HAS_OVERAGE) so a
+  // runaway comp user surfaces a 429 instead of accruing un-billable infra
+  // cost; operator can re-tier them via /admin/users/:user_id/set-tier if
+  // legitimate usage justifies a bump.
+  comp: 5_000_000,
 };
 
 /** Tiers whose contracts include overage billing (soft cap). */
@@ -35,6 +40,7 @@ export const TIER_HAS_OVERAGE: Record<AuthContext['tier'], boolean> = {
   pro: true,
   scale: true,
   business: false,
+  comp: false,
 };
 
 /** "YYYY-MM" in UTC for the given Date (default: now). */

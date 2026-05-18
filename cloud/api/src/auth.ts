@@ -10,7 +10,11 @@ import { hashKey, parseBearer } from './keys';
 export interface AuthContext {
   user_id: number;
   api_key_id: number;
-  tier: 'free' | 'pro' | 'scale' | 'business';
+  // `comp` is the no-charge partner / internal-use tier. Same wire shape
+  // as a paid tier; differs only in that no Stripe subscription backs it
+  // and its caps are set by operator decision (currently scale-equivalent).
+  // Provisioned via POST /admin/users/:user_id/set-tier, never via webhook.
+  tier: 'free' | 'pro' | 'scale' | 'business' | 'comp';
   account_hash: string;
   rate_limit_rps: number;
 }
@@ -32,6 +36,7 @@ const TIER_DEFAULT_RPS: Record<AuthContext['tier'], number> = {
   pro: 50,
   scale: 200,
   business: 1000,
+  comp: 200,
 };
 
 /**

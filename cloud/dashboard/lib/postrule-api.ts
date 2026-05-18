@@ -64,7 +64,7 @@ async function adminFetchNullable<T>(
 
 export interface PostruleUser {
   user_id: number;
-  tier: 'free' | 'pro' | 'scale' | 'business';
+  tier: 'free' | 'pro' | 'scale' | 'business' | 'comp';
   account_hash: string;
 }
 
@@ -174,7 +174,7 @@ export async function denyCliSession(userCode: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export interface UsageInfo {
-  tier: 'free' | 'pro' | 'scale' | 'business';
+  tier: 'free' | 'pro' | 'scale' | 'business' | 'comp';
   verdicts_this_period: number;
   cap: number | null;
   period_start: string;
@@ -215,7 +215,7 @@ export interface PostrulePreferences {
   email: string;
   display_name: string | null;
   telemetry_enabled: boolean;
-  tier: 'free' | 'pro' | 'scale' | 'business';
+  tier: 'free' | 'pro' | 'scale' | 'business' | 'comp';
   account_hash: string;
 }
 

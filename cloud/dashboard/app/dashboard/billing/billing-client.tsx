@@ -95,6 +95,51 @@ export default function BillingClient({
     }
   }
 
+  // Comp ("Partner") tier: no-charge, no Stripe subscription, no upgrade
+  // path through the checkout UI. Provisioned via /admin/users/:id/set-tier
+  // by operator decision; usage caps and rate limits are scale-equivalent
+  // and adjustable by operator. The billing page replaces the plan grid
+  // with a static partner message; if the user's plan changes, they get
+  // re-tiered via the same admin path (or a Stripe subscription, which
+  // would flip the tier back through the webhook).
+  if (currentTier === "comp") {
+    return (
+      <div className="mt-8 space-y-6">
+        <section className="surface-card">
+          <div className="flex items-baseline justify-between">
+            <h2
+              style={{
+                fontSize: "var(--size-h4)",
+                lineHeight: "var(--lh-h4)",
+                margin: 0,
+              }}
+            >
+              Partner plan
+            </h2>
+            <span
+              className="badge"
+              style={{
+                fontSize: "var(--size-caption-small, var(--size-caption))",
+                color: "var(--ink-soft)",
+                border: "1px solid var(--ink-soft)",
+                borderRadius: "999px",
+                padding: "2px 10px",
+              }}
+            >
+              Complimentary
+            </span>
+          </div>
+          <p className="prose-brand mt-3">
+            You&apos;re on a no-charge partner plan. Usage caps and rate limits are
+            set by Postrule and adjusted on request. Reach out to{" "}
+            <a href="mailto:hello@postrule.ai">hello@postrule.ai</a> if your needs
+            change or you&apos;d like to discuss a paid plan.
+          </p>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-8 space-y-6">
       {returnStatus === "success" && (

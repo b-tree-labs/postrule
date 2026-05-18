@@ -185,6 +185,105 @@ describe('admin: user upsert + key lifecycle', () => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /admin/users/:user_id/set-tier — operator escape hatch for
+// re-tiering users without going through Stripe. Used to provision
+// no-charge `comp` partner licenses.
+// ---------------------------------------------------------------------------
+describe('admin: POST /users/:user_id/set-tier', () => {
+  let userId: number;
+
+  beforeAll(async () => {
+    const u = await SELF.fetch(`${BASE}/admin/users`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        clerk_user_id: 'user_set_tier_001',
+        email: 'set-tier@example.com',
+      }),
+    });
+    userId = (await u.json<{ user_id: number }>()).user_id;
+  });
+
+  it('sets a known tier and returns the updated user', async () => {
+    const res = await SELF.fetch(`${BASE}/admin/users/${userId}/set-tier`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ tier: 'comp' }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<{ user_id: number; tier: string; email: string }>();
+    expect(body.user_id).toBe(userId);
+    expect(body.tier).toBe('comp');
+    expect(body.email).toBe('set-tier@example.com');
+  });
+
+  it('accepts every documented tier', async () => {
+    for (const tier of ['free', 'pro', 'scale', 'business', 'comp']) {
+      const res = await SELF.fetch(`${BASE}/admin/users/${userId}/set-tier`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ tier }),
+      });
+      expect(res.status).toBe(200);
+      const body = await res.json<{ tier: string }>();
+      expect(body.tier).toBe(tier);
+    }
+  });
+
+  it('rejects an unknown tier with 400 and surfaces the valid list', async () => {
+    const res = await SELF.fetch(`${BASE}/admin/users/${userId}/set-tier`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ tier: 'enterprise' }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json<{ error: string; valid_tiers: string[] }>();
+    expect(body.error).toBe('invalid_tier');
+    expect(body.valid_tiers).toEqual(['free', 'pro', 'scale', 'business', 'comp']);
+  });
+
+  it('rejects a missing tier field', async () => {
+    const res = await SELF.fetch(`${BASE}/admin/users/${userId}/set-tier`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json<{ error: string }>();
+    expect(body.error).toBe('missing_tier');
+  });
+
+  it('rejects an invalid user_id with 400', async () => {
+    const res = await SELF.fetch(`${BASE}/admin/users/not-a-number/set-tier`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ tier: 'comp' }),
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json<{ error: string }>()).error).toBe('invalid_user_id');
+  });
+
+  it('returns 404 for a user_id that does not exist', async () => {
+    const res = await SELF.fetch(`${BASE}/admin/users/99999/set-tier`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ tier: 'comp' }),
+    });
+    expect(res.status).toBe(404);
+    expect((await res.json<{ error: string }>()).error).toBe('user_not_found');
+  });
+
+  it('requires the service token', async () => {
+    const res = await SELF.fetch(`${BASE}/admin/users/${userId}/set-tier`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier: 'comp' }),
+    });
+    expect(res.status).toBe(401);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GET /admin/usage and GET /admin/verdicts/recent — dashboard root-page
 // data sources. Run in their own isolated user so the counts are
 // predictable regardless of test ordering.

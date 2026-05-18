@@ -41,6 +41,11 @@ const TIER_LABEL: Record<UsageInfo["tier"], string> = {
   pro: "Pro",
   scale: "Scale",
   business: "Business",
+  // `comp` renders as "Partner" — it's the no-charge tier provisioned
+  // by operator decision (not Stripe). The billing page also shows a
+  // "Complimentary" badge so the user knows their plan won't auto-renew
+  // or convert. See cloud/api/src/admin.ts /users/:id/set-tier.
+  comp: "Partner",
 };
 
 function daysUntil(iso: string, now: Date): number {
