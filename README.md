@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/b-tree-labs/postrule/main/brand/logo/postrule-wordmark-horizontal-dark.png">
-  <img src="https://raw.githubusercontent.com/b-tree-labs/postrule/main/brand/logo/postrule-wordmark-horizontal.png" alt="Postrule" width="420">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/b-tree-labs/postrule/main/brand/logo/postrule-wordmark-horizontal-dark-pypi.png">
+  <img src="https://raw.githubusercontent.com/b-tree-labs/postrule/main/brand/logo/postrule-wordmark-horizontal-pypi.png" alt="Postrule" width="420">
 </picture>
 
 # Self-taught classifiers.

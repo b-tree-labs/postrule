@@ -22,7 +22,7 @@ compute_switch_roi``, etc.
 See README.md and https://postrule.ai.
 """
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 from postrule.autoresearch import (
     CandidateHarness,
