@@ -273,8 +273,14 @@ docs/papers/**/outline.md
 # macOS Finder quarantine / sync artifacts
 .!*
 
-# Internal design explorations (working documents, not normative)
-docs/design/
+# Internal design explorations (working documents, not normative).
+# Ignore the contents of docs/design/ by default; carve out specific
+# normative design docs that should be committed — add an
+# `!docs/design/<filename>` line below to allowlist a doc.
+# (Pattern uses `docs/design/*` not `docs/design/` so negations work;
+# git can't un-ignore a file whose parent directory is ignored.)
+docs/design/*
+!docs/design/blue-green-deploys.md
 
 # =============================================================================
 # Section: Internal strategy / brand / governance — never public
