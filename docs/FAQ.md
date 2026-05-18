@@ -16,9 +16,10 @@ clears α (default 0.01) on at least 30 paired samples, the gate
 fires and the switch advances a phase. The full statistical
 framework — including the regime taxonomy, the
 sequential-testing posture, and the eight-benchmark validation —
-is in the [companion paper](papers/2026-when-should-a-rule-learn/paper-draft.md)
-and the [Test-Driven Product Development methodology
-reference](methodology/test-driven-product-development.md).
+is in the companion paper
+([OpenReview](https://openreview.net/forum?id=POmunHPNWl), or
+[`paper.pdf`](papers/2026-when-should-a-rule-learn/paper.pdf) in this
+repo).
 The short version: every graduation is a pre-registered, paired,
 statistically-defensible decision. Not vibes; not a hand-coded
 threshold. The gate fires *because evidence justified it*.
