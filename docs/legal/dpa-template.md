@@ -6,7 +6,7 @@
 
 This addendum (the "DPA") supplements the underlying service agreement
 between the Customer (the "Controller") and B-Tree Ventures, LLC, a
-Texas limited liability company doing business as B-Tree Labs (the
+Wyoming limited liability company doing business as B-Tree Labs (the
 "Processor"), under which the Processor makes the Postrule service
 available to the Controller. The DPA governs the Processor's
 processing of Personal Data on the Controller's behalf for the
@@ -485,7 +485,7 @@ transferred Personal Data.
 ## 15. Governing law
 
 15.1 **Choice of law.** This DPA is governed by the laws of the State
-of Texas, without regard to conflict-of-laws principles.
+of Wyoming, without regard to conflict-of-laws principles.
 
 15.2 **Negotiable.** A Controller required by its own jurisdiction to
 specify a different governing law may negotiate the choice of law in a
@@ -493,7 +493,7 @@ signed copy of this DPA. The Processor will entertain reasonable
 requests.
 
 15.3 **Jurisdiction.** Subject to §15.2, the state and federal courts
-located in Travis County, Texas have exclusive jurisdiction over
+located in Laramie County, Wyoming have exclusive jurisdiction over
 disputes arising under this DPA.
 
 ---
