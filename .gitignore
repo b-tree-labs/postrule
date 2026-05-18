@@ -275,3 +275,32 @@ docs/papers/**/outline.md
 
 # Internal design explorations (working documents, not normative)
 docs/design/
+
+# =============================================================================
+# Section: Internal strategy / brand / governance — never public
+# =============================================================================
+
+# Brand strategy + voice + governance + sub-brand planning
+brand/messaging.md
+brand/voice.md
+brand/governance.md
+brand/sub-brands.md
+brand/logo/_preview.html
+
+# Internal notes
+notes/
+
+# Internal repo-metadata documentation
+.github/REPO_METADATA.md
+
+# Pre-launch concept exploration (not shipped art)
+landing/assets/concepts/
+
+# Methodology framing (internal positioning)
+docs/methodology/
+
+# Internal security audits
+cloud/api/test/SECURITY_AUDIT-*.md
+
+# macOS Finder droppings (catch-all)
+**/.DS_Store
