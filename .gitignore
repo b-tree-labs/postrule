@@ -252,3 +252,23 @@ notes/sidequest-*.md
 docs/working/
 docs/marketing/
 .wrangler/
+
+# =============================================================================
+# Section: Paper drafts and authoring artifacts
+# Convention: finished PDFs / bibliographies / results stay in docs/papers/;
+# drafts and review notes live in docs/working/ (already ignored).
+# Unannounced papers (no public PDF yet) are ignored entirely.
+# =============================================================================
+
+# Unannounced paper — verifier-selection (companion #2)
+docs/papers/2026-verifier-selection/
+
+# Authoring artifacts in any paper dir
+docs/papers/**/paper-draft.md
+docs/papers/**/body.typ
+docs/papers/**/paper.typ
+docs/papers/**/ACCURACY_REVIEW-*.md
+docs/papers/**/outline.md
+
+# macOS Finder quarantine / sync artifacts
+.!*
