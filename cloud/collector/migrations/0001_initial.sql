@@ -1,7 +1,7 @@
 -- Copyright (c) 2026 B-Tree Ventures, LLC
 -- SPDX-License-Identifier: LicenseRef-BSL-1.1
 --
--- Dendra Insights — collector schema, v1.
+-- Postrule Insights — collector schema, v1.
 --
 -- Single append-only `events` table. Privacy posture per
 -- docs/working/telemetry-program-design-2026-04-28.md:

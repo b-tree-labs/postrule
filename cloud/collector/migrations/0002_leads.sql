@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS leads (
     email TEXT NOT NULL,
 
     -- Optional teammate forward target. Sent a one-line context note
-    -- ("@<email> saw this on Dendra and thought you'd want a look")
+    -- ("@<email> saw this on Postrule and thought you'd want a look")
     -- alongside the analysis when this is non-null.
     teammate_email TEXT,
 

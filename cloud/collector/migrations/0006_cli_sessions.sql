@@ -1,11 +1,11 @@
--- Migration 0006: cli_sessions table for the dendra-login device flow.
+-- Migration 0006: cli_sessions table for the `postrule login` device flow.
 --
 -- Backs RFC 8628 (OAuth 2.0 Device Authorization Grant) for the CLI:
 --
 --   1. CLI calls POST /v1/device/code → row inserted with state='pending'
 --      and a (device_code, user_code) pair. CLI displays user_code to
 --      the user; user_code is short, human-typeable (XXXX-XXXX).
---   2. User opens https://app.dendra.run/cli-auth, types user_code, clicks
+--   2. User opens https://app.postrule.ai/cli-auth, types user_code, clicks
 --      Authorize. Dashboard calls /admin/cli-sessions/:user_code/authorize
 --      → state transitions to 'authorized', user_id linked.
 --   3. CLI polls POST /v1/device/token with device_code → server mints a

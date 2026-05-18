@@ -9,7 +9,7 @@
 -- an auto-allocated reference; the cron handler escalates rows that
 -- have been sitting in the inbox too long.
 --
--- Cohabits with the existing dendra-events D1 (staging + production)
+-- Cohabits with the existing postrule-events D1 (staging + production)
 -- because there is no reason to provision a second database for a few
 -- hundred rows over the next decade. Migrations live with the
 -- collector for the same reason — single migrations_dir per database.
