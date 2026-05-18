@@ -177,6 +177,46 @@ describe('recordUsage atomic increment', () => {
     expect(over.over_cap_kind).toBe('soft');
     expect(over.overage_classifications).toBe(100);
   });
+
+  it('Comp tier hard-caps at 5M like scale (no overage since no billing)', async () => {
+    const u = await SELF.fetch(`${BASE}/admin/users`, {
+      method: 'POST',
+      headers: adminHeaders,
+      body: JSON.stringify({
+        clerk_user_id: 'usage_user_comp',
+        email: 'comp@example.com',
+      }),
+    });
+    const compUserId = (await u.json<{ user_id: number }>()).user_id;
+    await env.DB.prepare(`UPDATE users SET current_tier = 'comp' WHERE id = ?`)
+      .bind(compUserId)
+      .run();
+
+    const k = await SELF.fetch(`${BASE}/admin/keys`, {
+      method: 'POST',
+      headers: adminHeaders,
+      body: JSON.stringify({ user_id: compUserId }),
+    });
+    const compKeyId = (await k.json<{ id: number }>()).id;
+
+    const auth = {
+      user_id: compUserId,
+      api_key_id: compKeyId,
+      tier: 'comp' as const,
+      account_hash: 'h',
+      rate_limit_rps: 200,
+    };
+
+    // Bulk-load up to the cap edge.
+    const atCap = await recordUsage(env.DB, auth, 5_000_000);
+    expect(atCap.over_cap).toBe(false);
+
+    // One more pushes over → HARD cap (not soft), no overage recorded.
+    const over = await recordUsage(env.DB, auth, 100);
+    expect(over.over_cap).toBe(true);
+    expect(over.over_cap_kind).toBe('hard');
+    expect(over.overage_classifications).toBe(0);
+  });
 });
 
 describe('usageMiddleware via /v1 surface', () => {

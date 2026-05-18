@@ -112,6 +112,66 @@ admin.post('/users', async (c) => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /v1/admin/users/:user_id/set-tier — set a user's current_tier directly.
+//
+// Body: { tier: 'free' | 'pro' | 'scale' | 'business' | 'comp' }
+//
+// Used to provision no-charge `comp` (partner / internal-use) licenses
+// without going through Stripe. The Stripe webhook path
+// (subscription.created/updated/deleted) is the normal way tiers change;
+// this endpoint is the operator escape hatch for tiers Stripe doesn't
+// know about (`comp`) or for re-tiering an existing user (e.g. bumping
+// a comp user who's legitimately exceeded the scale-equivalent cap).
+//
+// Operator responsibility: when setting tier='comp', ensure no active
+// Stripe subscription exists for the user (otherwise the next webhook
+// event will overwrite the tier). See docs/ops/comp-license-provisioning.md.
+// ---------------------------------------------------------------------------
+const VALID_TIERS = ['free', 'pro', 'scale', 'business', 'comp'] as const;
+type ValidTier = (typeof VALID_TIERS)[number];
+
+admin.post('/users/:user_id/set-tier', async (c) => {
+  const userIdParam = c.req.param('user_id');
+  const userId = Number(userIdParam);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return c.json({ error: 'invalid_user_id' }, 400);
+  }
+
+  const body = await c.req.json<{ tier?: string }>().catch(() => null);
+  if (!body?.tier) {
+    return c.json({ error: 'missing_tier' }, 400);
+  }
+  if (!(VALID_TIERS as readonly string[]).includes(body.tier)) {
+    return c.json(
+      { error: 'invalid_tier', valid_tiers: VALID_TIERS },
+      400,
+    );
+  }
+  const tier = body.tier as ValidTier;
+
+  const updated = await c.env.DB.prepare(
+    `UPDATE users
+        SET current_tier = ?,
+            updated_at = datetime('now')
+      WHERE id = ?
+     RETURNING id, email, current_tier, account_hash`,
+  )
+    .bind(tier, userId)
+    .first<{ id: number; email: string; current_tier: string; account_hash: string }>();
+
+  if (!updated) {
+    return c.json({ error: 'user_not_found' }, 404);
+  }
+
+  return c.json({
+    user_id: updated.id,
+    email: updated.email,
+    tier: updated.current_tier,
+    account_hash: updated.account_hash,
+  });
+});
+
+// ---------------------------------------------------------------------------
 // POST /v1/admin/keys — issue a new API key. Returns plaintext ONCE.
 // Body: { user_id: number, name?: string, environment?: 'live' | 'test' }
 // ---------------------------------------------------------------------------

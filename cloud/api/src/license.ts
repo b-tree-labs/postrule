@@ -36,7 +36,7 @@ const DECODER = new TextDecoder();
 export interface LicenseClaims {
   iss: string;
   sub: string;
-  tier: 'business' | 'scale' | 'pro' | 'free';
+  tier: 'business' | 'scale' | 'pro' | 'free' | 'comp';
   account_hash: string;
   iat: number;
   exp: number;
