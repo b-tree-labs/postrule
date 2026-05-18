@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
     -- User-given label (e.g. "production", "dev-laptop", "ci").
     name TEXT,
     -- Per-key rate-limit override. NULL means "use tier default".
-    -- Only writeable for Business+ tier customers via Dendra ops.
+    -- Only writeable for Business+ tier customers via Postrule ops.
     rate_limit_rps_override INTEGER,
     last_used_at TEXT,
     -- Soft-deleted; index excludes revoked keys so auth lookup is fast.

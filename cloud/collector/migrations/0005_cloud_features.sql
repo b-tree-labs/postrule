@@ -1,14 +1,14 @@
 -- Migration 0005: cloud-feature backing tables.
 --
 -- Two tables for the v1.0 cloud features advertised on the dashboard
--- and exercised by `dendra.cloud.team_corpus` + `dendra.cloud.registry`.
+-- and exercised by `postrule.cloud.team_corpus` + `postrule.cloud.registry`.
 --
 -- Privacy posture:
 --   - `team_corpora.payload_json` is whatever the operator uploads via
 --     `share_corpus(...)`. We treat it as opaque JSON; cap is enforced
 --     server-side at insert time (16 KB).
 --   - `registry_contributions.payload_json` is anonymized client-side
---     by `dendra.cloud.registry.anonymize` before upload (strips a
+--     by `postrule.cloud.registry.anonymize` before upload (strips a
 --     conservative key list: author, email, host, repo_url, etc.) and
 --     re-validated server-side via the same key list.
 --

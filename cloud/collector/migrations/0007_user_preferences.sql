@@ -16,9 +16,9 @@
 --    they consented to.
 --
 -- 2. insights_enrollments is a new table — one row per (user, enrolled
---    period). Mirrors the local file at ~/.dendra/insights-enroll that
---    the CLI writes (src/dendra/insights/enrollment.py). The dashboard
---    toggle and the CLI command (`dendra insights enroll`) are the two
+--    period). Mirrors the local file at ~/.postrule/insights-enroll that
+--    the CLI writes (src/postrule/insights/enrollment.py). The dashboard
+--    toggle and the CLI command (`postrule insights enroll`) are the two
 --    ways into this table; both write the same shape so the row is
 --    portable across surfaces. `left_at` IS NULL means "currently
 --    enrolled". A user can re-enroll after leaving — the old row stays
@@ -34,7 +34,7 @@ ALTER TABLE users ADD COLUMN display_name TEXT;
 
 -- Default ON per Q4 decision 2026-05-11. The signed-in user agreed to
 -- this default at the consent moment during sign-in; the dashboard
--- toggle is the second way to opt out (DENDRA_NO_TELEMETRY=1 is the
+-- toggle is the second way to opt out (POSTRULE_NO_TELEMETRY=1 is the
 -- first). 1 = ON, 0 = OFF.
 ALTER TABLE users ADD COLUMN telemetry_enabled INTEGER NOT NULL DEFAULT 1;
 
