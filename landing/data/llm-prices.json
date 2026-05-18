@@ -1,6 +1,6 @@
 {
   "$schema": "https://postrule.ai/schemas/llm-prices.v1.json",
-  "last_updated": "2026-04-30",
+  "last_updated": "2026-05-18",
   "source": {
     "name": "BerriAI/litellm model_prices_and_context_window.json",
     "url": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
