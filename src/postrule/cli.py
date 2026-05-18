@@ -2151,7 +2151,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_insights_enroll.add_argument(
         "--yes",
         action="store_true",
-        help="Auto-confirm the disclosure prompt (for scripted installs on owner-controlled infra).",
+        help=(
+            "Auto-confirm the disclosure prompt (for scripted installs on owner-controlled infra)."
+        ),
     )
     p_insights_enroll.set_defaults(fn=cmd_insights_enroll)
 

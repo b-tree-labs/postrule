@@ -12,7 +12,8 @@
     { "pattern": "app.postrule.ai", "custom_domain": true }
   ],
   "vars": {
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_ZmFpdGhmdWwtc2F0eXItMjMuY2xlcmsuYWNjb3VudHMuZGV2JA",
+    // Clerk publishable test-instance key (front-end token, public by design).
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_ZmFpdGhmdWwtc2F0eXItMjMuY2xlcmsuYWNjb3VudHMuZGV2JA", // pragma: allowlist secret
     "NEXT_PUBLIC_DASHBOARD_URL": "https://app.postrule.ai",
     "POSTRULE_API_BASE_URL": "https://api.postrule.ai",
     "STRIPE_PRICE_ID_PRO": "price_1TTIfSDrF0wPV7rRYf1bAQiX",
