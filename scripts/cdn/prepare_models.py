@@ -250,7 +250,7 @@ def main() -> int:
         print(f"  ✓ {size / 1e9:.2f} GB  sha256={sha[:32]}…")
         print()
 
-    # ------- Output the artifacts Ben needs to act on -------
+    # ------- Output the artifacts the operator needs to act on -------
     print("=" * 72)
     print("SUMMARY")
     print("=" * 72)

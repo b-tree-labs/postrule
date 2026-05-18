@@ -693,8 +693,7 @@ def format_report(report: Report) -> str:
       per-switch lines for graduated and pre-graduation switches
       ``Total estimated saved this week: $<low>-<high>``
 
-    Hyphens, never em-dashes (Ben's tell-test: a Claude-shaped paper
-    leaks em-dashes; a human-and-Claude paper substitutes).
+    Hyphens, never em-dashes (output-style consistency rule).
     """
     lines: list[str] = []
     header = f"Postrule report - {report.n_switches} switches, {report.days_of_data} days of data"

@@ -9,9 +9,9 @@
 #   wrangler deploy --env production         # → production
 #
 # Required secrets (set with `wrangler secret put <NAME> --env <env>`):
-#   SECURITY_FORWARD_TO     — operator's primary inbox (Ben's personal mail)
-#                             receives forwards of every inbound report +
-#                             daily overdue digests + urgent escalations.
+#   SECURITY_FORWARD_TO     — operator's primary inbox; receives forwards
+#                             of every inbound report + daily overdue
+#                             digests + urgent escalations.
 #
 # Optional vars (settable per-env in [vars] / [env.production.vars]):
 #   SECURITY_FROM_ADDRESS   — defaults to "security@postrule.ai"
@@ -39,7 +39,7 @@ head_sampling_rate = 1.0
 
 # Daily at 09:00 UTC. Picks UTC (not Austin local) so DST doesn't shift
 # the run time twice a year. 09:00 UTC = 04:00 CDT / 03:00 CST — early
-# enough that Ben sees overdue alerts at start-of-day.
+# enough that the operator sees overdue alerts at start-of-day.
 [triggers]
 crons = ["0 9 * * *"]
 
@@ -53,7 +53,7 @@ database_id = "77ac4e6c-a09f-486a-9f40-bed39d209e2c"
 
 # Email-routing binding is configured via the Cloudflare dashboard
 # (Email → Email Routing → Routes), not declared here. After this
-# Worker deploys, Ben adds the route on postrule.ai (NOT
+# Worker deploys, the operator adds the route on postrule.ai (NOT
 # b-treeventures.com, which is Google-Workspace-hosted):
 #   security@postrule.ai → Send to a Worker → postrule-security-ops
 # Wrangler's TOML schema doesn't have a stable [[email_routing]] block

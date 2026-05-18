@@ -39,7 +39,7 @@ export interface AlertMessage {
 }
 
 /**
- * Send a notification to the operator (Ben). Today this is one sink
+ * Send a notification to the operator. Today this is one sink
  * (email); the function exists so callers don't pin themselves to
  * the email API directly.
  */
