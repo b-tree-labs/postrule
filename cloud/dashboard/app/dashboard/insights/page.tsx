@@ -7,7 +7,6 @@ import Link from "next/link";
 import { upsertUser, getInsightsStatus } from "../../../lib/postrule-api";
 import InsightsClient from "./insights-client";
 
-export const runtime = "edge";
 
 export default async function InsightsPage() {
   const { userId } = await auth();

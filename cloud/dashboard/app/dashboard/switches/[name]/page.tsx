@@ -18,7 +18,6 @@ import { notFound, redirect } from "next/navigation";
 import { upsertUser, getSwitchReport } from "../../../../lib/postrule-api";
 import SwitchReportClient from "./switch-report-client";
 
-export const runtime = "edge";
 
 export default async function SwitchReportPage({
   params,

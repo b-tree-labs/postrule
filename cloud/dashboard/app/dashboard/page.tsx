@@ -32,7 +32,6 @@ import {
 import UpgradeBanner from "./upgrade-banner";
 import OnboardingChecklist from "./onboarding-checklist";
 
-export const runtime = "edge";
 
 // Pretty tier label for the strip. The pricing-tiers.json shape uses
 // title-case labels; mirror that here without re-importing the file

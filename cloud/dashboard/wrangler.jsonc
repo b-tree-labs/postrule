@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "postrule-dashboard",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "routes": [
+    { "pattern": "app.postrule.ai", "custom_domain": true }
+  ],
+  "vars": {
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_ZmFpdGhmdWwtc2F0eXItMjMuY2xlcmsuYWNjb3VudHMuZGV2JA",
+    "NEXT_PUBLIC_DASHBOARD_URL": "https://app.postrule.ai",
+    "POSTRULE_API_BASE_URL": "https://api.postrule.ai",
+    "STRIPE_PRICE_ID_PRO": "price_1TTIfSDrF0wPV7rRYf1bAQiX",
+    "STRIPE_PRICE_ID_SCALE": "price_1TTIfTDrF0wPV7rR7evdTDVF",
+    "STRIPE_PRICE_ID_BUSINESS": "price_1TTIfUDrF0wPV7rR3g3ya7mE"
+  }
+}

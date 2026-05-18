@@ -5,7 +5,6 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import CliAuthClient from "./cli-auth-client";
 
-export const runtime = "edge";
 
 export default async function CliAuthPage({
   searchParams,

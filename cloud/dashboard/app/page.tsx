@@ -6,7 +6,6 @@ import {
   SignUpButton,
 } from "@clerk/nextjs";
 
-export const runtime = "edge";
 
 export default function Home() {
   return (

@@ -24,7 +24,6 @@ import {
   denyCliSession,
 } from "../../../lib/postrule-api";
 
-export const runtime = "edge";
 
 const USER_CODE_RE = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
 

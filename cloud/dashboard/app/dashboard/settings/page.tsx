@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { upsertUser, getPreferences } from "../../../lib/postrule-api";
 import SettingsClient from "./settings-client";
 
-export const runtime = "edge";
 
 export default async function SettingsPage() {
   const { userId } = await auth();

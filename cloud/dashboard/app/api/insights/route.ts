@@ -19,7 +19,6 @@ import {
   leaveInsights,
 } from "../../../lib/postrule-api";
 
-export const runtime = "edge";
 
 async function authedUser() {
   const { userId } = await auth();

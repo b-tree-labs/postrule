@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { upsertUser } from "../../../lib/postrule-api";
 import BillingClient from "./billing-client";
 
-export const runtime = "edge";
 
 export default async function BillingPage({
   searchParams,

@@ -8,7 +8,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { upsertUser, listKeys, issueKey } from "../../../lib/postrule-api";
 
-export const runtime = "edge";
 
 async function authedUser() {
   const { userId } = await auth();

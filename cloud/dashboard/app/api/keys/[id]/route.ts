@@ -10,7 +10,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { upsertUser, revokeKey } from "../../../../lib/postrule-api";
 
-export const runtime = "edge";
 
 export async function DELETE(
   _req: NextRequest,

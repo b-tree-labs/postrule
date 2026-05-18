@@ -15,7 +15,6 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { upsertUser } from "../../../../lib/postrule-api";
 import { stripe, priceIdForTier, checkoutReturnUrls } from "../../../../lib/stripe";
 
-export const runtime = "edge";
 
 // Tier ids mirror landing/data/pricing-tiers.json `id` fields (post
 // 2026-05-11 pricing restructure). The pre-restructure ids

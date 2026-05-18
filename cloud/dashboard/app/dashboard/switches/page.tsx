@@ -9,7 +9,6 @@ import { redirect } from "next/navigation";
 import { upsertUser, listSwitches } from "../../../lib/postrule-api";
 import SwitchesClient from "./switches-client";
 
-export const runtime = "edge";
 
 export default async function SwitchesListPage({
   searchParams,
