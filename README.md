@@ -586,7 +586,7 @@ pytest tests/
 
 ## About B-Tree Labs
 
-B-Tree Labs is a DBA of B-Tree Ventures, LLC (Texas). Postrule is
+B-Tree Labs is a DBA of B-Tree Ventures, LLC (Wyoming). Postrule is
 patent-protected (USPTO provisional filed 2026-04-21),
 dual-licensed (Apache 2.0 + BSL 1.1 with Change Date 2030-05-01
 → Apache 2.0), and shipped under a formal release process — the
