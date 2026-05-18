@@ -3,8 +3,8 @@
 
 [project]
 name = "postrule"
-version = "1.1.0"
-description = "Graduated-autonomy classification primitive — start as a rule, graduate to ML when evidence justifies it."
+version = "1.1.1"
+description = "Self-taught classifiers. Graduated-autonomy classification primitive: start as a rule, graduate to ML when evidence justifies it."
 readme = "README.md"
 # Split license (PEP 639 SPDX expression). See LICENSE.md in the
 # repo root for the full explanation; LICENSING.md is the
