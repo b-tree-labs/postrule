@@ -272,3 +272,6 @@ docs/papers/**/outline.md
 
 # macOS Finder quarantine / sync artifacts
 .!*
+
+# Internal design explorations (working documents, not normative)
+docs/design/
