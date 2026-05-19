@@ -15,6 +15,18 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.5] — 2026-05-19
+
+### Fixed
+
+- **Embed the production Ed25519 license-signing public key** in
+  `postrule.license.LICENSE_PUBLIC_KEYS_HEX` (key id `v1-postrule-prod`,
+  hex `340da602…f9954236`). Replaces the `"0" * 64` placeholder that
+  shipped with 1.1.0–1.1.4. Licenses signed by `postrule-api` are now
+  verifiable client-side without an env override.
+- The placeholder still works in tests via monkeypatch when exercising
+  the "no public keys configured" guard path.
+
 ## [1.1.0] — 2026-05-20
 
 The first public release. Skips 1.0.0 deliberately to match the
