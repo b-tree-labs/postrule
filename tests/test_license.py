@@ -162,10 +162,19 @@ def test_verify_rejects_malformed_token():
 
 
 def test_verify_no_keys_configured(monkeypatch, keypair, baseline_claims):
-    # No env override; built-in registry has only the placeholder which
-    # the verifier silently skips → "no public keys configured".
+    # When the registry holds only the all-zeros placeholder (the verifier
+    # skips it silently) and no env override is set, verify_license must
+    # raise "no public keys configured" rather than attempting verification
+    # against zero keys. We patch the registry to that placeholder-only
+    # state to exercise the guard — the shipped registry has a real
+    # production key, so the natural pre-rollout state has to be simulated.
+    from postrule import license as license_mod
+
     priv, _ = keypair
     monkeypatch.delenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", raising=False)
+    monkeypatch.setattr(
+        license_mod, "LICENSE_PUBLIC_KEYS_HEX", (("v1-placeholder", "0" * 64),)
+    )
     token = _make_token(priv, baseline_claims)
     with pytest.raises(LicenseInvalid, match="no public keys"):
         verify_license(token)
