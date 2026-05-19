@@ -58,15 +58,22 @@ import { NextResponse } from "next/server";
 //
 // frame-ancestors 'none' makes this stronger than X-Frame-Options DENY
 // (covers nested iframes too).
+// Clerk hosts called out explicitly:
+//   *.clerk.com               — Clerk CDN (JS bundle, images)
+//   *.clerk.dev               — Clerk auxiliary services
+//   *.clerk.accounts.dev      — Clerk-hosted dev/test instances (kept
+//                                 in allowlist for rollback-to-pk_test_)
+//   clerk.postrule.ai         — Postrule's production Clerk FAPI host
+//                                 (custom subdomain provisioned 2026-05-19)
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerk.dev https://*.clerk.accounts.dev https://clerk.postrule.ai https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com",
+  "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com https://clerk.postrule.ai",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.clerk.com https://*.clerk.dev https://*.clerk.accounts.dev https://clerk-telemetry.com https://api.postrule.ai https://staging-api.postrule.ai",
-  "frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com https://checkout.stripe.com https://billing.stripe.com",
-  "form-action 'self' https://checkout.stripe.com https://billing.stripe.com https://*.clerk.com https://*.clerk.accounts.dev",
+  "connect-src 'self' https://*.clerk.com https://*.clerk.dev https://*.clerk.accounts.dev https://clerk.postrule.ai https://clerk-telemetry.com https://api.postrule.ai https://staging-api.postrule.ai",
+  "frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://clerk.postrule.ai https://challenges.cloudflare.com https://checkout.stripe.com https://billing.stripe.com",
+  "form-action 'self' https://checkout.stripe.com https://billing.stripe.com https://*.clerk.com https://*.clerk.accounts.dev https://clerk.postrule.ai",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",
