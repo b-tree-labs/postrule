@@ -172,9 +172,7 @@ def test_verify_no_keys_configured(monkeypatch, keypair, baseline_claims):
 
     priv, _ = keypair
     monkeypatch.delenv("POSTRULE_LICENSE_PUBLIC_KEY_HEX", raising=False)
-    monkeypatch.setattr(
-        license_mod, "LICENSE_PUBLIC_KEYS_HEX", (("v1-placeholder", "0" * 64),)
-    )
+    monkeypatch.setattr(license_mod, "LICENSE_PUBLIC_KEYS_HEX", (("v1-placeholder", "0" * 64),))
     token = _make_token(priv, baseline_claims)
     with pytest.raises(LicenseInvalid, match="no public keys"):
         verify_license(token)
