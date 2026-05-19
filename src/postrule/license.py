@@ -50,7 +50,10 @@ LICENSE_PUBLIC_KEYS_HEX: tuple[tuple[str, str], ...] = (
     # (set 2026-05-18). Verification tries each entry here in turn so
     # we can rotate (add the new key at the top, retire the old one
     # in a later release after grace period).
-    ("v1-postrule-prod", "340da602226fbbf4c72b98a5d8d770aafa867127087ab0c12554575df9954236"),
+    (
+        "v1-postrule-prod",
+        "340da602226fbbf4c72b98a5d8d770aafa867127087ab0c12554575df9954236",
+    ),
 )
 
 # Allow installs to override at runtime (handy for staging / red-team
