@@ -1,8 +1,16 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 #
-# Triggered by a tag push matching ``v*``. Builds a wheel + sdist and
-# publishes to PyPI via the trusted-publisher (OIDC) binding.
+# Triggered on every push to `main`. Detects whether `pyproject.toml`
+# version has an existing matching `v*` tag; if not, auto-tags the
+# current commit, builds wheel + sdist, publishes to PyPI via the
+# trusted-publisher (OIDC) binding, and cuts a GitHub Release.
+#
+# Design intent: green main is sufficient to trigger a release. The
+# release artifact (PyPI + GitHub Release) is derived from the source-
+# of-truth `version = "..."` line in pyproject.toml, not from a
+# separate ceremony (`git tag v*`). A merge that bumps the version
+# IS the release; a merge that doesn't is a no-op.
 #
 # Setup (one-time, on PyPI):
 #   1. https://pypi.org/manage/account/publishing/
@@ -13,28 +21,90 @@
 #        Workflow filename: release.yml          ← matches THIS file
 #        Environment name:  pypi
 #
-# After the binding is active, ``git tag v1.0.0rc1 && git push origin
-# v1.0.0rc1`` triggers a publish. No PYPI_API_TOKEN secret is required;
-# OIDC-issued short-lived tokens authenticate the upload.
+# After the binding is active, no PYPI_API_TOKEN secret is required;
+# OIDC-issued short-lived tokens authenticate the upload. The tag
+# push the workflow itself performs uses the default GITHUB_TOKEN.
 #
 # Self-contained on purpose — no dependency on a reusable workflow
 # in a sibling org repo. If b-tree-labs gains multiple Python
 # packages later, refactor to a reusable workflow then; not now.
+
 name: release
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+  # Manual override for emergencies (e.g. republishing a yanked
+  # version, or re-tagging after a force-push to main).
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  check-version:
+    name: Detect unreleased version bump
+    runs-on: ubuntu-latest
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need history + tags so we can compare pyproject version
+          # against existing release tags.
+          fetch-depth: 0
+
+      - id: check
+        name: Compare pyproject.toml version vs existing tags
+        run: |
+          set -euo pipefail
+          version=$(grep -E '^version = "' pyproject.toml | sed -E 's/^version = "(.+)"$/\1/')
+          tag="v$version"
+          echo "Current pyproject version: $version"
+          echo "Looking for tag: $tag"
+          if git rev-parse --verify --quiet "refs/tags/$tag" > /dev/null; then
+            echo "Tag $tag already exists — no release needed."
+            echo "should-release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tag $tag does not exist — will release."
+            echo "should-release=true" >> "$GITHUB_OUTPUT"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          fi
+
+  tag:
+    name: Tag the release commit
+    needs: check-version
+    if: needs.check-version.outputs.should-release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      # Push the new vX.Y.Z tag back to the repo.
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Push tag
+        env:
+          TAG: ${{ needs.check-version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
   build:
     name: Build distributions
+    needs: [check-version, tag]
+    if: needs.check-version.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Check out the freshly-pushed tag so the build sees the
+          # exact ref that just got published.
+          ref: ${{ needs.check-version.outputs.tag }}
 
       - uses: actions/setup-python@v5
         with:
@@ -88,12 +158,14 @@ jobs:
 
   github-release:
     name: Create GitHub Release
-    needs: publish
+    needs: [check-version, publish]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check-version.outputs.tag }}
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -104,7 +176,8 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.check-version.outputs.tag }}
           generate_release_notes: true
           files: dist/*
           draft: false
-          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+          prerelease: ${{ contains(needs.check-version.outputs.tag, 'rc') || contains(needs.check-version.outputs.tag, 'beta') || contains(needs.check-version.outputs.tag, 'alpha') }}
