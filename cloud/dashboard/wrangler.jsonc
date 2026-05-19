@@ -12,8 +12,11 @@
     { "pattern": "app.postrule.ai", "custom_domain": true }
   ],
   "vars": {
-    // Clerk publishable test-instance key (front-end token, public by design).
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_ZmFpdGhmdWwtc2F0eXItMjMuY2xlcmsuYWNjb3VudHMuZGV2JA", // pragma: allowlist secret
+    // Clerk publishable production-instance key (front-end token, public
+    // by design). Decoded suffix → `clerk.postrule.ai$` = the FAPI host
+    // for the prod Clerk instance. Rotated 2026-05-19 from the pre-launch
+    // pk_test_* (faithful-satyr-23.clerk.accounts.dev) Development instance.
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsucG9zdHJ1bGUuYWkk", // pragma: allowlist secret
     "NEXT_PUBLIC_DASHBOARD_URL": "https://app.postrule.ai",
     "POSTRULE_API_BASE_URL": "https://api.postrule.ai",
     "STRIPE_PRICE_ID_PRO": "price_1TTIfSDrF0wPV7rRYf1bAQiX",
