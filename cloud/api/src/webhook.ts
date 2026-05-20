@@ -154,17 +154,21 @@ async function handleSubscriptionEvent(
   let tier: AuthContext['tier'] = 'free';
   const price = item?.price;
   if (price) {
-    // Lookup-key shape produced by scripts/sync-stripe-products.ts is
-    //   postrule_hosted_pro_monthly_usd
-    // The TIER_MAP keys match the tier id in pricing-tiers.json
-    // (hosted_pro etc), so we strip both the postrule_ prefix and the
-    // _monthly_usd suffix before lookup.
-    const raw =
-      price.lookup_key ??
-      (typeof price.metadata?.lookup_key === 'string' ? price.metadata.lookup_key : null);
-    const productLookup = raw
-      ? raw.replace(/^postrule_/, '').replace(/_monthly_usd$/, '')
+    // Tier identifier sources, in priority order:
+    //  1. price.metadata.tier_id — canonical, written by
+    //     scripts/sync-stripe-products.ts as "hosted_pro" / "hosted_scale" /
+    //     "hosted_business". Always matches TIER_MAP directly.
+    //  2. price.lookup_key — UI-facing identifier shaped like
+    //     "<brand>_hosted_<tier>_monthly_usd". May carry the legacy
+    //     `dendra_` prefix on prices created before the 2026-05 brand
+    //     transition; new prices use `postrule_`. We strip either prefix
+    //     and the `_monthly_usd` suffix before lookup.
+    const tierIdFromMetadata =
+      typeof price.metadata?.tier_id === 'string' ? price.metadata.tier_id : null;
+    const tierIdFromLookupKey = price.lookup_key
+      ? price.lookup_key.replace(/^(postrule|dendra)_/, '').replace(/_monthly_usd$/, '')
       : null;
+    const productLookup = tierIdFromMetadata ?? tierIdFromLookupKey;
     if (productLookup && TIER_MAP[productLookup]) {
       tier = TIER_MAP[productLookup]!;
     }
