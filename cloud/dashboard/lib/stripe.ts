@@ -18,7 +18,14 @@ export function stripe(): Stripe {
     throw new Error("STRIPE_SECRET_KEY env var is not set");
   }
   if (!_stripe) {
-    _stripe = new Stripe(SECRET_KEY);
+    // In Cloudflare Workers, the Stripe Node SDK MUST use Workers' native
+    // fetch() instead of Node's http module (which doesn't exist in the
+    // Workers runtime even with nodejs_compat). Without this httpClient
+    // override, every Stripe API call fails with "An error occurred with
+    // our connection to Stripe. Request was retried 2 times."
+    _stripe = new Stripe(SECRET_KEY, {
+      httpClient: Stripe.createFetchHttpClient(),
+    });
   }
   return _stripe;
 }
