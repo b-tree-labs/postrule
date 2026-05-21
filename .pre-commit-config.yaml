@@ -49,7 +49,10 @@ repos:
     hooks:
       - id: no-utexas
         name: fail on stray UT email/identifier references
+        # --exclude-dir=working skips docs/working/, which is gitignored
+        # and intentionally holds internal docs (investor application,
+        # private-beta invitee list) that legitimately reference UT.
         entry: >
-          bash -c 'if grep -rEn "utexas|UT Austin|bbooth@" src/ tests/ docs/ README.md CHANGELOG.md SECURITY.md CONTRIBUTING.md 2>/dev/null; then echo "found UT references — expected to be scrubbed"; exit 1; fi'
+          bash -c 'if grep -rEn --exclude-dir=working "utexas|UT Austin|bbooth@" src/ tests/ docs/ README.md CHANGELOG.md SECURITY.md CONTRIBUTING.md 2>/dev/null; then echo "found UT references — expected to be scrubbed"; exit 1; fi'
         language: system
         pass_filenames: false

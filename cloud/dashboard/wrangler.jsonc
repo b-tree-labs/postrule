@@ -11,6 +11,14 @@
   "routes": [
     { "pattern": "app.postrule.ai", "custom_domain": true }
   ],
+  // Persist console.* output to the Cloudflare dashboard (3-day retention,
+  // searchable, free). Without this, server-side logs from this Worker are
+  // visible only via `wrangler tail` while a session is running.
+  // Mirrors cloud/api/wrangler.toml's [observability] block.
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1.0
+  },
   "vars": {
     // Clerk publishable production-instance key (front-end token, public
     // by design). Decoded suffix → `clerk.postrule.ai$` = the FAPI host

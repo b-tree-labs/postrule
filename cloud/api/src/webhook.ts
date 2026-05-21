@@ -87,17 +87,47 @@ async function handleSubscriptionEvent(
   event: Stripe.Event,
   sub: Stripe.Subscription,
 ) {
-  // Resolve the user via stripe_customer_id (set on first checkout).
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
-  const userRow = await db
-    .prepare(`SELECT id FROM users WHERE stripe_customer_id = ? LIMIT 1`)
-    .bind(customerId)
-    .first<{ id: number }>();
 
-  if (!userRow) {
+  // Resolve the user. We prefer subscription_data.metadata.postrule_user_id
+  // (set by the dashboard checkout route at session-create time) because
+  // stripe_customer_id is only persisted on the users row after a webhook
+  // round-trip — so on the *first* customer.subscription.created event for
+  // a new subscriber, the stripe_customer_id column is still NULL. Without
+  // the metadata path, every first-checkout webhook silently no-ops with
+  // "subscription event for unknown customer", leaving the user stuck on
+  // free even though Stripe collected payment. Fall back to the
+  // stripe_customer_id lookup for subscriptions created outside our
+  // checkout flow (manual Stripe Dashboard creations, imports, etc.).
+  let userId: number | null = null;
+  const metaUserId = sub.metadata?.postrule_user_id;
+  if (metaUserId) {
+    const n = parseInt(metaUserId, 10);
+    if (Number.isFinite(n) && n > 0) userId = n;
+  }
+  if (!userId) {
+    const userRow = await db
+      .prepare(`SELECT id FROM users WHERE stripe_customer_id = ? LIMIT 1`)
+      .bind(customerId)
+      .first<{ id: number }>();
+    if (userRow) userId = userRow.id;
+  }
+
+  if (!userId) {
     console.warn(`subscription event for unknown customer ${customerId}`);
     return;
   }
+
+  // Persist stripe_customer_id back to the users row on first touch so
+  // subsequent events, customer-portal sessions, and admin tools can
+  // resolve the user without relying on subscription metadata.
+  await db
+    .prepare(
+      `UPDATE users SET stripe_customer_id = ?, updated_at = datetime('now')
+        WHERE id = ? AND (stripe_customer_id IS NULL OR stripe_customer_id != ?)`,
+    )
+    .bind(customerId, userId, customerId)
+    .run();
 
   // Idempotency: if last_event_id already matches, skip.
   const existing = await db
@@ -124,17 +154,21 @@ async function handleSubscriptionEvent(
   let tier: AuthContext['tier'] = 'free';
   const price = item?.price;
   if (price) {
-    // Lookup-key shape produced by scripts/sync-stripe-products.ts is
-    //   postrule_hosted_pro_monthly_usd
-    // The TIER_MAP keys match the tier id in pricing-tiers.json
-    // (hosted_pro etc), so we strip both the postrule_ prefix and the
-    // _monthly_usd suffix before lookup.
-    const raw =
-      price.lookup_key ??
-      (typeof price.metadata?.lookup_key === 'string' ? price.metadata.lookup_key : null);
-    const productLookup = raw
-      ? raw.replace(/^postrule_/, '').replace(/_monthly_usd$/, '')
+    // Tier identifier sources, in priority order:
+    //  1. price.metadata.tier_id — canonical, written by
+    //     scripts/sync-stripe-products.ts as "hosted_pro" / "hosted_scale" /
+    //     "hosted_business". Always matches TIER_MAP directly.
+    //  2. price.lookup_key — UI-facing identifier shaped like
+    //     "<brand>_hosted_<tier>_monthly_usd". May carry the legacy
+    //     `dendra_` prefix on prices created before the 2026-05 brand
+    //     transition; new prices use `postrule_`. We strip either prefix
+    //     and the `_monthly_usd` suffix before lookup.
+    const tierIdFromMetadata =
+      typeof price.metadata?.tier_id === 'string' ? price.metadata.tier_id : null;
+    const tierIdFromLookupKey = price.lookup_key
+      ? price.lookup_key.replace(/^(postrule|dendra)_/, '').replace(/_monthly_usd$/, '')
       : null;
+    const productLookup = tierIdFromMetadata ?? tierIdFromLookupKey;
     if (productLookup && TIER_MAP[productLookup]) {
       tier = TIER_MAP[productLookup]!;
     }
@@ -165,15 +199,15 @@ async function handleSubscriptionEvent(
          last_event_id = excluded.last_event_id,
          updated_at = datetime('now')`,
     )
-    .bind(userRow.id, sub.id, tier, status, periodStart, periodEnd, event.id)
+    .bind(userId, sub.id, tier, status, periodStart, periodEnd, event.id)
     .run();
 
   await db
     .prepare(`UPDATE users SET current_tier = ?, updated_at = datetime('now') WHERE id = ?`)
-    .bind(effectiveTier, userRow.id)
+    .bind(effectiveTier, userId)
     .run();
 
   console.log(
-    `applied ${event.type} for user=${userRow.id} sub=${sub.id} tier=${effectiveTier}`,
+    `applied ${event.type} for user=${userId} sub=${sub.id} tier=${effectiveTier}`,
   );
 }
