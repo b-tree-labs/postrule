@@ -226,7 +226,11 @@ describe('SCENARIO 1 — auto-unarchive race vs concurrent archive', () => {
 // ============================================================================
 
 describe('SCENARIO 2 — tier-cap atomicity at cap-1', () => {
-  it('exactly one request gets 201 when the counter starts at cap - 1', async () => {
+  // 256 concurrent verdict POSTs through miniflare-emulated D1 takes
+  // ~16s in GitHub Actions CI (well under 5s locally). Bump per-test
+  // timeout so this exercises the atomic-increment guarantee without
+  // racing the default vitest timeout in the slower environment.
+  it('exactly one request gets 201 when the counter starts at cap - 1', { timeout: 30_000 }, async () => {
     const user = await mintUser('capburst');
     const BURST = 256;
     const CAP = 10_000;
