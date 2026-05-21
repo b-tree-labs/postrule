@@ -1,0 +1,59 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: Apache-2.0
+#
+# Cloud Worker tests — runs the vitest suite in cloud/api/ against
+# miniflare (D1 in-memory + KV in-memory + signed webhook deliveries).
+# Required check on every PR that touches the worker source, its tests,
+# or the pricing-tiers JSON that drives Stripe product sync.
+#
+# Distinct from the Python CI in .github/workflows/ci.yml — that suite
+# covers the postrule PyPI package; this one covers Cloudflare Workers
+# (api + collector + dashboard) and the contract between them.
+
+name: Cloud tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud/api/**"
+      - "cloud/collector/**"
+      - "cloud/dashboard/**"
+      - "landing/data/pricing-tiers.json"
+      - ".github/workflows/cloud-tests.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cloud/api/**"
+      - "cloud/collector/**"
+      - "cloud/dashboard/**"
+      - "landing/data/pricing-tiers.json"
+      - ".github/workflows/cloud-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-vitest:
+    name: cloud/api vitest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: cloud/api/package-lock.json
+
+      - name: Install api deps
+        working-directory: cloud/api
+        run: npm ci
+
+      - name: Run vitest (webhook + auth + admin + verdicts + …)
+        working-directory: cloud/api
+        run: npx vitest run --reporter=verbose

@@ -27,8 +27,9 @@
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsucG9zdHJ1bGUuYWkk", // pragma: allowlist secret
     "NEXT_PUBLIC_DASHBOARD_URL": "https://app.postrule.ai",
     "POSTRULE_API_BASE_URL": "https://api.postrule.ai",
-    "STRIPE_PRICE_ID_PRO": "price_1TTIfSDrF0wPV7rRYf1bAQiX",
-    "STRIPE_PRICE_ID_SCALE": "price_1TTIfTDrF0wPV7rR7evdTDVF",
-    "STRIPE_PRICE_ID_BUSINESS": "price_1TTIfUDrF0wPV7rR3g3ya7mE"
+    "STRIPE_PRICE_ID_STARTER": "price_1TZZryDrF0wPV7rR670LwLzg",
+    "STRIPE_PRICE_ID_PRO": "price_1TZZrzDrF0wPV7rRghpEr935",
+    "STRIPE_PRICE_ID_SCALE": "price_1TZZrzDrF0wPV7rRiVWOD2p5",
+    "STRIPE_PRICE_ID_BUSINESS": "price_1TZZs0DrF0wPV7rRmMbljMvY"
   }
 }
