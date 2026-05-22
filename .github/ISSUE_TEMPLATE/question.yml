@@ -8,6 +8,13 @@ body:
   - type: markdown
     attributes:
       value: |
+        > **This is the public Postrule SDK repository.**
+        >
+        > Please do NOT include in your question: customer names, paid-account
+        > details, internal pricing, internal infrastructure detail, or paths
+        > under internal-only directories. For account-specific questions,
+        > email **support@postrule.ai**.
+
         For longer-form discussions, consider
         [GitHub Discussions](https://github.com/b-tree-labs/postrule/discussions)
         instead — it's a better fit for open-ended questions.

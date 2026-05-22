@@ -1,0 +1,39 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: Apache-2.0
+
+name: 📝 Documentation improvement
+description: Suggest a fix, addition, or rewrite for public Postrule docs
+title: "[docs] "
+labels: ["type:docs", "needs-triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > **This is the public Postrule SDK repository.**
+        >
+        > Please do NOT reference: customer names, internal infra hostnames,
+        > internal pricing details, ARR/MRR figures, internal roadmap milestones,
+        > or paths under internal-only directories.
+
+  - type: input
+    id: page
+    attributes:
+      label: Page / file
+      description: Which doc page or file is this about?
+      placeholder: "docs/quickstart/index.md or https://docs.postrule.ai/quickstart"
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's wrong, missing, or confusing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix or addition
+      description: A specific change, draft text, or pointer to a better source.
