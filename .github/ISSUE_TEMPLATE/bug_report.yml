@@ -8,6 +8,22 @@ body:
   - type: markdown
     attributes:
       value: |
+        > **This is the public Postrule SDK repository.**
+        >
+        > Please do NOT include in this issue:
+        > - Customer names, organization names, internal cohort identifiers
+        > - Stripe customer IDs, subscription IDs, account IDs (`acct_*`, `cus_*`, `sub_*`, `price_*`)
+        > - Specific dollar amounts of internal pricing, ARR, MRR, or projections
+        > - Internal infrastructure hostnames, Worker secret names, KV/D1 IDs
+        > - Internal roadmap milestone references (R-numbers, M-numbers)
+        > - Paths under internal-only directories
+        >
+        > For anything tied to a paid account or internal context, email
+        > **support@postrule.ai**. For security issues, use the private-advisory
+        > link on the New Issue chooser. A bot-flagged `needs-scrub` label
+        > means the trigger-word scanner detected one of the patterns above;
+        > review your text and edit before continuing.
+
         Thanks for reporting a bug. A minimal reproducer is the
         single most useful thing you can provide. If the bug is
         security-sensitive, close this and file a private advisory
