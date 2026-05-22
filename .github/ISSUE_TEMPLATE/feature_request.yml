@@ -8,6 +8,15 @@ body:
   - type: markdown
     attributes:
       value: |
+        > **This is the public Postrule SDK repository.**
+        >
+        > Please do NOT include: customer names, organization names, specific
+        > dollar amounts of internal pricing, ARR/MRR projections, internal
+        > infrastructure detail, internal roadmap milestone references, or paths
+        > under internal-only directories. For commercial / enterprise feature
+        > requests tied to a specific account or contract, email
+        > **support@postrule.ai**.
+
         Thanks for proposing a feature. Postrule is a **primitive** —
         we aim for a small, coherent API surface. Read
         `CONTRIBUTING.md` §Philosophy first if you haven't.
