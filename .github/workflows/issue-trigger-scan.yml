@@ -1,0 +1,138 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: Apache-2.0
+#
+# Trigger-word scanner — runs on every new issue / issue comment in the
+# public repo and flags suspected sensitive content.
+#
+# Patterns watched (case-insensitive):
+#   - Explicit dollar prices: $99, $499, $1,999, etc.
+#   - Stripe object IDs that leaked into prose: acct_*, cus_*, sub_*, price_*
+#   - Internal customer / cohort names hard-coded in the regex
+#   - Internal roadmap milestone shorthand (R1-R27, M1-M20)
+#   - References to gitignored internal-only paths
+#   - Active investor-process keywords (Speedrun + a16z)
+#
+# Behavior on match:
+#   1. Label the issue/comment-thread `needs-scrub`
+#   2. Post a non-deletable bot comment naming the matched patterns
+#      and linking the author back to docs/community/issue-policy.md
+#   3. Do NOT auto-delete content — operator (founder) reviews + edits
+#
+# This workflow ships to BOTH the public mirror (where it's load-bearing)
+# AND the private monorepo (where it's a no-op, since the private repo
+# allows all content; harmless extra signal there).
+
+name: Issue trigger-word scan
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  scan:
+    name: Scan issue / comment for sensitive patterns
+    runs-on: ubuntu-latest
+    # Skip the bot's own comments — avoids feedback loops
+    if: github.event.sender.login != 'github-actions[bot]'
+    steps:
+      - name: Scan + flag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Source text: issue body OR comment body, depending on event
+            const isComment = context.eventName === 'issue_comment';
+            const text = isComment
+              ? context.payload.comment.body
+              : context.payload.issue.body || '';
+            const issueNumber = context.payload.issue.number;
+
+            // Patterns to detect. Each is { name, regex, why } so the
+            // bot comment can explain which trigger fired.
+            const patterns = [
+              {
+                name: 'explicit_price',
+                regex: /\$\s?[0-9],?[0-9]{2,4}(?:\/mo|\/yr|\/year|\s*per\s*month)?/i,
+                why: 'specific dollar amount of pricing'
+              },
+              {
+                name: 'stripe_object_id',
+                regex: /\b(?:acct|cus|sub|price|prod|evt|si|pm|in|seti|pi|ch)_[A-Za-z0-9]{14,}\b/,
+                why: 'Stripe object identifier'
+              },
+              {
+                name: 'customer_name',
+                regex: /\b(?:UT\s+Austin|SoilMetrix)\b/i,
+                why: 'named design-partner / customer'
+              },
+              {
+                name: 'utexas_email',
+                regex: /@(?:[a-z0-9-]+\.)?utexas\.edu\b/i,
+                why: 'UT Austin email domain'
+              },
+              {
+                name: 'roadmap_milestone',
+                regex: /\b[RM][0-9]{1,2}\b(?!-)/,
+                why: 'internal roadmap milestone shorthand'
+              },
+              {
+                name: 'internal_path',
+                regex: /docs\/working\/[^\s)\]]+/,
+                why: 'reference to gitignored internal-only document'
+              },
+              {
+                name: 'investor_process',
+                regex: /\b(?:a16z\s+)?Speedrun(?:\s+SR\d+)?\b/i,
+                why: 'active investor process keyword'
+              },
+              {
+                name: 'arr_mrr_forecast',
+                regex: /\$\s?[0-9]+(?:\.[0-9]+)?\s?[MBK]\s+(?:ARR|MRR|valuation|EV)\b/i,
+                why: 'revenue forecast / valuation figure'
+              },
+            ];
+
+            const hits = patterns.filter(p => p.regex.test(text));
+            if (hits.length === 0) {
+              core.info('No sensitive patterns detected.');
+              return;
+            }
+
+            // Label the issue
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['needs-scrub']
+            });
+
+            // Compose the bot comment
+            const lines = [
+              '> ⚠️ **Possible sensitive content detected** by the trigger-word scanner.',
+              '>',
+              '> The following patterns matched in this ' +
+                (isComment ? 'comment' : 'issue body') + ':',
+              '>',
+              ...hits.map(h => `> - **${h.name}** — ${h.why}`),
+              '>',
+              '> This is the public Postrule SDK repository. Review the matched',
+              '> content and edit it out if it leaked from internal context. The',
+              '> `needs-scrub` label will stay until a maintainer clears it.',
+              '>',
+              '> See the new-issue template banners for the full list of patterns',
+              '> we keep off the public surface.',
+            ];
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: lines.join('\n')
+            });
+
+            core.warning(`Flagged ${hits.length} pattern(s): ${hits.map(h => h.name).join(', ')}`);
