@@ -1,0 +1,74 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: LicenseRef-BSL-1.1
+#
+# INTERNAL TEMPLATE — surfaces only in the postrule-private repo.
+# Excluded from the public-mirror sync allowlist.
+
+name: ☁️ Cloud bug (Worker / dashboard / billing)
+description: Bug in cloud/api, cloud/collector, cloud/dashboard, billing flow, or any Cloudflare-backed surface
+title: "[cloud-bug] "
+labels: ["type:cloud-bug", "needs-triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Full context welcome here — this is the internal repo. Customer names, account IDs,
+        Stripe IDs, pricing, infra hostnames, internal docs: all fair game.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - cloud/api (Hono Worker)
+        - cloud/collector (verdict ingest)
+        - cloud/dashboard (Next.js dashboard)
+        - cloud/aggregator (nightly cohort)
+        - cloud/security-ops
+        - Stripe billing (webhook, checkout, portal)
+        - Clerk auth flow
+        - D1 schema / data integrity
+        - KV (cohort priors, rate limits)
+        - Multiple / unclear
+    validations:
+      required: true
+
+  - type: input
+    id: deployed-version
+    attributes:
+      label: Affected worker version(s)
+      description: From `wrangler deployments list` or the CF dashboard
+      placeholder: "e29bfaf5-52aa-4fcc-..."
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Symptom (what the user / operator sees)
+    validations:
+      required: true
+
+  - type: textarea
+    id: root-cause
+    attributes:
+      label: Suspected root cause + impact radius
+      description: Customer-visible? Data-loss risk? Reversible?
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Curl, wrangler tail snippets, D1 queries, screenshots, etc.
+      render: shell
+
+  - type: input
+    id: customer
+    attributes:
+      label: Affected customer(s) — if known
+      description: Internal repo, customer names OK. "all" / "user 3" / specific email all fine.
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround currently in place
+      description: D1 patch applied? Tier flipped manually? Feature gated? Note here for handoff.
