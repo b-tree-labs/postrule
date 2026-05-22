@@ -14,7 +14,7 @@ export interface AuthContext {
   // as a paid tier; differs only in that no Stripe subscription backs it
   // and its caps are set by operator decision (currently scale-equivalent).
   // Provisioned via POST /admin/users/:user_id/set-tier, never via webhook.
-  tier: 'free' | 'pro' | 'scale' | 'business' | 'comp';
+  tier: 'free' | 'starter' | 'pro' | 'scale' | 'business' | 'comp';
   account_hash: string;
   rate_limit_rps: number;
 }
@@ -33,6 +33,7 @@ declare module 'hono' {
 
 const TIER_DEFAULT_RPS: Record<AuthContext['tier'], number> = {
   free: 10,
+  starter: 25,
   pro: 50,
   scale: 200,
   business: 1000,

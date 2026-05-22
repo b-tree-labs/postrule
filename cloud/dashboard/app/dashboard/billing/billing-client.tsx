@@ -40,33 +40,32 @@ const PLANS: PlanOption[] = [
       "100K verdicts/mo, private switches, email support, 14-day retention. Hosted classifier API quota included on rollout (Q3 2026).",
     upgrade_summary:
       "Starter is the on-ramp for solo developers + indie hackers — 10× the verdict cap of Free, private switches, email support, 14-day retention.",
-    status: "coming_soon",
-    available_from: "2026 Q3",
+    status: "available",
   },
   {
     tier_id: "pro",
     label: "Pro",
     price: "$99/mo",
     features:
-      "250K verdicts/mo, cohort-tuned BYOK judge orchestration, audit-chain export, unlimited dashboard users, 30-day retention, priority email support. Hosted classifier API quota included on rollout (Q3 2026).",
+      "500K verdicts/mo, cohort-tuned BYOK judge orchestration, audit-chain export, unlimited dashboard users, 30-day retention, priority email support. Hosted classifier API quota included on rollout (Q3 2026).",
     upgrade_summary:
-      "Pro adds the BYOK judge orchestration layer (cohort-tuned prompts + audit-chain export) on top of Free, with 25× the verdict cap and unlimited dashboard users.",
+      "Pro adds the BYOK judge orchestration layer (cohort-tuned prompts + audit-chain export) on top of Free / Starter, with 5× the verdict cap of Starter and unlimited dashboard users.",
     status: "available",
   },
   {
     tier_id: "scale",
     label: "Scale",
-    price: "$399/mo",
+    price: "$499/mo",
     features:
       "5M verdicts/mo, everything in Pro, plus webhooks, SSO, 90-day retention, priority email. Hosted classifier API quota expanded on rollout (Q3 2026).",
     upgrade_summary:
-      "Scale adds webhooks, SSO, and 90-day retention to Pro, with 20× the verdict cap for high-volume ML platforms.",
+      "Scale adds webhooks, SSO, and 90-day retention to Pro, with 10× the verdict cap for high-volume ML platforms.",
     status: "available",
   },
   {
     tier_id: "business",
     label: "Business",
-    price: "$1,499/mo",
+    price: "$1,999/mo",
     features:
       "25M verdicts/mo, everything in Scale, plus SOC 2, 99.9% SLA, BAA available, dedicated Slack. Hosted classifier API quota expanded on rollout (Q3 2026); frontier-capacity-management add-on available 2027 Q2.",
     upgrade_summary:

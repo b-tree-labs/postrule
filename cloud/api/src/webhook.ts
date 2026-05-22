@@ -33,9 +33,11 @@ export interface WebhookEnv extends ApiEnv {
 // products via cloud/api/scripts/sync-stripe-products.ts to refresh
 // metadata to the new short ids.
 const TIER_MAP: Record<string, AuthContext['tier']> = {
+  starter: 'starter',
   pro: 'pro',
   scale: 'scale',
   business: 'business',
+  hosted_starter: 'starter',
   hosted_pro: 'pro',
   hosted_scale: 'scale',
   hosted_business: 'business',

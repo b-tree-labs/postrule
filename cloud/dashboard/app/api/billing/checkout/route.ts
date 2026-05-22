@@ -22,9 +22,11 @@ import { stripe, priceIdForTier, checkoutReturnUrls } from "../../../../lib/stri
 // transitional aliases until the dashboard build no longer references
 // them anywhere.
 const ALLOWED_TIERS = new Set([
+  "starter",
   "pro",
   "scale",
   "business",
+  "hosted_starter",
   "hosted_pro",
   "hosted_scale",
   "hosted_business",
