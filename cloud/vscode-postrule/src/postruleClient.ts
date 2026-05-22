@@ -1,5 +1,5 @@
 // Copyright (c) 2026 B-Tree Labs
-// SPDX-License-Identifier: LicenseRef-BSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 /**
  * Thin wrapper over the postrule CLI. We invoke `postrule analyze --json <path>`

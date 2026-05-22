@@ -1,5 +1,5 @@
 // Copyright (c) 2026 B-Tree Labs
-// SPDX-License-Identifier: LicenseRef-BSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 /**
  * PostruleCodeActionProvider — for any function that the analyzer flagged as

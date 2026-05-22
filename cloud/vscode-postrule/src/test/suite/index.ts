@@ -1,5 +1,5 @@
 // Copyright (c) 2026 B-Tree Labs
-// SPDX-License-Identifier: LicenseRef-BSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 /**
  * Mocha entry point inside the VS Code test instance. Discovers all

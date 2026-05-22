@@ -67,7 +67,6 @@ jobs:
               cloud/dashboard/*|\
               cloud/aggregator/*|\
               cloud/security-ops/*|\
-              cloud/vscode-postrule/*|\
               landing/*|\
               brand/*)
                 return 0 ;;
