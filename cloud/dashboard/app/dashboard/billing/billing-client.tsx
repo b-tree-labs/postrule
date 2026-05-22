@@ -10,42 +10,78 @@ interface PlanOption {
   price: string;
   features: string;
   upgrade_summary: string;
+  // 'available' = signup enabled via Stripe Checkout
+  // 'coming_soon' = displayed with a waitlist CTA, no Stripe path
+  // 'sales_led' = displayed with a "Talk to sales" CTA, no Stripe path
+  status?: "available" | "coming_soon" | "sales_led";
+  available_from?: string;
 }
 
 // Tier ids here mirror landing/data/pricing-tiers.json `id` fields. The
 // Stripe-coupling layer (cloud/api/src/webhook.ts TIER_MAP,
 // cloud/dashboard/lib/stripe.ts priceIdForTier, wrangler.toml
 // STRIPE_PRICE_ID_<TIER>) keys off these same tier ids; rename here only
-// in lockstep with those. Per the 2026-05-11 pricing restructure, the
-// metering unit is "Verdicts / mo" — a verdict is one classification
-// Postrule logs to your account; it feeds your report card and the cohort.
+// in lockstep with those. The metering unit is "Verdicts / mo" — a verdict
+// is one classification Postrule logs to your account; it feeds your report
+// card and the cohort.
+//
+// 2026-05-20 pricing-v2 marketing-first rollout: Starter ($29) added as
+// coming_soon (waitlist CTA, no Stripe product yet). Hosted classifier API
+// quota lines surfaced on every paid tier as "included on rollout (Q3
+// 2026)" — actual quota tracking ships when the hosted API ships. Current
+// Pro/Scale/Business prices unchanged tonight; price + quota updates to
+// follow with the Stripe Live-key swap.
 const PLANS: PlanOption[] = [
+  {
+    tier_id: "starter",
+    label: "Starter",
+    price: "$29/mo",
+    features:
+      "100K verdicts/mo, private switches, email support, 14-day retention. Hosted classifier API quota included on rollout (Q3 2026).",
+    upgrade_summary:
+      "Starter is the on-ramp for solo developers + indie hackers — 10× the verdict cap of Free, private switches, email support, 14-day retention.",
+    status: "coming_soon",
+    available_from: "2026 Q3",
+  },
   {
     tier_id: "pro",
     label: "Pro",
     price: "$99/mo",
     features:
-      "250K verdicts/mo, cohort-tuned BYOK judge orchestration, audit-chain export, unlimited dashboard users, 30-day retention, priority email support.",
+      "250K verdicts/mo, cohort-tuned BYOK judge orchestration, audit-chain export, unlimited dashboard users, 30-day retention, priority email support. Hosted classifier API quota included on rollout (Q3 2026).",
     upgrade_summary:
-      "Adds the BYOK judge orchestration layer (cohort-tuned prompts + audit-chain export) on top of Free, with 25× the verdict cap and unlimited dashboard users.",
+      "Pro adds the BYOK judge orchestration layer (cohort-tuned prompts + audit-chain export) on top of Free, with 25× the verdict cap and unlimited dashboard users.",
+    status: "available",
   },
   {
     tier_id: "scale",
     label: "Scale",
     price: "$399/mo",
     features:
-      "5M verdicts/mo, everything in Pro, plus webhooks, SSO, 90-day retention, priority email.",
+      "5M verdicts/mo, everything in Pro, plus webhooks, SSO, 90-day retention, priority email. Hosted classifier API quota expanded on rollout (Q3 2026).",
     upgrade_summary:
-      "Adds webhooks, SSO, and 90-day retention to Pro, with 20× the verdict cap for high-volume ML platforms.",
+      "Scale adds webhooks, SSO, and 90-day retention to Pro, with 20× the verdict cap for high-volume ML platforms.",
+    status: "available",
   },
   {
     tier_id: "business",
     label: "Business",
     price: "$1,499/mo",
     features:
-      "25M verdicts/mo, everything in Scale, plus SOC 2, 99.9% SLA, BAA available, dedicated Slack.",
+      "25M verdicts/mo, everything in Scale, plus SOC 2, 99.9% SLA, BAA available, dedicated Slack. Hosted classifier API quota expanded on rollout (Q3 2026); frontier-capacity-management add-on available 2027 Q2.",
     upgrade_summary:
-      "Adds SOC 2, 99.9% SLA, BAA, and dedicated Slack to Scale, with a 5× verdict cap for regulated workloads.",
+      "Business adds SOC 2, 99.9% SLA, BAA, and dedicated Slack to Scale, with a 5× verdict cap for regulated workloads.",
+    status: "available",
+  },
+  {
+    tier_id: "enterprise",
+    label: "Enterprise",
+    price: "Custom",
+    features:
+      "Everything in Business, plus private cohort, dedicated inference capacity, custom integrations, named CSM, SOC 2 Type 2 + ISO 27001 + FedRAMP-ready, on-prem deployment option, frontier-capacity-management add-on.",
+    upgrade_summary:
+      "Enterprise adds private cohort, dedicated capacity, named CSM, and the full compliance stack on top of Business — for teams whose data residency or capacity guarantees require it.",
+    status: "sales_led",
   },
 ];
 
@@ -233,18 +269,37 @@ export default function BillingClient({
                   </span>{" "}
                   {p.upgrade_summary}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => startCheckout(p.tier_id)}
-                  disabled={busy !== null || isCurrent}
-                  className="btn btn-primary mt-4 w-full"
-                >
-                  {isCurrent
-                    ? "Current plan"
-                    : busy === p.tier_id
-                      ? "Redirecting…"
-                      : "Subscribe"}
-                </button>
+                {p.status === "coming_soon" ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="btn btn-secondary mt-4 w-full"
+                    title={`Available ${p.available_from ?? "soon"}`}
+                  >
+                    {`Available ${p.available_from ?? "soon"}`}
+                  </button>
+                ) : p.status === "sales_led" ? (
+                  <a
+                    href="mailto:hello@postrule.ai?subject=Enterprise%20plan%20inquiry"
+                    className="btn btn-primary mt-4 w-full"
+                    style={{ textAlign: "center", display: "block" }}
+                  >
+                    Talk to sales
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => startCheckout(p.tier_id)}
+                    disabled={busy !== null || isCurrent}
+                    className="btn btn-primary mt-4 w-full"
+                  >
+                    {isCurrent
+                      ? "Current plan"
+                      : busy === p.tier_id
+                        ? "Redirecting…"
+                        : "Subscribe"}
+                  </button>
+                )}
               </div>
             );
           })}

@@ -59,6 +59,20 @@
           t.overage_per_call_usd != null && t.overage_per_call_usd > 0
             ? `<small class="dim">+ $${t.overage_per_call_usd.toFixed(4)}/call overage</small>`
             : "";
+        // Status indicator surfaces tiers not yet open for direct signup.
+        // coming_soon → waitlist label with target quarter (e.g. "Coming
+        // 2026 Q3"). sales_led → "Talk to sales" label. available tiers
+        // render no label (default state).
+        const statusBadge = (() => {
+          if (t.status === "coming_soon") {
+            const when = t.available_from ? `Coming ${t.available_from}` : "Coming soon";
+            return `<small class="dim">${escapeHtml(when)}</small>`;
+          }
+          if (t.status === "sales_led") {
+            return `<small class="dim">Talk to sales</small>`;
+          }
+          return "";
+        })();
         const cta = t.cta_href
           ? `<a class="pricing-tier__cta" href="${escapeHtml(t.cta_href)}">${escapeHtml(t.cta_label || "Learn more")} →</a>`
           : "";
@@ -72,6 +86,7 @@
             </td>
             <td>
               ${escapeHtml(t.price_display || "")}
+              ${statusBadge ? "<br />" + statusBadge : ""}
               ${overage ? "<br />" + overage : ""}
             </td>
             <td>${escapeHtml(t.classifications_display || "")}</td>
