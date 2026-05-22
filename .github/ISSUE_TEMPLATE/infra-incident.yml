@@ -1,0 +1,90 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: LicenseRef-BSL-1.1
+#
+# INTERNAL TEMPLATE — surfaces only in the postrule-private repo.
+
+name: 🚨 Infra incident / outage
+description: Cloudflare / D1 / KV / Stripe / Clerk outage, degradation, or operational incident
+title: "[incident] "
+labels: ["type:incident", "needs-triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Internal repo. Capture chronology + decisions + customer impact for post-mortem.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "SEV-1 — full outage / data integrity at risk"
+        - "SEV-2 — partial outage / single tier affected"
+        - "SEV-3 — degraded but functional"
+        - "SEV-4 — internal-only impact / preventive"
+    validations:
+      required: true
+
+  - type: input
+    id: started
+    attributes:
+      label: Started (UTC)
+      placeholder: "2026-05-22 18:42 UTC"
+    validations:
+      required: true
+
+  - type: input
+    id: resolved
+    attributes:
+      label: Resolved (UTC, or "ongoing")
+      placeholder: "2026-05-22 19:18 UTC / ongoing"
+
+  - type: dropdown
+    id: affected
+    attributes:
+      label: Affected component
+      multiple: true
+      options:
+        - cloud/api Worker
+        - cloud/collector Worker
+        - cloud/dashboard Worker
+        - landing site (Pages)
+        - D1 database
+        - KV namespace
+        - Stripe webhook delivery
+        - Clerk auth
+        - SendGrid email delivery
+        - CF DNS / routing
+        - Other (describe below)
+
+  - type: textarea
+    id: timeline
+    attributes:
+      label: Timeline
+      description: |
+        Bullet list with UTC timestamps:
+          - 18:42 — first error observed in CF Observability
+          - 18:46 — confirmed Stripe webhook signature failures
+          - 18:51 — rotated STRIPE_WEBHOOK_SECRET
+          - 18:55 — webhook recovery confirmed
+    validations:
+      required: true
+
+  - type: textarea
+    id: customer-impact
+    attributes:
+      label: Customer impact
+      description: Which customers / how many users / what they observed
+
+  - type: textarea
+    id: root-cause
+    attributes:
+      label: Root cause + fix
+
+  - type: textarea
+    id: prevent
+    attributes:
+      label: Prevention follow-ups
+      description: |
+        List of action items to prevent recurrence. Link to follow-up issues.

@@ -1,0 +1,67 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: LicenseRef-BSL-1.1
+#
+# INTERNAL TEMPLATE — surfaces only in the postrule-private repo.
+
+name: 👤 Customer-specific issue
+description: Anything tied to a named customer — onboarding, billing, support, escalation
+title: "[customer] "
+labels: ["type:customer-issue", "needs-triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Internal repo — full customer detail OK. Cross-link to support thread,
+        Linear ticket, or Slack message as relevant.
+
+  - type: input
+    id: customer
+    attributes:
+      label: Customer / organization
+      placeholder: "UT Austin / SoilMetrix / acme.io / etc."
+    validations:
+      required: true
+
+  - type: input
+    id: contact
+    attributes:
+      label: Primary contact + email
+      placeholder: "Jane Smith <jane@acme.io>"
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "P0 — customer blocked, urgent (response within 4h)"
+        - "P1 — customer impacted, fix within 1 business day"
+        - "P2 — bug or pain point, fix within the week"
+        - "P3 — wishlist / improvement"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What the customer is hitting
+    validations:
+      required: true
+
+  - type: textarea
+    id: investigation
+    attributes:
+      label: Investigation log
+      description: What you've checked, found, ruled out. Update as you go.
+
+  - type: textarea
+    id: customer-comm
+    attributes:
+      label: Customer communication log
+      description: Last messages exchanged, expected next reply date.
+
+  - type: textarea
+    id: resolution
+    attributes:
+      label: Resolution + customer follow-up
+      description: How it ended; what message went back; any retention / credit applied.

@@ -1,0 +1,62 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: LicenseRef-BSL-1.1
+#
+# INTERNAL TEMPLATE — surfaces only in the postrule-private repo.
+# Never use this template's content for any public-facing communication
+# (PR descriptions, public issues, marketing copy, investor outreach).
+
+name: 💰 Pricing / billing strategy
+description: Tier structure, price changes, ARR/MRR planning, Stripe product configuration
+title: "[pricing] "
+labels: ["type:pricing", "needs-triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Internal repo. Pricing detail, projections, customer-specific deals — full context OK here,
+        but NEVER copy text from this issue into public surfaces.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Tier structure change (add / remove / rename / re-shape)
+        - Price-point change (raise / lower / promo)
+        - Quota / cap adjustment
+        - Custom commercial deal (enterprise / design-partner / comp)
+        - Add-on SKU (frontier capacity, private cohort, etc.)
+        - Stripe product/price sync issue
+        - Billing flow bug (also consider: cloud-bug template)
+        - Forecasting / ARR / MRR analysis
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current state
+      description: What the pricing or billing looks like today
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed change
+      description: What you want it to look like + why
+
+  - type: textarea
+    id: customer-impact
+    attributes:
+      label: Customer impact
+      description: |
+        Existing-customer grandfathering plan? Communication required?
+        New-customer-only? Estimated MRR delta?
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation surfaces
+      description: |
+        Which files / scripts / Stripe products / worker env vars need to change.
+        Reference the v2 sync flow if relevant.

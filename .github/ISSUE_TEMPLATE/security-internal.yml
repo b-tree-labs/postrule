@@ -1,0 +1,80 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: LicenseRef-BSL-1.1
+#
+# INTERNAL TEMPLATE — surfaces only in the postrule-private repo.
+# For external reporter intake, see SECURITY.md (email security@postrule.ai).
+# Public security advisories are handled via GitHub Security Advisories on
+# the public mirror after a fix is shipped.
+
+name: 🔒 Security work (internal, pre-disclosure)
+description: Vulnerability investigation, hardening, or pre-disclosure security tracking
+title: "[security] "
+labels: ["type:security", "needs-triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Internal-only until public advisory is published.
+        For external reports from researchers, intake via email per SECURITY.md.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity (CVSS-aligned)
+      options:
+        - "Critical (9.0–10.0) — RCE, auth bypass, mass data exposure"
+        - "High (7.0–8.9) — significant data exposure or privilege escalation"
+        - "Medium (4.0–6.9) — moderate impact with constraints"
+        - "Low (0.1–3.9) — minor, edge-case, or hardening"
+        - "Hardening — not a vuln, defense-in-depth improvement"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source
+    attributes:
+      label: Source
+      options:
+        - Internal discovery (operator, code review, scan)
+        - External reporter (please link intake email thread)
+        - Bug bounty submission
+        - Vendor / dependency advisory
+        - GitHub Dependabot alert
+    validations:
+      required: true
+
+  - type: textarea
+    id: vulnerability
+    attributes:
+      label: Vulnerability description
+      description: Affected component, attack vector, exploit prerequisites
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What an attacker could achieve. Customer data risk? Account takeover? DoS?
+
+  - type: textarea
+    id: mitigations
+    attributes:
+      label: Mitigations in place
+      description: Existing controls that reduce exploitability (auth, rate limit, etc.)
+
+  - type: textarea
+    id: fix
+    attributes:
+      label: Fix plan
+      description: Code change, config change, deploy sequence, rollback criteria
+
+  - type: textarea
+    id: disclosure
+    attributes:
+      label: Disclosure timeline
+      description: |
+        Embargo until: <date>
+        Public advisory to: GitHub Security Advisory on b-tree-labs/postrule
+        Notify customers: <yes/no + channel>
