@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 // Pricing renderer — fetches landing/data/pricing-tiers.json and
 // landing/data/llm-prices.json, renders the tier table and the
 // "find your tier" calculator. Single source of truth: edit the

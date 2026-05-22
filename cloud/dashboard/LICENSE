@@ -1,0 +1,16 @@
+All non-source files in this directory (package.json, package-lock.json,
+tsconfig.json, wrangler.jsonc, .env.example, next.config.mjs config
+metadata, etc.) are governed by the Business Source License 1.1
+(LICENSE-BSL at repo root). Change Date: 2030-05-01. Change License:
+Apache 2.0.
+
+Source files (.ts, .tsx, .css, .html) in this directory and its
+subdirectories carry SPDX-License-Identifier headers individually and
+are likewise BSL 1.1.
+
+This LICENSE file exists because JSON / TOML / lock files have no
+standardized comment syntax for SPDX-License-Identifier headers.
+license-check.yml reads this file's SPDX line as the directory-level
+declaration.
+
+SPDX-License-Identifier: LicenseRef-BSL-1.1

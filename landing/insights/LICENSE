@@ -1,0 +1,16 @@
+All JSON files in this directory are governed by the Business Source
+License 1.1 (LICENSE-BSL at repo root). Change Date: 2030-05-01. Change
+License: Apache 2.0.
+
+Files in this directory include:
+
+  - tuned-defaults.json        — cohort-prior output published nightly
+                                 by the aggregator. The cohort signal
+                                 itself is the moat; this file is the
+                                 distribution surface.
+
+JSON files cannot carry SPDX-License-Identifier headers (no comment
+syntax). This LICENSE file is the SPDX-equivalent declaration for the
+directory; license-check.yml reads it.
+
+SPDX-License-Identifier: LicenseRef-BSL-1.1

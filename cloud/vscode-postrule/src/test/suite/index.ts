@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 /**
  * Mocha entry point inside the VS Code test instance. Discovers all
  * compiled `*.test.js` files under `out/test/suite/` and runs them.

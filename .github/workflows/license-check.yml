@@ -1,16 +1,36 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 #
-# Enforces the dual-license boundary at PR time:
-#   - Every tracked .py file MUST have an SPDX-License-Identifier header
-#     in the first 5 lines.
-#   - The identifier MUST be exactly "Apache-2.0" or "LicenseRef-BSL-1.1".
-#   - "LicenseRef-BSL-1.1" is allowed only on the explicit path allowlist
-#     below; adding a new BSL file requires editing this workflow.
+# Enforces the dual-license boundary at PR time.
+#
+# Two structural checks:
+#
+#   1. Every tracked source file in the in-scope extensions MUST carry an
+#      SPDX-License-Identifier header in the first 5 lines. Identifier
+#      MUST be exactly "Apache-2.0" or "LicenseRef-BSL-1.1".
+#
+#      In-scope extensions: .py .ts .tsx .js .mjs .cjs .css .html
+#
+#      Out-of-scope (silently skipped): vendored deps (node_modules, .next,
+#      .open-next), binary assets (landing/assets, landing/wasm), generated
+#      output, anything in .gitignore.
+#
+#   2. "LicenseRef-BSL-1.1" is allowed only on the explicit path allowlist
+#      (see is_bsl_allowed below). Adding a new BSL file requires editing
+#      this workflow.
+#
+# JSON files have no comment syntax for SPDX. A separate check enforces
+# that every directory under landing/ or cloud/ containing tracked .json
+# files carries a `LICENSE` file declaring the directory-level governance.
 #
 # The path allowlist is intentional friction. The split-license map of
 # record lives in LICENSE.md; this workflow keeps the repo from drifting
 # away from it without a deliberate, reviewable change.
+#
+# Scope-expansion history: 2026-05-22 — extended from .py-only to .ts/
+# .tsx/.js/.mjs/.cjs/.css/.html plus directory-level LICENSE check for
+# JSON. The Python-only scope had silently exempted ~half the repo,
+# including landing/data/pricing-tiers.json and all of cloud/dashboard/.
 
 name: license-check
 
@@ -33,11 +53,25 @@ jobs:
 
           # ──────────────────────────────────────────────────────────────
           # BSL path allowlist. Adding a new BSL file requires editing
-          # this list — the friction is intentional. Mirror any change
-          # in LICENSE.md's component table.
+          # this function — the friction is intentional. Mirror any
+          # change in LICENSE.md's component table.
+          #
+          # Bash case `*` matches across slashes, so prefix patterns like
+          # `cloud/api/*` cover every nested path under that subtree.
           # ──────────────────────────────────────────────────────────────
           is_bsl_allowed() {
             case "$1" in
+              # ── Postrule-operated cloud / product surface (BSL by directory) ──
+              cloud/api/*|\
+              cloud/collector/*|\
+              cloud/dashboard/*|\
+              cloud/aggregator/*|\
+              cloud/security-ops/*|\
+              cloud/vscode-postrule/*|\
+              landing/*|\
+              brand/*)
+                return 0 ;;
+              # ── Python files explicitly BSL'd (analyzer + cloud-side SDK) ──
               src/postrule/analyzer.py|\
               src/postrule/auth.py|\
               src/postrule/benchmarks/harness.py|\
@@ -88,10 +122,29 @@ jobs:
             esac
           }
 
+          # Paths to exclude from the scan entirely: vendored deps, build
+          # output, binary assets that don't carry inline headers, and the
+          # WASM-built analyzer (its Python source is allowlisted above).
+          should_skip() {
+            case "$1" in
+              */node_modules/*|\
+              */.next/*|\
+              */.open-next/*|\
+              landing/assets/*|\
+              landing/wasm/*)
+                return 0 ;;
+              *)
+                return 1 ;;
+            esac
+          }
+
           errors=0
           checked=0
 
           while IFS= read -r file; do
+            if should_skip "$file"; then
+              continue
+            fi
             checked=$((checked + 1))
 
             # Locate the SPDX line within the first 5 lines.
@@ -106,7 +159,6 @@ jobs:
               continue
             fi
 
-            # spdx_line shape: "3:# SPDX-License-Identifier: Apache-2.0"
             line_num="${spdx_line%%:*}"
             spdx_value=$(printf '%s' "$spdx_line" \
               | sed -nE 's/.*SPDX-License-Identifier:[[:space:]]*([A-Za-z0-9._+-]+).*/\1/p')
@@ -130,13 +182,58 @@ jobs:
                 errors=$((errors + 1))
                 ;;
             esac
-          done < <(git ls-files '*.py')
+          done < <(git ls-files '*.py' '*.ts' '*.tsx' '*.js' '*.mjs' '*.cjs' '*.css' '*.html')
 
           echo ""
-          echo "Checked $checked Python files."
+          echo "Checked $checked source files."
           if [ "$errors" -gt 0 ]; then
             echo "License check FAILED with $errors error(s)."
             echo "Policy lives in LICENSE.md; this workflow at .github/workflows/license-check.yml."
             exit 1
           fi
-          echo "License check PASSED — all SPDX headers valid + BSL path allowlist clean."
+          echo "SPDX header check PASSED."
+
+      - name: Validate JSON directories have LICENSE declarations
+        run: |
+          set -euo pipefail
+
+          # JSON has no comment syntax for SPDX, so we enforce a
+          # directory-level LICENSE file in any directory under landing/
+          # or cloud/ that contains tracked .json files. The LICENSE
+          # file's content declares the governance (typically BSL 1.1
+          # for these directories).
+          #
+          # src/, tests/, examples/ are out of scope — their JSON test
+          # fixtures and data inherit from the file-level SPDX headers
+          # of their surrounding Python/TS code.
+
+          errors=0
+          checked=0
+
+          for d in $(git ls-files 'landing/**/*.json' 'cloud/**/*.json' \
+                       ':!:**/node_modules/**' ':!:**/.next/**' ':!:**/.open-next/**' \
+                     | xargs -n1 dirname 2>/dev/null \
+                     | sort -u); do
+            checked=$((checked + 1))
+            if [ ! -f "$d/LICENSE" ]; then
+              echo "::error file=$d::Directory contains tracked .json files but lacks a LICENSE declaration. Add $d/LICENSE describing license governance (typically BSL 1.1; mirror LICENSE.md component table)."
+              errors=$((errors + 1))
+              continue
+            fi
+            # Sanity: the LICENSE file should contain a SPDX-License-Identifier
+            # line so machines can parse the governance.
+            if ! grep -q "SPDX-License-Identifier:" "$d/LICENSE"; then
+              echo "::error file=$d/LICENSE::LICENSE file exists but does not declare SPDX-License-Identifier. Add a line like 'SPDX-License-Identifier: LicenseRef-BSL-1.1'."
+              errors=$((errors + 1))
+            fi
+          done
+
+          echo ""
+          echo "Checked $checked JSON-bearing directories."
+          if [ "$errors" -gt 0 ]; then
+            echo "JSON directory LICENSE check FAILED with $errors error(s)."
+            exit 1
+          fi
+          echo "JSON directory LICENSE check PASSED."
+          echo ""
+          echo "License check PASSED overall — SPDX headers valid + BSL path allowlist clean + JSON directories declared."

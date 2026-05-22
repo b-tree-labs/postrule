@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 // Custom drag-handle for resizing code blocks vertically. Replaces the
 // native `resize: vertical` corner handle with a full-width bar that
 // sits below each <pre class="code-snippet">. Document-level event

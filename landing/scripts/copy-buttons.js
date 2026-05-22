@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 // Copy-to-clipboard for any code block on the page. Two-attribute
 // contract:
 //   [data-copy-target] wraps the source <pre><code>command</code></pre>
