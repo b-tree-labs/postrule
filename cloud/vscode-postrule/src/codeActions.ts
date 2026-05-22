@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 /**
  * PostruleCodeActionProvider — for any function that the analyzer flagged as
  * non-auto-liftable, offers a single QuickFix titled

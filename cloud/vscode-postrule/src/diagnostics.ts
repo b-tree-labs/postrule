@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 /**
  * PostruleDiagnosticsProvider walks open Python documents, asks the postrule
  * CLI to analyze them, and publishes one vscode.Diagnostic per hazard

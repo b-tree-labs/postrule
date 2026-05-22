@@ -1,0 +1,20 @@
+All non-source files in this directory (package.json, package-lock.json,
+tsconfig.json, .vscodeignore, etc.) are governed by the Business Source
+License 1.1 (LICENSE-BSL at repo root). Change Date: 2030-05-01. Change
+License: Apache 2.0.
+
+Source files (.ts) in this directory and its subdirectories carry
+SPDX-License-Identifier headers individually and are likewise BSL 1.1.
+
+Note: this VS Code extension is currently BSL'd by default during the
+moat-build window. Consider relicensing to Apache 2.0 if the extension
+graduates to "core client integration" status alongside the SDK — that
+would match its functional role (a customer-installable IDE tool that
+mirrors the SDK's positioning). Tracked separately.
+
+This LICENSE file exists because JSON / TOML / lock files have no
+standardized comment syntax for SPDX-License-Identifier headers.
+license-check.yml reads this file's SPDX line as the directory-level
+declaration.
+
+SPDX-License-Identifier: LicenseRef-BSL-1.1

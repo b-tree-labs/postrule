@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 /**
  * Integration test: load the extension into a test VS Code instance, open
  * a fixture Python file with the side_effect_evidence hazard pattern, and

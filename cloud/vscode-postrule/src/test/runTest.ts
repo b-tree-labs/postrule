@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 /**
  * Boots a VS Code test instance and points it at our suite under
  * `out/test/suite`.

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 // Paste-your-code Pyodide analyzer.
 //
 // Loads Pyodide on first interaction (lazy — keeps landing fast for

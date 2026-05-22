@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 // Analyzer demo — preset chips load pre-computed JSON; custom URLs
 // trigger the Pyodide live path (loaded on demand). All math runs in
 // the browser; no backend, no upload, no telemetry.

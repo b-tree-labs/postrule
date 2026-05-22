@@ -1,3 +1,6 @@
+// Copyright (c) 2026 B-Tree Labs
+// SPDX-License-Identifier: LicenseRef-BSL-1.1
+
 /**
  * Thin wrapper over the postrule CLI. We invoke `postrule analyze --json <path>`
  * and parse the resulting AnalyzerReport. The CLI binary path is resolved
