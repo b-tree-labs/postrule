@@ -1,0 +1,254 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: Apache-2.0
+#
+# Private monorepo → public SDK mirror sync.
+#
+# Activates only on this private repo (postrule-private). The public
+# repo (b-tree-labs/postrule) does not run this workflow because the
+# sync allowlist excludes its own filename — see the runbook
+# (docs/working/repo-split-runbook-2026-05-22.md) for the full
+# include / exclude manifest.
+#
+# Triggers:
+#   - Push of a release tag matching v[0-9]+.[0-9]+.[0-9]+*
+#     (cadence: release-tag-only per architectural decision 2026-05-22)
+#   - Manual workflow_dispatch (with optional dry_run flag)
+#
+# Mechanism:
+#   1. Checkout the monorepo at the tagged commit (full history).
+#   2. Clone into /tmp/mirror-work to operate on a disposable copy.
+#   3. git-filter-repo to KEEP only the public allowlist of paths.
+#   4. git-filter-repo to DROP BSL'd Python files inside src/postrule/.
+#   5. git-filter-repo commit-callback to scrub commit messages of:
+#        - Specific dollar amounts ($99/mo, $499 etc.)
+#        - Stripe object IDs (price_*, acct_* etc.)
+#        - Internal customer / cohort names
+#        - Internal roadmap milestone references (R/M-numbers)
+#        - docs/working/* file path mentions
+#        - Active investor-process keywords (Speedrun + a16z)
+#        - ARR / MRR / valuation figures
+#   6. Force-push the filtered + scrubbed history to b-tree-labs/postrule
+#      using the PUBLIC_REPO_PAT secret.
+#   7. Push the triggering tag to the public repo so its `v*` tags
+#      match the monorepo's release cadence.
+#
+# Required secret:
+#   PUBLIC_REPO_PAT — fine-grained personal access token with
+#     Repository access: b-tree-labs/postrule only
+#     Permissions: Contents (read+write), Metadata (read)
+#     Owner: b-tree-labs
+#     Recommended issuer: dedicated postrule-sync GitHub account
+#     (separates sync commits from human commits in public history)
+
+name: Sync to public mirror
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — compute the diff but do not push'
+        type: boolean
+        default: true
+      target_ref:
+        description: 'Ref to sync from (default: triggering ref)'
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-to-public
+  cancel-in-progress: false  # never cancel a sync mid-flight
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout monorepo (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.target_ref || github.ref }}
+
+      - name: Install git-filter-repo
+        run: |
+          pip install git-filter-repo==2.47.0
+
+      - name: Configure git identity for filter-repo commits
+        run: |
+          git config --global user.email "sync@postrule.ai"
+          git config --global user.name "postrule-sync"
+
+      - name: Compute public-mirror subset
+        run: |
+          set -euo pipefail
+
+          # Clone into a disposable working directory; filter-repo
+          # operates destructively on the clone, never on the live tree.
+          git clone . /tmp/mirror-work
+          cd /tmp/mirror-work
+
+          # ────────────────────────────────────────────────────────────
+          # Positive allowlist — what KEEPS through the sync.
+          # ────────────────────────────────────────────────────────────
+          cat > /tmp/keep-paths.txt <<'EOF'
+          src/postrule/
+          tests/
+          docs/quickstart/
+          docs/reference/
+          docs/strategy/roadmap.md
+          docs/papers/
+          examples/
+          benchmarks/
+          README.md
+          CHANGELOG.md
+          CONTRIBUTING.md
+          SECURITY.md
+          CODE_OF_CONDUCT.md
+          LICENSE-APACHE
+          LICENSE.md
+          NOTICE
+          TRADEMARKS.md
+          SUPPORT.md
+          pyproject.toml
+          .gitignore
+          .github/workflows/ci.yml
+          .github/workflows/dco.yml
+          .github/workflows/install-smoke.yml
+          .github/workflows/license-check.yml
+          .github/workflows/refresh-llm-prices.yml
+          .github/workflows/release.yml
+          .github/workflows/issue-trigger-scan.yml
+          .github/ISSUE_TEMPLATE/config.yml
+          .github/ISSUE_TEMPLATE/bug_report.yml
+          .github/ISSUE_TEMPLATE/feature_request.yml
+          .github/ISSUE_TEMPLATE/documentation.yml
+          .github/ISSUE_TEMPLATE/question.yml
+          EOF
+          git filter-repo --force --paths-from-file /tmp/keep-paths.txt
+
+          # ────────────────────────────────────────────────────────────
+          # Negative exclusion 1 — BSL'd Python files within src/postrule/.
+          # These survived the positive allowlist (because src/postrule/
+          # is included wholesale) but per LICENSE.md they're BSL and must
+          # not ship to the public mirror.
+          # ────────────────────────────────────────────────────────────
+          git filter-repo --force \
+            --path-regex '^src/postrule/(analyzer|auth|cli|cloud|lifters|mcp_server|research|roi)' \
+            --invert-paths
+
+          # ────────────────────────────────────────────────────────────
+          # Negative exclusion 2 — tests for BSL'd Python files.
+          # ────────────────────────────────────────────────────────────
+          git filter-repo --force \
+            --path-regex '^tests/test_(analyzer|auth|cli|cli_login|cloud_|enrich_landing_corpus|lifter_|aggregator|mcp_server|research|roi)\.py$' \
+            --invert-paths
+
+          # ────────────────────────────────────────────────────────────
+          # Commit-message scrub.
+          # Rewrites every commit message on the public mirror to remove
+          # strategic / pricing / customer content while preserving the
+          # technical record. Private monorepo keeps original messages.
+          # ────────────────────────────────────────────────────────────
+          cat > /tmp/commit-scrub.py <<'PYEOF'
+          import re
+          def commit_callback(commit, _metadata):
+              msg = commit.message.decode('utf-8', errors='replace')
+              # Specific dollar amounts in pricing context
+              msg = re.sub(r'\$\s?[0-9],?[0-9]{2,4}(?:/mo|/year|/yr)?', '[PRICE]', msg)
+              # v1/v2 pricing terminology
+              msg = re.sub(r'\bv[12]\s+(pric\w*|tier(?:s| ladder)?)\b',
+                           '[PRICING]', msg, flags=re.IGNORECASE)
+              # Internal roadmap milestones (R1-R27 / M1-M20)
+              msg = re.sub(r'\b[RM][0-9]{1,2}\b(?!-)', '[MILESTONE]', msg)
+              # References to gitignored internal docs
+              msg = re.sub(r'docs/working/[^\s)\]]+', '[INTERNAL_DOC]', msg)
+              # Internal customer / cohort names
+              msg = re.sub(r'\bUT\s+Austin\b', '[COHORT]', msg)
+              msg = re.sub(r'\bSoilMetrix\b', '[COHORT]', msg)
+              msg = re.sub(r'\b[A-Za-z0-9._%+-]+@(?:[a-z0-9-]+\.)?utexas\.edu\b',
+                           '[COHORT_EMAIL]', msg)
+              # Stripe object IDs that leaked into commit bodies
+              msg = re.sub(r'\b(?:acct|cus|sub|price|prod|evt|si|pm)_[A-Za-z0-9]{14,}\b',
+                           '[STRIPE_ID]', msg)
+              # ARR / MRR / valuation forecasts
+              msg = re.sub(r'\$\s?[0-9]+(?:\.[0-9]+)?\s?[MBK]\s+(?:ARR|MRR|valuation|EV)\b',
+                           '[FORECAST]', msg)
+              # Active investor process references
+              msg = re.sub(r'\b(?:a16z\s+)?Speedrun(?:\s+SR\d+)?\b',
+                           '[INVESTOR_PROCESS]', msg, flags=re.IGNORECASE)
+              commit.message = msg.encode('utf-8')
+          PYEOF
+          git filter-repo --force --commit-callback "$(cat /tmp/commit-scrub.py)"
+
+          # ────────────────────────────────────────────────────────────
+          # Sanity checks — abort if the filtered tree is suspiciously
+          # small or contains a path we definitely don't want.
+          # ────────────────────────────────────────────────────────────
+          file_count=$(git ls-files | wc -l)
+          if [ "$file_count" -lt 20 ]; then
+            echo "::error::Filtered tree has only $file_count files — likely a filter-repo misconfiguration. Aborting."
+            exit 1
+          fi
+          if git ls-files | grep -qE '^(cloud/|landing/|brand/|docs/working/|docs/design/)'; then
+            echo "::error::Filtered tree contains paths that should have been excluded. Aborting."
+            git ls-files | grep -E '^(cloud/|landing/|brand/|docs/working/|docs/design/)' | head -10
+            exit 1
+          fi
+          echo "Filtered tree contains $file_count files; sanity checks passed."
+
+      - name: Push to public mirror
+        if: ${{ inputs.dry_run != true }}
+        env:
+          PUBLIC_REPO_PAT: ${{ secrets.PUBLIC_REPO_PAT }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PUBLIC_REPO_PAT:-}" ]; then
+            echo "::error::PUBLIC_REPO_PAT secret not configured. See docs/working/repo-split-runbook-2026-05-22.md §2C for setup instructions."
+            exit 1
+          fi
+          cd /tmp/mirror-work
+          git remote add public "https://x-access-token:${PUBLIC_REPO_PAT}@github.com/b-tree-labs/postrule.git"
+          # Force-push: the public repo's history is whatever filter-repo
+          # produces on every sync (deterministic from monorepo state at
+          # the tagged commit). Previous public commits are replaced;
+          # GitHub preserves stars / watchers / forks / issues / labels
+          # (repo metadata, not git tree).
+          git push --force public HEAD:main
+          # Mirror the triggering tag too (if this is a tag-triggered run).
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            # Use the tag's filtered hash. The original tag's SHA no longer
+            # exists in the filtered history; map by tag name to whatever
+            # filter-repo produced for HEAD.
+            git tag -f "${GITHUB_REF_NAME}" HEAD
+            git push --force public "${GITHUB_REF_NAME}"
+          fi
+
+      - name: Dry-run summary
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          cd /tmp/mirror-work
+          echo "=== Filtered tree contents (first 100 files) ==="
+          git ls-files | head -100
+          echo "..."
+          echo ""
+          echo "=== Total file count ==="
+          git ls-files | wc -l
+          echo ""
+          echo "=== Sample commit messages on filtered history (HEAD~5..HEAD) ==="
+          git log --format='%n%h %s%n%n%b' HEAD~5..HEAD 2>/dev/null || git log --format='%n%h %s%n%n%b'
+          echo ""
+          echo "=== Verify no internal paths leaked ==="
+          if git ls-files | grep -qE '^(cloud/|landing/|brand/|docs/working/|docs/design/)'; then
+            echo "FAIL: internal paths present in filtered tree"
+            git ls-files | grep -E '^(cloud/|landing/|brand/|docs/working/|docs/design/)'
+            exit 1
+          else
+            echo "PASS: no internal paths present"
+          fi
+          echo ""
+          echo "Dry run complete. Re-run with dry_run=false to push to public mirror."
