@@ -22,7 +22,17 @@ compute_switch_roi``, etc.
 See README.md and https://postrule.ai.
 """
 
-__version__ = "1.1.4"
+def _read_package_version() -> str:
+    """Return the installed distribution version (matches pyproject.toml)."""
+    try:
+        from importlib.metadata import version
+
+        return version("postrule")
+    except Exception:
+        return "1.1.5"
+
+
+__version__ = _read_package_version()
 
 from postrule.autoresearch import (
     CandidateHarness,
