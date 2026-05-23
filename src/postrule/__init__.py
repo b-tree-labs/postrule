@@ -22,8 +22,6 @@ compute_switch_roi``, etc.
 See README.md and https://postrule.ai.
 """
 
-__version__ = "1.1.4"
-
 from postrule.autoresearch import (
     CandidateHarness,
     CandidateReport,
@@ -134,6 +132,19 @@ try:  # pragma: no cover — observability hook; intentionally fails silent
     _verdict_telemetry.maybe_install()  # pragma: no cover
 except BaseException:  # noqa: BLE001 — observability hook, fails silent  # pragma: no cover
     pass  # pragma: no cover
+
+
+def _read_package_version() -> str:
+    """Return the installed distribution version (matches pyproject.toml)."""
+    try:
+        from importlib.metadata import version
+
+        return version("postrule")
+    except Exception:  # pragma: no cover — fallback when running from source tree
+        return "1.1.5"
+
+
+__version__ = _read_package_version()
 
 __all__ = [
     "AccuracyMarginGate",

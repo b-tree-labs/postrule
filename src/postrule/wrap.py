@@ -161,14 +161,10 @@ def _has_ml_switch_decorator(fn: ast.FunctionDef) -> bool:
 
 
 def _infer_labels(fn: ast.FunctionDef) -> list[str]:
-    """Extract string-literal labels from the function's return statements."""
-    seen: list[str] = []
-    for node in ast.walk(fn):
-        if isinstance(node, ast.Return) and isinstance(node.value, ast.Constant):
-            value = node.value.value
-            if isinstance(value, str) and value and value not in seen:
-                seen.append(value)
-    return seen
+    """Extract string labels from return literals and dict-lookup maps."""
+    from postrule.analyzer import _collect_classification_labels
+
+    return _collect_classification_labels(fn)
 
 
 def _find_import_insertion_line(tree: ast.Module, source_lines: list[str]) -> int:

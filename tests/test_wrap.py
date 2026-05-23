@@ -49,6 +49,17 @@ class TestLabelInference:
         with pytest.raises(WrapError, match="could not infer labels"):
             wrap_function(source, "triage", author="@triage:support")
 
+    def test_infers_labels_from_dict_get_default(self):
+        source = (
+            "def _classify_file_type(filename, data):\n"
+            "    ext_map = {'csv': 'soil_test_csv', 'shp': 'boundary', 'pdf': 'document'}\n"
+            "    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''\n"
+            "    return ext_map.get(ext, 'unknown')\n"
+        )
+        result = wrap_function(source, "_classify_file_type", author="@upload:intake")
+        assert result.inferred_labels is True
+        assert set(result.labels) == {"soil_test_csv", "boundary", "document", "unknown"}
+
 
 # ---------------------------------------------------------------------------
 # Decorator insertion
