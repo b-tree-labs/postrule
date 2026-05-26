@@ -111,6 +111,48 @@ class _MLSwitchWrapper:
     def phase(self):  # → Phase
         return self.switch.phase()
 
+    _ZERO_STATS: dict[str, int] = {
+        "queued": 0,
+        "sent": 0,
+        "dropped_rate_limited": 0,
+        "dropped_queue_full": 0,
+        "failed": 0,
+    }
+
+    def telemetry_stats(self) -> dict[str, int]:
+        """Delivery counters for this switch's verdict telemetry (#71).
+
+        Returns ``{queued, sent, dropped_rate_limited, dropped_queue_full,
+        failed}`` from the emitter backing this switch. For the default
+        hosted-API pipe these are live counts; for non-accounting emitters
+        (``NullEmitter`` when signed out, ``StdoutEmitter``/``ListEmitter``)
+        every count is zero — nothing is being shipped to meter.
+
+        Pair with :meth:`flush` to make the counts meaningful before a
+        short-lived process exits: the sender is an async daemon thread, so
+        without a flush ``sent`` undercounts what you recorded.
+        """
+        emitter = self.switch.telemetry
+        stats = getattr(emitter, "stats", None)
+        if callable(stats):
+            return dict(stats())
+        return dict(self._ZERO_STATS)
+
+    def flush(self, timeout: float = 5.0) -> bool:
+        """Block until queued verdicts are delivered, or ``timeout`` elapses.
+
+        Returns True once the emitter's send queue has fully drained (so
+        ``telemetry_stats()["sent"]`` reflects every recorded verdict),
+        False on timeout. No-op returning True for emitters with no async
+        send queue (e.g. ``NullEmitter``). Call before exiting a short-lived
+        script that records verdicts — see #71.
+        """
+        emitter = self.switch.telemetry
+        flush = getattr(emitter, "flush", None)
+        if callable(flush):
+            return bool(flush(timeout))
+        return True
+
 
 def ml_switch(
     *,
@@ -163,7 +205,16 @@ def ml_switch(
 
     Returns a wrapper callable that forwards to the decorated function
     and exposes the LearnedSwitch affordances (``record_verdict``,
-    ``status``, ``phase``, ``switch``).
+    ``status``, ``phase``, ``switch``) plus verdict-telemetry
+    introspection (``telemetry_stats``, ``flush``).
+
+    Note:
+        For signed-in users, ``record_verdict`` ships an outcome to the
+        hosted API via a background daemon thread. In a short-lived
+        process (a script, a one-shot job) that thread may not finish
+        draining before the interpreter exits, so verdicts can be lost
+        silently. Call ``wrapped_fn.flush()`` before exit and
+        ``wrapped_fn.telemetry_stats()`` to confirm what landed (#71).
     """
 
     def decorate(fn: Callable[..., Any]) -> _MLSwitchWrapper:
