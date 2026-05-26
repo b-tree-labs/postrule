@@ -503,9 +503,9 @@ docs/
 ## Paper
 
 *"When Should a Rule Learn? Transition Curves for Safe
-Rule-to-ML Graduation"* — companion paper, arXiv submission
-targeted for ~2026-05-22 (a few days after the v1.0 launch, once
-the Snips-rerun + paper-polish work is in). Outline + reproducible
+Rule-to-ML Graduation"* — companion paper, submitted to TMLR
+(Transactions on Machine Learning Research) and under review via
+[OpenReview](https://openreview.net/forum?id=POmunHPNWl). Outline + reproducible
 benchmark results at
 [`docs/papers/2026-when-should-a-rule-learn/`](https://github.com/b-tree-labs/postrule/blob/main/docs/papers/2026-when-should-a-rule-learn/).
 Annotated bibliography of related work at

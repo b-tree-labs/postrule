@@ -15,7 +15,7 @@ OpenReview: <https://openreview.net/forum?id=POmunHPNWl>.
 
 ```bibtex
 @article{booth2026postrule,
-  title  = {When Should a Rule Learn? A Statistical Framework for Graduated ML Autonomy},
+  title  = {When Should a Rule Learn? Transition Curves for Safe Rule-to-ML Graduation},
   author = {Booth, Benjamin},
   year   = {2026},
   note   = {Under review at TMLR. \url{https://openreview.net/forum?id=POmunHPNWl}}
