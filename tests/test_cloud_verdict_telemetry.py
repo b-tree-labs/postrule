@@ -40,7 +40,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from postrule import LearnedSwitch, Verdict
+from postrule import LearnedSwitch, Verdict, ml_switch
 from postrule.cloud.verdict_telemetry import (
     CloudVerdictEmitter,
     maybe_install,
@@ -452,6 +452,126 @@ class TestEndToEndDefaultEmitter:
 # Backward-compat sanity: existing in-process emitters (ListEmitter) still
 # capture the enriched payload shape.
 # ---------------------------------------------------------------------------
+
+
+class TestEmitterStatsAndFlush:
+    """#71 — operator-visible delivery counters + reliable drain."""
+
+    def _make(self, sender: _RecordingSender, **kw: Any) -> CloudVerdictEmitter:
+        return CloudVerdictEmitter(
+            api_url="http://localhost:8787",
+            bearer_token="x",
+            sender=sender,
+            **kw,
+        )
+
+    def test_stats_snapshot_shape(self):
+        em = self._make(_RecordingSender(), start_thread=False)
+        s = em.stats()
+        assert set(s) == {
+            "queued",
+            "sent",
+            "dropped_rate_limited",
+            "dropped_queue_full",
+            "failed",
+        }
+        assert all(v == 0 for v in s.values())
+
+    def test_flush_drains_so_sent_equals_recorded(self):
+        sender = _RecordingSender()
+        em = self._make(sender)
+        try:
+            for _ in range(40):
+                em.emit("outcome", {"switch": "t", "outcome": "correct", "phase": "P0"})
+            assert em.flush(5.0) is True
+            assert em.stats()["sent"] == 40
+            assert em.queued == 40
+            assert len(sender.calls) == 40
+        finally:
+            em.close(timeout=0.1)
+
+    def test_flush_true_when_already_empty(self):
+        em = self._make(_RecordingSender())
+        try:
+            assert em.flush(0.5) is True
+        finally:
+            em.close(timeout=0.1)
+
+    def test_flush_drains_after_queue_overflow_eviction(self):
+        # Evicted items must be task_done()'d or flush() would hang on
+        # unfinished_tasks forever. Produce overflow deterministically with
+        # the sender thread off, then start it and confirm a clean drain.
+        sender = _RecordingSender()
+        em = self._make(
+            sender,
+            queue_capacity=3,
+            rate_limit_burst=1000,
+            rate_limit_per_second=10000,
+            start_thread=False,
+        )
+        try:
+            for i in range(20):
+                em.emit("outcome", {"switch": f"s{i}", "outcome": "correct", "phase": "P0"})
+            assert em.dropped_queue_full == 17
+            assert em._queue.unfinished_tasks == 3  # eviction accounting consistent
+            em._start_sender()
+            assert em.flush(5.0) is True
+            assert em._queue.unfinished_tasks == 0
+            assert em.sent == 3
+        finally:
+            em.close(timeout=0.1)
+
+    def test_first_drop_warns_once_on_stderr(self, capsys):
+        em = self._make(
+            _RecordingSender(),
+            rate_limit_burst=1,
+            rate_limit_per_second=0.001,
+            start_thread=False,
+        )
+        for _ in range(5):
+            em.emit("outcome", {"switch": "t", "outcome": "correct", "phase": "P0"})
+        err = capsys.readouterr().err
+        assert err.count("verdict telemetry dropped") == 1  # one-shot, not per-drop
+        assert em.dropped_rate_limited == 4
+
+
+class TestWrapperTelemetryAccessors:
+    """#71 — telemetry_stats() / flush() surfaced on the @ml_switch wrapper."""
+
+    def test_telemetry_stats_reports_cloud_counters(self):
+        sender = _RecordingSender()
+        emitter = CloudVerdictEmitter(
+            api_url="http://localhost:8787", bearer_token="x", sender=sender
+        )
+        try:
+            register_default_emitter(lambda: emitter)
+
+            @ml_switch(labels=["bug", "feature"])
+            def triage(t: dict) -> str:
+                return "bug" if "crash" in (t.get("title") or "") else "feature"
+
+            triage.record_verdict(input={"title": "crash"}, label="bug", outcome="correct")
+            assert triage.flush(5.0) is True
+            stats = triage.telemetry_stats()
+            assert stats["queued"] == 1
+            assert stats["sent"] == 1
+        finally:
+            emitter.close(timeout=0.1)
+
+    def test_stats_zero_and_flush_noop_when_signed_out(self):
+        # Default emitter is NullEmitter (no async send queue).
+        @ml_switch(labels=["bug", "feature"])
+        def triage(t: dict) -> str:
+            return "feature"
+
+        assert triage.telemetry_stats() == {
+            "queued": 0,
+            "sent": 0,
+            "dropped_rate_limited": 0,
+            "dropped_queue_full": 0,
+            "failed": 0,
+        }
+        assert triage.flush(0.1) is True
 
 
 class TestEnrichedOutcomePayload:

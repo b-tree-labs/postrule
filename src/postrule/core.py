@@ -1771,6 +1771,18 @@ class LearnedSwitch:
         """Ceiling on this switch's phase. :meth:`advance` refuses to exceed."""
         return self.config.phase_limit
 
+    @property
+    def telemetry(self) -> TelemetryEmitter:
+        """The telemetry emitter this switch emits outcomes to.
+
+        Resolved once at construction: the explicit ``telemetry=`` argument
+        if given, else the process default emitter (the hosted-API verdict
+        pipe for signed-in users, ``NullEmitter`` otherwise). Exposed so
+        callers can sample delivery counters and drain the async sender —
+        see :meth:`postrule.decorator._MLSwitchWrapper.telemetry_stats`.
+        """
+        return self._telemetry
+
     def advance(self, *, _auto: bool = False) -> Any:
         """Evaluate the configured gate and advance the phase on pass.
 
