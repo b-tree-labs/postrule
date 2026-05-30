@@ -113,6 +113,7 @@ jobs:
               tests/test_cloud_report.py|\
               tests/test_cloud_sync.py|\
               tests/test_cloud_outbox.py|\
+              tests/test_cloud_outbox_wired.py|\
               tests/test_cloud_team_corpus.py|\
               tests/test_cloud_verdict_telemetry.py|\
               tests/test_enrich_landing_corpus.py|\
