@@ -276,3 +276,136 @@ class TestStatusServerUnreachable:
         # That's a different failure mode than "no credentials" and needs
         # a different forward path.
         assert "server" in out.lower() or "unreachable" in out.lower()
+
+
+# ---------------------------------------------------------------------------
+# #33 PR 3 — service-account identity in `postrule status`.
+# /v1/whoami now returns key_kind + service_name; the doctor surfaces
+# them so the operator sees "Connected as orders-api (production)" when
+# running under a service-account key instead of the human email.
+# ---------------------------------------------------------------------------
+
+
+class _FakeWhoamiService:
+    """/v1/whoami returns a service-account shape."""
+
+    def __init__(
+        self,
+        *,
+        email: str = "issuer@example.com",
+        tier: str = "pro",
+        service_name: str = "orders-api (production)",
+    ) -> None:
+        self.email = email
+        self.tier = tier
+        self.service_name = service_name
+
+    def __call__(self, api_url: str, api_key: str) -> dict:
+        return {
+            "email": self.email,
+            "tier": self.tier,
+            "telemetry_enabled": True,
+            "key_kind": "service",
+            "service_name": self.service_name,
+        }
+
+
+class TestStatusServiceAccountIdentity:
+    def test_service_key_shows_service_name_in_identity_line(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        args: argparse.Namespace,
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(
+            _auth,
+            "load_credentials",
+            lambda: {
+                "api_key": "prul_live_abc",  # pragma: allowlist secret
+                "email": "issuer@example.com",
+                "api_url": "https://api.postrule.ai",
+            },
+        )
+        from postrule import cli as cli_mod
+
+        monkeypatch.setattr(
+            cli_mod, "_status_whoami", _FakeWhoamiService(service_name="orders-api (production)")
+        )
+        rc = cmd_status(args)
+        out = capsys.readouterr().out
+        assert rc == 0
+        # Identity line names the service deployment, not the human email.
+        assert "orders-api (production)" in out
+        # A service-account chip / qualifier is shown so the operator knows
+        # they're running as a deployment identity.
+        assert "service" in out.lower()
+
+    def test_service_key_does_not_show_only_email(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        args: argparse.Namespace,
+    ) -> None:
+        # Under a service key, the email should NOT be the headline
+        # identity. (It may appear elsewhere as the issuer, but the
+        # primary identity line names the service.)
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(
+            _auth,
+            "load_credentials",
+            lambda: {
+                "api_key": "prul_live_abc",  # pragma: allowlist secret
+                "email": "alice@example.com",
+                "api_url": "https://api.postrule.ai",
+            },
+        )
+        from postrule import cli as cli_mod
+
+        monkeypatch.setattr(
+            cli_mod,
+            "_status_whoami",
+            _FakeWhoamiService(email="alice@example.com", service_name="billing-api (staging)"),
+        )
+        cmd_status(args)
+        out = capsys.readouterr().out
+        # The first line after the header should be the service name,
+        # not alice@example.com as the headline.
+        lines = [ln for ln in out.splitlines() if ln.strip().startswith("✓")]
+        assert lines, "no Connected-as line found"
+        assert "billing-api (staging)" in lines[0]
+        # Email may appear later as issuer-of-record, but not as the
+        # primary identity.
+        assert "alice@example.com" not in lines[0]
+
+    def test_user_key_unchanged_shape(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        args: argparse.Namespace,
+    ) -> None:
+        # Regression guard: user keys still show the email as the headline.
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(
+            _auth,
+            "load_credentials",
+            lambda: {
+                "api_key": "prul_live_abc",  # pragma: allowlist secret
+                "email": "alice@example.com",
+                "api_url": "https://api.postrule.ai",
+            },
+        )
+        from postrule import cli as cli_mod
+
+        # Existing _FakeWhoamiOk omits key_kind — the status doctor
+        # should treat that as 'user' (backwards-compat with older
+        # servers).
+        monkeypatch.setattr(cli_mod, "_status_whoami", _FakeWhoamiOk(email="alice@example.com"))
+        cmd_status(args)
+        out = capsys.readouterr().out
+        lines = [ln for ln in out.splitlines() if ln.strip().startswith("✓")]
+        assert lines
+        assert "alice@example.com" in lines[0]
