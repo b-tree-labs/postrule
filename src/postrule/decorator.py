@@ -278,7 +278,10 @@ def ml_switch(
             from postrule.project import derive_project_slug
 
             try:
-                resolved_project = derive_project_slug()
+                # Pass switch_name so a `postrule.toml [switches.<name>]`
+                # override (#36) wins for one switch without changing the
+                # repo-wide default.
+                resolved_project = derive_project_slug(switch_name=switch_name)
             except Exception:
                 resolved_project = "default"
 
