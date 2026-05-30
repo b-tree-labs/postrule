@@ -25,6 +25,7 @@ Implementation contract pinned by these tests:
 
 from __future__ import annotations
 
+import argparse
 import subprocess
 import sys
 from pathlib import Path
@@ -32,6 +33,7 @@ from pathlib import Path
 import pytest
 
 from postrule.analyzer import analyze
+from postrule.cli import cmd_analyze
 
 _PLAIN_RULE = "def classify(text):\n    if 'a' in text:\n        return 'a'\n    return 'b'\n"
 
@@ -190,3 +192,75 @@ class TestAnalyzeDiffCLI:
         # can fix.
         assert "Traceback" not in stderr
         assert "git" in stderr.lower()
+
+
+# ---------------------------------------------------------------------------
+# In-process cmd_analyze coverage. The subprocess tests above pin the
+# end-to-end semantics; these call cmd_analyze() directly so pytest-cov
+# can instrument the --diff code path (subprocess child interpreters
+# don't credit toward the parent coverage report).
+# ---------------------------------------------------------------------------
+
+
+def _build_analyze_args(path: str, **kw: object) -> argparse.Namespace:
+    return argparse.Namespace(
+        path=path,
+        format=kw.get("format", "json"),
+        json=kw.get("json", False),
+        project_savings=kw.get("project_savings", False),
+        report=kw.get("report", False),
+        report_out=kw.get("report_out"),
+        cost_per_call=kw.get("cost_per_call"),
+        llm_provider=kw.get("llm_provider", "default"),
+        sort=kw.get("sort", "priority"),
+        reverse=kw.get("reverse", False),
+        diff=kw.get("diff"),
+    )
+
+
+class TestCmdAnalyzeInProcess:
+    def test_diff_against_main_passes_restrict_through(
+        self,
+        repo_with_baseline_and_branch: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        monkeypatch.chdir(repo_with_baseline_and_branch)
+        rc = cmd_analyze(_build_analyze_args(str(repo_with_baseline_and_branch), diff="main"))
+        assert rc == 0
+        import json
+
+        out = json.loads(capsys.readouterr().out)
+        files = {s["file_path"] for s in out["sites"]}
+        assert any(f.endswith("src/c.py") for f in files)
+        assert not any(f.endswith("src/a.py") for f in files)
+
+    def test_diff_in_non_git_directory_returns_nonzero(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        _write(tmp_path / "src" / "a.py", _PLAIN_RULE)
+        monkeypatch.chdir(tmp_path)
+        rc = cmd_analyze(_build_analyze_args(str(tmp_path), diff="main"))
+        assert rc != 0
+        err = capsys.readouterr().err
+        assert "git" in err.lower()
+
+    def test_no_diff_does_not_invoke_git(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        # Sanity: without --diff, cmd_analyze takes the original path
+        # (no git introspection, no restrict_to).
+        _write(tmp_path / "src" / "a.py", _PLAIN_RULE)
+        monkeypatch.chdir(tmp_path)
+        rc = cmd_analyze(_build_analyze_args(str(tmp_path)))
+        assert rc == 0
+        import json
+
+        out = json.loads(capsys.readouterr().out)
+        assert len(out["sites"]) >= 1
