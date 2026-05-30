@@ -115,6 +115,7 @@ jobs:
               tests/test_cloud_report.py|\
               tests/test_cloud_sync.py|\
               tests/test_cloud_outbox.py|\
+              tests/test_cloud_outbox_flusher.py|\
               tests/test_cloud_registration.py|\
               tests/test_cloud_outbox_wired.py|\
               tests/test_cloud_team_corpus.py|\
