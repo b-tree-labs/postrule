@@ -107,6 +107,7 @@ jobs:
               tests/test_cli.py|\
               tests/test_cli_init_guidance.py|\
               tests/test_cli_login.py|\
+              tests/test_cli_status.py|\
               tests/test_init_safety.py|\
               tests/test_landing_headers.py|\
               tests/test_cli_quickstart.py|\
