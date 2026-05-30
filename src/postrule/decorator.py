@@ -311,7 +311,23 @@ def ml_switch(
             # sites include it on every verdict's wire payload.
             project=resolved_project,
         )
-        return _MLSwitchWrapper(fn, switch, packed_signature=packed_sig, project=resolved_project)
+        wrapper = _MLSwitchWrapper(
+            fn, switch, packed_signature=packed_sig, project=resolved_project
+        )
+        # #34 PR 3 — best-effort auto-register so the switch appears in
+        # the dashboard from "I wrapped a function," not "I recorded a
+        # verdict." Background-threaded, silent on failure; decorator
+        # import never raises. Skip when project is the "default"
+        # fallback — no point cluttering the cloud projects table for
+        # unbound switches.
+        try:
+            if resolved_project != "default":
+                from postrule.cloud import registration as _reg
+
+                _reg.auto_register_in_background(switch.name, resolved_project)
+        except BaseException:
+            pass
+        return wrapper
 
     return decorate
 

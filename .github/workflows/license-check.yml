@@ -78,6 +78,7 @@ jobs:
               src/postrule/cli.py|\
               src/postrule/cloud/__init__.py|\
               src/postrule/cloud/outbox.py|\
+              src/postrule/cloud/registration.py|\
               src/postrule/cloud/registry.py|\
               src/postrule/cloud/sync.py|\
               src/postrule/cloud/team_corpus.py|\
@@ -113,6 +114,7 @@ jobs:
               tests/test_cloud_report.py|\
               tests/test_cloud_sync.py|\
               tests/test_cloud_outbox.py|\
+              tests/test_cloud_registration.py|\
               tests/test_cloud_outbox_wired.py|\
               tests/test_cloud_team_corpus.py|\
               tests/test_cloud_verdict_telemetry.py|\
