@@ -38,7 +38,12 @@ from typing import Any
 
 import pytest
 
-from postrule.mcp_server import call_tool, list_tools
+# Skip the whole module when the optional `mcp` extra isn't installed.
+# Matches the pattern in tests/test_mcp_server.py — CI's base install
+# doesn't pull in the mcp dependency.
+pytest.importorskip("mcp")
+
+from postrule.mcp_server import call_tool, list_tools  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Registration
@@ -253,7 +258,7 @@ class TestConnectCompleteTool:
         )
         assert result["state"] == "authorized"
         assert result["email"] == "alice@example.com"
-        assert saved["api_key"] == "prul_live_new"
+        assert saved["api_key"] == "prul_live_new"  # pragma: allowlist secret
         assert saved["email"] == "alice@example.com"
 
     def test_pending_response_signals_retry(self, monkeypatch: pytest.MonkeyPatch) -> None:
