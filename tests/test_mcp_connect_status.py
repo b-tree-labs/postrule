@@ -286,3 +286,215 @@ class TestConnectCompleteTool:
         result = asyncio.run(call_tool("postrule_connect_complete", {}))
         assert result["state"] == "error"
         assert "device_code" in result.get("message", "").lower()
+
+
+# ---------------------------------------------------------------------------
+# Coverage for the HTTP helpers — _status_whoami_for_mcp,
+# _device_post_code, _device_poll_token. Tests mock urllib.request at the
+# right layer so we exercise the parse + error-mapping branches.
+# ---------------------------------------------------------------------------
+
+
+class _FakeUrlopenResponse:
+    def __init__(self, status: int, body: bytes) -> None:
+        self.status = status
+        self._body = body
+
+    def read(self) -> bytes:
+        return self._body
+
+    def __enter__(self) -> "_FakeUrlopenResponse":
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        return None
+
+
+class TestStatusWhoamiForMcp:
+    def test_2xx_returns_parsed_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import urllib.request
+
+        from postrule import mcp_server as _mcp
+
+        def fake_urlopen(req, timeout):
+            return _FakeUrlopenResponse(200, b'{"email":"x@y","tier":"pro"}')
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        out = _mcp._status_whoami_for_mcp("http://api.example", "key")
+        assert out["email"] == "x@y"
+        assert out["tier"] == "pro"
+
+    def test_non_2xx_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import urllib.request
+
+        from postrule import mcp_server as _mcp
+
+        def fake_urlopen(req, timeout):
+            return _FakeUrlopenResponse(500, b"oops")
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        with pytest.raises(OSError):
+            _mcp._status_whoami_for_mcp("http://api.example", "key")
+
+
+class TestDevicePostCode:
+    def test_returns_parsed_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import urllib.request
+
+        from postrule import mcp_server as _mcp
+
+        body = b'{"device_code":"d","user_code":"U-1","verification_uri_complete":"x","interval":5,"expires_in":900}'
+
+        def fake_urlopen(req, timeout):
+            return _FakeUrlopenResponse(200, body)
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        info = _mcp._device_post_code("http://api.example", {"device_name": "agent"})
+        assert info["device_code"] == "d"
+        assert info["user_code"] == "U-1"
+
+
+class TestDevicePollToken:
+    def _mock_http_error(self, code: int, body: str):
+        import urllib.error
+
+        class _Err(urllib.error.HTTPError):
+            def __init__(self) -> None:
+                self.code = code
+                self._body = body.encode("utf-8")
+                # HTTPError needs more init but read() is what we use.
+
+            def read(self) -> bytes:
+                return self._body
+
+        return _Err()
+
+    def test_2xx_maps_to_authorized(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import urllib.request
+
+        from postrule import mcp_server as _mcp
+
+        def fake_urlopen(req, timeout):
+            return _FakeUrlopenResponse(200, b'{"api_key":"k","email":"e","telemetry_enabled":true}')
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        out = _mcp._device_poll_token("http://api.example", "d")
+        assert out["status"] == "authorized"
+        assert out["email"] == "e"
+
+    def test_authorization_pending_maps_to_pending(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import urllib.error
+        import urllib.request
+
+        from postrule import mcp_server as _mcp
+
+        def fake_urlopen(req, timeout):
+            err = urllib.error.HTTPError(
+                "http://x", 400, "Bad Request", {}, None  # type: ignore[arg-type]
+            )
+            err.read = lambda: b'{"error":"authorization_pending"}'  # type: ignore[method-assign]
+            raise err
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        out = _mcp._device_poll_token("http://api.example", "d")
+        assert out["status"] == "pending"
+
+    def test_access_denied_maps_to_denied(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import urllib.error
+        import urllib.request
+
+        from postrule import mcp_server as _mcp
+
+        def fake_urlopen(req, timeout):
+            err = urllib.error.HTTPError("http://x", 400, "Bad", {}, None)  # type: ignore[arg-type]
+            err.read = lambda: b'{"error":"access_denied"}'  # type: ignore[method-assign]
+            raise err
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        out = _mcp._device_poll_token("http://api.example", "d")
+        assert out["status"] == "denied"
+
+    def test_expired_token_maps_to_expired(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import urllib.error
+        import urllib.request
+
+        from postrule import mcp_server as _mcp
+
+        def fake_urlopen(req, timeout):
+            err = urllib.error.HTTPError("http://x", 400, "Bad", {}, None)  # type: ignore[arg-type]
+            err.read = lambda: b'{"error":"expired_token"}'  # type: ignore[method-assign]
+            raise err
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        out = _mcp._device_poll_token("http://api.example", "d")
+        assert out["status"] == "expired"
+
+    def test_unknown_error_maps_to_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import urllib.error
+        import urllib.request
+
+        from postrule import mcp_server as _mcp
+
+        def fake_urlopen(req, timeout):
+            err = urllib.error.HTTPError("http://x", 500, "Server", {}, None)  # type: ignore[arg-type]
+            err.read = lambda: b"{}"  # type: ignore[method-assign]
+            raise err
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        out = _mcp._device_poll_token("http://api.example", "d")
+        assert out["status"] == "error"
+
+
+class TestApiBaseHelper:
+    def test_postrule_api_base_env_overrides(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from postrule import mcp_server as _mcp
+
+        monkeypatch.setenv("POSTRULE_API_BASE", "http://localhost:8787/v1")
+        assert _mcp._api_base_for_mcp() == "http://localhost:8787/v1"
+
+    def test_falls_back_to_api_url_plus_v1(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from postrule import mcp_server as _mcp
+
+        monkeypatch.delenv("POSTRULE_API_BASE", raising=False)
+        monkeypatch.setenv("POSTRULE_API_URL", "https://api.example.com")
+        assert _mcp._api_base_for_mcp() == "https://api.example.com/v1"
+
+
+class TestStatusToolServerUnreachable:
+    def test_whoami_failure_reports_server_unreachable(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path
+    ) -> None:
+        from postrule import auth as _auth
+        from postrule import mcp_server as _mcp
+
+        monkeypatch.setattr(
+            _auth,
+            "load_credentials",
+            lambda: {
+                "api_key": "prul_live_abc",  # pragma: allowlist secret
+                "email": "ops@example.com",
+                "api_url": "https://api.postrule.ai",
+            },
+        )
+
+        def boom(api_url: str, api_key: str) -> dict:
+            raise ConnectionError("simulated")
+
+        monkeypatch.setattr(_mcp, "_status_whoami_for_mcp", boom)
+        monkeypatch.chdir(tmp_path)
+        result = asyncio.run(call_tool("postrule_status", {}))
+        assert result["connected"] is True
+        assert result.get("server_reachable") is False
+        assert "next_step" in result
