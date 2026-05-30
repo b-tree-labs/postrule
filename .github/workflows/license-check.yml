@@ -129,6 +129,7 @@ jobs:
               tests/test_project_derivation.py|\
               tests/test_project_from_toml.py|\
               tests/test_project_wire_payload.py|\
+              tests/test_mcp_connect_status.py|\
               tests/test_mcp_server.py|\
               tests/test_ml_switch_docstring.py|\
               tests/test_research.py|\
