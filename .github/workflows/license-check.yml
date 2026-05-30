@@ -106,6 +106,7 @@ jobs:
               tests/test_cli_init_guidance.py|\
               tests/test_cli_login.py|\
               tests/test_init_safety.py|\
+              tests/test_landing_headers.py|\
               tests/test_cli_quickstart.py|\
               tests/test_cloud_registry.py|\
               tests/test_cloud_report.py|\
