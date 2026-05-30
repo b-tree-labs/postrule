@@ -742,6 +742,9 @@ class LearnedSwitch:
         "name",
         "_rule",
         "author",
+        # #107 — project slug this switch belongs to (Account → Project →
+        # Switch). Forwarded on every verdict's wire payload.
+        "project",
         "config",
         "_storage",
         "_model",
@@ -788,6 +791,13 @@ class LearnedSwitch:
         ml_head: MLHead | None = None,
         head_strategy: Any | None = None,
         telemetry: TelemetryEmitter | None = None,
+        # The project this switch belongs to (#107). Set by the decorator
+        # layer from `@ml_switch(project=...)` or the auto-derived slug;
+        # bare LearnedSwitch users can pass through explicitly. Forwarded
+        # on every verdict's wire payload so the server can persist into
+        # switch_meta. None means "this switch isn't tagged with a
+        # project" — the wire payload omits the field entirely.
+        project: str | None = None,
     ) -> None:
         if rule is None or not callable(rule):
             raise ValueError("rule must be a callable")
@@ -865,6 +875,8 @@ class LearnedSwitch:
         self.name = name
         self._rule = rule
         self.author = author
+        # #107 — see __init__ docstring on `project=`.
+        self.project = project
         self.config = resolved_config
         if storage is not None and persist:
             raise ValueError(
@@ -1669,6 +1681,10 @@ class LearnedSwitch:
                 "outcome",
                 {
                     "switch": self.name,
+                    # #107 — propagate project on every verdict so the
+                    # CloudVerdictEmitter wire payload carries it through
+                    # to the server (which upserts switch_meta).
+                    "project": self.project,
                     "outcome": outcome,
                     "source": source,
                     "phase": phase_letter,

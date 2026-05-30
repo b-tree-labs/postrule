@@ -265,6 +265,23 @@ def ml_switch(
 
             wrapped_labels = _wrap_on_callables(labels, packed_sig)
 
+        # Resolve project at decorate time so both the wrapper and the
+        # underlying LearnedSwitch carry the answer for the lifetime of
+        # the process. Explicit kwarg wins; otherwise auto-derive from
+        # git remote → pyproject → "default" via
+        # postrule.project.derive_project_slug(). Decorator import MUST
+        # NOT raise — derive helpers swallow all OSError / parse errors.
+        # See #107.
+        if project is not None:
+            resolved_project = project
+        else:
+            from postrule.project import derive_project_slug
+
+            try:
+                resolved_project = derive_project_slug()
+            except Exception:
+                resolved_project = "default"
+
         switch = LearnedSwitch(
             name=switch_name,
             rule=inner_rule,
@@ -287,22 +304,10 @@ def ml_switch(
             model=model,
             ml_head=ml_head,
             telemetry=telemetry,
+            # #107 — propagate project to the underlying switch so emit
+            # sites include it on every verdict's wire payload.
+            project=resolved_project,
         )
-        # Resolve project at decorate time so the wrapper carries the
-        # answer for the lifetime of the process. Explicit kwarg wins;
-        # otherwise auto-derive from git remote → pyproject → "default"
-        # via postrule.project.derive_project_slug(). Decorator import
-        # MUST NOT raise — derive helpers swallow all OSError / parse
-        # errors. See #107.
-        if project is not None:
-            resolved_project = project
-        else:
-            from postrule.project import derive_project_slug
-
-            try:
-                resolved_project = derive_project_slug()
-            except Exception:
-                resolved_project = "default"
         return _MLSwitchWrapper(fn, switch, packed_signature=packed_sig, project=resolved_project)
 
     return decorate

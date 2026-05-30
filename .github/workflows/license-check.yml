@@ -119,6 +119,7 @@ jobs:
               tests/test_lifter_evidence_v1_1.py|\
               tests/test_aggregator.py|\
               tests/test_project_derivation.py|\
+              tests/test_project_wire_payload.py|\
               tests/test_mcp_server.py|\
               tests/test_ml_switch_docstring.py|\
               tests/test_research.py|\
