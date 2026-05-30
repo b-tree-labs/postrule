@@ -77,6 +77,7 @@ jobs:
               src/postrule/benchmarks/harness.py|\
               src/postrule/cli.py|\
               src/postrule/cloud/__init__.py|\
+              src/postrule/cloud/outbox.py|\
               src/postrule/cloud/registry.py|\
               src/postrule/cloud/sync.py|\
               src/postrule/cloud/team_corpus.py|\
@@ -111,6 +112,7 @@ jobs:
               tests/test_cloud_registry.py|\
               tests/test_cloud_report.py|\
               tests/test_cloud_sync.py|\
+              tests/test_cloud_outbox.py|\
               tests/test_cloud_team_corpus.py|\
               tests/test_cloud_verdict_telemetry.py|\
               tests/test_enrich_landing_corpus.py|\
