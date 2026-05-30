@@ -181,6 +181,23 @@ def ml_switch(
 ) -> Callable[[Callable[..., Any]], _MLSwitchWrapper]:
     """Wrap a classification rule function as a :class:`LearnedSwitch`.
 
+    Wrapping alone does NOT log verdicts to the dashboard — the wrapper
+    returns predictions; the operator must call
+    ``wrapped_fn.record_verdict(input=..., label=..., outcome=...)`` after
+    each invocation to record one. See #72 for the discoverability trap
+    this avoids.
+
+    Example::
+
+        @ml_switch(labels=["bug", "feature"], author="@team")
+        def triage(ticket):
+            return "bug" if "crash" in ticket["title"] else "feature"
+
+        label = triage(ticket)               # runs the rule, returns label
+        triage.record_verdict(               # ← required to log a verdict
+            input=ticket, label=label, outcome="correct",
+        )
+
     Args:
         labels: The switch's label-based conditional expressions —
             each label names a possible classifier output; pairing a
