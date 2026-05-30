@@ -50,10 +50,17 @@ class _MLSwitchWrapper:
         fn: Callable[..., Any],
         switch: LearnedSwitch,
         packed_signature: Any | None = None,
+        project: str | None = None,
     ) -> None:
         self.switch = switch
         self._fn = fn
         self._packed_signature = packed_signature
+        # The project this switch belongs to (#107). Resolved at decorate
+        # time — either an explicit ``project=`` kwarg, or the slug from
+        # ``postrule.project.derive_project_slug()`` (git remote →
+        # pyproject → "default"). Surfaced for introspection so dashboards
+        # / SDK helpers can read it without re-deriving.
+        self.project: str = project or "default"
         # Preserve wrapped function metadata so reflection / help()
         # / docstrings work as if the user had called the bare fn.
         functools.update_wrapper(self, fn)
@@ -159,6 +166,7 @@ def ml_switch(
     labels: LabelsArg | None = None,
     author: str | None = None,
     name: str | None = None,
+    project: str | None = None,
     # Hoisted SwitchConfig fields — the common case. Either use these,
     # or pass an explicit ``config=SwitchConfig(...)``, but not both.
     starting_phase: Phase | None = None,
@@ -280,7 +288,22 @@ def ml_switch(
             ml_head=ml_head,
             telemetry=telemetry,
         )
-        return _MLSwitchWrapper(fn, switch, packed_signature=packed_sig)
+        # Resolve project at decorate time so the wrapper carries the
+        # answer for the lifetime of the process. Explicit kwarg wins;
+        # otherwise auto-derive from git remote → pyproject → "default"
+        # via postrule.project.derive_project_slug(). Decorator import
+        # MUST NOT raise — derive helpers swallow all OSError / parse
+        # errors. See #107.
+        if project is not None:
+            resolved_project = project
+        else:
+            from postrule.project import derive_project_slug
+
+            try:
+                resolved_project = derive_project_slug()
+            except Exception:
+                resolved_project = "default"
+        return _MLSwitchWrapper(fn, switch, packed_signature=packed_sig, project=resolved_project)
 
     return decorate
 
