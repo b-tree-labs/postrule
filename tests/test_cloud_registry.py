@@ -105,9 +105,31 @@ class TestAnonymize:
             "host": "x",
             "hostname": "x",
             "machine_id": "x",
+            # #107 — project metadata is account-scoped, never cohort-shared.
+            # Slugs derived from `git remote get-url origin` identify the
+            # operator's codebase; even the integer FK would link cohort
+            # rows back to an account once the projects table is joinable.
+            "project": "owner/repo",
+            "project_slug": "owner/repo",
+            "project_id": 42,
+            "project_name": "Billing Service",
         }
         scrubbed = registry.anonymize(all_id_keys)
         assert scrubbed == {}
+
+    def test_strips_project_keys_when_nested(self):
+        # The corpus payload nests these under a per-rule dict; the recursive
+        # scrub must reach them at any depth (regression for #107).
+        corpus = {
+            "rule": {
+                "project": "owner/repo",
+                "project_slug": "owner/repo",
+                "project_name": "Billing Service",
+                "kept": "ok",
+            }
+        }
+        scrubbed = registry.anonymize(corpus)
+        assert scrubbed == {"rule": {"kept": "ok"}}
 
 
 class TestContribute:
