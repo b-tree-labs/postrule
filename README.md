@@ -34,6 +34,12 @@ failure.
 `mark_correct()` calls scattered through your code.** Drop the
 verifier and Postrule's autonomous mode does the rest.
 
+> **We see your decisions, never your data.** When the hosted pipe is
+> on, Postrule ships only the *shape* of each decision —
+> `{switch_name, phase, verdict}` — never your inputs, content, labels,
+> or ground truth. Safe on regulated data by construction; opt out
+> anytime. [What ships over the wire ↓](#we-see-your-decisions-never-your-data)
+
 > **What `default_verifier()` does on first call.** Lazy-downloads
 > `qwen2.5:7b` (~4.7 GB) into your Ollama cache, then runs locally
 > for every verdict — no API key, no per-call cost, nothing leaves
@@ -389,6 +395,28 @@ and the parallel-committee benchmark in
 Full surface + interop contract: [`docs/async.md`](https://github.com/b-tree-labs/postrule/blob/main/docs/async.md).
 
 ## Security properties
+
+### We see your decisions, never your data
+
+When verdict telemetry is on, Postrule's hosted pipe ships **only the
+shape of a decision — never its content.** Each `record_verdict` sends:
+
+| Field | Example | What it is |
+| --- | --- | --- |
+| `switch_name` | `intent_router` | the name you gave the switch |
+| `phase` | `P3` | which tier decided (rule → model → ML) |
+| `rule_correct` / `model_correct` / `ml_correct` | `true` / `false` | was each layer's call right |
+| `project` | `field-hand` | project slug (derived from your git remote) |
+| `request_id` | `a1b2…` | idempotency key |
+
+It **never** sends your inputs, the classified content, the labels
+themselves, or your ground truth — those stay in your process. A
+credential leak can't expose your data, and the "is this safe on
+regulated data?" question answers itself. Verify it yourself:
+`postrule.cloud.verdict_telemetry._build_payload` is the single
+chokepoint, and `postrule verify` prints exactly what goes over the
+wire. Telemetry is opt-out (`POSTRULE_NO_TELEMETRY=1`, per-switch
+`telemetry=False`, or the dashboard toggle).
 
 - **20-pattern jailbreak corpus:** 100% rule-floor preserved when
   the shadow language model is configured to return the attacker-desired
