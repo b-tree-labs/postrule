@@ -15,6 +15,21 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.7] — 2026-05-31
+
+### Added
+
+- **`postrule.coerce_tool_schema(schema, *, target="gemini")`** — bakes in
+  the LLM tool-schema coercion every integrator was re-implementing by hand
+  (#54). Strips dialect metadata that constrained provider Schema protos
+  reject (`title`, `default`, `$schema`, `additionalProperties`, …) and
+  collapses Pydantic's Optional `anyOf: [{type}, {null}]` encoding into
+  `{type, nullable: true}`. Unlike the field-discovered workaround, it
+  **resolves `$ref` against `$defs`/`definitions` before stripping them**, so
+  nested models survive (and self-referential models don't infinite-loop).
+  Pure (never mutates input) and keyed by `target` so the SDK stays
+  provider-agnostic as more dialects are added.
+
 ## [1.1.5] — 2026-05-19
 
 ### Fixed
