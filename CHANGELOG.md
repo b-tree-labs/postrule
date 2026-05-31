@@ -15,6 +15,23 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.8] — 2026-05-31
+
+### Added
+
+- **`postrule verify`** — closes the verify loop (#51), the #1 DX gap a
+  real integration hit. The always-on emitter is fire-and-forget (right
+  for the prod hot path), which left "did anything reach the dashboard?"
+  answerable only by eyeballing the web UI. `verify` answers it from the
+  shell: one **blocking** POST of a test verdict to a clearly-named probe
+  switch (`postrule.verify.probe`, or `--switch NAME` for a real one),
+  prints the HTTP result, then **reads it back** via `GET /v1/switches`
+  and prints the switch's dashboard URL. Exit codes: 0 delivered, 2
+  not-connected, 4 emit-failed — so it's usable in CI / agent harnesses.
+  Also documents the async emitter's counter semantics (`sent` =
+  delivered, `queued` = in-flight, `failed` = non-2xx) that confused the
+  first integration's `sent=0 / queued=2` read.
+
 ## [1.1.7] — 2026-05-31
 
 ### Added
