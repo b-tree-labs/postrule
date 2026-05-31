@@ -102,6 +102,7 @@ from postrule.telemetry import (
     StdoutEmitter,
     TelemetryEmitter,
 )
+from postrule.tool_schema import coerce_tool_schema
 from postrule.verdicts import (
     CallableVerdictSource,
     HumanReviewerSource,
@@ -211,6 +212,7 @@ __all__ = [
     "WebhookVerdictSource",
     "__version__",
     "available_ml_heads",
+    "coerce_tool_schema",
     "default_verifier",
     "deserialize_record",
     "flock_supported",
