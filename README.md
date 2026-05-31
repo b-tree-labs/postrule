@@ -5,7 +5,7 @@
 
 # Self-taught classifiers.
 
-**Drop a rule. Drop a verifier. Watch your classifier get smarter automatically.**
+**Drop a rule. Bring your truth. Watch your classifier get smarter — automatically, and only when a statistical gate proves it beats the rule.**
 
 ```python
 from postrule import ml_switch, default_verifier
