@@ -38,6 +38,17 @@ class TestDecoratorBehavior:
         assert st.phase is Phase.RULE
         assert st.outcomes_total == 0
 
+    def test_current_phase_property_matches_phase_method(self):
+        # #55 — `current_phase` is the property-style accessor (consistent
+        # with `name`); `phase()` stays callable for back-compat.
+        @ml_switch(labels=["a", "b"], author="alice")
+        def f(x):
+            return "a"
+
+        assert f.current_phase is Phase.RULE
+        assert f.current_phase == f.phase()
+        assert f.current_phase == f.switch.phase()
+
     def test_record_outcome_flows_through(self):
         @ml_switch(labels=["a", "b"], author="alice")
         def f(x):
