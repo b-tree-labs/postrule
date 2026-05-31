@@ -118,6 +118,16 @@ class _MLSwitchWrapper:
     def phase(self):  # → Phase
         return self.switch.phase()
 
+    # #55 — consistent accessor. ``name`` is a property but ``phase`` was
+    # method-only, so reading the current phase meant remembering to call
+    # it (``fn.phase()``) or reaching through ``fn.switch``. ``current_phase``
+    # is the property-style read; ``phase()`` stays for back-compat.
+    @property
+    def current_phase(self):  # → Phase
+        """The switch's current :class:`~postrule.Phase` (property form of
+        :meth:`phase`)."""
+        return self.switch.phase()
+
     _ZERO_STATS: dict[str, int] = {
         "queued": 0,
         "sent": 0,
@@ -205,6 +215,17 @@ def ml_switch(
         triage.record_verdict(               # ← required to log a verdict
             input=ticket, label=label, outcome="correct",
         )
+
+    Reading state (no need to read the source — #55):
+
+    * ``triage.current_phase`` — the current :class:`Phase` (property);
+      ``triage.phase()`` is the equivalent method form.
+    * ``triage.status()`` — full :class:`SwitchStatus` (phase, outcome
+      counts, gate readiness).
+    * ``triage.name`` / ``triage.project`` — identity + project slug.
+    * ``triage.switch`` — the underlying :class:`LearnedSwitch` for
+      advanced use; the common accessors above proxy onto it so you
+      rarely need it.
 
     Args:
         labels: The switch's label-based conditional expressions —

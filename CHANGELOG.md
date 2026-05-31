@@ -15,6 +15,20 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.10] — 2026-05-31
+
+### Added
+
+- **`wrapped_fn.current_phase` property** (#55) — a property-style accessor
+  for a switch's current phase, consistent with `.name`. Previously reading
+  the phase meant the method form `.phase()` or reaching through `.switch`,
+  an inconsistency that sent integrators to the source. `.phase()` stays for
+  back-compat.
+- **`@ml_switch` docstring now documents the state accessors** (`current_phase`,
+  `status()`, `name`, `project`, `switch`) so the common case doesn't require
+  reading `decorator.py`/`core.py` (#55). Broader kwargs-surface slimming +
+  an "instrument an existing rule" runnable example track as follow-ups.
+
 ## [1.1.9] — 2026-05-31
 
 ### Fixed
