@@ -26,6 +26,10 @@ where you are:
 - **[Threat model](THREAT_MODEL.md)** — trust boundaries, threats
   considered + mitigations, audit-chain integrity claims, what's
   out of scope. Written for enterprise pre-checks.
+- **[Securing your API key](securing-your-api-key.md)** — service vs
+  user keys, secrets managers, rotation/revocation, keyless agent
+  connect, and the secret-scanning pattern. The answer for your
+  security team.
 
 ## Deep dives
 
