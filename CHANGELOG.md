@@ -15,6 +15,28 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.9] — 2026-05-31
+
+### Fixed
+
+- **`postrule analyze` now attributes runs to the signed-in account** (#63).
+  Previously analyze was local-only, so the dashboard's "Analyze your first
+  repo" onboarding step never checked off (it was mis-keyed to verdict
+  emission) and the analyzer's findings were never surfaced per-account.
+  When authenticated (or `POSTRULE_API_KEY` is set, and telemetry isn't
+  opted out), analyze now POSTs a **run-level** summary to `POST /v1/analyze`
+  — project slug, files scanned, total/already-instrumented site counts,
+  and a projected-annual-savings range. Honors the "decisions, never your
+  data" contract (#53): no per-site code, identifiers, or content ships.
+  Best-effort and silent on failure — attribution never breaks `analyze`.
+
+### Added
+
+- **`/v1/analyze` (+ `/admin/analyze/latest`)** and the `analyze_runs` table
+  (migration 0015). The dashboard onboarding step is now gated on a real
+  analyze run reaching the account, and the latest run's summary is exposed
+  for the realized/unrealized-value surfaces (#58/#59 groundwork).
+
 ## [1.1.8] — 2026-05-31
 
 ### Added
