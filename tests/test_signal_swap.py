@@ -227,6 +227,99 @@ class TestStaleMLQuarantine:
         assert "quarantine" not in _events(s2)
 
 
+class TestDefaultSetUpgrade:
+    """#60 PR3 — a graduated switch on gate=None pins its default-set version;
+    an SDK upgrade that changes the default must not silently re-grade it.
+    migrate_defaults() is the opt-in, evidence-gated path forward."""
+
+    def _seed_default(self, tmp_path, name, n, *, rule_wins=False, target_wins=False):
+        s = LearnedSwitch(
+            rule=lambda _x: "a",
+            name=name,
+            starting_phase=Phase.MODEL_PRIMARY,
+            storage=FileStorage(str(tmp_path)),
+            persist=True,  # gate=None → default
+        )
+        for i in range(n):
+            if target_wins:
+                s._storage.append_record(
+                    name, _rec(rule_right=(i < n // 4), model_right=(i < n - 5))
+                )
+            elif rule_wins:
+                s._storage.append_record(
+                    name, _rec(rule_right=(i < n - 5), model_right=(i < n // 4))
+                )
+        return s
+
+    def test_upgrade_default_change_pins_not_demotes(self, tmp_path, monkeypatch) -> None:
+        import postrule.defaults as D
+
+        s1 = self._seed_default(tmp_path, "pin", n=60, rule_wins=True)
+        assert s1._default_set_version == "v1"
+        assert s1._gate_is_default is True
+
+        # Simulate `pip install -U`: a NEW, stricter default-set v2 ships.
+        D.register_default_set(
+            "v2", {"gate": lambda: McNemarGate(alpha=0.5), "drift_gate": lambda: McNemarGate()}
+        )
+        monkeypatch.setattr(D, "CURRENT_DEFAULT_SET_VERSION", "v2")
+
+        s2 = LearnedSwitch(
+            rule=lambda _x: "a",
+            name="pin",
+            starting_phase=Phase.MODEL_PRIMARY,
+            storage=FileStorage(str(tmp_path)),
+            persist=True,
+        )
+        # Pinned to v1 — NOT re-graded despite rule-wins evidence + new default.
+        assert s2.phase() is Phase.MODEL_PRIMARY
+        assert s2._default_set_version == "v1"
+        ev = _events(s2)
+        assert "pin" in ev and "demote" not in ev
+
+    def test_migrate_defaults_adopts_when_justified(self, tmp_path) -> None:
+        import postrule.defaults as D
+
+        D.register_default_set(
+            "v3",
+            {
+                "gate": lambda: McNemarGate(alpha=0.05, min_paired=20),
+                "drift_gate": lambda: McNemarGate(),
+            },
+        )
+        s = self._seed_default(tmp_path, "mig", n=60, target_wins=True)
+        assert s.migrate_defaults(to_version="v3") is True
+        assert s._default_set_version == "v3"
+        assert "migrate" in _events(s)
+
+    def test_migrate_defaults_rejected_when_unjustified(self, tmp_path) -> None:
+        import postrule.defaults as D
+
+        D.register_default_set(
+            "v4",
+            {
+                "gate": lambda: McNemarGate(alpha=0.05, min_paired=20),
+                "drift_gate": lambda: McNemarGate(),
+            },
+        )
+        s = self._seed_default(tmp_path, "noMig", n=60, rule_wins=True)
+        assert s.migrate_defaults(to_version="v4") is False  # phase not re-justified
+        assert s._default_set_version == "v1"
+        assert "migrate_rejected" in _events(s)
+
+    def test_explicit_gate_is_not_default_managed(self, tmp_path) -> None:
+        s = LearnedSwitch(
+            rule=lambda _x: "a",
+            name="exp",
+            starting_phase=Phase.RULE,
+            gate=McNemarGate(alpha=0.01, min_paired=20),
+            storage=FileStorage(str(tmp_path)),
+            persist=True,
+        )
+        assert s._gate_is_default is False
+        assert s.migrate_defaults(to_version="v3") is False  # operator owns the gate
+
+
 class TestReconcileCore:
     def test_fresh_switch_adopts_never_demotes(self, tmp_path) -> None:
         s = _build(

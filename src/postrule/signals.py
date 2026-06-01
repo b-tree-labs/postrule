@@ -159,9 +159,16 @@ def signal_signature(switch: Any) -> SignalSignature:
     gate = getattr(config, "gate", None) if config is not None else None
     strategy = getattr(switch, "_head_strategy", None)
     head = getattr(switch, "_ml_head", None)
+    # A library-default gate identifies by its pinned default-set *version*,
+    # not the concrete params — so a code-default change is recognized as
+    # default-drift (pinned), not an operator swap (#60 PR3).
+    if getattr(switch, "_gate_is_default", False):
+        gate_id: tuple = ("__default__", getattr(switch, "_default_set_version", None))
+    else:
+        gate_id = _gate_identity(gate)
     return SignalSignature(
         judge_id=_judge_identity(verifier),
-        gate_id=_gate_identity(gate),
+        gate_id=gate_id,
         strategy_id=_strategy_identity(strategy),
         ml_head_version=_head_version(head),
     )

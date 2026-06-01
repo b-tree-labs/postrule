@@ -781,6 +781,9 @@ class LearnedSwitch:
         "_labels_raw",
         "_label_index",
         "_persist",
+        # #60 PR3 — versioned default-set pinning for a library-default gate.
+        "_gate_is_default",
+        "_default_set_version",
         "__weakref__",
     )
 
@@ -874,19 +877,24 @@ class LearnedSwitch:
             config = SwitchConfig(**supplied_hoisted) if supplied_hoisted else SwitchConfig()
         resolved_config = config
 
-        # Resolve the gate lazily — keeps core's import graph free of
-        # the viz/math dependencies that McNemarGate needs.
+        # Resolve the gate lazily from the versioned default-set (#60 PR3).
+        # A library-default gate (gate=None) is *pinned* to a default-set
+        # version so a later SDK upgrade that changes the default never
+        # silently re-grades a graduated switch — see reconcile_signals'
+        # default-drift handling + migrate_defaults(). An explicit gate is
+        # operator-owned and version-free.
+        from postrule.defaults import CURRENT_DEFAULT_SET_VERSION, resolve_gate
+
+        self._gate_is_default: bool = resolved_config.gate is None
+        self._default_set_version: str | None = (
+            CURRENT_DEFAULT_SET_VERSION if self._gate_is_default else None
+        )
         if resolved_config.gate is None:
-            from postrule.gates import McNemarGate
+            resolved_config.gate = resolve_gate(CURRENT_DEFAULT_SET_VERSION)
 
-            resolved_config.gate = McNemarGate()
-
-        # Same for the drift_gate. Default ``McNemarGate()`` makes the
-        # demotion check symmetric with the advance check by default.
+        # Same for the drift_gate (not part of the graduation signature).
         if resolved_config.drift_gate is None:
-            from postrule.gates import McNemarGate
-
-            resolved_config.drift_gate = McNemarGate()
+            resolved_config.drift_gate = resolve_gate(CURRENT_DEFAULT_SET_VERSION, "drift_gate")
 
         # safety_critical refuses ML_PRIMARY even as a ceiling; this
         # is stricter than SwitchConfig's post_init (which only caps
@@ -2587,8 +2595,41 @@ class LearnedSwitch:
                     self._save_signature(cur, justified_at=justified_at, high_water=high_water)
                 return
 
-            # --- Swap detected -------------------------------------------
             changed = cur.changed_components(prev_sig)
+
+            # --- Default-set drift → PIN (not a swap) (#60 PR3) ----------
+            # The only change is the gate, and BOTH are library-defaults of
+            # differing versions: a `pip install -U` changed the default
+            # under a switch that graduated on `gate=None`. Do NOT re-grade —
+            # pin to the version it graduated under (resolve that default and
+            # keep serving). Operators opt into the new default via
+            # migrate_defaults(). No demote.
+            if (
+                changed == ["gate"]
+                and self._gate_is_default
+                and prev_sig.gate_id
+                and prev_sig.gate_id[0] == "__default__"
+                and cur.gate_id
+                and cur.gate_id[0] == "__default__"
+            ):
+                from postrule.defaults import resolve_gate
+
+                pinned_version = prev_sig.gate_id[1]
+                self.config.gate = resolve_gate(pinned_version)
+                self._default_set_version = pinned_version
+                self._append_ledger(
+                    "pin",
+                    sig_before=cur,
+                    sig_after=prev_sig,
+                    phase_before=self.phase().name,
+                    phase_after=self.phase().name,
+                    reason=f"default-set drift on upgrade: pinned to {pinned_version} "
+                    "(graduated switch not re-graded; use migrate_defaults to adopt newer)",
+                )
+                self._save_signature(signal_signature(self))
+                return
+
+            # --- Swap detected -------------------------------------------
             phase_before = self.phase().name
             self._append_ledger(
                 "swap",
@@ -2677,6 +2718,69 @@ class LearnedSwitch:
         if self._ml_head is not None or self._head_strategy is not None:
             return True
         return self._get_state("head") is not None
+
+    def migrate_defaults(self, *, to_version: str) -> bool:
+        """Opt into a newer default-set version — evidence-gated (#60 PR3).
+
+        Graduated switches pin the default-set they earned their phase under;
+        SDK upgrades never move them. This is the *explicit* path to adopt a
+        newer default: it re-justifies the current phase under the new
+        default's gate on a recency window and adopts only if the phase is
+        still earned (RULE always migrates). Returns True if migrated. A no-op
+        (returns False) for switches with an operator-supplied gate — that gate
+        is operator-owned, not default-managed.
+        """
+        from postrule.defaults import resolve_gate
+        from postrule.gates import prev_phase
+        from postrule.signals import signal_signature
+
+        with self._lock:
+            if not self._gate_is_default:
+                return False
+            if to_version == self._default_set_version:
+                return True
+            new_gate = resolve_gate(to_version)
+            current = self.phase()
+            ok = True
+            if current is not Phase.RULE:
+                pred = prev_phase(current)
+                window = self._recency_window()
+                min_paired = (
+                    getattr(new_gate, "min_paired", getattr(new_gate, "_min_paired", 0)) or 0
+                )
+                decision = new_gate.evaluate(window, pred, current)
+                # Adopt only on a confident re-justification; insufficient
+                # recent evidence holds the pinned version (a stricter new
+                # default could otherwise demote us right after migrating).
+                if getattr(decision, "paired_sample_size", 0) < min_paired:
+                    ok = False
+                else:
+                    ok = bool(getattr(decision, "target_better", False))
+            before = signal_signature(self)
+            if not ok:
+                self._append_ledger(
+                    "migrate_rejected",
+                    sig_before=before,
+                    sig_after=before,
+                    phase_before=current.name,
+                    phase_after=current.name,
+                    reason=f"default-set {to_version} does not re-justify {current.name} "
+                    "on recent evidence; pinned version kept",
+                )
+                return False
+            self.config.gate = new_gate
+            self._default_set_version = to_version
+            after = signal_signature(self)
+            self._save_signature(after)
+            self._append_ledger(
+                "migrate",
+                sig_before=before,
+                sig_after=after,
+                phase_before=current.name,
+                phase_after=self.phase().name,
+                reason=f"migrated to default-set {to_version} (phase re-justified)",
+            )
+            return True
 
     def _ensure_ml_head(self, phase: Phase) -> None:
         """Ensure ``self._ml_head`` is set, consulting head_strategy if needed.

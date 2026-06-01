@@ -15,6 +15,26 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.15] — 2026-06-01
+
+### Added
+
+- **Versioned default-sets + upgrade safety (#60, PR 3 of 3 — completes #60).**
+  A switch that graduated on a library-default gate (`gate=None`) now **pins**
+  the default-set version it earned its phase under. A `pip install -U` that
+  ships a new default is recognized as **default-drift, not an operator swap**:
+  `reconcile_signals` re-points the gate to the *pinned* version and records a
+  `pin` event — the graduated switch is **never silently re-graded** (the
+  unintentional-degradation-on-upgrade hole is closed). `migrate_defaults(
+  to_version=...)` is the **opt-in, evidence-gated** path forward: it adopts a
+  newer default-set only if the current phase re-justifies under it on a recent
+  window, else holds (`migrate_rejected`). Default-sets are sourced
+  **embedded-baseline + cloud-override**: `postrule.defaults` ships the frozen
+  registry (the cross-language reference) and exposes `register_default_set()`
+  for a cloud/operator-published version. New `postrule.defaults` module;
+  `LearnedSwitch.migrate_defaults` (proxied on `@ml_switch`-wrapped fns).
+  An operator-supplied explicit gate is version-free (not default-managed).
+
 ## [1.1.14] — 2026-06-01
 
 ### Added
