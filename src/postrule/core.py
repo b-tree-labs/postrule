@@ -464,6 +464,12 @@ class SwitchConfig:
     # prior justification is never blindly reinstated (data may have drifted).
     reconcile_window_records: int = 2000
     reconcile_window_days: float = 90.0
+    # Opt-in version stamp for the rule body. Bump it when a *material* edit to
+    # the rule changes its behavior — that's the demote trigger for a rule
+    # change (the baseline graduation was measured against has moved). Left
+    # None, a rule refactor only raises a surfaced "rule drift" advisory and
+    # never auto-demotes (pin-on-upgrade: no silent degradation).
+    rule_version: str | None = None
     # Deprecated alias for starting_phase. None means "not supplied"
     # and the dataclass falls back to starting_phase's default.
     phase: Phase | None = None
@@ -810,6 +816,7 @@ class LearnedSwitch:
         verifier_sample_rate: float | None = None,
         reconcile_signals: bool | None = None,
         signal_swap_action: str | None = None,
+        rule_version: str | None = None,
         config: SwitchConfig | None = None,
         storage: Storage | None = None,
         persist: bool = False,
@@ -864,6 +871,7 @@ class LearnedSwitch:
             "verifier_sample_rate": verifier_sample_rate,
             "reconcile_signals": reconcile_signals,
             "signal_swap_action": signal_swap_action,
+            "rule_version": rule_version,
         }
         supplied_hoisted = {k: v for k, v in hoisted_config_kwargs.items() if v is not None}
         if config is not None and supplied_hoisted:
@@ -2590,8 +2598,31 @@ class LearnedSwitch:
                 return
             prev_sig, _prev_phase_name, justified_at, high_water = loaded
             if prev_sig.core_identity() == cur.core_identity():
-                # No swap. Refresh the head-version stamp for audit only.
-                if prev_sig.ml_head_version != cur.ml_head_version:
+                # No swap. But the rule body may have drifted (bytecode digest
+                # changed) without an explicit rule_version bump. That does NOT
+                # demote — a refactor must not degrade a hard-earned phase — but
+                # we surface it as an advisory so a *material* edit shipped
+                # without a version bump is visible (and the operator can bump
+                # rule_version to force re-justification if it really changed
+                # behavior).
+                rule_drifted = (
+                    prev_sig.rule_drift_digest is not None
+                    and cur.rule_drift_digest is not None
+                    and prev_sig.rule_drift_digest != cur.rule_drift_digest
+                )
+                if rule_drifted:
+                    self._append_ledger(
+                        "advisory",
+                        sig_before=prev_sig,
+                        sig_after=cur,
+                        phase_before=self.phase().name,
+                        phase_after=self.phase().name,
+                        reason="rule body changed without a rule_version bump "
+                        "(advisory only — phase held; bump rule_version to force "
+                        "re-justification if behavior materially changed)",
+                    )
+                # Refresh the audit-only stamps (head version + rule drift digest).
+                if rule_drifted or prev_sig.ml_head_version != cur.ml_head_version:
                     self._save_signature(cur, justified_at=justified_at, high_water=high_water)
                 return
 
@@ -2689,14 +2720,19 @@ class LearnedSwitch:
             # Stale-ML quarantine (#60 PR2). A judge or strategy swap
             # invalidates any ML head trained under the OLD signal — its
             # accuracy was validated by a judge/strategy we no longer use.
-            # (A gate-only swap does NOT touch the head: the gate never
-            # trains it.) Quarantine = delete the persisted head state so the
-            # about-to-run background load can't restore stale weights, and
-            # clear the strategy-selected head so it re-selects + refits from
-            # the log on the next ML-phase serve. An explicitly-supplied head
-            # is left in place (the operator owns it) but its persisted state
-            # is dropped so it retrains rather than reloading stale weights.
-            if ("judge" in changed or "strategy" in changed) and self._head_is_present():
+            # A *labels* change is even more fundamental: the head was fit to a
+            # classification space that no longer exists (an added label it can
+            # never emit, a removed/renamed one it still emits), so it must
+            # retrain on the new space too. (A gate-only or rule-version-only
+            # swap does NOT touch the head: neither trains it.) Quarantine =
+            # delete the persisted head state so the about-to-run background
+            # load can't restore stale weights, and clear the strategy-selected
+            # head so it re-selects + refits from the log on the next ML-phase
+            # serve. An explicitly-supplied head is left in place (the operator
+            # owns it) but its persisted state is dropped so it retrains rather
+            # than reloading stale weights.
+            quarantine_triggers = ("judge", "strategy", "labels")
+            if any(c in changed for c in quarantine_triggers) and self._head_is_present():
                 self._delete_state("head")
                 if self._head_strategy is not None:
                     self._ml_head = None
@@ -2707,7 +2743,7 @@ class LearnedSwitch:
                     phase_before=self.phase().name,
                     phase_after=self.phase().name,
                     reason=f"ML head trained under prior signal invalidated by "
-                    f"{', '.join(c for c in changed if c in ('judge', 'strategy'))} swap",
+                    f"{', '.join(c for c in changed if c in quarantine_triggers)} swap",
                 )
 
             self._save_signature(signal_signature(self))

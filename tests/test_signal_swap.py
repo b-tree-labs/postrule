@@ -455,3 +455,116 @@ class TestReconcileCore:
         )
         assert s2.phase() is Phase.MODEL_PRIMARY
         assert _events(s2) == ["adopt"]  # only the first switch's adopt; no swap processed
+
+
+# ---------------------------------------------------------------------------
+# Labels change + rule change (added-labels / rule-edit graduation integrity)
+# ---------------------------------------------------------------------------
+class TestLabelsAndRuleSwap:
+    def test_labels_id_in_identity_and_changed(self) -> None:
+        base = SignalSignature("j", ("McNemarGate", 0.01, 200), None, None)
+        added = SignalSignature(
+            "j", ("McNemarGate", 0.01, 200), None, None, labels_id=(("c", None),)
+        )
+        assert base.core_identity() != added.core_identity()
+        assert added.changed_components(base) == ["labels"]
+
+    def test_rule_version_in_identity_drift_excluded(self) -> None:
+        base = SignalSignature("j", ("McNemarGate", 0.01, 200), None, None)
+        bumped = SignalSignature("j", ("McNemarGate", 0.01, 200), None, None, rule_version_id="v2")
+        assert bumped.changed_components(base) == ["rule"]
+        # drift digest is advisory-only: it must NOT move the core identity.
+        drifted = SignalSignature(
+            "j", ("McNemarGate", 0.01, 200), None, None, rule_drift_digest="deadbeef"
+        )
+        assert drifted.core_identity() == base.core_identity()
+        assert drifted.changed_components(base) == []
+
+    def test_rule_drift_digest_catches_constant_only_edit(self) -> None:
+        from postrule.signals import _rule_drift_digest
+
+        # Same opcodes, different returned constant → must differ.
+        assert _rule_drift_digest(lambda _x: "a") != _rule_drift_digest(lambda _x: "b")
+        # No __code__ (C callable) → None, not a crash.
+        assert _rule_drift_digest(len) is None
+
+    def _seed_with_head(self, tmp_path, name, labels):
+        s = LearnedSwitch(
+            rule=lambda _x: "a",
+            name=name,
+            starting_phase=Phase.MODEL_PRIMARY,
+            gate=McNemarGate(alpha=0.01, min_paired=20),
+            ml_head=_StubHead(),
+            labels=labels,
+            storage=FileStorage(str(tmp_path)),
+            persist=True,
+        )
+        # target_wins → phase stays justified, isolating quarantine from demote.
+        for i in range(60):
+            s._storage.append_record(name, _rec(rule_right=(i < 15), model_right=(i < 55)))
+        s._storage.put_state(name, "head", b"S")
+        return s
+
+    def test_added_label_quarantines_head(self, tmp_path) -> None:
+        self._seed_with_head(tmp_path, "lbl", ["a", "b"])
+        s2 = LearnedSwitch(
+            rule=lambda _x: "a",
+            name="lbl",
+            starting_phase=Phase.MODEL_PRIMARY,
+            gate=McNemarGate(alpha=0.01, min_paired=20),
+            ml_head=_StubHead(),
+            labels=["a", "b", "c"],  # added a label → classification space changed
+            storage=FileStorage(str(tmp_path)),
+            persist=True,
+        )
+        ev = _events(s2)
+        assert "swap" in ev and "quarantine" in ev
+        assert s2._storage.get_state("lbl", "head") is None  # stale head dropped
+
+    def test_rule_version_bump_demotes(self, tmp_path) -> None:
+        _build(
+            tmp_path,
+            "rv",
+            Phase.MODEL_PRIMARY,
+            gate=McNemarGate(alpha=0.01, min_paired=20),
+            n=60,
+            rule_wins=True,
+        )
+        # Only rule_version changes (gate identical) → swap on "rule" → demote.
+        s2 = _reopen(
+            tmp_path,
+            "rv",
+            Phase.MODEL_PRIMARY,
+            gate=McNemarGate(alpha=0.01, min_paired=20),
+            rule_version="v2",
+        )
+        assert s2.phase() is Phase.RULE
+        ev = _events(s2)
+        assert "swap" in ev and "demote" in ev
+
+    def test_rule_drift_without_version_is_advisory_not_demote(self, tmp_path) -> None:
+        name = "drift"
+        s = LearnedSwitch(
+            rule=lambda _x: "a",
+            name=name,
+            starting_phase=Phase.MODEL_PRIMARY,
+            gate=McNemarGate(alpha=0.01, min_paired=20),
+            storage=FileStorage(str(tmp_path)),
+            persist=True,
+        )
+        # rule_wins: a real demote WOULD cascade to RULE if this were a swap —
+        # proving the advisory path deliberately holds the phase instead.
+        for i in range(60):
+            s._storage.append_record(name, _rec(rule_right=(i < 55), model_right=(i < 15)))
+        s2 = LearnedSwitch(
+            rule=lambda _x: "behaviorally-different",  # edited body, NO rule_version bump
+            name=name,
+            starting_phase=Phase.MODEL_PRIMARY,
+            gate=McNemarGate(alpha=0.01, min_paired=20),
+            storage=FileStorage(str(tmp_path)),
+            persist=True,
+        )
+        assert s2.phase() is Phase.MODEL_PRIMARY  # held — refactor never auto-demotes
+        ev = _events(s2)
+        assert "advisory" in ev
+        assert "demote" not in ev and "swap" not in ev
