@@ -15,6 +15,21 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.14] — 2026-06-01
+
+### Added
+
+- **Signal-swap stale-ML quarantine (#60, PR 2 of 3).** A judge or ML-head
+  strategy swap invalidates any ML head trained under the *old* signal — its
+  accuracy was validated by a judge/strategy no longer in use. On a detected
+  judge/strategy swap, `reconcile_signals` now **quarantines** the head:
+  deletes the persisted head state (so the construction-time background load
+  can't restore stale weights) and clears a strategy-selected head so it
+  re-selects + refits from the log on the next ML-phase serve. A **gate-only**
+  swap never quarantines (the gate doesn't train the head). Recorded as a
+  `quarantine` event in the per-switch audit ledger. PR 3 adds versioned-
+  default pinning + opt-in migration.
+
 ## [1.1.13] — 2026-06-01
 
 ### Added
