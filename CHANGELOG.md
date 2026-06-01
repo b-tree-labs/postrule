@@ -15,6 +15,22 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.16] — 2026-06-01
+
+### Added
+
+- **Failure-condition detector, dogfooded as a Postrule switch (#95).** Detects
+  when a switch lost data / fragmented / reset because it lacked durable or
+  managed storage — the conditions a Managed plan would have prevented (the
+  free→managed upsell). `postrule.cloud.failure_detector` builds a
+  control-plane-only **fingerprint** (unexplained phase resets, verdict-gap /
+  volume cliffs, cross-replica phase divergence, corrupt-state flag — never
+  classified content) and classifies it (`healthy` / `state_loss` /
+  `fragmentation` / `corruption`) through an `@ml_switch` that starts as a rule
+  and graduates as labeled incidents accumulate (Postrule on Postrule). Because
+  the fingerprint is decisions-not-data, the output is safe to surface on an
+  internal *or* a curated public "Postrule live on Postrule" dogfooding view.
+
 ## [1.1.15] — 2026-06-01
 
 ### Added
