@@ -718,14 +718,18 @@ class LearnedSwitch:
             under ``./runtime/postrule/<name>/`` instead (wrapped in a
             :class:`ResilientStorage` so a transient disk failure
             does not take down classification).
-        persist: When ``True`` and ``storage`` is not explicitly
-            supplied, use a :class:`FileStorage` rooted at
+        persist: Enables per-switch state durability — the ML head,
+            circuit-breaker, and (#60) signal signature + audit ledger
+            survive restarts. When ``storage`` is **not** supplied, this
+            is a shortcut for a :class:`FileStorage` rooted at
             ``./runtime/postrule/`` wrapped in :class:`ResilientStorage`
-            — transient I/O failures spill to an in-memory buffer
-            that drains back when the primary recovers. Mutually
-            exclusive with an explicit ``storage=`` argument. For
-            hard-fail-on-IO-error semantics, pass
-            ``storage=FileStorage(...)`` directly.
+            (transient I/O failures spill to an in-memory buffer that
+            drains back on recovery). When ``storage`` **is** supplied,
+            ``persist=True`` composes with it: state rides through that
+            backend's state interface (``put_state``/``get_state``), or
+            falls back to local ``./runtime/postrule/`` sidecars if the
+            backend doesn't implement one — so a shared/managed backend
+            can hold the whole data plane for elastic compute.
         model: Optional :class:`ModelClassifier` used in MODEL_SHADOW and
             MODEL_PRIMARY phases.
     """
@@ -878,11 +882,12 @@ class LearnedSwitch:
         # #107 — see __init__ docstring on `project=`.
         self.project = project
         self.config = resolved_config
-        if storage is not None and persist:
-            raise ValueError(
-                "persist=True is incompatible with an explicit storage= "
-                "argument. Pass one or the other."
-            )
+        # persist + explicit storage now compose (#data-plane): the explicit
+        # backend IS the durable store, and persist=True enables per-switch
+        # state (head/breaker/signature/ledger) to ride through that backend's
+        # state interface (or fall back to local sidecars if it doesn't
+        # implement one). When storage is None, persist=True keeps its
+        # shortcut: a batched FileStorage wrapped in ResilientStorage.
         if storage is None:
             if persist:
                 # persist=True wraps a batched FileStorage in

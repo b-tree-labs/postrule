@@ -90,15 +90,23 @@ class TestDefaultStorageWiring:
         assert len(recs) == 1
         assert recs[0].label == "bug"
 
-    def test_persist_plus_explicit_storage_raises(self, tmp_path):
-        with pytest.raises(ValueError, match="persist=True is incompatible"):
-            LearnedSwitch(
-                name="triage",
-                rule=lambda _: "bug",
-                author="alice",
-                storage=BoundedInMemoryStorage(),
-                persist=True,
-            )
+    def test_persist_plus_explicit_storage_composes(self, tmp_path):
+        # persist=True now composes with an explicit storage: the explicit
+        # backend is used (not replaced by the default ResilientStorage), and
+        # state persistence is enabled, riding through that backend.
+        store = BoundedInMemoryStorage()
+        s = LearnedSwitch(
+            name="triage",
+            rule=lambda _: "bug",
+            author="alice",
+            storage=store,
+            persist=True,
+        )
+        assert s.storage is store  # explicit backend kept
+        assert s._persist is True  # persistence enabled
+        # State rides through the explicit (state-capable) backend.
+        s._put_state("breaker", b"1")
+        assert store.get_state("triage", "breaker") == b"1"
 
     def test_explicit_storage_wins(self):
         storage = BoundedInMemoryStorage(max_records=5)

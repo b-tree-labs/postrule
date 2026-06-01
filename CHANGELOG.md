@@ -15,6 +15,20 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.12] — 2026-06-01
+
+### Changed
+
+- **`persist=True` now composes with an explicit `storage=`** (previously a
+  `ValueError`). An explicit backend is kept as the durable store and
+  `persist=True` enables per-switch state (ML head, circuit-breaker, and the
+  #60 signature/ledger) to ride through that backend's state interface — or
+  fall back to local `./runtime/postrule/` sidecars if it doesn't implement
+  one. This lets a **shared / managed backend hold the whole data plane** for
+  elastic compute (the next step after the 1.1.11 state interface). When
+  `storage` is omitted, `persist=True` keeps its `ResilientStorage(FileStorage)`
+  shortcut — no change for existing callers.
+
 ## [1.1.11] — 2026-05-31
 
 ### Added
