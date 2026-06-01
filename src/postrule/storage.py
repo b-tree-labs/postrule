@@ -108,6 +108,20 @@ class Storage(Protocol):
 
     def load_records(self, switch_name: str) -> list[ClassificationRecord]: ...
 
+    # --- Per-switch state blobs (optional) -------------------------------
+    # Beyond the verdict log, a switch holds small per-switch state — the
+    # trained ML head, the circuit-breaker flag, and (post-#60) the signal
+    # signature + audit ledger. Routing these through Storage (rather than
+    # hardcoded local files) is what lets the *data plane* live in a shared
+    # / managed backend for elastic compute. A backend that does not
+    # implement these is still a valid Storage: the SDK falls back to local
+    # sidecar files (today's behavior) when they're absent.
+    def put_state(self, switch_name: str, key: str, blob: bytes) -> None: ...
+
+    def get_state(self, switch_name: str, key: str) -> bytes | None: ...
+
+    def delete_state(self, switch_name: str, key: str) -> None: ...
+
 
 class StorageBase(ABC):
     """Abstract base class for custom storage backends.
@@ -156,6 +170,20 @@ class StorageBase(ABC):
     def load_records(self, switch_name: str) -> list[ClassificationRecord]:
         """Return every record for the named switch in append order."""
         raise NotImplementedError
+
+    # --- Per-switch state blobs (default: in-process) --------------------
+    # A working in-memory default so every StorageBase subclass supports
+    # state out of the box (ephemeral backends like InMemoryStorage want
+    # exactly this). Durable backends (FileStorage, SqliteStorage) override
+    # to persist; ResilientStorage delegates to the wrapped backend.
+    def put_state(self, switch_name: str, key: str, blob: bytes) -> None:
+        self.__dict__.setdefault("_state_blobs", {})[(switch_name, key)] = bytes(blob)
+
+    def get_state(self, switch_name: str, key: str) -> bytes | None:
+        return self.__dict__.get("_state_blobs", {}).get((switch_name, key))
+
+    def delete_state(self, switch_name: str, key: str) -> None:
+        self.__dict__.get("_state_blobs", {}).pop((switch_name, key), None)
 
 
 # ---------------------------------------------------------------------------
@@ -1043,6 +1071,35 @@ class FileStorage(StorageBase):
         with self._exclusive_lock(switch_name):
             self._rotate(switch_name)
 
+    # --- Per-switch state blobs (durable, co-located with the log) -------
+    # Filenames preserve the legacy sidecar names the SDK used before state
+    # was routed through Storage, so existing persisted `.head`/`.breaker`
+    # files are still found after the upgrade.
+    _STATE_FILENAMES = {"head": ".head", "breaker": ".breaker"}
+
+    def _state_path(self, switch_name: str, key: str) -> Path:
+        fname = self._STATE_FILENAMES.get(key, f".state-{key}")
+        return self._switch_dir(switch_name) / fname
+
+    def put_state(self, switch_name: str, key: str, blob: bytes) -> None:
+        path = self._state_path(switch_name, key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_bytes(bytes(blob))
+        tmp.replace(path)  # atomic on POSIX
+
+    def get_state(self, switch_name: str, key: str) -> bytes | None:
+        try:
+            return self._state_path(switch_name, key).read_bytes()
+        except (OSError, FileNotFoundError):
+            return None
+
+    def delete_state(self, switch_name: str, key: str) -> None:
+        try:
+            self._state_path(switch_name, key).unlink()
+        except (OSError, FileNotFoundError):
+            pass
+
 
 # ---------------------------------------------------------------------------
 # SqliteStorage — recommended for concurrent production workloads
@@ -1159,6 +1216,40 @@ class SqliteStorage(StorageBase):
             )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_outcomes_switch ON outcomes(switch_name, id)"
+            )
+            # Per-switch state blobs (ML head, breaker, signature, ledger).
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS switch_state (
+                    switch_name TEXT NOT NULL,
+                    key TEXT NOT NULL,
+                    blob BLOB NOT NULL,
+                    PRIMARY KEY (switch_name, key)
+                )
+                """
+            )
+
+    def put_state(self, switch_name: str, key: str, blob: bytes) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                """INSERT INTO switch_state (switch_name, key, blob) VALUES (?, ?, ?)
+                   ON CONFLICT(switch_name, key) DO UPDATE SET blob = excluded.blob""",
+                (switch_name, key, sqlite3.Binary(bytes(blob))),
+            )
+
+    def get_state(self, switch_name: str, key: str) -> bytes | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT blob FROM switch_state WHERE switch_name = ? AND key = ?",
+                (switch_name, key),
+            ).fetchone()
+        return bytes(row[0]) if row is not None else None
+
+    def delete_state(self, switch_name: str, key: str) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                "DELETE FROM switch_state WHERE switch_name = ? AND key = ?",
+                (switch_name, key),
             )
 
     def append_record(self, switch_name: str, record: ClassificationRecord) -> None:
@@ -1370,6 +1461,16 @@ class ResilientStorage(StorageBase):
             pass
         fallback_recs = list(self._fallback.load_records(switch_name))
         return primary_recs + fallback_recs
+
+    # --- Per-switch state blobs — delegate to the (durable) primary ------
+    def put_state(self, switch_name: str, key: str, blob: bytes) -> None:
+        self._primary.put_state(switch_name, key, blob)
+
+    def get_state(self, switch_name: str, key: str) -> bytes | None:
+        return self._primary.get_state(switch_name, key)
+
+    def delete_state(self, switch_name: str, key: str) -> None:
+        self._primary.delete_state(switch_name, key)
 
     # --- Degraded-mode machinery ------------------------------------------
 

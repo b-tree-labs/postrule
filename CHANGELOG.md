@@ -15,6 +15,31 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.11] — 2026-05-31
+
+### Added
+
+- **`Storage` gains a per-switch state interface** — `put_state` / `get_state`
+  / `delete_state(switch_name, key, ...)`. Beyond the verdict log, a switch
+  holds small per-switch state (the trained ML head, the circuit-breaker flag,
+  and — coming with #60 — a signal signature + audit ledger). Routing these
+  through `Storage` (rather than hardcoded local files) is the foundation that
+  lets the **data plane** live in a shared / managed backend for elastic compute
+  (see `docs/design/state-and-deployment-architecture.md`). Implemented on all
+  built-in backends: `FileStorage` (co-located with the log, preserving the
+  legacy `.head`/`.breaker` filenames), `SqliteStorage` (a `switch_state`
+  table), `InMemoryStorage`/`BoundedInMemoryStorage` (in-process), and
+  `ResilientStorage` (delegates to its primary).
+
+### Changed
+
+- **ML-head + circuit-breaker persistence now route through the `Storage` state
+  interface** instead of hardcoded `runtime/postrule/<name>/` sidecar files. For
+  the default `persist=True` backend the on-disk location is unchanged (so
+  existing persisted state is found); a backend that doesn't implement the state
+  methods transparently falls back to the legacy local sidecars. No behavior
+  change for existing deployments.
+
 ## [1.1.10] — 2026-05-31
 
 ### Added

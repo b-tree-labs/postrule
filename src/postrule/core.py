@@ -2278,69 +2278,95 @@ class LearnedSwitch:
 
     # --- Breaker-state persistence (paper §7.1 survives restart) ---------
 
-    def _breaker_path(self) -> Path | None:
-        """Path to the breaker-state sidecar file, or ``None`` if unsupported.
+    # --- Per-switch state routing (Storage-backed, local-file fallback) ---
+    # State (ML head, breaker, and the #60 signature/ledger) routes through
+    # the configured Storage backend when it supports the state interface —
+    # so the *data plane* can live in a shared / managed backend for elastic
+    # compute (see docs/design/state-and-deployment-architecture.md). A
+    # backend without the state methods (older custom Storage) transparently
+    # falls back to the legacy local sidecar files under
+    # ``runtime/postrule/<name>/`` — identical to pre-upgrade behavior.
 
-        Breaker persistence is enabled when ``persist=True`` was
-        passed at construction — see v1-readiness.md §5 D2.
-        """
-        if not getattr(self, "_persist", False):
-            return None
-        return Path("runtime") / "postrule" / self.name / ".breaker"
+    def _state_capable(self) -> bool:
+        return hasattr(self._storage, "put_state")
 
-    def _save_breaker_state(self) -> None:
-        """Persist ``_circuit_tripped`` to disk when configured.
+    def _legacy_state_path(self, key: str) -> Path:
+        return Path("runtime") / "postrule" / self.name / f".{key}"
 
-        Called from the lock holders that mutate the breaker
-        (``_classify_impl`` ML_PRIMARY branch, ``reset_circuit_breaker``).
-        A failure here never propagates — persistence is best-effort;
-        crashing the classifier over a sidecar-file write is a worse
-        outcome than losing a restart-survival on one trip.
-        """
-        path = self._breaker_path()
-        if path is None:
+    def _put_state(self, key: str, blob: bytes) -> None:
+        if self._state_capable():
+            try:
+                self._storage.put_state(self.name, key, blob)
+            except BaseException:
+                pass
             return
+        path = self._legacy_state_path(key)
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("1" if self._circuit_tripped else "0")
+            tmp = path.with_suffix(path.suffix + ".tmp")
+            tmp.write_bytes(blob)
+            tmp.replace(path)
         except OSError:
             pass
 
-    def _load_breaker_state(self) -> None:
-        """Rehydrate ``_circuit_tripped`` from disk at construction.
+    def _get_state(self, key: str) -> bytes | None:
+        if self._state_capable():
+            try:
+                return self._storage.get_state(self.name, key)
+            except BaseException:
+                return None
+        try:
+            return self._legacy_state_path(key).read_bytes()
+        except (OSError, FileNotFoundError):
+            return None
 
-        Called from ``__init__`` only when ``persist=True``. A
-        missing or unreadable file leaves the breaker untripped
-        (the safe default).
-        """
-        path = self._breaker_path()
-        if path is None:
+    def _delete_state(self, key: str) -> None:
+        if self._state_capable():
+            try:
+                self._storage.delete_state(self.name, key)
+            except BaseException:
+                pass
             return
         try:
-            raw = path.read_text().strip()
+            self._legacy_state_path(key).unlink()
         except (OSError, FileNotFoundError):
+            pass
+
+    def _save_breaker_state(self) -> None:
+        """Persist ``_circuit_tripped`` when configured (best-effort).
+
+        Routed through :meth:`_put_state` (Storage-backed or local-file
+        fallback). Never propagates — crashing the classifier over a
+        state write is worse than losing one trip's restart-survival.
+        """
+        if not getattr(self, "_persist", False):
             return
-        if raw == "1":
+        self._put_state("breaker", b"1" if self._circuit_tripped else b"0")
+
+    def _load_breaker_state(self) -> None:
+        """Rehydrate ``_circuit_tripped`` at construction (persist=True only).
+
+        Missing/unreadable state leaves the breaker untripped (safe default).
+        """
+        if not getattr(self, "_persist", False):
+            return
+        raw = self._get_state("breaker")
+        if raw is not None and raw.strip() == b"1":
             self._circuit_tripped = True
 
     # --- ML head state persistence (avoids re-fit on every restart) ------
 
-    def _head_path(self) -> Path | None:
-        """Path to the ML-head state sidecar file, or ``None`` if unsupported.
-
-        Head persistence is enabled when ``persist=True`` AND the
-        configured ``ml_head`` implements both ``state_bytes`` and
-        ``load_state``. Heads without these methods fall back to
-        refit-from-log on first prediction.
+    def _head_persist_enabled(self) -> bool:
+        """Head persistence is on when ``persist=True`` AND the configured
+        ``ml_head`` implements both ``state_bytes`` and ``load_state``.
+        Heads without these fall back to refit-from-log on first prediction.
         """
         if not getattr(self, "_persist", False):
-            return None
+            return False
         head = self._ml_head
         if head is None:
-            return None
-        if not hasattr(head, "state_bytes") or not hasattr(head, "load_state"):
-            return None
-        return Path("runtime") / "postrule" / self.name / ".head"
+            return False
+        return hasattr(head, "state_bytes") and hasattr(head, "load_state")
 
     def _save_head_state(self) -> None:
         """Persist trained ML-head state to disk.
@@ -2358,8 +2384,7 @@ class LearnedSwitch:
         crashes the classifier is broken. The next restart re-fits
         from the verdict log if the sidecar is missing or unreadable.
         """
-        path = self._head_path()
-        if path is None:
+        if not self._head_persist_enabled():
             return
         try:
             with self._head_lock:
@@ -2370,13 +2395,7 @@ class LearnedSwitch:
             raise
         except BaseException:
             return
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_suffix(path.suffix + ".tmp")
-            tmp.write_bytes(blob)
-            tmp.replace(path)
-        except OSError:
-            pass
+        self._put_state("head", blob)
 
     def _load_head_state(self) -> None:
         """Rehydrate trained ML-head state from disk.
@@ -2390,12 +2409,10 @@ class LearnedSwitch:
         safe default; the next ``fit`` from the verdict log restores
         readiness).
         """
-        path = self._head_path()
-        if path is None:
+        if not self._head_persist_enabled():
             return
-        try:
-            blob = path.read_bytes()
-        except (OSError, FileNotFoundError):
+        blob = self._get_state("head")
+        if blob is None:
             return
         try:
             with self._head_lock:
