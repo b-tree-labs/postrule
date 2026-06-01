@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from postrule.ml import MLHead
     from postrule.models import ModelClassifier
+    from postrule.signals import SignalSignature
     from postrule.storage import Storage
     from postrule.telemetry import TelemetryEmitter
 
@@ -447,6 +448,22 @@ class SwitchConfig:
     # handler exceptions to bubble. ``KeyboardInterrupt`` and
     # ``SystemExit`` propagate regardless of this knob.
     propagate_action_exceptions: bool = False
+    # --- Signal-swap graduation integrity (#60) -------------------------
+    # On construction (persist=True), detect whether the judge / ML-head
+    # strategy / statistical gate changed since the switch last graduated,
+    # and re-justify the current phase under the new signal — demoting
+    # toward the rule floor if the phase is no longer statistically
+    # justified. Set False to manage signatures externally.
+    reconcile_signals: bool = True
+    # Action when a swap leaves the current phase unjustified: "demote"
+    # (auto-step toward RULE until re-justified — fail-safe default) or
+    # "flag" (audit + leave the phase, operator decides).
+    signal_swap_action: str = "demote"
+    # Recency window for swap re-justification + swap-back reinstatement: the
+    # gate is re-run over only the most recent N records / D days so a stale
+    # prior justification is never blindly reinstated (data may have drifted).
+    reconcile_window_records: int = 2000
+    reconcile_window_days: float = 90.0
     # Deprecated alias for starting_phase. None means "not supplied"
     # and the dataclass falls back to starting_phase's default.
     phase: Phase | None = None
@@ -788,6 +805,8 @@ class LearnedSwitch:
         on_verdict: Callable[[Any], None] | None = None,
         verifier: Any = None,
         verifier_sample_rate: float | None = None,
+        reconcile_signals: bool | None = None,
+        signal_swap_action: str | None = None,
         config: SwitchConfig | None = None,
         storage: Storage | None = None,
         persist: bool = False,
@@ -840,6 +859,8 @@ class LearnedSwitch:
             "on_verdict": on_verdict,
             "verifier": verifier,
             "verifier_sample_rate": verifier_sample_rate,
+            "reconcile_signals": reconcile_signals,
+            "signal_swap_action": signal_swap_action,
         }
         supplied_hoisted = {k: v for k, v in hoisted_config_kwargs.items() if v is not None}
         if config is not None and supplied_hoisted:
@@ -984,6 +1005,18 @@ class LearnedSwitch:
         self._head_loaded = threading.Event()
         if self._persist:
             self._load_breaker_state()
+            # #60 — detect a judge/strategy/gate swap since the switch last
+            # graduated and re-justify (demote toward the rule floor if the
+            # current phase is no longer earned under the new signal). Runs
+            # before the head load so a future quarantine can pre-empt a
+            # stale head. Best-effort; never blocks construction fatally.
+            if getattr(self.config, "reconcile_signals", True):
+                try:
+                    self.reconcile_signals(_at_init=True)
+                except (KeyboardInterrupt, SystemExit):
+                    raise
+                except BaseException:  # pragma: no cover — integrity check is best-effort
+                    pass
             # Restore the trained ML head on a background thread so
             # constructing a switch never blocks on a multi-second
             # pickle.loads (transformer-class heads can be hundreds of
@@ -2428,6 +2461,191 @@ class LearnedSwitch:
             # Corrupt blob, version mismatch, etc. — discard and let
             # the head re-fit from the log.
             return
+
+    # --- Signal-swap graduation integrity (#60) -------------------------
+
+    def _recency_window(self) -> list[ClassificationRecord]:
+        """Most-recent records for swap re-justification — bounded by
+        ``reconcile_window_records`` and ``reconcile_window_days`` so a stale
+        prior justification is never reinstated on data that may have drifted.
+        """
+        records = self._storage.load_records(self.name)
+        days = getattr(self.config, "reconcile_window_days", 90.0)
+        if days and days > 0:
+            cutoff = time.time() - days * 86400.0
+            records = [r for r in records if getattr(r, "timestamp", 0.0) >= cutoff]
+        n = getattr(self.config, "reconcile_window_records", 2000)
+        if n and len(records) > n:
+            records = records[-n:]
+        return records
+
+    def _save_signature(
+        self,
+        sig: SignalSignature,
+        *,
+        justified_at: float | None = None,
+        high_water: int | None = None,
+    ) -> None:
+        import json
+
+        if high_water is None:
+            try:
+                high_water = len(self._storage.load_records(self.name))
+            except BaseException:
+                high_water = 0
+        payload = {
+            "signature": sig.to_audit(),
+            "phase": self.phase().name,
+            "justified_at": justified_at if justified_at is not None else time.time(),
+            "verdict_high_water": high_water,
+        }
+        self._put_state("signature", json.dumps(payload).encode("utf-8"))
+
+    def _load_signature(self):
+        """Return ``(SignalSignature, phase_name, justified_at, high_water)`` or None."""
+        import json
+
+        from postrule.signals import SignalSignature
+
+        blob = self._get_state("signature")
+        if blob is None:
+            return None
+        try:
+            d = json.loads(blob.decode("utf-8"))
+            return (
+                SignalSignature.from_audit(d["signature"]),
+                d.get("phase"),
+                d.get("justified_at"),
+                d.get("verdict_high_water", 0),
+            )
+        except BaseException:  # pragma: no cover — corrupt signature → treat as fresh
+            return None
+
+    def _append_ledger(
+        self,
+        event: str,
+        *,
+        sig_before,
+        sig_after,
+        phase_before: str,
+        phase_after: str,
+        reason: str,
+        **extra,
+    ) -> None:
+        """Append one audit event (JSONL) to the per-switch ledger."""
+        import json
+
+        rec = {
+            "ts": time.time(),
+            "event": event,
+            "switch": self.name,
+            "phase_before": phase_before,
+            "phase_after": phase_after,
+            "sig_before": sig_before.to_audit() if sig_before is not None else None,
+            "sig_after": sig_after.to_audit() if sig_after is not None else None,
+            "reason": reason,
+            **extra,
+        }
+        try:
+            existing = self._get_state("ledger") or b""
+            line = json.dumps(rec).encode("utf-8") + b"\n"
+            self._put_state("ledger", existing + line)
+        except BaseException:  # pragma: no cover — ledger is best-effort audit
+            pass
+
+    def reconcile_signals(self, *, _at_init: bool = False):
+        """Detect a judge/strategy/gate swap and re-justify the current phase.
+
+        Demote-only (fail toward the rule floor); never auto-promotes. On a
+        swap that leaves the phase unjustified under the *new* signal (judged
+        on a recency window), the switch demotes toward RULE — unless
+        ``signal_swap_action='flag'``, which audits but leaves the phase.
+        A switch with no persisted signature *adopts* the current one without
+        demoting (no false positive on first run / upgrade). Idempotent.
+        """
+        from postrule.gates import prev_phase
+        from postrule.signals import signal_signature
+
+        with self._lock:
+            cur = signal_signature(self)
+            loaded = self._load_signature()
+            if loaded is None:
+                self._save_signature(cur)
+                self._append_ledger(
+                    "adopt",
+                    sig_before=None,
+                    sig_after=cur,
+                    phase_before=self.phase().name,
+                    phase_after=self.phase().name,
+                    reason="initial signature adopted (no prior justification)",
+                )
+                return
+            prev_sig, _prev_phase_name, justified_at, high_water = loaded
+            if prev_sig.core_identity() == cur.core_identity():
+                # No swap. Refresh the head-version stamp for audit only.
+                if prev_sig.ml_head_version != cur.ml_head_version:
+                    self._save_signature(cur, justified_at=justified_at, high_water=high_water)
+                return
+
+            # --- Swap detected -------------------------------------------
+            changed = cur.changed_components(prev_sig)
+            phase_before = self.phase().name
+            self._append_ledger(
+                "swap",
+                sig_before=prev_sig,
+                sig_after=cur,
+                phase_before=phase_before,
+                phase_after=phase_before,
+                reason=f"signal swap: {', '.join(changed)} changed",
+                changed_components=changed,
+            )
+
+            action = getattr(self.config, "signal_swap_action", "demote")
+            if action != "flag":
+                # Re-justify (demote-only) under the CURRENT gate on a recent
+                # window. Insufficient recent evidence => hold (don't punish a
+                # phase that simply hasn't re-accumulated under the new signal).
+                gate = self.config.gate
+                min_paired = getattr(gate, "min_paired", getattr(gate, "_min_paired", 0)) or 0
+                while self.phase() is not Phase.RULE:
+                    current = self.phase()
+                    pred = prev_phase(current)
+                    if pred is None:
+                        break
+                    window = self._recency_window()
+                    try:
+                        decision = gate.evaluate(window, pred, current)
+                    except BaseException:  # pragma: no cover — defensive
+                        break
+                    if getattr(decision, "target_better", False):
+                        break  # still justified under the new signal
+                    if getattr(decision, "paired_sample_size", 0) < min_paired:
+                        self._append_ledger(
+                            "swap",
+                            sig_before=prev_sig,
+                            sig_after=cur,
+                            phase_before=current.name,
+                            phase_after=current.name,
+                            reason="insufficient recent evidence to re-justify; holding phase",
+                        )
+                        break
+                    self.demote(
+                        reason=f"signal-swap re-justification failed ({', '.join(changed)})",
+                        _auto=True,
+                        _decision=decision,
+                    )
+                    self._append_ledger(
+                        "demote",
+                        sig_before=prev_sig,
+                        sig_after=cur,
+                        phase_before=current.name,
+                        phase_after=self.phase().name,
+                        reason=f"phase {current.name} no longer justified under new signal "
+                        f"({', '.join(changed)})",
+                        p_value=getattr(decision, "p_value", None),
+                    )
+
+            self._save_signature(signal_signature(self))
 
     def _ensure_ml_head(self, phase: Phase) -> None:
         """Ensure ``self._ml_head`` is set, consulting head_strategy if needed.
