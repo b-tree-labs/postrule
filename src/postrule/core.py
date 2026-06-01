@@ -2306,7 +2306,7 @@ class LearnedSwitch:
             tmp = path.with_suffix(path.suffix + ".tmp")
             tmp.write_bytes(blob)
             tmp.replace(path)
-        except OSError:
+        except OSError:  # pragma: no cover — best-effort disk write
             pass
 
     def _get_state(self, key: str) -> bytes | None:
@@ -2329,7 +2329,7 @@ class LearnedSwitch:
             return
         try:
             self._legacy_state_path(key).unlink()
-        except (OSError, FileNotFoundError):
+        except (OSError, FileNotFoundError):  # pragma: no cover — best-effort
             pass
 
     def _save_breaker_state(self) -> None:
@@ -2348,7 +2348,7 @@ class LearnedSwitch:
 
         Missing/unreadable state leaves the breaker untripped (safe default).
         """
-        if not getattr(self, "_persist", False):
+        if not getattr(self, "_persist", False):  # pragma: no cover — callsite gates on persist
             return
         raw = self._get_state("breaker")
         if raw is not None and raw.strip() == b"1":

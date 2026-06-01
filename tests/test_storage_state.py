@@ -90,6 +90,8 @@ class TestSwitchPersistsThroughStorage:
 
         s1 = LearnedSwitch(rule=rule, name="brk", starting_phase=Phase.RULE, persist=True)
         assert s1._state_capable() is True
+        # No ML head configured → head persistence is off (no .head written).
+        assert s1._head_persist_enabled() is False
         s1._circuit_tripped = True
         s1._save_breaker_state()
         # Landed in the switch's storage backend via the state interface.
@@ -128,3 +130,59 @@ class TestFallbackForNonStateBackend:
         assert s._get_state("breaker") == b"1"
         s._delete_state("breaker")
         assert s._get_state("breaker") is None
+
+
+class TestStateCapablePutGetDelete:
+    def test_put_get_delete_through_capable_backend(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Exercises the state-capable branch of all three core helpers.
+        from postrule import LearnedSwitch, Phase
+
+        monkeypatch.chdir(tmp_path)
+
+        def rule(_x):
+            return "a"
+
+        s = LearnedSwitch(rule=rule, name="cap", starting_phase=Phase.RULE, persist=True)
+        assert s._state_capable() is True
+        s._put_state("k", b"v")
+        assert s._get_state("k") == b"v"
+        s._delete_state("k")
+        assert s._get_state("k") is None
+
+
+class TestStateHelpersSwallowBackendErrors:
+    def test_helpers_never_propagate_storage_errors(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # A state-capable backend whose methods raise must never break the
+        # caller — state persistence is best-effort.
+        from postrule import LearnedSwitch, Phase
+
+        monkeypatch.chdir(tmp_path)
+
+        class ExplodingStateStorage:
+            def append_record(self, name, rec): ...
+            def load_records(self, name):
+                return []
+
+            def put_state(self, *a):
+                raise RuntimeError("boom")
+
+            def get_state(self, *a):
+                raise RuntimeError("boom")
+
+            def delete_state(self, *a):
+                raise RuntimeError("boom")
+
+        def rule(_x):
+            return "a"
+
+        s = LearnedSwitch(rule=rule, name="boom", starting_phase=Phase.RULE, persist=True)
+        s._storage = ExplodingStateStorage()
+        assert s._state_capable() is True
+        # None of these raise:
+        s._put_state("k", b"v")
+        assert s._get_state("k") is None
+        s._delete_state("k")
