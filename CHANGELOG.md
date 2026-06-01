@@ -15,6 +15,28 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.13] — 2026-06-01
+
+### Added
+
+- **Signal-swap graduation integrity (#60, PR 1 of 3).** A switch's phase is
+  earned against a specific signal — the judge/verifier × ML-head strategy ×
+  statistical gate. If any is swapped, the evidence that justified the current
+  phase may no longer hold. On construction (`persist=True`), the switch now
+  computes a **signal signature**, compares it to the one its phase was last
+  justified under, and on a detected swap **re-justifies the current phase
+  under the new signal on a recency window** — demoting toward the rule floor
+  when it's no longer earned. Demote-only: it never auto-promotes, so a stale
+  prior graduation is re-earned via the normal gate, never blindly reinstated.
+  Every adopt / swap / demote is recorded to a per-switch **audit ledger**
+  (persisted through the `Storage` state interface). New knobs:
+  `reconcile_signals: bool = True` and `signal_swap_action: "demote" | "flag"`
+  (plus `reconcile_window_records` / `reconcile_window_days`). A switch with no
+  prior signature adopts the current one without demoting (no false positive on
+  upgrade); `ml_head_version` is excluded from swap detection so routine
+  retraining is never misread as a swap. PR 2 adds stale-ML head quarantine;
+  PR 3 adds versioned-default pinning + opt-in migration.
+
 ## [1.1.12] — 2026-06-01
 
 ### Changed
