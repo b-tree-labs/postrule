@@ -4,6 +4,14 @@ Welcome. Postrule is a graduated-autonomy classification primitive
 for production Python systems. Pick the entry point that matches
 where you are:
 
+## The big idea
+
+- **[Bring your own truth oracle](bring-your-own-truth-oracle.md)** —
+  the heart of Postrule, example-first: you define what "correct"
+  means, and a switch only graduates when the evidence clears a
+  statistical gate against *your* truth. No model grades its own
+  homework. **Read this if you read nothing else.**
+
 ## Start here
 
 - **[Getting started](getting-started.md)** — mental model + your

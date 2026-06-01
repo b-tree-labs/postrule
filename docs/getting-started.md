@@ -12,6 +12,12 @@ A working switch in 2 minutes. A switch that graduates itself in
 > if the evidence is strong enough. You never have to call
 > `advance()` by hand.
 
+> **The differentiator:** *you* define what "correct" means, and a
+> switch only graduates when the evidence clears a statistical gate
+> against your truth. That's [Bring your own truth
+> oracle](bring-your-own-truth-oracle.md) — the one page to read if
+> you read only one.
+
 ## What Postrule is
 
 A classification primitive — first shipped as a Python
