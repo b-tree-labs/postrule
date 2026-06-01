@@ -209,11 +209,14 @@ def introspect_signature(
                 if p.name not in annotations:
                     where = f"{class_name}.{fn.__name__}" if class_name is not None else fn.__name__
                     raise TypeError(
-                        f"{where!r} has parameter {p.name!r} with no "
-                        "annotation; multi-argument rules and evidence "
-                        "methods require type annotations on every "
-                        "parameter so the packed-input schema is fully "
-                        "typed (the LLM/ML head needs the schema)."
+                        f"{where!r} has parameter {p.name!r} with no type "
+                        "annotation. Multi-argument rules need a type on every "
+                        "parameter so Postrule can build the packed-input schema "
+                        "the LLM/ML head reads.\n"
+                        f"  Fix: annotate it, e.g. `def {fn.__name__}(..., "
+                        f"{p.name}: str): ...` (use the real type).\n"
+                        "  Single-argument rules don't need annotations — the "
+                        "lone arg is passed straight through."
                     )
 
     # Decide if we can use the fast single-arg passthrough path.

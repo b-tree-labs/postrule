@@ -217,6 +217,20 @@ class TestSwitchClassMultiArg:
                 class Meta:
                     no_action = ("a",)
 
+    def test_missing_annotation_error_is_actionable(self):
+        """#55 — the multi-arg annotation error shows a copy-paste fix, not
+        just the reason, so a new user isn't sent to read the source."""
+        with pytest.raises(TypeError) as exc:
+
+            @ml_switch(labels=["a", "b"])
+            def my_rule(subject, body: str) -> str:  # `subject` unannotated
+                return "a"
+
+        msg = str(exc.value)
+        assert "Fix:" in msg
+        assert "subject: str" in msg  # concrete annotate example for the bad param
+        assert "my_rule" in msg
+
     def test_missing_annotation_on_extra_arg_raises(self):
         """A multi-arg evidence method with no annotation on one of its
         non-self args is a clear error.
