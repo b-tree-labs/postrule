@@ -2645,7 +2645,38 @@ class LearnedSwitch:
                         p_value=getattr(decision, "p_value", None),
                     )
 
+            # Stale-ML quarantine (#60 PR2). A judge or strategy swap
+            # invalidates any ML head trained under the OLD signal — its
+            # accuracy was validated by a judge/strategy we no longer use.
+            # (A gate-only swap does NOT touch the head: the gate never
+            # trains it.) Quarantine = delete the persisted head state so the
+            # about-to-run background load can't restore stale weights, and
+            # clear the strategy-selected head so it re-selects + refits from
+            # the log on the next ML-phase serve. An explicitly-supplied head
+            # is left in place (the operator owns it) but its persisted state
+            # is dropped so it retrains rather than reloading stale weights.
+            if ("judge" in changed or "strategy" in changed) and self._head_is_present():
+                self._delete_state("head")
+                if self._head_strategy is not None:
+                    self._ml_head = None
+                self._append_ledger(
+                    "quarantine",
+                    sig_before=prev_sig,
+                    sig_after=cur,
+                    phase_before=self.phase().name,
+                    phase_after=self.phase().name,
+                    reason=f"ML head trained under prior signal invalidated by "
+                    f"{', '.join(c for c in changed if c in ('judge', 'strategy'))} swap",
+                )
+
             self._save_signature(signal_signature(self))
+
+    def _head_is_present(self) -> bool:
+        """A head exists to quarantine — either a live instance or a strategy
+        that would lazily select one (or persisted head state on disk)."""
+        if self._ml_head is not None or self._head_strategy is not None:
+            return True
+        return self._get_state("head") is not None
 
     def _ensure_ml_head(self, phase: Phase) -> None:
         """Ensure ``self._ml_head`` is set, consulting head_strategy if needed.

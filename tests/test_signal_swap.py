@@ -156,6 +156,77 @@ def _reopen(tmp_path, name, phase, *, gate, **cfg):
     )
 
 
+class _Judge:
+    def __init__(self, name):
+        self.source_name = name
+
+    def judge(self, _inp, _label):  # pragma: no cover — not exercised in reconcile
+        return None
+
+
+class _StubHead:
+    def fit(self, _recs):
+        pass
+
+    def predict(self, _inp, _labels):  # pragma: no cover
+        from postrule.ml import MLPrediction
+
+        return MLPrediction(label="a", confidence=0.9)
+
+    def model_version(self):
+        return "stub-1"
+
+    def state_bytes(self):
+        return b"S"
+
+    def load_state(self, _b):
+        pass
+
+
+class TestStaleMLQuarantine:
+    def _seed(self, tmp_path, name, judge, gate, n=60):
+        s = LearnedSwitch(
+            rule=lambda _x: "a",
+            name=name,
+            starting_phase=Phase.MODEL_PRIMARY,
+            gate=gate,
+            verifier=judge,
+            ml_head=_StubHead(),
+            storage=FileStorage(str(tmp_path)),
+            persist=True,
+        )
+        for i in range(n):  # target wins → phase stays justified (isolate quarantine from demote)
+            s._storage.append_record(name, _rec(rule_right=(i < n // 4), model_right=(i < n - 5)))
+        s._storage.put_state(name, "head", b"S")  # ensure a persisted head exists
+        return s
+
+    def _reopen(self, tmp_path, name, judge, gate):
+        return LearnedSwitch(
+            rule=lambda _x: "a",
+            name=name,
+            starting_phase=Phase.MODEL_PRIMARY,
+            gate=gate,
+            verifier=judge,
+            ml_head=_StubHead(),
+            storage=FileStorage(str(tmp_path)),
+            persist=True,
+        )
+
+    def test_judge_swap_quarantines_head(self, tmp_path) -> None:
+        g = McNemarGate(alpha=0.01, min_paired=20)
+        self._seed(tmp_path, "q1", _Judge("judge:a"), g)
+        s2 = self._reopen(tmp_path, "q1", _Judge("judge:b"), McNemarGate(alpha=0.01, min_paired=20))
+        assert s2._storage.get_state("q1", "head") is None  # stale weights dropped
+        assert "quarantine" in _events(s2)
+
+    def test_gate_only_swap_does_not_quarantine(self, tmp_path) -> None:
+        self._seed(tmp_path, "q2", _Judge("judge:a"), McNemarGate(alpha=0.01, min_paired=20))
+        s2 = self._reopen(tmp_path, "q2", _Judge("judge:a"), McNemarGate(alpha=0.05, min_paired=20))
+        # Gate-only swap: the head was not trained by the gate → keep it.
+        assert s2._storage.get_state("q2", "head") == b"S"
+        assert "quarantine" not in _events(s2)
+
+
 class TestReconcileCore:
     def test_fresh_switch_adopts_never_demotes(self, tmp_path) -> None:
         s = _build(
