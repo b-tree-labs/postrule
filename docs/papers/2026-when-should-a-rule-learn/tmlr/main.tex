@@ -1,0 +1,48 @@
+% When Should a Rule Learn? — TMLR submission (anonymous / under review).
+% Built from ../paper-draft.md via build_tmlr.py. Compile with LuaLaTeX
+% (handles the UTF-8 the paper uses: α, →, ×, ≥). See RESUBMISSION.md.
+
+\documentclass[10pt]{article}
+
+% Anonymous submission (default). For the two de-anonymized modes:
+%   camera-ready : \usepackage[accepted]{tmlr}
+%   preprint/arXiv: \usepackage[preprint]{tmlr}
+\usepackage{tmlr}
+
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{longtable,booktabs,array}
+
+% --- pandoc-fragment support macros (the latex writer assumes these) ---
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\pandocbounded}[1]{#1}
+\providecommand{\passthrough}[1]{#1}
+
+% --- anonymized system name -------------------------------------------------
+% Renders "our framework" for the double-blind submission. For camera-ready /
+% preprint, change ONE line to reveal the real name:
+%   \renewcommand{\sysname}{Postrule}
+\newcommand{\sysname}{our framework}
+
+\title{When Should a Rule Learn? Transition Curves for Safe Rule-to-ML Graduation}
+
+% In submission mode the tmlr style auto-anonymizes the byline to
+% "Under review as submission to TMLR"; this block is a placeholder and is
+% only shown in [accepted]/[preprint] modes (replace then).
+\author{\name Anonymous Author \email anon@example.org \\
+      \addr Anonymous Institution}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{abstract.tex}
+\end{abstract}
+
+\input{body.tex}
+
+\end{document}
