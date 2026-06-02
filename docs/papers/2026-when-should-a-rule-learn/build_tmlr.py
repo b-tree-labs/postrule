@@ -32,6 +32,10 @@ def anonymize(t: str) -> str:
         "Anonymous. (2026). When Should a Rule Learn? Under review.",
         t,
     )
+    # Awkward prose where the bare-name macro would read badly — rephrase in
+    # the markdown before the macro substitution runs.
+    t = t.replace(" (the Postrule library)", "")
+    t = t.replace("the Postrule library", "the reference implementation")
     return t
 
 
@@ -64,6 +68,10 @@ subprocess.run(
         "-t",
         "latex",
         "--shift-heading-level-by=-1",
+        # Plain verbatim code blocks (no skylighting Shaded/Highlighting env +
+        # token macros, which the fragment writer doesn't define). A journal
+        # paper doesn't need syntax coloring.
+        "--no-highlight",
         "-o",
         "tmlr/body.tex",
     ],
@@ -74,10 +82,34 @@ subprocess.run(
     check=True,
 )
 
-# Macro-ize the product name: anonymous now, one-line flip for camera-ready.
-b = pathlib.Path("tmlr/body.tex").read_text(encoding="utf-8")
-n = b.count("Postrule")
-b = b.replace("Postrule", r"\sysname{}")
-pathlib.Path("tmlr/body.tex").write_text(b, encoding="utf-8")
-print(f"body.tex: {len(b.splitlines())} lines, {n} Postrule→\\sysname")
-print("abstract.tex:", len(pathlib.Path("tmlr/abstract.tex").read_text().splitlines()), "lines")
+
+# Macro-ize the product name in BOTH body and abstract: anonymous now, one-line
+# flip for camera-ready. Capital "Postrule" (prose) → \sysname; lowercase
+# "postrule" (code identifiers / module paths / filenames) → \pkgname.
+def _macroize_names(text: str) -> tuple[str, int]:
+    count = text.count("Postrule") + text.count("postrule")
+    text = text.replace("Postrule", r"\sysname{}")
+    text = text.replace("postrule", r"\pkgname{}")
+    return text, count
+
+
+total = 0
+for fn in ("tmlr/body.tex", "tmlr/abstract.tex"):
+    t = pathlib.Path(fn).read_text(encoding="utf-8")
+    t, c = _macroize_names(t)
+    total += c
+    if fn.endswith("body.tex"):
+        # Source typo: "$G(\mathcal{D}) = $" has a space before the closing $,
+        # so pandoc emits literal escaped dollars, dropping \mathcal into text
+        # mode. Restore proper inline math.
+        t = t.replace(r"\$G(\mathcal{D}) = \$", r"\(G(\mathcal{D}) =\)")
+        # Figures: pandoc emits \includesvg for ![](*.svg) (needs inkscape).
+        # Use the committed PNG renders via \includegraphics — portable.
+        t = re.sub(
+            r"\\includesvg(?:\[[^]]*\])?\{(results/[^}]+)\.svg\}",
+            r"\\includegraphics[width=\\linewidth]{\1.png}",
+            t,
+        )
+    pathlib.Path(fn).write_text(t, encoding="utf-8")
+
+print(f"body+abstract: {total} Postrule/postrule → \\sysname / \\pkgname")

@@ -449,7 +449,7 @@ The paired McNemar test rejects ``\(A\) and \(B\) have equal accuracy''
 at significance level \(\alpha\) when the two-sided exact binomial
 \(p\)-value of \(\min(b, c)\) under the null
 \(\text{Binomial}(b + c, 0.5)\) is below \(\alpha\). The gate
-\$G(\mathcal{D}) = \$ \texttt{advance} iff \(b > c\) and \(p < \alpha\)
+\(G(\mathcal{D}) =\) \texttt{advance} iff \(b > c\) and \(p < \alpha\)
 and \(b + c \ge n_{\min}\).
 
 The minimum-pair condition \(n_{\min}\) (we use \(n_{\min} = 200\))
@@ -664,7 +664,7 @@ the lifecycle generalizes beyond text.
 \subsection{4.2 Rule construction}\label{rule-construction}
 
 The day-zero rule is automated and deliberately simple. For each
-dataset, \texttt{postrule.benchmarks.rules.build\_reference\_rule}
+dataset, \texttt{\pkgname{}.benchmarks.rules.build\_reference\_rule}
 constructs an \texttt{if/elif} cascade by:
 
 \begin{enumerate}
@@ -691,7 +691,7 @@ in §5.4.
 \subsection{4.3 ML head}\label{ml-head}
 
 The ML head for the §5.1 headline experiment is
-\texttt{postrule.ml.SklearnTextHead}: TF-IDF features with sublinear
+\texttt{\pkgname{}.ml.SklearnTextHead}: TF-IDF features with sublinear
 term-frequency, plus an L2-regularized logistic regression. Deliberately
 simple: a transformer would produce higher absolute accuracy but would
 conflate the \emph{transition-curve shape} (the contribution) with the
@@ -757,10 +757,10 @@ accuracy and against gate-statistic) for each benchmark.
 All code is at \texttt{{[}anonymized\ repository{]}} (Apache 2.0). All
 fixed seeds are documented in the benchmark JSONL output. The
 transition-curve dataset is released as
-\texttt{postrule-transition-curves-2026.jsonl} accompanying this paper.
+\texttt{\pkgname{}-transition-curves-2026.jsonl} accompanying this paper.
 The benchmark harness ships in
-\texttt{src/postrule/research.py::run\_benchmark\_experiment} and the
-McNemar computation in \texttt{src/postrule/gates.py::McNemarGate}.
+\texttt{src/\pkgname{}/research.py::run\_benchmark\_experiment} and the
+McNemar computation in \texttt{src/\pkgname{}/gates.py::McNemarGate}.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
@@ -1282,7 +1282,7 @@ The finding is structural: \textbf{there is no universally best MLHead
 for paired-correctness intent classification.} The right choice is a
 function of data shape (cardinality, samples-per-class density,
 class-balance skew). The reference implementation exposes this as a
-configurable strategy: \texttt{postrule.MLHeadStrategy} is a Protocol,
+configurable strategy: \texttt{\pkgname{}.MLHeadStrategy} is a Protocol,
 \texttt{CardinalityMLHeadStrategy} is the shipped default with
 thresholds informed by Table 7, and \texttt{head\_strategy=} plumbs into
 \texttt{LearnedSwitch} so the strategy is consulted lazily on first
@@ -1311,13 +1311,13 @@ The CIFAR-10 setup uses two pieces shipped in v1.0:
 \tightlist
 \item
   \textbf{Rule:}
-  \texttt{postrule.image\_rules.build\_color\_centroid\_rule} (companion
-  to \texttt{postrule.benchmarks.rules.build\_reference\_rule} for
+  \texttt{\pkgname{}.image\_rules.build\_color\_centroid\_rule} (companion
+  to \texttt{\pkgname{}.benchmarks.rules.build\_reference\_rule} for
   text). For each class in the seed window, computes the mean RGB
   triple; predicts an unseen image by L2-nearest centroid. Cheap,
   deterministic, no training; the image analog of a keyword rule.
 \item
-  \textbf{ML head:} \texttt{postrule.ml.ImagePixelLogRegHead}. Flattens
+  \textbf{ML head:} \texttt{\pkgname{}.ml.ImagePixelLogRegHead}. Flattens
   the 32×32×3 uint8 image to a 3072-dim float vector (normalized to
   {[}0, 1{]}), fits a multinomial logistic regression. sklearn-only, no
   torch dependency on the v1.0 install path.
@@ -1638,10 +1638,10 @@ We list the limitations that reviewers should weigh.
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \section{The \sysname{} Reference
-Implementation}\label{the-postrule-reference-implementation}
+Implementation}\label{the-\pkgname{}-reference-implementation}
 
 The reference implementation realizes the lifecycle as a Python library
-(\texttt{pip\ install\ postrule}). Python is the v1.0 reference because
+(\texttt{pip\ install\ \pkgname{}}). Python is the v1.0 reference because
 the empirical work in §5 is in Python, but the lifecycle, the Gate
 protocol, and the audit-chain format are language-agnostic by design.
 Client libraries for additional languages (TypeScript/JavaScript, Go,
@@ -1658,30 +1658,28 @@ migration through a single call site, so the same
 calls on day one and on day thirty? The simplest invocation is a
 decorator over the rule function:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ImportTok{from}\NormalTok{ postrule }\ImportTok{import}\NormalTok{ ml\_switch}
-\ImportTok{from}\NormalTok{ myapp.moderation }\ImportTok{import}\NormalTok{ publish, queue\_for\_review, block\_and\_notify}
+\begin{verbatim}
+from \pkgname{} import ml_switch
+from myapp.moderation import publish, queue_for_review, block_and_notify
 
-\CommentTok{\# Content moderation: each label is paired with a downstream system}
-\CommentTok{\# action whose miscost is immediate (target harm, censorship complaint,}
-\CommentTok{\# or a moderator drowned in spillover).}
-\AttributeTok{@ml\_switch}\NormalTok{(labels}\OperatorTok{=}\NormalTok{\{}
-    \StringTok{"publish"}\NormalTok{: publish,}
-    \StringTok{"review"}\NormalTok{:  queue\_for\_review,}
-    \StringTok{"block"}\NormalTok{:   block\_and\_notify,}
-\NormalTok{\})}
-\KeywordTok{def}\NormalTok{ classify\_content(post: }\BuiltInTok{dict}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \BuiltInTok{str}\NormalTok{:}
-\NormalTok{    text }\OperatorTok{=}\NormalTok{ (post.get(}\StringTok{"body"}\NormalTok{) }\KeywordTok{or} \StringTok{""}\NormalTok{).lower()}
-    \ControlFlowTok{if} \BuiltInTok{any}\NormalTok{(term }\KeywordTok{in}\NormalTok{ text }\ControlFlowTok{for}\NormalTok{ term }\KeywordTok{in}\NormalTok{ BANNED\_TERMS):}
-        \ControlFlowTok{return} \StringTok{"block"}
-    \ControlFlowTok{if}\NormalTok{ post.get(}\StringTok{"reporter\_count"}\NormalTok{, }\DecValTok{0}\NormalTok{) }\OperatorTok{\textgreater{}=} \DecValTok{3}\NormalTok{:}
-        \ControlFlowTok{return} \StringTok{"review"}
-    \ControlFlowTok{return} \StringTok{"publish"}
+# Content moderation: each label is paired with a downstream system
+# action whose miscost is immediate (target harm, censorship complaint,
+# or a moderator drowned in spillover).
+@ml_switch(labels={
+    "publish": publish,
+    "review":  queue_for_review,
+    "block":   block_and_notify,
+})
+def classify_content(post: dict) -> str:
+    text = (post.get("body") or "").lower()
+    if any(term in text for term in BANNED_TERMS):
+        return "block"
+    if post.get("reporter_count", 0) >= 3:
+        return "review"
+    return "publish"
 
-\NormalTok{classify\_content(post)  }\CommentTok{\# classifies AND fires the matching handler}
-\end{Highlighting}
-\end{Shaded}
+classify_content(post)  # classifies AND fires the matching handler
+\end{verbatim}
 
 Calling \texttt{classify\_content(post)} classifies the post and fires
 the matching handler in a single call: classification and routing are
@@ -1847,36 +1845,34 @@ autoresearch loop (an LLM agent proposing candidate rules, ML heads, and
 feature combinations against the live verdict log) is the workflow
 \texttt{CandidateHarness} is built for:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\ImportTok{from}\NormalTok{ postrule }\ImportTok{import}\NormalTok{ ml\_switch, CandidateHarness}
-\ImportTok{from}\NormalTok{ myapp.payments }\ImportTok{import}\NormalTok{ approve, decline, send\_to\_review}
-\ImportTok{from}\NormalTok{ myapp.fraud\_research }\ImportTok{import}\NormalTok{ propose\_candidate  }\CommentTok{\# agent{-}driven proposer}
+\begin{verbatim}
+from \pkgname{} import ml_switch, CandidateHarness
+from myapp.payments import approve, decline, send_to_review
+from myapp.fraud_research import propose_candidate  # agent-driven proposer
 
-\AttributeTok{@ml\_switch}\NormalTok{(labels}\OperatorTok{=}\NormalTok{\{}
-    \StringTok{"approve"}\NormalTok{: approve,}
-    \StringTok{"decline"}\NormalTok{: decline,}
-    \StringTok{"review"}\NormalTok{:  send\_to\_review,}
-\NormalTok{\})}
-\KeywordTok{def}\NormalTok{ screen\_payment(tx: }\BuiltInTok{dict}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \BuiltInTok{str}\NormalTok{:}
-    \ControlFlowTok{if}\NormalTok{ tx[}\StringTok{"amount"}\NormalTok{] }\OperatorTok{\textgreater{}} \DecValTok{10\_000} \KeywordTok{and}\NormalTok{ tx[}\StringTok{"country"}\NormalTok{] }\KeywordTok{not} \KeywordTok{in}\NormalTok{ ALLOWED:}
-        \ControlFlowTok{return} \StringTok{"review"}
-    \ControlFlowTok{if}\NormalTok{ tx[}\StringTok{"velocity\_24h"}\NormalTok{] }\OperatorTok{\textgreater{}} \DecValTok{10}\NormalTok{:}
-        \ControlFlowTok{return} \StringTok{"decline"}
-    \ControlFlowTok{return} \StringTok{"approve"}
+@ml_switch(labels={
+    "approve": approve,
+    "decline": decline,
+    "review":  send_to_review,
+})
+def screen_payment(tx: dict) -> str:
+    if tx["amount"] > 10_000 and tx["country"] not in ALLOWED:
+        return "review"
+    if tx["velocity_24h"] > 10:
+        return "decline"
+    return "approve"
 
-\CommentTok{\# An agent proposes new screeners on a cadence. Each candidate is shadow{-}}
-\CommentTok{\# evaluated against live traffic and promoted only if the paired{-}McNemar}
-\CommentTok{\# gate clears at alpha=0.01. Failed candidates never touch user{-}visible}
-\CommentTok{\# decisions; the incumbent screener stays in place.}
-\NormalTok{harness }\OperatorTok{=}\NormalTok{ CandidateHarness(}
-\NormalTok{    switch}\OperatorTok{=}\NormalTok{screen\_payment.switch,}
-\NormalTok{    propose}\OperatorTok{=}\NormalTok{propose\_candidate,}
-\NormalTok{    gate\_alpha}\OperatorTok{=}\FloatTok{0.01}\NormalTok{,}
-\NormalTok{)}
-\NormalTok{harness.run()  }\CommentTok{\# runs continuously in production}
-\end{Highlighting}
-\end{Shaded}
+# An agent proposes new screeners on a cadence. Each candidate is shadow-
+# evaluated against live traffic and promoted only if the paired-McNemar
+# gate clears at alpha=0.01. Failed candidates never touch user-visible
+# decisions; the incumbent screener stays in place.
+harness = CandidateHarness(
+    switch=screen_payment.switch,
+    propose=propose_candidate,
+    gate_alpha=0.01,
+)
+harness.run()  # runs continuously in production
+\end{verbatim}
 
 The economic surface is the point. Every candidate that the agent
 proposes is graded against the incumbent on the same paired-correctness
@@ -1896,7 +1892,7 @@ substrate underneath.
 \subsection{9.6 Licensing and
 governance}\label{licensing-and-governance}
 
-The client SDK (everything end-users \texttt{import\ postrule} reaches)
+The client SDK (everything end-users \texttt{import\ \pkgname{}} reaches)
 is Apache 2.0. The analyzer / research / ROI components
 (\texttt{analyzer.py}, \texttt{cli.py}, \texttt{research.py},
 \texttt{roi.py}) are BSL 1.1 with a Change Date of 2030-05-01 (Change
@@ -2171,7 +2167,7 @@ a research program.
 \end{itemize}
 
 \subsection{10.7 MLHead-strategy graduation as a recursive \sysname{}
-problem}\label{mlhead-strategy-graduation-as-a-recursive-postrule-problem}
+problem}\label{mlhead-strategy-graduation-as-a-recursive-\pkgname{}-problem}
 
 The §5.6 finding that the empirical winner depends on data shape
 generalizes recursively. A \texttt{CardinalityMLHeadStrategy} is
@@ -2396,8 +2392,8 @@ Arena. \emph{NeurIPS 2023}. arXiv:2306.05685.
 \section{Reference Rules}\label{reference-rules}
 
 The four reference rules are auto-generated by
-\texttt{postrule.benchmarks.rules.build\_reference\_rule(seed=100)}. The
-full source is at \texttt{src/postrule/benchmarks/rules.py}. We publish
+\texttt{\pkgname{}.benchmarks.rules.build\_reference\_rule(seed=100)}. The
+full source is at \texttt{src/\pkgname{}/benchmarks/rules.py}. We publish
 the generated rules per benchmark in
 \texttt{docs/papers/2026-when-should-a-rule-learn/rules/} for
 replication.
@@ -2422,19 +2418,19 @@ replication.
   released.
 \item
   ✓ Benchmark harness reproduces the result:
-  \texttt{postrule\ bench\ \{atis,banking77,clinc150,hwu64\}}.
+  \texttt{\pkgname{}\ bench\ \{atis,banking77,clinc150,hwu64\}}.
 \end{itemize}
 
 \section{Code listings}\label{code-listings}
 
 Key implementation references: -
-\texttt{src/postrule/core.py::LearnedSwitch}: six-phase lifecycle. -
-\texttt{src/postrule/gates.py::McNemarGate}: paired-McNemar gate. -
-\texttt{src/postrule/research.py::run\_benchmark\_experiment}: the
+\texttt{src/\pkgname{}/core.py::LearnedSwitch}: six-phase lifecycle. -
+\texttt{src/\pkgname{}/gates.py::McNemarGate}: paired-McNemar gate. -
+\texttt{src/\pkgname{}/research.py::run\_benchmark\_experiment}: the
 harness used in §4--§5. -
-\texttt{src/postrule/verdicts.py::JudgeSource}: LLM-as-judge with
+\texttt{src/\pkgname{}/verdicts.py::JudgeSource}: LLM-as-judge with
 same-model bias guardrail. -
-\texttt{src/postrule/autoresearch.py::CandidateHarness}: autoresearch
+\texttt{src/\pkgname{}/autoresearch.py::CandidateHarness}: autoresearch
 substrate.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}

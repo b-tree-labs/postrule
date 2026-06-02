@@ -15,25 +15,28 @@ two reasons. Both are fixed in this `tmlr/` package:
 - `results/*.png` — the 7 figures (vendored; figures switched from `\includesvg` → `\includegraphics` PNG for portability).
 - `build_tmlr.py` — regenerates `body.tex`/`abstract.tex` from the markdown.
 
-## How to compile (do this first — it is the verification step)
-I could **not** compile locally (no TeX install here), so the first compile on
-Overleaf is the verification gate.
+## Compile status — VERIFIED
+This package **compiles clean** (`exit 0`, **32 pages**, US-letter) — verified
+locally with **Tectonic**. `main.pdf` in this folder is that build (anonymized).
+The earlier "couldn't compile" caveat is resolved: Unicode, the longtable
+`\real`/column-width macros, the `\mathcal` math fix, figure paths (svg→png),
+and caption numbering were all fixed and re-compiled to zero errors.
 
-1. **Overleaf** → New Project → Upload Project → zip this `tmlr/` folder.
-2. **Menu → Compiler → LuaLaTeX.** *(Required: the paper uses UTF-8 — α, →, ×, ≥, β — which pdfLaTeX chokes on. LuaLaTeX handles it natively.)*
-3. Compile. Then verify the conversion artifacts below.
+To rebuild:
+- **Tectonic (what was used):** `cd tmlr && tectonic main.tex` → `main.pdf`. Single binary, fetches packages on first run.
+- **Overleaf (reviewer-equivalent):** upload this `tmlr/` folder, set **Compiler → LuaLaTeX** (handles the UTF-8 mapped via `newunicodechar`), compile.
+- To regenerate `body.tex`/`abstract.tex` from the markdown source: `python3 ../build_tmlr.py` (re-applies anonymization + fixes), then recompile.
 
-### Conversion artifacts to eyeball on first compile
-pandoc → LaTeX is faithful but a few things deserve a look (none are
-format/anonymization blockers; they're typesetting polish):
-- **Section numbering** — headings are auto-numbered by LaTeX (manual "1." prefixes were stripped). Confirm 1–11 + appendices read right; `\appendix` is injected before Appendix A.
-- **Wide tables** — 12 `longtable`s. If any overrun the margin, wrap with `\resizebox{\textwidth}{!}{…}` or `\small`.
-- **Figure sizing** — each is `\includegraphics[width=\linewidth]`; adjust per-figure if a panel is too large.
-- **Abstract** — lives in `\begin{abstract}` in `main.tex` (pulled from `abstract.tex`).
+Resolved during verification (no open items): section auto-numbering,
+12 `longtable`s shrunk with `\small` (no margin overruns), figure captions
+(manual "Figure N." kept, LaTeX's duplicate label suppressed), abstract in
+`\begin{abstract}`. Residual: ~36 cosmetic overfull boxes (normal; not a
+blocker).
 
 ## Anonymization checklist (done — verify before submit)
 - [x] Author name / affiliation / email — removed (placeholder byline; auto-anonymized by `\usepackage{tmlr}`).
-- [x] **Product name** → `\sysname` macro = "our framework". (22 occurrences in body.)
+- [x] **Product name (prose)** → `\sysname` macro = "our framework".
+- [x] **Package/code identifiers (lowercase `postrule`)** → `\pkgname` macro = "ourlib" (module paths, filenames, e.g. `ourlib.ml.SklearnTextHead`). 45 prose+code occurrences total across body + abstract; **compiled-PDF grep for `postrule`/`booth`/`b-tree`/`austin`/patent = 0.**
 - [x] Company name ("B-Tree Labs") → "[Anonymous Org]".
 - [x] GitHub URL → "[anonymized repository]" (2 spots).
 - [x] Patent provisional number → "[patent application details omitted for anonymous review]".
@@ -45,7 +48,7 @@ format/anonymization blockers; they're typesetting polish):
 
 ## De-anonymize for camera-ready / preprint (after acceptance)
 1. `main.tex`: `\usepackage{tmlr}` → `\usepackage[accepted]{tmlr}` (camera-ready) or `\usepackage[preprint]{tmlr}` (arXiv).
-2. `main.tex`: `\newcommand{\sysname}{our framework}` → `\renewcommand{\sysname}{Postrule}` (one line).
+2. `main.tex`: flip **two** macros — `\newcommand{\sysname}{our framework}` → `{Postrule}`, and `\newcommand{\pkgname}{ourlib}` → `{postrule}`.
 3. Restore the real `\author{…}` block, Acknowledgments, GitHub URL, patent note, self-citation.
 
 ## Resubmit on OpenReview
