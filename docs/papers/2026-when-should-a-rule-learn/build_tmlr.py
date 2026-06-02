@@ -1,3 +1,8 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: Apache-2.0
+#
+# Build the anonymized TMLR LaTeX package from paper-draft.md. See tmlr/RESUBMISSION.md.
+
 import pathlib
 import re
 import subprocess
