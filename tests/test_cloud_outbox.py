@@ -191,3 +191,13 @@ class TestPayloadEncoding:
         ob = Outbox(path=tmp_path / "ob.sqlite")
         with pytest.raises((TypeError, ValueError)):
             ob.enqueue({"junk": bad})
+
+
+class TestOldestPendingAt:
+    def test_none_when_empty_then_iso_after_enqueue(self, tmp_path: Path) -> None:
+        ob = Outbox(path=tmp_path / "ob.sqlite")
+        assert ob.oldest_pending_at() is None
+        ob.enqueue({"switch_name": "a", "request_id": "r1"})
+        ts = ob.oldest_pending_at()
+        assert isinstance(ts, str) and ts
+        ob.close()

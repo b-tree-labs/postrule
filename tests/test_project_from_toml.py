@@ -191,3 +191,31 @@ class TestDecoratorReadsPostruleToml:
             return "a"
 
         assert my_switch.project == "forced/value"
+
+
+# ---------------------------------------------------------------------------
+# #110 — switches_from_postrule_toml: per-switch project map for `postrule status`
+# ---------------------------------------------------------------------------
+class TestSwitchesFromPostruleToml:
+    def test_maps_each_declared_switch_to_resolved_project(self, tmp_path: Path) -> None:
+        from postrule.project import switches_from_postrule_toml
+
+        (tmp_path / "postrule.toml").write_text(
+            '[project]\norg = "acme"\nproject = "support-triage"\n\n'
+            '[switches.intent]\nproject = "support-triage"\n\n'
+            '[switches.file_intake]\nproject = "intake"\n',
+            encoding="utf-8",
+        )
+        assert switches_from_postrule_toml(start=tmp_path) == {
+            "intent": "acme/support-triage",
+            "file_intake": "acme/intake",
+        }
+
+    def test_absent_toml_or_switches_returns_empty(self, tmp_path: Path) -> None:
+        from postrule.project import switches_from_postrule_toml
+
+        assert switches_from_postrule_toml(start=tmp_path) == {}
+        (tmp_path / "postrule.toml").write_text(
+            '[project]\norg = "acme"\nproject = "p"\n', encoding="utf-8"
+        )
+        assert switches_from_postrule_toml(start=tmp_path) == {}

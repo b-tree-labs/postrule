@@ -48,6 +48,7 @@ __all__ = [
     "project_from_git_remote",
     "project_from_postrule_toml",
     "project_from_pyproject",
+    "switches_from_postrule_toml",
 ]
 
 
@@ -123,6 +124,34 @@ def project_from_postrule_toml(
     if isinstance(default_project, str) and default_project.strip():
         return f"{org}/{default_project.strip()}"
     return None
+
+
+def switches_from_postrule_toml(start: Path | None = None) -> dict[str, str]:
+    """Map each switch declared under ``[switches.<name>]`` in
+    ``postrule.toml`` to its resolved ``"<org>/<project>"``.
+
+    Powers the per-switch project view in ``postrule status`` (#110). Returns
+    an empty dict when there's no ``postrule.toml`` or no ``[switches]`` table.
+    Each entry is resolved through :func:`project_from_postrule_toml` so the
+    override-vs-default precedence is identical to what the SDK applies.
+    """
+    if start is None:
+        start = Path.cwd()
+    toml_path = start / "postrule.toml"
+    if not toml_path.is_file():
+        return {}
+    data = _load_toml(toml_path)
+    if not isinstance(data, dict):
+        return {}
+    switches_tbl = data.get("switches")
+    if not isinstance(switches_tbl, dict):
+        return {}
+    out: dict[str, str] = {}
+    for name in switches_tbl:
+        resolved = project_from_postrule_toml(start=start, switch_name=name)
+        if resolved:
+            out[str(name)] = resolved
+    return out
 
 
 # https://github.com/owner/repo(.git)?  ssh://git@host/owner/repo(.git)?
