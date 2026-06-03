@@ -42,8 +42,9 @@ Keys look like `prul_live_<32 chars>` (production) or `prul_test_<32 chars>`
   key into an agent prompt is an anti-pattern):
 
   ```
-  postrule.connect    # MCP tool — runs the device flow
-  postrule.status     # MCP tool — reports connection identity
+  postrule_connect_start     # MCP tool — begins the device flow
+  postrule_connect_complete  # MCP tool — polls until authorized, saves creds
+  postrule_status            # MCP tool — reports connection identity
   ```
 
 ## What never to do
