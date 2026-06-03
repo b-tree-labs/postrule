@@ -38,6 +38,10 @@ where you are:
   user keys, secrets managers, rotation/revocation, keyless agent
   connect, and the secret-scanning pattern. The answer for your
   security team.
+- **[MCP server](integrations/mcp.md)** — drive Postrule from a coding
+  agent (Claude Code, Cursor, …): install, one-line registration, the
+  tool list, the one-call instrument-codebase loop, and connecting a
+  cloud account from the chat.
 
 ## Deep dives
 
@@ -73,7 +77,8 @@ duct tape.
 
 → Start with [autoresearch.md](autoresearch.md), then
 [`examples/19_autoresearch_loop.py`](../examples/19_autoresearch_loop.py)
-for the end-to-end loop.
+for the end-to-end loop. To let a coding agent instrument a repo
+directly, wire up the [MCP server](integrations/mcp.md).
 
 ### Compliance / regulated industries
 

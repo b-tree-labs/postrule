@@ -36,6 +36,12 @@ Check the function:
 
 ### 2. Prefer the CLI for the wrap
 
+> **Running through an MCP client?** If Postrule's [MCP server](mcp.md) is
+> connected, use the `postrule_init` tool (or `postrule_instrument_codebase`
+> to do a whole repo in one call) instead of the shell commands below — same
+> AST surgery, structured JSON back, `dry_run=True` by default. The rest of
+> this skill applies unchanged.
+
 The library ships `postrule init`, which performs the AST surgery
 correctly without any risk of malformed decorator syntax:
 
