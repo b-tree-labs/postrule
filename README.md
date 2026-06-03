@@ -75,16 +75,13 @@ you get every dollar of consulting back.
 
 ## Why I built this
 
-Every system I've worked on with classification decisions in
-production — ML at Uber, research-software work in nuclear
-engineering at UT, and AI-using software at SoilMetrix —
-repeated the same pattern: rules accumulate, larger models
-earn their seat over the rule, but graduating decisions *off*
-a larger model onto something smaller and cheaper needed a
-formal evidence gate that nothing on the shelf provided. I
-wrote Postrule because I needed it on my own systems. The
-companion paper formalizes the gate (paired-McNemar at every
-transition); the eight-benchmark suite stress-tests it.
+Across very different production systems, classification decisions
+repeated the same pattern: rules accumulate, a larger model earns its
+seat over the rule — but graduating decisions *off* that model onto
+something smaller and cheaper needed a formal evidence gate nothing on
+the shelf provided. I built Postrule because I needed it on my own
+systems. The companion paper formalizes the gate (paired-McNemar at
+every transition); the eight-benchmark suite proves it holds.
 
 — Ben Booth
 
@@ -580,11 +577,11 @@ US provisional patent (application pending, filed 2026-04-21).
 
 ## Status
 
-**v1.1.0** — public release (2026-05-20). Skips 1.0.0
+**v1.1.x** — public release line (first shipped 2026-05-20). Skips 1.0.0
 deliberately to match the product posture (software smarter
 every month, not frozen at .0.0). PyPI
 [1.0.0rc1](https://pypi.org/project/postrule/1.0.0rc1/) was the
-pre-release; 1.1.0 supersedes it for the public ship.
+pre-release; the 1.1.x line supersedes it for the public ship.
 Six lifecycle phases ✓ Head-to-head evidence gates ✓
 Native async API ✓ VerdictSource family ✓
 CandidateHarness for autoresearch loops ✓

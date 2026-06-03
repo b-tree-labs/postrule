@@ -14,9 +14,9 @@ this public repo during double-blind review** — publicly tying this repo to
 the anonymous submission would deanonymize it. (Maintainers: the link lives
 in the private investor materials, not here.)
 
-The anonymized submission build is in [`tmlr/`](tmlr/) (see
-[`tmlr/RESUBMISSION.md`](tmlr/RESUBMISSION.md)); `paper.pdf` above is the
-**non-anonymized author copy** — do not link reviewers to it during review.
+The anonymized TMLR submission build is kept **private** (not in this public
+repo during double-blind review); `paper.pdf` above is the non-anonymized
+author copy.
 
 ## Citation
 
