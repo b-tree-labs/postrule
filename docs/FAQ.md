@@ -105,7 +105,7 @@ We mean it. Postrule is opinionated about being a primitive for
 production-grade classification — not a general-purpose
 dispatcher.
 
-## What can't I Dendrify?
+## What can't Postrule wrap?
 
 Some shapes of code look like classification but aren't, or have constraints that block lifting cleanly. The concrete list:
 
