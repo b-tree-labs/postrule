@@ -165,11 +165,18 @@ def load_tweet_emotion() -> BenchmarkDataset:
 # Topic / long-document
 # --------------------------------------------------------------------------
 def load_dbpedia14() -> BenchmarkDataset:
-    """DBpedia-14 (Zhang et al. 2015) — 14 ontology classes, long text."""
+    """DBpedia-14 (Zhang et al. 2015) — 14 ontology classes, long text.
+
+    The HF train split is sorted by class, so a capped training prefix
+    would see only one label. Shuffle deterministically so any prefix is
+    class-balanced (the rule builder shuffles its own seed window
+    separately).
+    """
     ds = _load("dbpedia_14")
     names = _maybe_names(ds["train"].features["label"])
     train = _rows_to_pairs(ds["train"], "content", "label", names)
     test = _rows_to_pairs(ds["test"], "content", "label", names)
+    Random(20260603).shuffle(train)
     return BenchmarkDataset(
         name="dbpedia14",
         train=train,
