@@ -31,8 +31,36 @@ from postrule.benchmarks.loaders import (
     load_snips,
     load_trec6,
 )
+from postrule.benchmarks.loaders_audio import load_esc50
+from postrule.benchmarks.loaders_ext import (
+    ALL_TEXT_EXT_LOADERS,
+    load_dbpedia14,
+    load_emotion,
+    load_imdb,
+    load_rotten_tomatoes,
+    load_sms_spam,
+    load_sst2,
+    load_tweet_emotion,
+    load_tweet_hate,
+    load_tweet_offensive,
+    load_twenty_newsgroups,
+    load_yahoo_answers,
+)
 
 __all__ = [
+    "ALL_TEXT_EXT_LOADERS",
+    "load_esc50",
+    "load_dbpedia14",
+    "load_emotion",
+    "load_imdb",
+    "load_rotten_tomatoes",
+    "load_sms_spam",
+    "load_sst2",
+    "load_tweet_emotion",
+    "load_tweet_hate",
+    "load_tweet_offensive",
+    "load_twenty_newsgroups",
+    "load_yahoo_answers",
     "BenchmarkDataset",
     "GraduationEvent",
     "Report",

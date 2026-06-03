@@ -1,0 +1,194 @@
+{
+  "alpha": 0.01,
+  "rows": [
+    {
+      "dataset": "esc50",
+      "n_labels": 50,
+      "rule_baseline": 0.068,
+      "ml_asymptote": 0.32,
+      "gap": 0.253,
+      "outcomes_to_graduate": 250,
+      "regime": "rule_floor"
+    },
+    {
+      "dataset": "atis",
+      "n_labels": 26,
+      "rule_baseline": 0.7,
+      "ml_asymptote": 0.887,
+      "gap": 0.187,
+      "outcomes_to_graduate": 250,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "banking77",
+      "n_labels": 77,
+      "rule_baseline": 0.013,
+      "ml_asymptote": 0.877,
+      "gap": 0.864,
+      "outcomes_to_graduate": 250,
+      "regime": "rule_floor"
+    },
+    {
+      "dataset": "cifar10",
+      "n_labels": 10,
+      "rule_baseline": 0.162,
+      "ml_asymptote": 0.282,
+      "gap": 0.12,
+      "outcomes_to_graduate": 250,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "clinc150",
+      "n_labels": 151,
+      "rule_baseline": 0.005,
+      "ml_asymptote": 0.819,
+      "gap": 0.813,
+      "outcomes_to_graduate": 250,
+      "regime": "rule_floor"
+    },
+    {
+      "dataset": "hwu64",
+      "n_labels": 64,
+      "rule_baseline": 0.018,
+      "ml_asymptote": 0.836,
+      "gap": 0.818,
+      "outcomes_to_graduate": 250,
+      "regime": "rule_floor"
+    },
+    {
+      "dataset": "trec6",
+      "n_labels": 6,
+      "rule_baseline": 0.43,
+      "ml_asymptote": 0.852,
+      "gap": 0.422,
+      "outcomes_to_graduate": 250,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "codelangs",
+      "n_labels": 12,
+      "rule_baseline": 0.878,
+      "ml_asymptote": 0.978,
+      "gap": 0.101,
+      "outcomes_to_graduate": 400,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "tweet_eval_emotion",
+      "n_labels": 4,
+      "rule_baseline": 0.391,
+      "ml_asymptote": 0.64,
+      "gap": 0.249,
+      "outcomes_to_graduate": 500,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "emotion",
+      "n_labels": 6,
+      "rule_baseline": 0.326,
+      "ml_asymptote": 0.862,
+      "gap": 0.536,
+      "outcomes_to_graduate": 1000,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "sst2",
+      "n_labels": 2,
+      "rule_baseline": 0.511,
+      "ml_asymptote": 0.825,
+      "gap": 0.313,
+      "outcomes_to_graduate": 1000,
+      "regime": "rule_floor"
+    },
+    {
+      "dataset": "tweet_eval_offensive",
+      "n_labels": 2,
+      "rule_baseline": 0.71,
+      "ml_asymptote": 0.801,
+      "gap": 0.091,
+      "outcomes_to_graduate": 1000,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "twenty_newsgroups",
+      "n_labels": 20,
+      "rule_baseline": 0.124,
+      "ml_asymptote": 0.674,
+      "gap": 0.55,
+      "outcomes_to_graduate": 1000,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "ag_news",
+      "n_labels": 4,
+      "rule_baseline": 0.259,
+      "ml_asymptote": 0.918,
+      "gap": 0.659,
+      "outcomes_to_graduate": 1000,
+      "regime": "rule_floor"
+    },
+    {
+      "dataset": "sms_spam",
+      "n_labels": 2,
+      "rule_baseline": 0.914,
+      "ml_asymptote": 0.971,
+      "gap": 0.057,
+      "outcomes_to_graduate": 2000,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "yahoo_answers",
+      "n_labels": 10,
+      "rule_baseline": 0.21,
+      "ml_asymptote": 0.538,
+      "gap": 0.328,
+      "outcomes_to_graduate": 2000,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "snips",
+      "n_labels": 7,
+      "rule_baseline": 0.143,
+      "ml_asymptote": 0.982,
+      "gap": 0.839,
+      "outcomes_to_graduate": 2000,
+      "regime": "rule_floor"
+    },
+    {
+      "dataset": "rotten_tomatoes",
+      "n_labels": 2,
+      "rule_baseline": 0.514,
+      "ml_asymptote": 0.783,
+      "gap": 0.269,
+      "outcomes_to_graduate": 6000,
+      "regime": "rule_floor"
+    },
+    {
+      "dataset": "imdb",
+      "n_labels": 2,
+      "rule_baseline": 0.571,
+      "ml_asymptote": 0.852,
+      "gap": 0.282,
+      "outcomes_to_graduate": 16000,
+      "regime": "rule_usable"
+    },
+    {
+      "dataset": "dbpedia14",
+      "n_labels": 14,
+      "rule_baseline": 0.535,
+      "ml_asymptote": 0.071,
+      "gap": -0.463,
+      "outcomes_to_graduate": null,
+      "regime": "rule_near_optimum"
+    },
+    {
+      "dataset": "tweet_eval_hate",
+      "n_labels": 2,
+      "rule_baseline": 0.545,
+      "ml_asymptote": 0.498,
+      "gap": -0.048,
+      "outcomes_to_graduate": null,
+      "regime": "rule_near_optimum"
+    }
+  ]
+}

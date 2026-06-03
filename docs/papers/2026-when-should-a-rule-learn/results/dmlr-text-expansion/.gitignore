@@ -1,0 +1,7 @@
+
+# DMLR expansion: large regenerable transition-curve dumps (kept locally, not tracked)
+imdb.jsonl
+yahoo_answers.jsonl
+dbpedia14.jsonl
+*.err
+_run.log
