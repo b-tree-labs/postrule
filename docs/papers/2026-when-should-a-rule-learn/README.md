@@ -8,8 +8,15 @@
 
 ## Status
 
-Submitted to TMLR (Transactions on Machine Learning Research) via
-OpenReview: <https://openreview.net/forum?id=POmunHPNWl>.
+**Under review at TMLR** (Transactions on Machine Learning Research),
+resubmitted June 2026. The OpenReview link is intentionally **withheld from
+this public repo during double-blind review** — publicly tying this repo to
+the anonymous submission would deanonymize it. (Maintainers: the link lives
+in the private investor materials, not here.)
+
+The anonymized submission build is in [`tmlr/`](tmlr/) (see
+[`tmlr/RESUBMISSION.md`](tmlr/RESUBMISSION.md)); `paper.pdf` above is the
+**non-anonymized author copy** — do not link reviewers to it during review.
 
 ## Citation
 
@@ -18,6 +25,6 @@ OpenReview: <https://openreview.net/forum?id=POmunHPNWl>.
   title  = {When Should a Rule Learn? Transition Curves for Safe Rule-to-ML Graduation},
   author = {Booth, Benjamin},
   year   = {2026},
-  note   = {Under review at TMLR. \url{https://openreview.net/forum?id=POmunHPNWl}}
+  note   = {Under review at TMLR (double-blind), 2026.}
 }
 ```
