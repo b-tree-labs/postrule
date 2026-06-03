@@ -101,8 +101,9 @@ bundled = [
 ]
 mcp = [
     # Model Context Protocol server for `postrule mcp` — exposes the CLI
-    # surface (analyze, init, refresh, doctor) as MCP tools so Claude
-    # Code and other MCP-aware agents can drive Postrule in-process.
+    # surface (analyze, init, instrument_codebase, refresh, doctor, status,
+    # connect) as MCP tools so Claude Code and other MCP-aware agents can
+    # drive Postrule in-process. See docs/integrations/mcp.md.
     "mcp>=1.0.0",
 ]
 dev = [

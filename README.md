@@ -590,7 +590,7 @@ Native `Switch` class authoring ✓ Multi-arg auto-packing ✓
 Drift detection (`postrule refresh` / `doctor`) ✓
 Prescriptive analyzer (Phase 5 hazard diagnostics) ✓
 Account system MVP + `postrule login` ✓
-MCP server (`postrule mcp`) ✓
+MCP server (`postrule mcp`) — analyze + instrument a repo from a coding agent ([docs](docs/integrations/mcp.md)) ✓
 VS Code extension (early v1.1) ✓
 1,433 tests passing.
 
