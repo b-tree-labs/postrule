@@ -72,6 +72,7 @@ jobs:
               brand/*)
                 return 0 ;;
               # ── Python files explicitly BSL'd (analyzer + cloud-side SDK) ──
+              src/postrule/agent.py|\
               src/postrule/analyzer.py|\
               src/postrule/auth.py|\
               src/postrule/benchmarks/harness.py|\
@@ -101,6 +102,7 @@ jobs:
               cloud/aggregator/run.py|\
               landing/wasm/postrule_analyzer.py|\
               scripts/sizing_study.py|\
+              tests/test_agent.py|\
               tests/test_analyze_diff.py|\
               tests/test_analyzer.py|\
               tests/test_auth.py|\
