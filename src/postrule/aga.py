@@ -103,14 +103,24 @@ def oracle_terminal(tiers: list[TierResult], *, epsilon: float = 0.02) -> Tier:
     return band[0].tier
 
 
-def crossover_outcomes(ml_curve: list[tuple[int, float]], model_acc: float) -> int | None:
-    """First training-outcome count where the ML curve overtakes the LLM line.
+def crossover_outcomes(
+    ml_curve: list[tuple[int, float]], model_acc: float, *, epsilon: float = 0.02
+) -> int | None:
+    """First training-outcome count where classical ML reaches a *consistent tie*
+    with the LLM line — i.e. is no longer meaningfully worse, within ``epsilon``.
 
-    Returns None if ML never reaches ``model_acc`` within the measured curve —
-    the signal that AGA should *not* advance into the ML phases (stay on MODEL).
+    ML does NOT have to *beat* the LLM to justify graduating to it: once ML ties
+    (statistical non-inferiority), AGA advances to the ML phase to shed the LLM's
+    perpetual per-call inference cost. So the bar is ``acc >= model_acc - epsilon``,
+    not ``acc >= model_acc``. Returns None if ML never ties within the measured
+    curve — the signal that AGA should stay on MODEL (the LLM is the terminal).
+
+    Note: ``epsilon`` here is a point-estimate stand-in for the proper criterion —
+    a sustained non-inferiority (TOST / equivalence) test on the paired stream,
+    the equivalence-direction analog of the paper's McNemar superiority gate.
     """
     for n, acc in sorted(ml_curve):
-        if acc >= model_acc:
+        if acc >= model_acc - epsilon:
             return n
     return None
 

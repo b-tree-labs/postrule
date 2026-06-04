@@ -437,6 +437,92 @@ class AccuracyMarginGate:
 
 
 # ---------------------------------------------------------------------------
+# CostToleranceGate — graduate to a cheaper-to-operate tier when "close enough"
+# ---------------------------------------------------------------------------
+
+
+class CostToleranceGate:
+    """Advance to the target tier when it is *non-inferior* — within ``margin``
+    below the current tier — rather than strictly better.
+
+    Motivation: the target of a graduation is usually far cheaper to *operate*
+    than the incumbent (a trained ML head or a rule costs ~nothing per call,
+    whereas an LLM bills every inference). So it is often economically correct
+    to switch as soon as the cheaper tier is *close enough* — giving up at most
+    ``margin`` accuracy to shed perpetual inference cost. This is the
+    equivalence/non-inferiority complement to :class:`McNemarGate` (which only
+    advances on a reliable *improvement*).
+
+    Advance condition: ``target_acc >= current_acc - margin`` (i.e.
+    ``delta >= -margin``) on at least ``min_paired`` paired correct-outcome
+    records. ``margin = 0`` recovers a tie-or-better rule.
+
+    Caveat: this is a point-estimate non-inferiority check. For a *consistent*
+    tie under sampling noise, wrap it in :class:`MinVolumeGate` and/or require
+    the condition to hold across several evaluations (a TOST-style sustained
+    non-inferiority test is the rigorous form).
+    """
+
+    def __init__(self, margin: float = 0.02, min_paired: int = DEFAULT_MIN_PAIRED) -> None:
+        if not 0.0 <= margin < 1.0:
+            raise ValueError(f"margin must be in [0, 1); got {margin}")
+        if min_paired <= 0:
+            raise ValueError(f"min_paired must be positive; got {min_paired}")
+        self._margin = margin
+        self._min_paired = min_paired
+
+    @property
+    def margin(self) -> float:
+        return self._margin
+
+    @property
+    def min_paired(self) -> int:
+        return self._min_paired
+
+    def evaluate(
+        self,
+        records: list[ClassificationRecord],
+        current_phase: Phase,
+        target_phase: Phase,
+        /,
+    ) -> GateDecision:
+        current_correct, target_correct = _paired_correctness(records, current_phase, target_phase)
+        n = len(current_correct)
+        if n < self._min_paired:
+            return GateDecision(
+                target_better=False,
+                rationale=(f"insufficient paired samples: {n} < {self._min_paired} required"),
+                paired_sample_size=n,
+            )
+        current_acc = sum(current_correct) / n
+        target_acc = sum(target_correct) / n
+        delta = target_acc - current_acc
+        if delta >= -self._margin:
+            return GateDecision(
+                target_better=True,
+                rationale=(
+                    f"accuracy delta {delta:+.1%} within non-inferiority margin "
+                    f"{self._margin:.1%} — {target_phase.name}={target_acc:.1%} is close "
+                    f"enough to {current_phase.name}={current_acc:.1%} to graduate to the "
+                    f"cheaper-to-operate tier ({n} paired samples)"
+                ),
+                paired_sample_size=n,
+                current_accuracy=current_acc,
+                target_accuracy=target_acc,
+            )
+        return GateDecision(
+            target_better=False,
+            rationale=(
+                f"accuracy delta {delta:+.1%} below non-inferiority margin "
+                f"-{self._margin:.1%} on {n} samples — target is meaningfully worse"
+            ),
+            paired_sample_size=n,
+            current_accuracy=current_acc,
+            target_accuracy=target_acc,
+        )
+
+
+# ---------------------------------------------------------------------------
 # MinVolumeGate — require N records before delegating
 # ---------------------------------------------------------------------------
 
@@ -571,6 +657,7 @@ __all__ = [
     "DEFAULT_MIN_PAIRED",
     "AccuracyMarginGate",
     "CompositeGate",
+    "CostToleranceGate",
     "Gate",
     "GateDecision",
     "ManualGate",
