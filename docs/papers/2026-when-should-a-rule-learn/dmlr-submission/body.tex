@@ -16,17 +16,16 @@ trained model as the eventual destination --- an assumption also baked
 into autonomy frameworks whose ceiling is a trained model. This paper
 tests that assumption directly rather than asserting a ladder.
 
-This paper questions that ladder with data. For a given classification
-stream, which tier \emph{should} serve it, and when? We treat it as a
-data-centric measurement problem: score all three tiers (rule, LLM,
-classical ML) on the same test set, on a shared axis of labeled-outcomes
-consumed, across 19 public text datasets spanning sentiment, intent,
-moderation, emotion, topic, and spam, plus preliminary image and audio.
-The answer is not ``always the trained model.'' It depends on
-measurable, early-observable properties of the stream --- chiefly label
-cardinality and how far the day-zero rule sits above chance --- and for
-a large fraction of streams the LLM is the correct \emph{terminal} tier,
-not a way-station.
+For a given classification stream, which tier \emph{should} serve it,
+and when? We treat it as a data-centric measurement problem: score all
+three tiers (rule, LLM, classical ML) on the same test set, on a shared
+axis of labeled-outcomes consumed, across 19 public text datasets
+spanning sentiment, intent, moderation, emotion, topic, and spam, plus
+preliminary image and audio. The answer is not ``always the trained
+model.'' It depends on measurable, early-observable properties of the
+stream --- chiefly label cardinality and how far the day-zero rule sits
+above chance --- and for a large fraction of streams the LLM is the
+correct \emph{terminal} tier, not a way-station.
 
 We turn this into an algorithm, Adaptive Graduated Autonomy (AGA), that
 chooses the terminal tier per stream under a multi-objective policy
@@ -65,6 +64,10 @@ negatives we report plainly rather than hide.
   \textbf{AGA} --- chooses the terminal tier and graduates under a
   non-inferiority gate; matches fixed-ladder accuracy at
   \textasciitilde44\% fewer labeled outcomes.
+\item
+  \textbf{A lifecycle-level safety guarantee} --- a composable
+  cumulative-Type-I bound over the whole graduation chain (not just one
+  transition), with the rule as a persistent accuracy floor.
 \item
   \textbf{Two honest negatives} --- a learned cross-site tier-predictor
   does not generalize at 21 datasets; spectrogram-vision fails on audio.
@@ -165,6 +168,40 @@ tweet\_offensive & 2 & 0.660 & 0.775 & 0.752 & 0.730 & ML \\
   drift, and re-escalates to the LLM when the data demands --- only the
   LLM \emph{dependency} shrinks.
 \end{itemize}
+
+\subsection{A lifecycle-level safety
+guarantee}\label{a-lifecycle-level-safety-guarantee}
+
+The per-transition gate gives the standard guarantee that advancing to a
+worse-than-current tier has probability ≤ α (the McNemar Type-I error
+--- \emph{not} novel; it is the test's definition applied to a promotion
+decision). The lifecycle-level statement is what distinguishes AGA from
+a single gated comparison.
+
+\textbf{Proposition (cumulative safety).} Consider a graduation
+trajectory of at most m gated transitions, each evaluated by a paired
+test at level α with non-inferiority margin ε. Then with probability at
+least 1 − mα, every advance is to a tier non-inferior (within ε) to the
+current one; consequently the deployed accuracy stays within ε of the
+best previously-certified tier, and because the rule is a persistent
+fallback (the floor), operating accuracy is bounded below by (rule
+accuracy − ε) throughout, regardless of m.
+
+\emph{Proof sketch.} Each gated advance to an inferior tier is a Type-I
+event with probability ≤ α; a union bound over ≤ m transitions bounds
+the probability of any such event by mα. Absent any Type-I event, each
+advance is within-ε non-inferior, so by induction deployed accuracy
+stays within ε of the best certified tier; the never-removed rule floor
+lower-bounds it. ∎
+
+\textbf{Remarks (honesty).} The union bound is loose, and independence
+across transitions is an idealization (tests reuse the accumulating
+stream); if many transitions are expected, α should be spent with a
+correction (e.g., α/m). The guarantee is on \emph{certified} accuracy
+under the test's assumptions, not a distribution-free promise. What it
+buys over a single McNemar test is a \emph{composable} safety statement
+for an autonomous multi-tier lifecycle --- the property a practitioner
+needs to let the system graduate unattended.
 
 \subsection{Measured latency + cost (the steady-state
 axes)}\label{measured-latency-cost-the-steady-state-axes}

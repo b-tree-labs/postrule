@@ -41,8 +41,8 @@ recently, prototyping with an LLM and distilling to a cheaper model to cut infer
 destination — an assumption also baked into autonomy frameworks whose ceiling is a trained model.
 This paper tests that assumption directly rather than asserting a ladder.
 
-This paper questions that ladder with data. For a given classification stream, which tier
-*should* serve it, and when? We treat it as a data-centric measurement problem: score all three
+For a given classification stream, which tier *should* serve it, and when? We treat it as a
+data-centric measurement problem: score all three
 tiers (rule, LLM, classical ML) on the same test set, on a shared axis of labeled-outcomes
 consumed, across 19 public text datasets spanning sentiment, intent, moderation, emotion, topic,
 and spam, plus preliminary image and audio. The answer is not "always the trained model." It
@@ -72,7 +72,9 @@ plainly rather than hide.
    and rule-over-chance predict which tier wins and how deep ML must train.
 3. **AGA** — chooses the terminal tier and graduates under a non-inferiority gate; matches
    fixed-ladder accuracy at ~44% fewer labeled outcomes.
-4. **Two honest negatives** — a learned cross-site tier-predictor does not generalize at 21
+4. **A lifecycle-level safety guarantee** — a composable cumulative-Type-I bound over the whole
+   graduation chain (not just one transition), with the rule as a persistent accuracy floor.
+5. **Two honest negatives** — a learned cross-site tier-predictor does not generalize at 21
    datasets; spectrogram-vision fails on audio. Plus a tunable non-inferiority ("close-enough")
    gate for cost-aware graduation.
 
@@ -134,10 +136,36 @@ beats the LLM's 0.78, so image actually favors ML; see §6.)
 - **The router is permanent**: it holds the rule floor, watches for drift, and re-escalates to the
   LLM when the data demands — only the LLM *dependency* shrinks.
 
-### 4.1 Measured latency + cost (the steady-state axes)
+### 4.1 A lifecycle-level safety guarantee
+
+The per-transition gate gives the standard guarantee that advancing to a worse-than-current tier
+has probability ≤ α (the McNemar Type-I error — *not* novel; it is the test's definition applied
+to a promotion decision). The lifecycle-level statement is what distinguishes AGA from a single
+gated comparison.
+
+**Proposition (cumulative safety).** Consider a graduation trajectory of at most m gated
+transitions, each evaluated by a paired test at level α with non-inferiority margin ε. Then with
+probability at least 1 − mα, every advance is to a tier non-inferior (within ε) to the current
+one; consequently the deployed accuracy stays within ε of the best previously-certified tier, and
+because the rule is a persistent fallback (the floor), operating accuracy is bounded below by
+(rule accuracy − ε) throughout, regardless of m.
+
+*Proof sketch.* Each gated advance to an inferior tier is a Type-I event with probability ≤ α; a
+union bound over ≤ m transitions bounds the probability of any such event by mα. Absent any
+Type-I event, each advance is within-ε non-inferior, so by induction deployed accuracy stays
+within ε of the best certified tier; the never-removed rule floor lower-bounds it. ∎
+
+**Remarks (honesty).** The union bound is loose, and independence across transitions is an
+idealization (tests reuse the accumulating stream); if many transitions are expected, α should be
+spent with a correction (e.g., α/m). The guarantee is on *certified* accuracy under the test's
+assumptions, not a distribution-free promise. What it buys over a single McNemar test is a
+*composable* safety statement for an autonomous multi-tier lifecycle — the property a practitioner
+needs to let the system graduate unattended.
+
+### 4.2 Measured latency + cost (the steady-state axes)
 Per-call latency (p50): rule 0.003 ms, classical-ML 0.1 ms, MiniLM-embed ML 6-23 ms, LLM 530-570 ms — the rule is ~200,000x faster than the LLM, classical ML ~5,000x. LLM per-call cost $0.0001-0.0006 (scales with label-prompt length); rule/ML ~$0. Under a real-time SLO (e.g. 50 ms) the LLM is structurally excluded, so latency *forces* graduation to on-device tiers (latency_profile.json).
 
-### 4.2 AGA vs the fixed ladder
+### 4.3 AGA vs the fixed ladder
 AGA matches accuracy at far lower labeled-outcome cost:
 
 ```
@@ -173,7 +201,7 @@ AGA keeps LLM as terminal (skips ML training): 10/21
 AGA picks rule/ML over not-better LLM (avoids perpetual cost): 6/21
 ```
 
-### 4.3 Honest negative: cross-site prediction does not yet generalize
+### 4.4 Honest negative: cross-site prediction does not yet generalize
 A gradient-boosted predictor of the best tier from early-observable characteristics scores
 **below the majority baseline** leave-one-dataset-out at 21 datasets, and its apparent skill
 swings with test-set noise (0.62→0.41 between n=200 and n=400 before significance-aware labeling).
