@@ -32,10 +32,14 @@ cascade or the gate (both prior art).
 Most production software is full of small classification decisions: route this ticket, tag this
 message, flag this content, pick this branch. Each is a function from an input to one of a fixed
 set of labels. Teams build these three ways — a hand-written rule, a call to a large language
-model, or a trained classical model — and the choice is usually made once, by intuition, and
-rarely revisited. The common mental model is a ladder: start with a rule, replace it with an LLM
-when the rule is too brittle, and "graduate" to a trained model once enough labeled outcomes
-accumulate, with the trained model as the assumed destination.
+model, or a trained classical model — and the choice is usually made once, per site, by intuition,
+and rarely revisited; there is no shared, evidence-based basis for it. Two progressions are
+well-documented in practice: replacing brittle rules with learned models (the rule-to-ML migration
+long noted as a source of technical debt; Sculley et al. 2015, Breck et al. 2017), and, more
+recently, prototyping with an LLM and distilling to a cheaper model to cut inference cost
+(FrugalGPT; LLM-as-teacher distillation). Both *implicitly* treat a trained model as the eventual
+destination — an assumption also baked into autonomy frameworks whose ceiling is a trained model.
+This paper tests that assumption directly rather than asserting a ladder.
 
 This paper questions that ladder with data. For a given classification stream, which tier
 *should* serve it, and when? We treat it as a data-centric measurement problem: score all three
