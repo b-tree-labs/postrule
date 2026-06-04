@@ -97,18 +97,30 @@ def wilson_halfwidth(acc: float, n: int, z: float = 1.96) -> float:
     return z * math.sqrt(max(acc * (1 - acc), 1e-9) / n) + z * z / (2 * n)
 
 
-def oracle_terminal(tiers: list[TierResult], *, epsilon: float = 0.02) -> Tier:
+def oracle_terminal(
+    tiers: list[TierResult], *, epsilon: float = 0.02, sample_n: int | None = None
+) -> Tier:
     """The cost-aware best terminal tier given *measured* accuracies.
 
-    Pick the highest-accuracy tier; then, among all tiers within ``epsilon`` of
+    Pick the highest-accuracy tier; then, among all tiers within the tie band of
     it, prefer the one cheapest to operate (lowest operating rank), breaking
-    remaining ties by higher accuracy then fewer labeled outcomes. This is the
-    composition rule: the LLM wins only when it is strictly (>epsilon) better.
+    remaining ties by higher accuracy then fewer labeled outcomes. The LLM wins
+    only when it is *significantly* better.
+
+    The tie band is ``max(epsilon, wilson_halfwidth(best_acc, sample_n))`` when
+    ``sample_n`` is given — so sub-noise accuracy differences collapse to a tie
+    (→ the cheaper tier), instead of letting test-set sampling noise flip the
+    label. This is what stabilizes the oracle (and the meta-policy trained on it)
+    across re-runs; without it, a 1-2 point noise wiggle silently changes the
+    "winner."
     """
     if not tiers:
         raise ValueError("no tiers to choose from")
     best_acc = max(t.accuracy for t in tiers)
-    band = [t for t in tiers if t.accuracy >= best_acc - epsilon]
+    band_eps = epsilon
+    if sample_n:
+        band_eps = max(epsilon, wilson_halfwidth(best_acc, sample_n))
+    band = [t for t in tiers if t.accuracy >= best_acc - band_eps]
     band.sort(key=lambda t: (_OPERATING_RANK[t.tier], -t.accuracy, t.labeled_outcomes))
     return band[0].tier
 

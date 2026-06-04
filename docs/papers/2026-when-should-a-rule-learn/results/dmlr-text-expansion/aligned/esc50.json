@@ -1,32 +1,32 @@
 {
   "dataset": "esc50",
   "n_labels": 50,
-  "common_test_n": 60,
-  "rule_acc": 0.0333,
+  "common_test_n": 120,
+  "rule_acc": 0.0583,
   "rule_outcomes": 100,
   "ml_curve": [
     {
       "outcomes": 100,
-      "acc": 0.0333
+      "acc": 0.125
     },
     {
       "outcomes": 250,
-      "acc": 0.05
+      "acc": 0.125
     },
     {
       "outcomes": 500,
-      "acc": 0.1167
+      "acc": 0.2333
     },
     {
       "outcomes": 1000,
-      "acc": 0.15
+      "acc": 0.2833
     },
     {
       "outcomes": 1600,
-      "acc": 0.1333
+      "acc": 0.2667
     }
   ],
-  "model_zeroshot": null,
-  "model_fewshot": null,
-  "fs_examples": null
+  "model_zeroshot": 0.0167,
+  "model_fewshot": 0.05,
+  "fs_examples": 8
 }
