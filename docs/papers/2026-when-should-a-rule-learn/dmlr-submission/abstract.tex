@@ -1,23 +1,29 @@
-Production classification sites begin as hand-written rules, are often
-replaced by a large language model (LLM) call, and may eventually
-graduate to a trained classical model. Existing practice treats this as
-a fixed linear ladder that always marches toward a trained model as the
-destination. We ask a data-centric question instead: \textbf{given a
-data stream's measurable characteristics, which composition of \{rule,
-LLM, trained ML\} is correct, and when?} Across 19 public text
-classification datasets --- scored apples-to-apples on a common test set
-with four decision-maker tiers (keyword rule, zero-shot LLM, few-shot
-LLM, classical ML over a training-budget curve) --- we find that two
-early-observable characteristics, \textbf{label cardinality} and
-\textbf{rule-accuracy-over-chance}, together with the accumulated
-labeled-outcome budget, predict the cost-optimal tier (0.62
-leave-one-dataset-out, vs 0.51 majority baseline). We turn this into
-\textbf{Adaptive Graduated Autonomy (AGA)}, an algorithm that selects
-the \emph{terminal} tier per stream and graduates between tiers under a
-statistical gate, rather than always advancing to the trained model.
-Against the fixed-ladder baseline, AGA delivers higher mean accuracy
-(0.836 vs 0.816) at 64\% fewer labeled outcomes (1,409 vs 3,934), and
-keeps the LLM as the terminal decision-maker on 12 of 19 streams ---
-precisely the streams where a trained model never reliably matches it. A
-tunable non-inferiority margin lets operators trade a bounded accuracy
-give-up for shedding the LLM's perpetual per-call cost.
+A production classification site can be served by a hand-written rule, a
+(neural-net) LLM call, or a trained classical model. Common practice
+treats the rule→LLM→ML progression as a fixed ladder whose destination
+is always the trained model. We ask a data-centric question instead:
+\textbf{given a stream's measurable characteristics, which of these
+tiers should serve it, and when?} On 19 public text datasets (plus
+preliminary image and audio), scored apples-to-apples on a common test
+set across four tiers (keyword rule, zero-shot LLM, few-shot LLM,
+classical-ML training curve), we find a clear, interpretable gradient:
+\textbf{label cardinality and rule-accuracy-over-chance predict which
+tier wins} --- high-cardinality streams favor the trained classical
+model, low-cardinality/binary streams favor the LLM. We operationalize
+this as \textbf{Adaptive Graduated Autonomy (AGA)}, which selects the
+\emph{terminal} tier per stream (often the LLM, not the trained model)
+under a \emph{multi-objective} policy --- modality feasibility and a
+latency SLO as hard constraints, accuracy within a significance band,
+operating cost minimized --- and graduates under a statistical
+non-inferiority gate. This paper measures the accuracy/cost axes;
+latency and modality are first-class in the algorithm. AGA matches the
+fixed-ladder baseline's accuracy while consuming
+\textbf{\textasciitilde44\% fewer labeled outcomes}, and keeps the LLM
+as terminal on roughly half of streams. We report two honest negatives
+that strengthen rather than weaken the picture: a \emph{learned
+cross-site predictor} of the best tier does \textbf{not} generalize at
+this fleet size (leave-one-dataset-out below the majority baseline) ---
+per-site measurement is required --- and a vision-LLM-on-spectrogram
+proxy fails on environmental audio. The contribution is the
+characterization and the cost-reducing adaptive algorithm, not the
+cascade or the gate (both prior art).

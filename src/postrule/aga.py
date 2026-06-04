@@ -64,11 +64,21 @@ _TERMINAL_PHASE = {
 
 @dataclass
 class TierResult:
-    """Measured accuracy + labeled-outcome cost for one tier on a stream."""
+    """Measured accuracy + the multi-objective axes for one tier on a stream.
+
+    Tier selection is multi-objective: accuracy (within a significance band),
+    latency (a hard SLO), modality feasibility (a hard filter), and operating
+    cost (the soft objective to minimize). ``labeled_outcomes`` is the one-time
+    label cost; ``per_call_ms``/``feasible`` carry the latency and modality axes.
+    Cost is the dimension this study measured; the others are first-class in the
+    policy and default to "unconstrained" so cost-only behavior is recovered.
+    """
 
     tier: Tier
     accuracy: float
-    labeled_outcomes: int  # x-position on the cost axis
+    labeled_outcomes: int  # one-time label cost (x-axis of the transition curve)
+    per_call_ms: float | None = None  # steady-state latency (None = unknown/unconstrained)
+    feasible: bool = True  # modality feasibility (e.g. spectrogram-vision can't read words)
 
 
 @dataclass
@@ -98,29 +108,45 @@ def wilson_halfwidth(acc: float, n: int, z: float = 1.96) -> float:
 
 
 def oracle_terminal(
-    tiers: list[TierResult], *, epsilon: float = 0.02, sample_n: int | None = None
+    tiers: list[TierResult],
+    *,
+    epsilon: float = 0.02,
+    sample_n: int | None = None,
+    latency_slo_ms: float | None = None,
 ) -> Tier:
-    """The cost-aware best terminal tier given *measured* accuracies.
+    """The multi-objective best terminal tier given *measured* tier results.
 
-    Pick the highest-accuracy tier; then, among all tiers within the tie band of
-    it, prefer the one cheapest to operate (lowest operating rank), breaking
-    remaining ties by higher accuracy then fewer labeled outcomes. The LLM wins
-    only when it is *significantly* better.
+    The decision is multi-objective, applied in priority order:
+      1. **Modality feasibility** (hard): drop ``feasible=False`` tiers.
+      2. **Latency SLO** (hard): if ``latency_slo_ms`` is set, drop tiers whose
+         ``per_call_ms`` exceeds it.
+      3. **Accuracy** (significance band): keep tiers within
+         ``max(epsilon, wilson_halfwidth(best_acc, sample_n))`` of the best
+         feasible accuracy, so sub-noise differences collapse to a tie (this is
+         what stabilizes the oracle/meta-policy across re-runs).
+      4. **Operating cost** (soft, minimized): among the band, prefer the cheapest
+         to operate (lowest operating rank), then higher accuracy, then fewer
+         labeled outcomes. The LLM wins only when it is *significantly* better.
 
-    The tie band is ``max(epsilon, wilson_halfwidth(best_acc, sample_n))`` when
-    ``sample_n`` is given — so sub-noise accuracy differences collapse to a tie
-    (→ the cheaper tier), instead of letting test-set sampling noise flip the
-    label. This is what stabilizes the oracle (and the meta-policy trained on it)
-    across re-runs; without it, a 1-2 point noise wiggle silently changes the
-    "winner."
+    Cost is the dimension this study measured; latency and modality are
+    first-class axes that default to unconstrained (recovering cost-only
+    selection). If every tier is infeasible/over-SLO the constraints are relaxed
+    to avoid an empty choice (a degraded-mode fallback the caller can detect).
     """
     if not tiers:
         raise ValueError("no tiers to choose from")
-    best_acc = max(t.accuracy for t in tiers)
+    candidates = [t for t in tiers if t.feasible]
+    if latency_slo_ms is not None:
+        candidates = [
+            t for t in candidates if t.per_call_ms is None or t.per_call_ms <= latency_slo_ms
+        ]
+    if not candidates:  # degraded mode: no tier meets the hard constraints
+        candidates = list(tiers)
+    best_acc = max(t.accuracy for t in candidates)
     band_eps = epsilon
     if sample_n:
         band_eps = max(epsilon, wilson_halfwidth(best_acc, sample_n))
-    band = [t for t in tiers if t.accuracy >= best_acc - band_eps]
+    band = [t for t in candidates if t.accuracy >= best_acc - band_eps]
     band.sort(key=lambda t: (_OPERATING_RANK[t.tier], -t.accuracy, t.labeled_outcomes))
     return band[0].tier
 
