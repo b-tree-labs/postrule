@@ -87,6 +87,16 @@ class StreamCharacteristics:
         return self.rule_baseline / chance
 
 
+def wilson_halfwidth(acc: float, n: int, z: float = 1.96) -> float:
+    """Approximate Wilson 95% CI half-width for a proportion — used to treat
+    sub-noise accuracy differences as ties rather than real wins."""
+    if n <= 0:
+        return 1.0
+    import math
+
+    return z * math.sqrt(max(acc * (1 - acc), 1e-9) / n) + z * z / (2 * n)
+
+
 def oracle_terminal(tiers: list[TierResult], *, epsilon: float = 0.02) -> Tier:
     """The cost-aware best terminal tier given *measured* accuracies.
 

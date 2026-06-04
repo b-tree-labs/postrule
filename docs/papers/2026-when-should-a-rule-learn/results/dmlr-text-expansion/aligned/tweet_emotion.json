@@ -1,32 +1,32 @@
 {
   "dataset": "tweet_emotion",
   "n_labels": 4,
-  "common_test_n": 200,
-  "rule_acc": 0.385,
+  "common_test_n": 400,
+  "rule_acc": 0.4025,
   "rule_outcomes": 100,
   "ml_curve": [
     {
       "outcomes": 100,
-      "acc": 0.415
+      "acc": 0.4025
     },
     {
       "outcomes": 250,
-      "acc": 0.525
+      "acc": 0.51
     },
     {
       "outcomes": 500,
-      "acc": 0.545
+      "acc": 0.5375
     },
     {
       "outcomes": 1000,
-      "acc": 0.585
+      "acc": 0.575
     },
     {
       "outcomes": 2000,
-      "acc": 0.62
+      "acc": 0.6125
     }
   ],
-  "model_zeroshot": 0.875,
-  "model_fewshot": 0.865,
+  "model_zeroshot": 0.8275,
+  "model_fewshot": 0.81,
   "fs_examples": 40
 }

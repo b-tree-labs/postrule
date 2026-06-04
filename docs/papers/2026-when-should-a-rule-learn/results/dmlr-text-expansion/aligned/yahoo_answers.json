@@ -1,40 +1,40 @@
 {
   "dataset": "yahoo_answers",
   "n_labels": 10,
-  "common_test_n": 200,
-  "rule_acc": 0.235,
+  "common_test_n": 400,
+  "rule_acc": 0.24,
   "rule_outcomes": 100,
   "ml_curve": [
     {
       "outcomes": 100,
-      "acc": 0.135
+      "acc": 0.1625
     },
     {
       "outcomes": 250,
-      "acc": 0.31
+      "acc": 0.32
     },
     {
       "outcomes": 500,
-      "acc": 0.37
+      "acc": 0.3725
     },
     {
       "outcomes": 1000,
-      "acc": 0.485
+      "acc": 0.4875
     },
     {
       "outcomes": 2000,
-      "acc": 0.55
+      "acc": 0.5525
     },
     {
       "outcomes": 5000,
-      "acc": 0.645
+      "acc": 0.635
     },
     {
       "outcomes": 10000,
-      "acc": 0.675
+      "acc": 0.67
     }
   ],
-  "model_zeroshot": 0.735,
-  "model_fewshot": 0.71,
+  "model_zeroshot": 0.74,
+  "model_fewshot": 0.72,
   "fs_examples": 40
 }

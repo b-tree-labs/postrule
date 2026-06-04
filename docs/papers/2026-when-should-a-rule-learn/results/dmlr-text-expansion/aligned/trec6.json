@@ -1,36 +1,36 @@
 {
   "dataset": "trec6",
   "n_labels": 6,
-  "common_test_n": 200,
-  "rule_acc": 0.395,
+  "common_test_n": 400,
+  "rule_acc": 0.42,
   "rule_outcomes": 100,
   "ml_curve": [
     {
       "outcomes": 100,
-      "acc": 0.525
+      "acc": 0.5425
     },
     {
       "outcomes": 250,
-      "acc": 0.655
+      "acc": 0.645
     },
     {
       "outcomes": 500,
-      "acc": 0.7
+      "acc": 0.6675
     },
     {
       "outcomes": 1000,
-      "acc": 0.74
+      "acc": 0.73
     },
     {
       "outcomes": 2000,
-      "acc": 0.795
+      "acc": 0.81
     },
     {
       "outcomes": 5000,
-      "acc": 0.85
+      "acc": 0.855
     }
   ],
-  "model_zeroshot": 0.765,
-  "model_fewshot": 0.88,
+  "model_zeroshot": 0.795,
+  "model_fewshot": 0.8875,
   "fs_examples": 36
 }

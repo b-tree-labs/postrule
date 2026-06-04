@@ -1,0 +1,32 @@
+{
+  "dataset": "esc50",
+  "n_labels": 50,
+  "common_test_n": 60,
+  "rule_acc": 0.0333,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.0333
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.05
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.1167
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.15
+    },
+    {
+      "outcomes": 1600,
+      "acc": 0.1333
+    }
+  ],
+  "model_zeroshot": null,
+  "model_fewshot": null,
+  "fs_examples": null
+}

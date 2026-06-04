@@ -1,29 +1,29 @@
 {
   "dataset": "sst2",
   "n_labels": 2,
-  "common_test_n": 200,
-  "rule_acc": 0.515,
+  "common_test_n": 400,
+  "rule_acc": 0.5125,
   "rule_outcomes": 100,
   "ml_curve": [
     {
       "outcomes": 100,
-      "acc": 0.565
+      "acc": 0.555
     },
     {
       "outcomes": 250,
-      "acc": 0.63
+      "acc": 0.6125
     },
     {
       "outcomes": 500,
-      "acc": 0.645
+      "acc": 0.625
     },
     {
       "outcomes": 1000,
-      "acc": 0.745
+      "acc": 0.715
     },
     {
       "outcomes": 2000,
-      "acc": 0.745
+      "acc": 0.715
     },
     {
       "outcomes": 5000,
@@ -31,10 +31,10 @@
     },
     {
       "outcomes": 10000,
-      "acc": 0.78
+      "acc": 0.76
     }
   ],
-  "model_zeroshot": 0.965,
-  "model_fewshot": 0.975,
+  "model_zeroshot": 0.9675,
+  "model_fewshot": 0.9775,
   "fs_examples": 40
 }
