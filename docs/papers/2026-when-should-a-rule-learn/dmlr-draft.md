@@ -93,7 +93,8 @@ plainly rather than hide.
 
 Sorted by label cardinality, the gradient is visible: high-cardinality → trained ML; binary/
 low-cardinality → LLM. (esc50 ML "wins" only because the spectrogram-vision proxy fails; cifar10's
-LLM "win" reflects a weak pixel-ML baseline — see §6.)
+LLM "win" is an artifact of the pixel-logreg baseline — a frozen-ViT baseline reaches 0.95 and
+beats the LLM's 0.78, so image actually favors ML; see §6.)
 
 | dataset | labels | rule | ML | MODEL-zs | MODEL-fs | best |
 |---|--:|--:|--:|--:|--:|---|
@@ -199,8 +200,12 @@ needed. We report these as preliminary evidence of modality-generality, not as h
   baseline** (banking77 0.87 > fine-tuned DistilBERT 0.80 at this budget), consistent with ML
   winning there. So the central finding is robust to baseline strength. Caveats: fine-tuning was
   light (untuned, 4k examples) — heavier tuning could narrow but not erase the sentiment gap;
-  frozen embeddings are not uniformly stronger (imdb MiniLM 0.78 < TF-IDF 0.85, truncation). Image
-  ML remains a weak pixel-logreg; a CNN/ViT baseline is needed before drawing image conclusions.
+  frozen embeddings are not uniformly stronger (imdb MiniLM 0.78 < TF-IDF 0.85, truncation).
+  **Image, resolved:** with a real baseline (frozen ViT embeddings + logreg) classical ML reaches
+  **0.95 on CIFAR-10, decisively beating the zero-shot vision LLM (0.78)** — so CIFAR's apparent
+  "LLM wins" was purely the pixel-logreg strawman; with a proper image model, ML wins, mirroring
+  the high-cardinality-text pattern. (The aligned table still lists the pixel-logreg tier; the ViT
+  result is the robustness check.)
 - Latency/cost are measured on a sample (latency_profile.json); LLM latency is network-bound and will vary.
 - **Single LLM (Claude Haiku), single prompt** — accuracies are prompt/model sensitive.
 - **Multimodal MODEL tier is a proxy** (spectrogram/frames); native audio/video models are future
