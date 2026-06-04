@@ -1,7 +1,36 @@
 \section{Introduction}\label{introduction}
 
-(Keep the ``every production codebase has classify functions''
-motivation; drop product language.)
+Most production software is full of small classification decisions:
+route this ticket, tag this message, flag this content, pick this
+branch. Each is a function from an input to one of a fixed set of
+labels. Teams build these three ways --- a hand-written rule, a call to
+a large language model, or a trained classical model --- and the choice
+is usually made once, by intuition, and rarely revisited. The common
+mental model is a ladder: start with a rule, replace it with an LLM when
+the rule is too brittle, and ``graduate'' to a trained model once enough
+labeled outcomes accumulate, with the trained model as the assumed
+destination.
+
+This paper questions that ladder with data. For a given classification
+stream, which tier \emph{should} serve it, and when? We treat it as a
+data-centric measurement problem: score all three tiers (rule, LLM,
+classical ML) on the same test set, on a shared axis of labeled-outcomes
+consumed, across 19 public text datasets spanning sentiment, intent,
+moderation, emotion, topic, and spam, plus preliminary image and audio.
+The answer is not ``always the trained model.'' It depends on
+measurable, early-observable properties of the stream --- chiefly label
+cardinality and how far the day-zero rule sits above chance --- and for
+a large fraction of streams the LLM is the correct \emph{terminal} tier,
+not a way-station.
+
+We turn this into an algorithm, Adaptive Graduated Autonomy (AGA), that
+chooses the terminal tier per stream under a multi-objective policy
+(modality feasibility and a latency SLO as hard constraints, accuracy
+within a statistical significance band, operating cost minimized) and
+graduates between tiers under a non-inferiority gate --- graduating to
+the cheaper tier as soon as it \emph{ties}, not only when it wins.
+Against the fixed ``always graduate to ML'' baseline, AGA matches
+accuracy while consuming far fewer labeled outcomes.
 
 What is \emph{not} claimed as novel: LLM cost-cascades (FrugalGPT) and
 learning-to-defer route between models already; paired-McNemar
@@ -9,7 +38,8 @@ classifier comparison is standard. What \emph{is} contributed: (1) a
 characterization of which dataset characteristics predict the
 cost-optimal tier, (2) an adaptive algorithm that exploits it to cut
 labeled-data cost at parity accuracy, and (3) honest evidence on where a
-learned cross-site policy does and does not work.
+learned cross-site policy does and does not work --- including two
+negatives we report plainly rather than hide.
 
 \subsection{Contributions}\label{contributions}
 
