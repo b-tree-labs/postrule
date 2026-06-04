@@ -1,0 +1,23 @@
+Production classification sites begin as hand-written rules, are often
+replaced by a large language model (LLM) call, and may eventually
+graduate to a trained classical model. Existing practice treats this as
+a fixed linear ladder that always marches toward a trained model as the
+destination. We ask a data-centric question instead: \textbf{given a
+data stream's measurable characteristics, which composition of \{rule,
+LLM, trained ML\} is correct, and when?} Across 19 public text
+classification datasets --- scored apples-to-apples on a common test set
+with four decision-maker tiers (keyword rule, zero-shot LLM, few-shot
+LLM, classical ML over a training-budget curve) --- we find that two
+early-observable characteristics, \textbf{label cardinality} and
+\textbf{rule-accuracy-over-chance}, together with the accumulated
+labeled-outcome budget, predict the cost-optimal tier (0.62
+leave-one-dataset-out, vs 0.51 majority baseline). We turn this into
+\textbf{Adaptive Graduated Autonomy (AGA)}, an algorithm that selects
+the \emph{terminal} tier per stream and graduates between tiers under a
+statistical gate, rather than always advancing to the trained model.
+Against the fixed-ladder baseline, AGA delivers higher mean accuracy
+(0.836 vs 0.816) at 64\% fewer labeled outcomes (1,409 vs 3,934), and
+keeps the LLM as the terminal decision-maker on 12 of 19 streams ---
+precisely the streams where a trained model never reliably matches it. A
+tunable non-inferiority margin lets operators trade a bounded accuracy
+give-up for shedding the LLM's perpetual per-call cost.
