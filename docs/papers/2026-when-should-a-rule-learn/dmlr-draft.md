@@ -63,7 +63,27 @@ algorithm and a learned, continually-refined policy that operationalize it.
 
 ## 3. The composition varies by stream (results)
 
-[Table: per-dataset rule / ML / model_zs / model_fs accuracies — from llm_tiers.json + aligned/.]
+| dataset | labels | rule | ML | LLM-zs | LLM-fs | winner |
+|---|--:|--:|--:|--:|--:|---|
+| clinc150 | 151 | 0.170 | 0.850 | 0.760 | 0.740 | ML |
+| banking77 | 77 | 0.245 | 0.875 | 0.810 | 0.810 | ML |
+| hwu64 | 64 | 0.210 | 0.795 | 0.845 | 0.845 | LLM-zs |
+| atis | 26 | 0.690 | 0.825 | 0.585 | 0.815 | ML |
+| twenty_newsgroups | 20 | 0.135 | 0.670 | 0.665 | 0.695 | LLM-fs |
+| dbpedia14 | 14 | 0.605 | 0.970 | 0.975 | 0.990 | LLM-fs |
+| codelangs | 12 | 0.892 | 0.986 | 1.000 | 1.000 | LLM-zs |
+| yahoo_answers | 10 | 0.235 | 0.675 | 0.735 | 0.710 | LLM-zs |
+| snips | 7 | 0.765 | 0.985 | 0.975 | 0.985 | ML |
+| emotion | 6 | 0.345 | 0.815 | 0.660 | 0.635 | ML |
+| trec6 | 6 | 0.395 | 0.850 | 0.765 | 0.880 | LLM-fs |
+| ag_news | 4 | 0.340 | 0.895 | 0.850 | 0.910 | LLM-fs |
+| tweet_emotion | 4 | 0.385 | 0.620 | 0.875 | 0.865 | LLM-zs |
+| imdb | 2 | 0.515 | 0.895 | 0.935 | 0.975 | LLM-fs |
+| rotten_tomatoes | 2 | 0.500 | 0.720 | 0.935 | 0.945 | LLM-fs |
+| sms_spam | 2 | 0.935 | 0.955 | 0.905 | 0.985 | LLM-fs |
+| sst2 | 2 | 0.515 | 0.780 | 0.965 | 0.975 | LLM-fs |
+| tweet_hate | 2 | 0.490 | 0.565 | 0.805 | 0.675 | LLM-zs |
+| tweet_offensive | 2 | 0.680 | 0.775 | 0.755 | 0.725 | ML |
 Key reading: classical ML wins on high-cardinality intent (banking77 0.875 vs LLM 0.81); the LLM
 wins decisively on low-cardinality sentiment/moderation (sst2 0.78→0.975, imdb 0.895→0.975); few-
 shot ≥ zero-shot almost everywhere.
@@ -80,7 +100,38 @@ shot ≥ zero-shot almost everywhere.
 
 ### 4.1 AGA vs the fixed ladder
 Mean accuracy 0.836 vs 0.816; mean labeled outcomes 1,409 vs 3,934 (−64%); LLM kept as terminal on
-12/19. [Table from evaluate_aga.py.]
+12/19.
+
+```
+dataset             oracle          AGA(LODO)        AGA_acc fixed_acc AGA_cost fix_cost
+------------------------------------------------------------------------------------------------
+ag_news             ml              ml                 0.895     0.895     5000     5000
+atis                ml              ml                 0.825     0.825     2000     2000
+banking77           ml              model_zeroshot     0.810     0.875        0     5000
+clinc150            ml              model_fewshot      0.740     0.850       40     5000
+codelangs           ml              model_fewshot      1.000     0.986       36      500
+dbpedia14           ml              ml                 0.970     0.970     2000     2000
+emotion             ml              model_zeroshot     0.660     0.815        0     5000
+hwu64               model_zeroshot  ml                 0.795     0.795     5000     5000
+imdb                model_fewshot   model_fewshot      0.975     0.895       40     5000
+rotten_tomatoes     model_fewshot   model_zeroshot     0.935     0.720        0     5000
+sms_spam            model_fewshot   ml                 0.955     0.955     2000     2000
+snips               ml              ml                 0.985     0.985      500      500
+sst2                model_fewshot   model_fewshot      0.975     0.780       40     5000
+trec6               model_fewshot   model_zeroshot     0.765     0.850        0     5000
+tweet_emotion       model_zeroshot  model_fewshot      0.865     0.620       40     2000
+tweet_hate          model_zeroshot  model_fewshot      0.675     0.565       40      250
+tweet_offensive     ml              model_fewshot      0.725     0.775       40      500
+twenty_newsgroups   model_fewshot   model_zeroshot     0.665     0.670        0    10000
+yahoo_answers       model_zeroshot  ml                 0.675     0.675    10000    10000
+------------------------------------------------------------------------------------------------
+
+LODO oracle-match: 6/19 = 0.32
+Mean accuracy — AGA 0.836 vs fixed-ladder(ML_PRIMARY) 0.816
+Mean labeled outcomes — AGA 1409 vs fixed-ladder 3934
+AGA keeps LLM as terminal (skips ML training): 12/19
+AGA picks rule/ML over not-better LLM (avoids perpetual cost): 4/19
+```
 
 ### 4.2 Meta-policy generalization
 Four-tier leave-one-dataset-out: 0.623 (vs 0.51 majority). Drivers: log label-cardinality (0.42),
