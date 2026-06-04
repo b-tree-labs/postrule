@@ -1,0 +1,65 @@
+{
+  "sst2": {
+    "strong_ml": 0.8025,
+    "weak_ml": 0.77,
+    "model_zeroshot": 0.9675,
+    "model_fewshot": 0.9775,
+    "n_labels": 2
+  },
+  "imdb": {
+    "strong_ml": 0.78,
+    "weak_ml": 0.8525,
+    "model_zeroshot": 0.9375,
+    "model_fewshot": 0.9575,
+    "n_labels": 2
+  },
+  "rotten_tomatoes": {
+    "strong_ml": 0.735,
+    "weak_ml": 0.7225,
+    "model_zeroshot": 0.93,
+    "model_fewshot": 0.94,
+    "n_labels": 2
+  },
+  "tweet_hate": {
+    "strong_ml": 0.53,
+    "weak_ml": 0.56,
+    "model_zeroshot": 0.77,
+    "model_fewshot": 0.64,
+    "n_labels": 2
+  },
+  "tweet_emotion": {
+    "strong_ml": 0.73,
+    "weak_ml": 0.6125,
+    "model_zeroshot": 0.8275,
+    "model_fewshot": 0.81,
+    "n_labels": 4
+  },
+  "emotion": {
+    "strong_ml": 0.67,
+    "weak_ml": 0.8175,
+    "model_zeroshot": 0.6325,
+    "model_fewshot": 0.6075,
+    "n_labels": 6
+  },
+  "ag_news": {
+    "strong_ml": 0.895,
+    "weak_ml": 0.895,
+    "model_zeroshot": 0.8525,
+    "model_fewshot": 0.8925,
+    "n_labels": 4
+  },
+  "banking77": {
+    "strong_ml": 0.885,
+    "weak_ml": 0.87,
+    "model_zeroshot": 0.7775,
+    "model_fewshot": 0.8075,
+    "n_labels": 77
+  },
+  "clinc150": {
+    "strong_ml": 0.865,
+    "weak_ml": 0.8375,
+    "model_zeroshot": 0.7475,
+    "model_fewshot": 0.725,
+    "n_labels": 151
+  }
+}
