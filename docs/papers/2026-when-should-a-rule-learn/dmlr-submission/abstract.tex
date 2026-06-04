@@ -15,15 +15,15 @@ this as \textbf{Adaptive Graduated Autonomy (AGA)}, which selects the
 under a \emph{multi-objective} policy --- modality feasibility and a
 latency SLO as hard constraints, accuracy within a significance band,
 operating cost minimized --- and graduates under a statistical
-non-inferiority gate. This paper measures the accuracy/cost axes;
-latency and modality are first-class in the algorithm. AGA matches the
-fixed-ladder baseline's accuracy while consuming
-\textbf{\textasciitilde44\% fewer labeled outcomes}, and keeps the LLM
-as terminal on roughly half of streams. We report two honest negatives
-that strengthen rather than weaken the picture: a \emph{learned
-cross-site predictor} of the best tier does \textbf{not} generalize at
-this fleet size (leave-one-dataset-out below the majority baseline) ---
-per-site measurement is required --- and a vision-LLM-on-spectrogram
-proxy fails on environmental audio. The contribution is the
-characterization and the cost-reducing adaptive algorithm, not the
-cascade or the gate (both prior art).
+non-inferiority gate. This paper measures the accuracy, cost, AND
+latency axes (modality feasibility is first-class but a hard filter, not
+a measured scalar). AGA matches the fixed-ladder baseline's accuracy
+while consuming \textbf{\textasciitilde44\% fewer labeled outcomes}, and
+keeps the LLM as terminal on roughly half of streams. We report two
+honest negatives that strengthen rather than weaken the picture: a
+\emph{learned cross-site predictor} of the best tier does \textbf{not}
+generalize at this fleet size (leave-one-dataset-out below the majority
+baseline) --- per-site measurement is required --- and a
+vision-LLM-on-spectrogram proxy fails on environmental audio. The
+contribution is the characterization and the cost-reducing adaptive
+algorithm, not the cascade or the gate (both prior art).

@@ -17,8 +17,8 @@ classical model, low-cardinality/binary streams favor the LLM. We operationalize
 **Adaptive Graduated Autonomy (AGA)**, which selects the *terminal* tier per stream (often the
 LLM, not the trained model) under a *multi-objective* policy — modality feasibility and a latency
 SLO as hard constraints, accuracy within a significance band, operating cost minimized — and
-graduates under a statistical non-inferiority gate. This paper measures the accuracy/cost axes;
-latency and modality are first-class in the algorithm. AGA matches
+graduates under a statistical non-inferiority gate. This paper measures the accuracy, cost, AND latency axes (modality
+feasibility is first-class but a hard filter, not a measured scalar). AGA matches
 the fixed-ladder baseline's accuracy while consuming **~44% fewer labeled outcomes**, and keeps
 the LLM as terminal on roughly half of streams. We report two honest negatives that strengthen
 rather than weaken the picture: a *learned cross-site predictor* of the best tier does **not**
@@ -106,7 +106,10 @@ LLM "win" reflects a weak pixel-ML baseline — see §6.)
 - **The router is permanent**: it holds the rule floor, watches for drift, and re-escalates to the
   LLM when the data demands — only the LLM *dependency* shrinks.
 
-### 4.1 AGA vs the fixed ladder
+### 4.1 Measured latency + cost (the steady-state axes)
+Per-call latency (p50): rule 0.003 ms, classical-ML 0.1 ms, MiniLM-embed ML 6-23 ms, LLM 530-570 ms — the rule is ~200,000x faster than the LLM, classical ML ~5,000x. LLM per-call cost $0.0001-0.0006 (scales with label-prompt length); rule/ML ~$0. Under a real-time SLO (e.g. 50 ms) the LLM is structurally excluded, so latency *forces* graduation to on-device tiers (latency_profile.json).
+
+### 4.2 AGA vs the fixed ladder
 AGA matches accuracy at far lower labeled-outcome cost:
 
 ```
@@ -142,7 +145,7 @@ AGA keeps LLM as terminal (skips ML training): 10/21
 AGA picks rule/ML over not-better LLM (avoids perpetual cost): 6/21
 ```
 
-### 4.2 Honest negative: cross-site prediction does not yet generalize
+### 4.3 Honest negative: cross-site prediction does not yet generalize
 A gradient-boosted predictor of the best tier from early-observable characteristics scores
 **below the majority baseline** leave-one-dataset-out at 21 datasets, and its apparent skill
 swings with test-set noise (0.62→0.41 between n=200 and n=400 before significance-aware labeling).
@@ -167,6 +170,7 @@ needed. We report these as preliminary evidence of modality-generality, not as h
   stronger (imdb 0.78 < TF-IDF 0.85 due to MiniLM truncating long reviews); a *fine-tuned*
   transformer ablation is the remaining future work. (Image ML remains a weak pixel-logreg; a
   CNN/ViT baseline is needed before drawing image conclusions.)
+- Latency/cost are measured on a sample (latency_profile.json); LLM latency is network-bound and will vary.
 - **Single LLM (Claude Haiku), single prompt** — accuracies are prompt/model sensitive.
 - **Multimodal MODEL tier is a proxy** (spectrogram/frames); native audio/video models are future
   work. Spectrogram-vision is shown to fail on environmental audio.
