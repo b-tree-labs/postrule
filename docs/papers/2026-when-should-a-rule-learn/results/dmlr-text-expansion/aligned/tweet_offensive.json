@@ -1,0 +1,40 @@
+{
+  "dataset": "tweet_offensive",
+  "n_labels": 2,
+  "common_test_n": 200,
+  "rule_acc": 0.68,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.715
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.71
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.745
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.745
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.76
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.76
+    },
+    {
+      "outcomes": 10000,
+      "acc": 0.775
+    }
+  ],
+  "model_zeroshot": 0.755,
+  "model_fewshot": 0.725,
+  "fs_examples": 40
+}

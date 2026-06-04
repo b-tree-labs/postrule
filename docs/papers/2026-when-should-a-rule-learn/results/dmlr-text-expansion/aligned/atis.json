@@ -1,0 +1,32 @@
+{
+  "dataset": "atis",
+  "n_labels": 26,
+  "common_test_n": 200,
+  "rule_acc": 0.69,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.685
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.72
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.745
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.78
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.825
+    }
+  ],
+  "model_zeroshot": 0.585,
+  "model_fewshot": 0.815,
+  "fs_examples": 22
+}

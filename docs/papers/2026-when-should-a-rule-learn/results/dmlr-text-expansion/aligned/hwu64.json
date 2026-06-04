@@ -1,0 +1,36 @@
+{
+  "dataset": "hwu64",
+  "n_labels": 64,
+  "common_test_n": 200,
+  "rule_acc": 0.21,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.14
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.31
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.495
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.675
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.725
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.795
+    }
+  ],
+  "model_zeroshot": 0.845,
+  "model_fewshot": 0.845,
+  "fs_examples": 40
+}

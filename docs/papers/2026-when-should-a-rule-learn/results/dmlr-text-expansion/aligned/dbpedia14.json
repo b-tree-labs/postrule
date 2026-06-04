@@ -1,0 +1,40 @@
+{
+  "dataset": "dbpedia14",
+  "n_labels": 14,
+  "common_test_n": 200,
+  "rule_acc": 0.605,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.475
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.735
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.84
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.945
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.955
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.95
+    },
+    {
+      "outcomes": 10000,
+      "acc": 0.97
+    }
+  ],
+  "model_zeroshot": 0.975,
+  "model_fewshot": 0.99,
+  "fs_examples": 28
+}

@@ -1,0 +1,36 @@
+{
+  "dataset": "rotten_tomatoes",
+  "n_labels": 2,
+  "common_test_n": 200,
+  "rule_acc": 0.5,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.58
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.605
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.675
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.69
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.665
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.72
+    }
+  ],
+  "model_zeroshot": 0.935,
+  "model_fewshot": 0.945,
+  "fs_examples": 40
+}

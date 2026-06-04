@@ -1,0 +1,40 @@
+{
+  "dataset": "emotion",
+  "n_labels": 6,
+  "common_test_n": 200,
+  "rule_acc": 0.345,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.33
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.38
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.43
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.53
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.63
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.735
+    },
+    {
+      "outcomes": 10000,
+      "acc": 0.815
+    }
+  ],
+  "model_zeroshot": 0.66,
+  "model_fewshot": 0.635,
+  "fs_examples": 36
+}

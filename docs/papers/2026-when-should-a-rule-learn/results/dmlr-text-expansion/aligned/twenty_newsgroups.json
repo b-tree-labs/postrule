@@ -1,0 +1,40 @@
+{
+  "dataset": "twenty_newsgroups",
+  "n_labels": 20,
+  "common_test_n": 200,
+  "rule_acc": 0.135,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.125
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.195
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.315
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.405
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.535
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.625
+    },
+    {
+      "outcomes": 10000,
+      "acc": 0.67
+    }
+  ],
+  "model_zeroshot": 0.665,
+  "model_fewshot": 0.695,
+  "fs_examples": 40
+}

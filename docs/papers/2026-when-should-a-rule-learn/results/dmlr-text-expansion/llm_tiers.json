@@ -1,0 +1,116 @@
+{
+  "banking77": {
+    "zero_shot": 0.81,
+    "few_shot": 0.81,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "clinc150": {
+    "zero_shot": 0.76,
+    "few_shot": 0.74,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "hwu64": {
+    "zero_shot": 0.845,
+    "few_shot": 0.845,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "atis": {
+    "zero_shot": 0.585,
+    "few_shot": 0.815,
+    "fs_examples": 22,
+    "common_test_n": 200
+  },
+  "snips": {
+    "zero_shot": 0.975,
+    "few_shot": 0.985,
+    "fs_examples": 35,
+    "common_test_n": 200
+  },
+  "trec6": {
+    "zero_shot": 0.765,
+    "few_shot": 0.88,
+    "fs_examples": 36,
+    "common_test_n": 200
+  },
+  "ag_news": {
+    "zero_shot": 0.85,
+    "few_shot": 0.91,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "codelangs": {
+    "zero_shot": 1.0,
+    "few_shot": 1.0,
+    "fs_examples": 36,
+    "common_test_n": 139
+  },
+  "sst2": {
+    "zero_shot": 0.965,
+    "few_shot": 0.975,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "imdb": {
+    "zero_shot": 0.935,
+    "few_shot": 0.975,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "rotten_tomatoes": {
+    "zero_shot": 0.935,
+    "few_shot": 0.945,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "tweet_offensive": {
+    "zero_shot": 0.755,
+    "few_shot": 0.725,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "tweet_hate": {
+    "zero_shot": 0.805,
+    "few_shot": 0.675,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "emotion": {
+    "zero_shot": 0.66,
+    "few_shot": 0.635,
+    "fs_examples": 36,
+    "common_test_n": 200
+  },
+  "tweet_emotion": {
+    "zero_shot": 0.875,
+    "few_shot": 0.865,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "dbpedia14": {
+    "zero_shot": 0.975,
+    "few_shot": 0.99,
+    "fs_examples": 28,
+    "common_test_n": 200
+  },
+  "yahoo_answers": {
+    "zero_shot": 0.735,
+    "few_shot": 0.71,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "twenty_newsgroups": {
+    "zero_shot": 0.665,
+    "few_shot": 0.695,
+    "fs_examples": 40,
+    "common_test_n": 200
+  },
+  "sms_spam": {
+    "zero_shot": 0.905,
+    "few_shot": 0.985,
+    "fs_examples": 40,
+    "common_test_n": 200
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "dataset": "clinc150",
+  "n_labels": 151,
+  "common_test_n": 200,
+  "rule_acc": 0.17,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.085
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.12
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.34
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.5
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.68
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.785
+    },
+    {
+      "outcomes": 10000,
+      "acc": 0.85
+    }
+  ],
+  "model_zeroshot": 0.76,
+  "model_fewshot": 0.74,
+  "fs_examples": 40
+}
