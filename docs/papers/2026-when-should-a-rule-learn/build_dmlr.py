@@ -1,23 +1,19 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 #
-# Build an anonymized DMLR LaTeX package from dmlr-draft.md.
-# Reuses the vendored TMLR style files as a stand-in (DMLR's style is JMLR-derived
-# and near-identical); swap in the official DMLR .sty before final submission.
+# Build the DMLR LaTeX package from dmlr-draft.md using the official dmlr2e style
+# (vendored in dmlr-submission/). DMLR is SINGLE-BLIND, so the package is NOT
+# anonymized: the real author and the repository are shown.
 
 import pathlib
 import re
-import shutil
 import subprocess
 
 HERE = pathlib.Path(__file__).resolve().parent
 SRC = HERE / "dmlr-draft.md"
 OUT = HERE / "dmlr-submission"
-STYLE = HERE.parent.parent / "internal" / "tmlr-submission" / "tmlr"
 
 OUT.mkdir(exist_ok=True)
-for fn in ("tmlr.sty", "tmlr.bst", "fancyhdr.sty", "math_commands.tex"):
-    shutil.copy(STYLE / fn, OUT / fn)
 
 raw = SRC.read_text(encoding="utf-8").split("\n")
 title = next(ln[2:].strip() for ln in raw if ln.startswith("# "))
@@ -34,14 +30,8 @@ body = text[text.index("## 1.") :]
 body = re.sub(r"^(#{2,3})\s+\d+(?:\.\d+)*\.?\s+", r"\1 ", body, flags=re.M)
 
 
-def anonymize(t: str) -> str:
-    t = t.replace("B-Tree Labs", "[Anonymous Org]")
-    t = t.replace("Benjamin Booth", "Anonymous Author")
-    t = re.sub(r"github\.com/[^\s)]+", "[anonymized repository]", t)
-    return t
-
-
-abs, body = anonymize(abs), anonymize(body)
+# DMLR is single-blind: no anonymization. Author identity and the repository
+# are shown (the previous TMLR-era anonymize() pass is intentionally removed).
 (OUT / "_abstract.md").write_text(abs, encoding="utf-8")
 (OUT / "_body.md").write_text(body, encoding="utf-8")
 
@@ -116,7 +106,7 @@ main = r"""\documentclass[twoside,11pt]{article}
 \author{\name Benjamin Booth \email ben@b-treeventures.com \\
        \addr B-Tree Labs}
 \editor{Under review for DMLR}
-\def\openreview{\url{https://openreview.net/forum?id=XXXXX}}
+\def\openreview{\textit{(forum link assigned upon submission)}}
 % {volume}{year}{pages}{date submitted}{date published}{paper id}{author-full-names}
 \dmlrheading{1}{2026}{1-\pageref{LastPage}}{}{}{00-0000}{Benjamin Booth}
 \ShortHeadings{When Should a Rule Learn?}{Booth}
