@@ -1,16 +1,16 @@
-# When Should a Rule Learn? Predicting the Rule, Neural-Net, and ML Composition for Classification Streams
+# When Should a Rule Learn? Predicting the Rule, LLM, and Trained-Model Composition for Classification Streams
 
 *Working draft for DMLR. Numbers from the aligned study (common test set, text n=400; image and audio preliminary). Anonymize before submission (system name behind a macro).*
 
 ## Abstract
 
-A production classification site can be served by a hand-written rule, a large language model (LLM) call, or a trained classical model. Common practice treats the rule-to-LLM-to-ML progression as a fixed ladder whose destination is the trained model. We ask a different question. Given a stream's measurable characteristics, which of these tiers should serve it, and when? We score four tiers (keyword rule, zero-shot LLM, few-shot LLM, and a classical-ML training curve) on a common test set across 19 public text datasets, with preliminary image and audio. Two early-observable properties, label cardinality and rule accuracy over chance, predict which tier wins: high-cardinality streams favor the trained classical model, while binary and low-cardinality streams favor the LLM. We operationalize this as Adaptive Graduated Autonomy (AGA), which selects the terminal tier per stream under a multi-objective policy (modality feasibility and a latency budget as hard constraints, accuracy within a significance band, operating cost minimized) and graduates between tiers using a statistical non-inferiority gate. The study measures the accuracy, cost, and latency axes; modality feasibility enters as a hard filter rather than a measured scalar. AGA matches the fixed-ladder baseline's accuracy while using about 44% fewer labeled outcomes, and it keeps the LLM as the terminal tier on roughly half of the streams. We report two negative results. A learned cross-site predictor of the best tier does not generalize at this number of datasets, so per-site measurement is required. And a vision-LLM-on-spectrogram proxy fails on environmental audio. The contribution is the characterization and the cost-reducing adaptive algorithm, not the cascade or the gate, which are prior art.
+A production classification site can be served by a hand-written rule, a large language model (LLM) call, or a task-trained model. Common practice treats the rule-to-LLM-to-ML progression as a fixed ladder whose destination is the trained model. We ask a different question. Given a stream's measurable characteristics, which of these tiers should serve it, and when? We score four tiers (keyword rule, zero-shot LLM, few-shot LLM, and a task-trained-model training curve) on a common test set across 19 public text datasets, with preliminary image and audio. Two early-observable properties, label cardinality and rule accuracy over chance, predict which tier wins: high-cardinality streams favor the task-trained model, while binary and low-cardinality streams favor the LLM. We operationalize this as Adaptive Graduated Autonomy (AGA), which selects the terminal tier per stream under a multi-objective policy (modality feasibility and a latency budget as hard constraints, accuracy within a significance band, operating cost minimized) and graduates between tiers using a statistical non-inferiority gate. The study measures the accuracy, cost, and latency axes; modality feasibility enters as a hard filter rather than a measured scalar. AGA matches the fixed-ladder baseline's accuracy while using about 44% fewer labeled outcomes, and it keeps the LLM as the terminal tier on roughly half of the streams. We report two negative results. A learned cross-site predictor of the best tier does not generalize at this number of datasets, so per-site measurement is required. And a vision-LLM-on-spectrogram proxy fails on environmental audio. The contribution is the characterization and the cost-reducing adaptive algorithm, not the cascade or the gate, which are prior art.
 
 ## 1. Introduction
 
-Most production software contains many small classification decisions: route this ticket, tag this message, flag this content, pick this branch. Each is a function from an input to one of a fixed set of labels. Teams build these three ways, with a hand-written rule, an LLM call, or a trained classical model. The choice is usually made once per site, by intuition, and rarely revisited; there is no shared, evidence-based basis for it. Two progressions are documented in practice. The first replaces brittle rules with learned models, a migration long noted as a source of technical debt (Sculley et al. 2015; Breck et al. 2017). The second prototypes with an LLM and distills to a cheaper model to cut inference cost (FrugalGPT; LLM-as-teacher distillation). Both implicitly treat a trained model as the destination, an assumption also built into autonomy frameworks whose ceiling is a trained model. We test that assumption with data rather than assert a ladder.
+Most production software contains many small classification decisions: route this ticket, tag this message, flag this content, pick this branch. Each is a function from an input to one of a fixed set of labels. Teams build these three ways, with a hand-written rule, an LLM call, or a task-trained model. The choice is usually made once per site, by intuition, and rarely revisited; there is no shared, evidence-based basis for it. Two progressions are documented in practice. The first replaces brittle rules with learned models, a migration long noted as a source of technical debt (Sculley et al. 2015; Breck et al. 2017). The second prototypes with an LLM and distills to a cheaper model to cut inference cost (FrugalGPT; LLM-as-teacher distillation). Both implicitly treat a trained model as the destination, an assumption also built into autonomy frameworks whose ceiling is a trained model. We test that assumption with data rather than assert a ladder.
 
-For a given classification stream, which tier should serve it, and when? We treat this as a measurement problem. We score all three tiers (rule, LLM, classical ML) on the same test set, on a shared axis of labeled outcomes consumed, across 19 text datasets spanning sentiment, intent, moderation, emotion, topic, and spam, with preliminary image and audio. The answer is not "always the trained model." It depends on measurable properties of the stream, chiefly label cardinality and how far the day-zero rule sits above chance. For a large fraction of streams the LLM is the right terminal tier, not a way-station.
+For a given classification stream, which tier should serve it, and when? We treat this as a measurement problem. We score all three tiers (rule, LLM, task-trained model) on the same test set, on a shared axis of labeled outcomes consumed, across 19 text datasets spanning sentiment, intent, moderation, emotion, topic, and spam, with preliminary image and audio. The answer is not "always the trained model." It depends on measurable properties of the stream, chiefly label cardinality and how far the day-zero rule sits above chance. For a large fraction of streams the LLM is the right terminal tier, not a way-station.
 
 We turn this into an algorithm, Adaptive Graduated Autonomy (AGA), that chooses the terminal tier per stream under a multi-objective policy (modality feasibility and a latency budget as hard constraints, accuracy within a significance band, operating cost minimized). It graduates between tiers using a non-inferiority gate, moving to the cheaper tier as soon as that tier ties, not only when it wins. Against the fixed "always graduate to ML" baseline, AGA matches accuracy while using far fewer labeled outcomes.
 
@@ -18,7 +18,7 @@ We do not claim the mechanism as novel. LLM cost-cascades (FrugalGPT) and learni
 
 ### 1.1 Contributions
 
-1. An aligned multi-tier benchmark. Rule, zero-shot LLM, few-shot LLM, and a classical-ML curve, all scored on one common test set per dataset, on a shared labeled-outcomes axis, across 19 text datasets and preliminary image and audio.
+1. An aligned multi-tier benchmark. Rule, zero-shot LLM, few-shot LLM, and a task-trained-model curve, all scored on one common test set per dataset, on a shared labeled-outcomes axis, across 19 text datasets and preliminary image and audio.
 2. A predictive characterization. Label cardinality (Spearman ρ ≈ −0.7 against outcomes-to-graduate) and rule-over-chance predict which tier wins and how deep ML must train.
 3. AGA, which chooses the terminal tier and graduates under a non-inferiority gate, matching fixed-ladder accuracy at about 44% fewer labeled outcomes.
 4. A lifecycle-level safety bound. A cumulative Type-I bound over the whole graduation chain, not just one transition, with the rule as a persistent accuracy floor.
@@ -26,7 +26,7 @@ We do not claim the mechanism as novel. LLM cost-cascades (FrugalGPT) and learni
 
 ## 2. Setup
 
-Tiers. RULE, then MODEL (the LLM, zero- and few-shot), then ML (a classical sklearn head). The LLM is the neural-net tier; ML is the trained classical tier.
+Tiers. RULE, then the LLM (a pretrained model used zero- and few-shot, consuming no task labels), then a task-trained model (a classifier fit to the site's labeled outcomes, for example a logistic-regression head or a fine-tuned transformer). What separates the last two is training provenance, a borrowed general model versus a model fit to this task, not architecture. For brevity the tables abbreviate the task-trained tier as ML and the two LLM settings as LLM-zs (zero-shot) and LLM-fs (few-shot).
 
 Datasets. 19 text datasets, plus CIFAR-10 (image) and ESC-50 (audio).
 
@@ -38,28 +38,28 @@ Two costs. We separate the one-time labeled-outcome cost (to train ML or seed th
 
 Sorted by label cardinality, a gradient appears: high cardinality favors trained ML, while binary and low-cardinality favor the LLM. Two rows are artifacts addressed in Section 6. ESC-50 ML "wins" only because the spectrogram-vision proxy fails, and CIFAR-10's LLM "win" reflects the pixel-logreg baseline; a frozen-ViT baseline reaches 0.95 and beats the LLM's 0.78, so image in fact favors ML.
 
-| dataset | labels | rule | ML | MODEL-zs | MODEL-fs | best |
+| dataset | labels | rule | ML | LLM-zs | LLM-fs | best |
 |---|--:|--:|--:|--:|--:|---|
 | clinc150 | 151 | 0.172 | 0.838 | 0.748 | 0.725 | ML |
 | banking77 | 77 | 0.225 | 0.870 | 0.777 | 0.807 | ML |
-| hwu64 | 64 | 0.247 | 0.805 | 0.850 | 0.865 | MODEL-fs |
+| hwu64 | 64 | 0.247 | 0.805 | 0.850 | 0.865 | LLM-fs |
 | esc50 | 50 | 0.058 | 0.283 | 0.017 | 0.050 | ML |
 | atis | 26 | 0.733 | 0.848 | 0.598 | 0.815 | ML |
-| twenty_newsgroups | 20 | 0.133 | 0.660 | 0.685 | 0.680 | MODEL-zs |
-| dbpedia14 | 14 | 0.632 | 0.968 | 0.968 | 0.978 | MODEL-fs |
-| codelangs | 12 | 0.892 | 0.986 | 1.000 | 1.000 | MODEL-zs |
-| cifar10 | 10 | 0.173 | 0.327 | 0.780 | 0.340 | MODEL-zs |
-| yahoo_answers | 10 | 0.240 | 0.670 | 0.740 | 0.720 | MODEL-zs |
+| twenty_newsgroups | 20 | 0.133 | 0.660 | 0.685 | 0.680 | LLM-zs |
+| dbpedia14 | 14 | 0.632 | 0.968 | 0.968 | 0.978 | LLM-fs |
+| codelangs | 12 | 0.892 | 0.986 | 1.000 | 1.000 | LLM-zs |
+| cifar10 | 10 | 0.173 | 0.327 | 0.780 | 0.340 | LLM-zs |
+| yahoo_answers | 10 | 0.240 | 0.670 | 0.740 | 0.720 | LLM-zs |
 | snips | 7 | 0.755 | 0.983 | 0.970 | 0.983 | ML |
 | emotion | 6 | 0.323 | 0.818 | 0.632 | 0.608 | ML |
-| trec6 | 6 | 0.420 | 0.855 | 0.795 | 0.887 | MODEL-fs |
+| trec6 | 6 | 0.420 | 0.855 | 0.795 | 0.887 | LLM-fs |
 | ag_news | 4 | 0.375 | 0.895 | 0.853 | 0.892 | ML |
-| tweet_emotion | 4 | 0.403 | 0.613 | 0.828 | 0.810 | MODEL-zs |
-| imdb | 2 | 0.532 | 0.853 | 0.938 | 0.958 | MODEL-fs |
-| rotten_tomatoes | 2 | 0.487 | 0.723 | 0.930 | 0.940 | MODEL-fs |
-| sms_spam | 2 | 0.920 | 0.945 | 0.887 | 0.988 | MODEL-fs |
-| sst2 | 2 | 0.512 | 0.770 | 0.968 | 0.978 | MODEL-fs |
-| tweet_hate | 2 | 0.497 | 0.560 | 0.770 | 0.640 | MODEL-zs |
+| tweet_emotion | 4 | 0.403 | 0.613 | 0.828 | 0.810 | LLM-zs |
+| imdb | 2 | 0.532 | 0.853 | 0.938 | 0.958 | LLM-fs |
+| rotten_tomatoes | 2 | 0.487 | 0.723 | 0.930 | 0.940 | LLM-fs |
+| sms_spam | 2 | 0.920 | 0.945 | 0.887 | 0.988 | LLM-fs |
+| sst2 | 2 | 0.512 | 0.770 | 0.968 | 0.978 | LLM-fs |
+| tweet_hate | 2 | 0.497 | 0.560 | 0.770 | 0.640 | LLM-zs |
 | tweet_offensive | 2 | 0.660 | 0.775 | 0.752 | 0.730 | ML |
 
 ## 4. Adaptive Graduated Autonomy
@@ -80,11 +80,12 @@ Remarks. The union bound is loose, and independence across transitions is an ide
 
 ### 4.2 Measured latency and cost
 
-Per-call latency (p50): rule 0.003 ms, classical ML 0.1 ms, MiniLM-embedding ML 6 to 23 ms, LLM 530 to 570 ms. The rule is roughly 200,000 times faster than the LLM, and classical ML about 5,000 times. LLM per-call cost is $0.0001 to $0.0006 and scales with the length of the label prompt; rule and ML are near zero. Under a real-time budget (for example 50 ms) the LLM is excluded by construction, so latency forces graduation to local tiers. See latency_profile.json.
+Per-call latency (p50): rule 0.003 ms, task-trained model 0.1 ms, MiniLM-embedding ML 6 to 23 ms, LLM 530 to 570 ms. The rule is roughly 200,000 times faster than the LLM, and task-trained model about 5,000 times. LLM per-call cost is $0.0001 to $0.0006 and scales with the length of the label prompt; rule and ML are near zero. Under a real-time budget (for example 50 ms) the LLM is excluded by construction, so latency forces graduation to local tiers. See latency_profile.json.
 
 ### 4.3 AGA versus the fixed ladder
 
-AGA matches accuracy at much lower labeled-outcome cost.
+AGA matches accuracy at much lower labeled-outcome cost. In the raw output below, model_zeroshot and
+model_fewshot denote the LLM tier (zero- and few-shot) and ml denotes the task-trained tier.
 
 ```
 dataset             oracle          AGA(LODO)        AGA_acc fixed_acc AGA_cost fix_cost
@@ -125,13 +126,13 @@ A gradient-boosted predictor of the best tier, trained on the early-observable c
 
 ## 5. Preliminary results on image and audio
 
-The gate is modality-agnostic, since it consumes (decision, outcome) pairs; only the LLM input path is modality-specific. The rule and ML tiers transfer to CIFAR-10 and ESC-50. The MODEL tier is preliminary. Claude vision on CIFAR images reaches 0.78 zero-shot, though the pixel-logreg ML used in the aligned table is a weak baseline (see Section 6). A spectrogram-to-vision proxy for ESC-50 fails, scoring 0.017, below chance, so a native-audio model is needed. We treat these as preliminary evidence that the lifecycle generalizes across modalities, not as headline results.
+The gate is modality-agnostic, since it consumes (decision, outcome) pairs; only the LLM input path is modality-specific. The rule and ML tiers transfer to CIFAR-10 and ESC-50. The LLM tier is preliminary. Claude vision on CIFAR images reaches 0.78 zero-shot, though the pixel-logreg ML used in the aligned table is a weak baseline (see Section 6). A spectrogram-to-vision proxy for ESC-50 fails, scoring 0.017, below chance, so a native-audio model is needed. We treat these as preliminary evidence that the lifecycle generalizes across modalities, not as headline results.
 
 ## 6. Limitations
 
-The classical-ML tier is the cheap day-N head (TF-IDF, pixels, or MFCC features with logistic regression). To check whether the "LLM wins" results are an artifact of a weak baseline, we ran two stronger baselines. Frozen sentence-transformer embeddings (all-MiniLM-L6-v2) with logistic regression still lose to the LLM on short-text sentiment and moderation (sst2 0.80 vs 0.98; rotten_tomatoes 0.74 vs 0.94; tweet_hate 0.53 vs 0.77). A fine-tuned DistilBERT (4k examples, 3 epochs) narrows the gap but does not close it (sst2 0.89 vs 0.98; imdb 0.87 vs 0.96, about 9 points). On high-cardinality intent, a tuned TF-IDF and logistic regression remained the strongest classical baseline (banking77 0.87, above fine-tuned DistilBERT's 0.80 at this budget), consistent with ML winning there. The central finding therefore holds across baseline strength. Two caveats apply: the fine-tune was light and untuned, so heavier tuning could narrow but is unlikely to erase the sentiment gap, and frozen embeddings are not uniformly stronger (imdb MiniLM 0.78 is below TF-IDF's 0.85 because of truncation). For image, a real baseline resolves the ambiguity: frozen ViT embeddings with logistic regression reach 0.95 on CIFAR-10, above the zero-shot vision LLM's 0.78, so CIFAR's apparent "LLM win" was the pixel-logreg strawman and image favors ML, as high-cardinality text does. The aligned table still lists the pixel-logreg tier; the ViT number is the robustness check.
+The task-trained tier defaults to the cheap day-N head (TF-IDF, pixels, or MFCC features with logistic regression). To check whether the "LLM wins" results are an artifact of a weak baseline, we ran two stronger baselines. Frozen sentence-transformer embeddings (all-MiniLM-L6-v2) with logistic regression still lose to the LLM on short-text sentiment and moderation (sst2 0.80 vs 0.98; rotten_tomatoes 0.74 vs 0.94; tweet_hate 0.53 vs 0.77). A fine-tuned DistilBERT (4k examples, 3 epochs) narrows the gap but does not close it (sst2 0.89 vs 0.98; imdb 0.87 vs 0.96, about 9 points). On high-cardinality intent, a tuned TF-IDF and logistic regression remained the strongest classical baseline (banking77 0.87, above fine-tuned DistilBERT's 0.80 at this budget), consistent with ML winning there. The central finding therefore holds across baseline strength. Two caveats apply: the fine-tune was light and untuned, so heavier tuning could narrow but is unlikely to erase the sentiment gap, and frozen embeddings are not uniformly stronger (imdb MiniLM 0.78 is below TF-IDF's 0.85 because of truncation). For image, a real baseline resolves the ambiguity: frozen ViT embeddings with logistic regression reach 0.95 on CIFAR-10, above the zero-shot vision LLM's 0.78, so CIFAR's apparent "LLM win" was the pixel-logreg strawman and image favors ML, as high-cardinality text does. The aligned table still lists the pixel-logreg tier; the ViT number is the robustness check.
 
-Other limitations. Latency and cost are measured on a sample (latency_profile.json), and LLM latency is network-bound and will vary. We use a single LLM (Claude Haiku) and a single prompt, so accuracies are sensitive to prompt and model. The multimodal MODEL tier is a proxy (spectrogram or sampled frames); native audio and video models are future work, and spectrogram-vision is shown to fail on environmental audio. The cross-site predictor does not generalize at this number of datasets (Section 4.4). With n=400 test subsets the accuracy confidence intervals are about ±0.04, and we use significance-aware tie bands accordingly.
+Other limitations. Latency and cost are measured on a sample (latency_profile.json), and LLM latency is network-bound and will vary. We use a single LLM (Claude Haiku) and a single prompt, so accuracies are sensitive to prompt and model. The multimodal LLM tier is a proxy (spectrogram or sampled frames); native audio and video models are future work, and spectrogram-vision is shown to fail on environmental audio. The cross-site predictor does not generalize at this number of datasets (Section 4.4). With n=400 test subsets the accuracy confidence intervals are about ±0.04, and we use significance-aware tie bands accordingly.
 
 ## 7. Related work
 
