@@ -113,7 +113,7 @@ main = r"""\documentclass[twoside,11pt]{article}
 \title{TITLE}
 % DMLR is single-blind. Author block uses real identity (B-Tree Labs affiliation,
 % kept separate from UT to preserve clean B-Tree IP ownership of Postrule).
-\author{\name Benjamin Booth \email benjamin.booth@gmail.com \\
+\author{\name Benjamin Booth \email ben@b-treeventures.com \\
        \addr B-Tree Labs}
 \editor{Under review for DMLR}
 \def\openreview{\url{https://openreview.net/forum?id=XXXXX}}
