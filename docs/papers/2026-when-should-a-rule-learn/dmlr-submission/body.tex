@@ -100,7 +100,7 @@ stream}\label{the-composition-varies-by-stream}
 
 Sorted by label cardinality, a gradient appears: high cardinality favors
 trained ML, while binary and low-cardinality favor the LLM. Two rows are
-artifacts addressed in Section 6. ESC-50 ML ``wins'' only because the
+artifacts addressed in Section 7. ESC-50 ML ``wins'' only because the
 spectrogram-vision proxy fails, and CIFAR-10's LLM ``win'' reflects the
 pixel-logreg baseline; a frozen-ViT baseline reaches 0.95 and beats the
 LLM's 0.78, so image in fact favors ML.
@@ -260,10 +260,41 @@ pairs; only the LLM input path is modality-specific. The rule and ML
 tiers transfer to CIFAR-10 and ESC-50. The LLM tier is preliminary.
 Claude vision on CIFAR images reaches 0.78 zero-shot, though the
 pixel-logreg ML used in the aligned table is a weak baseline (see
-Section 6). A spectrogram-to-vision proxy for ESC-50 fails, scoring
+Section 7). A spectrogram-to-vision proxy for ESC-50 fails, scoring
 0.017, below chance, so a native-audio model is needed. We treat these
 as preliminary evidence that the lifecycle generalizes across
 modalities, not as headline results.
+
+\section{Practical implications}\label{practical-implications}
+
+For a team choosing how to serve a classification stream, the results
+suggest four guidelines.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  The trained model is not the default destination. On many streams,
+  especially binary and low-cardinality ones, a pretrained LLM is the
+  most accurate tier and is the right place to stop; do not assume the
+  goal is to graduate to a task-trained model.
+\item
+  Check two cheap signals first. Label cardinality and how far a
+  100-example rule sits above chance predict which tier will win, before
+  any training. High cardinality with a near-chance rule points to the
+  task-trained tier; a binary task with a weak rule points to the LLM.
+\item
+  Graduate on a tie, not a win. The rule and a trained model are far
+  cheaper to operate than an LLM (microseconds to milliseconds versus
+  roughly half a second per call here), so moving to the cheaper tier as
+  soon as it is statistically non-inferior captures most of the cost and
+  latency benefit at no accuracy loss.
+\item
+  Measure per site rather than predict across sites. A learned predictor
+  of the best tier from stream characteristics did not generalize at 21
+  datasets, so the reliable approach is to instrument each site and let
+  the gate decide, not to guess from a model of the choice.
+\end{enumerate}
 
 \section{Limitations}\label{limitations}
 

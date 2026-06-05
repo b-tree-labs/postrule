@@ -36,7 +36,7 @@ Two costs. We separate the one-time labeled-outcome cost (to train ML or seed th
 
 ## 3. The composition varies by stream
 
-Sorted by label cardinality, a gradient appears: high cardinality favors trained ML, while binary and low-cardinality favor the LLM. Two rows are artifacts addressed in Section 6. ESC-50 ML "wins" only because the spectrogram-vision proxy fails, and CIFAR-10's LLM "win" reflects the pixel-logreg baseline; a frozen-ViT baseline reaches 0.95 and beats the LLM's 0.78, so image in fact favors ML.
+Sorted by label cardinality, a gradient appears: high cardinality favors trained ML, while binary and low-cardinality favor the LLM. Two rows are artifacts addressed in Section 7. ESC-50 ML "wins" only because the spectrogram-vision proxy fails, and CIFAR-10's LLM "win" reflects the pixel-logreg baseline; a frozen-ViT baseline reaches 0.95 and beats the LLM's 0.78, so image in fact favors ML.
 
 | dataset | labels | rule | ML | LLM-zs | LLM-fs | best |
 |---|--:|--:|--:|--:|--:|---|
@@ -126,18 +126,27 @@ A gradient-boosted predictor of the best tier, trained on the early-observable c
 
 ## 5. Preliminary results on image and audio
 
-The gate is modality-agnostic, since it consumes (decision, outcome) pairs; only the LLM input path is modality-specific. The rule and ML tiers transfer to CIFAR-10 and ESC-50. The LLM tier is preliminary. Claude vision on CIFAR images reaches 0.78 zero-shot, though the pixel-logreg ML used in the aligned table is a weak baseline (see Section 6). A spectrogram-to-vision proxy for ESC-50 fails, scoring 0.017, below chance, so a native-audio model is needed. We treat these as preliminary evidence that the lifecycle generalizes across modalities, not as headline results.
+The gate is modality-agnostic, since it consumes (decision, outcome) pairs; only the LLM input path is modality-specific. The rule and ML tiers transfer to CIFAR-10 and ESC-50. The LLM tier is preliminary. Claude vision on CIFAR images reaches 0.78 zero-shot, though the pixel-logreg ML used in the aligned table is a weak baseline (see Section 7). A spectrogram-to-vision proxy for ESC-50 fails, scoring 0.017, below chance, so a native-audio model is needed. We treat these as preliminary evidence that the lifecycle generalizes across modalities, not as headline results.
 
-## 6. Limitations
+## 6. Practical implications
+
+For a team choosing how to serve a classification stream, the results suggest four guidelines.
+
+1. The trained model is not the default destination. On many streams, especially binary and low-cardinality ones, a pretrained LLM is the most accurate tier and is the right place to stop; do not assume the goal is to graduate to a task-trained model.
+2. Check two cheap signals first. Label cardinality and how far a 100-example rule sits above chance predict which tier will win, before any training. High cardinality with a near-chance rule points to the task-trained tier; a binary task with a weak rule points to the LLM.
+3. Graduate on a tie, not a win. The rule and a trained model are far cheaper to operate than an LLM (microseconds to milliseconds versus roughly half a second per call here), so moving to the cheaper tier as soon as it is statistically non-inferior captures most of the cost and latency benefit at no accuracy loss.
+4. Measure per site rather than predict across sites. A learned predictor of the best tier from stream characteristics did not generalize at 21 datasets, so the reliable approach is to instrument each site and let the gate decide, not to guess from a model of the choice.
+
+## 7. Limitations
 
 The task-trained tier defaults to the cheap day-N head (TF-IDF, pixels, or MFCC features with logistic regression). To check whether the "LLM wins" results are an artifact of a weak baseline, we ran two stronger baselines. Frozen sentence-transformer embeddings (all-MiniLM-L6-v2) with logistic regression still lose to the LLM on short-text sentiment and moderation (sst2 0.80 vs 0.98; rotten_tomatoes 0.74 vs 0.94; tweet_hate 0.53 vs 0.77). A fine-tuned DistilBERT (4k examples, 3 epochs) narrows the gap but does not close it (sst2 0.89 vs 0.98; imdb 0.87 vs 0.96, about 9 points). On high-cardinality intent, a tuned TF-IDF and logistic regression remained the strongest classical baseline (banking77 0.87, above fine-tuned DistilBERT's 0.80 at this budget), consistent with ML winning there. The central finding therefore holds across baseline strength. Two caveats apply: the fine-tune was light and untuned, so heavier tuning could narrow but is unlikely to erase the sentiment gap, and frozen embeddings are not uniformly stronger (imdb MiniLM 0.78 is below TF-IDF's 0.85 because of truncation). For image, a real baseline resolves the ambiguity: frozen ViT embeddings with logistic regression reach 0.95 on CIFAR-10, above the zero-shot vision LLM's 0.78, so CIFAR's apparent "LLM win" was the pixel-logreg strawman and image favors ML, as high-cardinality text does. The aligned table still lists the pixel-logreg tier; the ViT number is the robustness check.
 
 Other limitations. Latency and cost are measured on a sample (latency_profile.json), and LLM latency is network-bound and will vary. We use a single LLM (Claude Haiku) and a single prompt, so accuracies are sensitive to prompt and model. The multimodal LLM tier is a proxy (spectrogram or sampled frames); native audio and video models are future work, and spectrogram-vision is shown to fail on environmental audio. The cross-site predictor does not generalize at this number of datasets (Section 4.4). With n=400 test subsets the accuracy confidence intervals are about ±0.04, and we use significance-aware tie bands accordingly.
 
-## 7. Related work
+## 8. Related work
 
 FrugalGPT and related LLM cascades route for cost. Learning-to-defer routes per example. Champion-challenger and shadow deployment are standard MLOps. The paired-McNemar test follows Dietterich. AGA differs by choosing the terminal tier per stream from measurable characteristics and graduating off the LLM under a non-inferiority gate, rather than routing per example or hand-tuning a cascade.
 
-## 8. Reproducibility
+## 9. Reproducibility
 
 A single command, `scripts/reproduce_dmlr.sh`, regenerates every number. The MODEL stages skip automatically without an API key. See REPRODUCE.md.
