@@ -1,13 +1,11 @@
-\documentclass[10pt]{article}
-\usepackage{tmlr}
-\input{math_commands.tex}
+\documentclass[twoside,11pt]{article}
+% Official DMLR (JMLR-family) style. DMLR is SINGLE-BLIND: real author names.
+\usepackage{dmlr2e}
+\usepackage{lastpage}
 \usepackage{microtype}
-\usepackage{hyperref}
-\usepackage{url}
-\usepackage{amsmath,amssymb}
-\usepackage{graphicx}
 \usepackage{booktabs,longtable,array}
 \usepackage{calc}
+\usepackage{etoolbox}
 \AtBeginEnvironment{longtable}{\small}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \providecommand{\pandocbounded}[1]{#1}
@@ -21,14 +19,28 @@
 \newunicodechar{−}{\ensuremath{-}}
 \newunicodechar{ρ}{\ensuremath{\rho}}
 \newunicodechar{ε}{\ensuremath{\epsilon}}
-\newcommand{\sysname}{our framework}
-\newcommand{\pkgname}{ourlib}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{σ}{\ensuremath{\sigma}}
+\newunicodechar{∎}{\ensuremath{\blacksquare}}
 \title{When Should a Rule Learn? Predicting the Rule, LLM, and Trained-Model Composition for Classification Streams}
-\author{\AND Anonymous Author(s)\\Under review}
+% TODO(author): DMLR is single-blind. Replace the placeholder name/email/affiliation
+% below with the real author(s). Do NOT start a line with '[' right after \\ (LaTeX
+% parses \\[...] as an optional length).
+\author{\name Author Name \email author@institution.edu \\
+       \addr Department, Institution, City, Country}
+\editor{Under review for DMLR}
+\def\openreview{\url{https://openreview.net/forum?id=XXXXX}}
+% {volume}{year}{pages}{date submitted}{date published}{paper id}{author-full-names}
+\dmlrheading{1}{2026}{1-\pageref{LastPage}}{}{}{00-0000}{[Author]}
+\ShortHeadings{When Should a Rule Learn?}{[Author]}
+\firstpageno{1}
 \begin{document}
 \maketitle
-\begin{abstract}
+\begin{abstract}%
 \input{abstract.tex}
 \end{abstract}
+\begin{keywords}
+  classification, model selection, LLM cascades, data-centric machine learning, graduated autonomy
+\end{keywords}
 \input{body.tex}
 \end{document}

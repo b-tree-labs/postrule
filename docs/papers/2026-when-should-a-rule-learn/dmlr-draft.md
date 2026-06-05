@@ -131,6 +131,10 @@ Production ML and statistical comparison. Brittle rules and silent regressions a
 
 Cost-sensitive and active learning. Cost-sensitive learning weights errors by cost (Elkan 2001) and active learning chooses which labels to acquire (Settles 2009). Both are complementary: AGA's labeled-outcome axis is a cost the site already pays through its outcome stream, and the gate decides when enough has accumulated to graduate.
 
+## Broader Impact
+
+This work helps practitioners decide, for each classification site, whether a rule, a large language model, or a trained model should serve it, and when to move between tiers. The potential positive consequences are lower inference cost and energy use, since routine classification can be graduated off always-on LLMs onto cheap local models; lower latency, which benefits on-device and real-time uses; and an auditable promotion process, since a deterministic rule is retained as a safety floor and a statistical gate is required before any change. The potential negative consequences, with mitigations, are as follows. An automated graduation policy could promote a worse decision-maker if the outcome labels feeding the gate are biased or sparse; the non-inferiority gate bounds but does not eliminate this risk, and the retained rule floor together with human review for safety-sensitive sites is the intended mitigation. The labels and outcomes used to train and gate the tiers can encode social biases, which this method does not address and which should be handled with standard fairness auditing. Finally, cutting cost is not a reason to remove human oversight from consequential decisions. This method only chooses which automated tier to use where automation is already warranted; it does not argue for automating decisions that should involve people.
+
 ## 9. Reproducibility
 
 A single command, `scripts/reproduce_dmlr.sh`, regenerates every number. The MODEL stages skip automatically without an API key. See REPRODUCE.md.
