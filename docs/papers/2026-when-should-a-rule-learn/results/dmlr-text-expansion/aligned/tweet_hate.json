@@ -1,0 +1,36 @@
+{
+  "dataset": "tweet_hate",
+  "n_labels": 2,
+  "common_test_n": 400,
+  "rule_acc": 0.4975,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.4625
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.56
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.5525
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.4625
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.4725
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.465
+    }
+  ],
+  "model_zeroshot": 0.77,
+  "model_fewshot": 0.64,
+  "fs_examples": 40
+}

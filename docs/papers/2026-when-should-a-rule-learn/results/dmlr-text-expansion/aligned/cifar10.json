@@ -1,0 +1,32 @@
+{
+  "dataset": "cifar10",
+  "n_labels": 10,
+  "common_test_n": 150,
+  "rule_acc": 0.1733,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.24
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.2733
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.2667
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.3267
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.2867
+    }
+  ],
+  "model_zeroshot": 0.78,
+  "model_fewshot": 0.34,
+  "fs_examples": 8
+}

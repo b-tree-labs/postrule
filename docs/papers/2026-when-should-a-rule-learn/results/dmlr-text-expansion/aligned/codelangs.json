@@ -1,0 +1,24 @@
+{
+  "dataset": "codelangs",
+  "n_labels": 12,
+  "common_test_n": 139,
+  "rule_acc": 0.8921,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.7122
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.9496
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.9856
+    }
+  ],
+  "model_zeroshot": 1.0,
+  "model_fewshot": 1.0,
+  "fs_examples": 36
+}

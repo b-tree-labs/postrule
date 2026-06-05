@@ -1,0 +1,7 @@
+{
+  "strong_image_ml_vit": 0.9533,
+  "weak_pixel_ml": 0.3267,
+  "model_zeroshot_llm": 0.78,
+  "model_fewshot_llm": 0.34,
+  "n_labels": 10
+}

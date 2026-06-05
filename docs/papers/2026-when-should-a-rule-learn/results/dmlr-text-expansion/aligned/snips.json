@@ -1,0 +1,40 @@
+{
+  "dataset": "snips",
+  "n_labels": 7,
+  "common_test_n": 400,
+  "rule_acc": 0.755,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.9375
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.95
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.9775
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.9725
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.98
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.9825
+    },
+    {
+      "outcomes": 10000,
+      "acc": 0.98
+    }
+  ],
+  "model_zeroshot": 0.97,
+  "model_fewshot": 0.9825,
+  "fs_examples": 35
+}

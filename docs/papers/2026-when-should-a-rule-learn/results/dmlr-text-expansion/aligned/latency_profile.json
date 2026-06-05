@@ -1,0 +1,42 @@
+{
+  "sst2": {
+    "n_labels": 2,
+    "rule": {
+      "p50_ms": 0.0026,
+      "p95_ms": 0.0048
+    },
+    "ml_tfidf": {
+      "p50_ms": 0.102,
+      "p95_ms": 0.1236
+    },
+    "ml_minilm": {
+      "p50_ms": 23.2011,
+      "p95_ms": 178.7025
+    },
+    "model_llm": {
+      "p50_ms": 532.9904,
+      "p95_ms": 1598.518
+    },
+    "model_llm_per_call_usd": 8.1e-05
+  },
+  "banking77": {
+    "n_labels": 77,
+    "rule": {
+      "p50_ms": 0.0051,
+      "p95_ms": 0.0096
+    },
+    "ml_tfidf": {
+      "p50_ms": 0.1464,
+      "p95_ms": 0.2181
+    },
+    "ml_minilm": {
+      "p50_ms": 6.4451,
+      "p95_ms": 188.3366
+    },
+    "model_llm": {
+      "p50_ms": 568.241,
+      "p95_ms": 2827.9362
+    },
+    "model_llm_per_call_usd": 0.000614
+  }
+}

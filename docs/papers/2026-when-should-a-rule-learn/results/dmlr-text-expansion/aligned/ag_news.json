@@ -1,0 +1,40 @@
+{
+  "dataset": "ag_news",
+  "n_labels": 4,
+  "common_test_n": 400,
+  "rule_acc": 0.375,
+  "rule_outcomes": 100,
+  "ml_curve": [
+    {
+      "outcomes": 100,
+      "acc": 0.4375
+    },
+    {
+      "outcomes": 250,
+      "acc": 0.7475
+    },
+    {
+      "outcomes": 500,
+      "acc": 0.8025
+    },
+    {
+      "outcomes": 1000,
+      "acc": 0.8675
+    },
+    {
+      "outcomes": 2000,
+      "acc": 0.87
+    },
+    {
+      "outcomes": 5000,
+      "acc": 0.89
+    },
+    {
+      "outcomes": 10000,
+      "acc": 0.895
+    }
+  ],
+  "model_zeroshot": 0.8525,
+  "model_fewshot": 0.8925,
+  "fs_examples": 40
+}

@@ -1,0 +1,45 @@
+\documentclass[twoside,11pt]{article}
+% Official DMLR (JMLR-family) style. DMLR is SINGLE-BLIND: real author names.
+\usepackage{dmlr2e}
+\usepackage{lastpage}
+\usepackage{microtype}
+\usepackage{booktabs,longtable,array}
+\usepackage{calc}
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\small}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\pandocbounded}[1]{#1}
+\providecommand{\real}[1]{#1}
+\usepackage{newunicodechar}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{≈}{\ensuremath{\approx}}
+\newunicodechar{≤}{\ensuremath{\le}}
+\newunicodechar{≥}{\ensuremath{\ge}}
+\newunicodechar{−}{\ensuremath{-}}
+\newunicodechar{ρ}{\ensuremath{\rho}}
+\newunicodechar{ε}{\ensuremath{\epsilon}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{σ}{\ensuremath{\sigma}}
+\newunicodechar{∎}{\ensuremath{\blacksquare}}
+\title{When Should a Rule Learn? Predicting the Rule, LLM, and Trained-Model Composition for Classification Streams}
+% DMLR is single-blind. Author block uses real identity (B-Tree Labs affiliation,
+% kept separate from UT to preserve clean B-Tree IP ownership of Postrule).
+\author{\name Benjamin Booth \email ben@b-treeventures.com \\
+       \addr B-Tree Labs}
+\editor{Under review for DMLR}
+\def\openreview{\textit{(forum link assigned upon submission)}}
+% {volume}{year}{pages}{date submitted}{date published}{paper id}{author-full-names}
+\dmlrheading{1}{2026}{1-\pageref{LastPage}}{}{}{00-0000}{Benjamin Booth}
+\ShortHeadings{When Should a Rule Learn?}{Booth}
+\firstpageno{1}
+\begin{document}
+\maketitle
+\begin{abstract}%
+\input{abstract.tex}
+\end{abstract}
+\begin{keywords}
+  classification, model selection, LLM cascades, data-centric machine learning, graduated autonomy
+\end{keywords}
+\input{body.tex}
+\end{document}

@@ -176,6 +176,9 @@ parallel = true
 omit = [
     "*/tests/*",
     "*/benchmarks/loaders.py",  # network-bound; covered by integration runs
+    "*/benchmarks/loaders_ext.py",  # network-bound HF dataset loaders; integration only
+    "*/benchmarks/loaders_audio.py",  # network-bound audio dataset loaders; integration only
+    "*/audio_features.py",  # optional-dep (librosa/soundfile) MFCC/spectrogram; benchmark-only
 ]
 
 [tool.coverage.report]
