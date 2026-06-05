@@ -1,102 +1,42 @@
-# When Should a Rule Learn? Predicting the Rule / Neural-Net / ML Composition for Classification Streams
+# When Should a Rule Learn? Predicting the Rule, Neural-Net, and ML Composition for Classification Streams
 
-*Working draft for DMLR. Numbers from the aligned study (common test set, text n=400;
-image/audio preliminary). Anonymize before submission (system name behind a macro).*
+*Working draft for DMLR. Numbers from the aligned study (common test set, text n=400; image and audio preliminary). Anonymize before submission (system name behind a macro).*
 
 ## Abstract
 
-A production classification site can be served by a hand-written rule, a (neural-net) LLM call,
-or a trained classical model. Common practice treats the rule→LLM→ML progression as a fixed
-ladder whose destination is always the trained model. We ask a data-centric question instead:
-**given a stream's measurable characteristics, which of these tiers should serve it, and when?**
-On 19 public text datasets (plus preliminary image and audio), scored apples-to-apples on a
-common test set across four tiers (keyword rule, zero-shot LLM, few-shot LLM, classical-ML
-training curve), we find a clear, interpretable gradient: **label cardinality and
-rule-accuracy-over-chance predict which tier wins** — high-cardinality streams favor the trained
-classical model, low-cardinality/binary streams favor the LLM. We operationalize this as
-**Adaptive Graduated Autonomy (AGA)**, which selects the *terminal* tier per stream (often the
-LLM, not the trained model) under a *multi-objective* policy — modality feasibility and a latency
-SLO as hard constraints, accuracy within a significance band, operating cost minimized — and
-graduates under a statistical non-inferiority gate. This paper measures the accuracy, cost, AND latency axes (modality
-feasibility is first-class but a hard filter, not a measured scalar). AGA matches
-the fixed-ladder baseline's accuracy while consuming **~44% fewer labeled outcomes**, and keeps
-the LLM as terminal on roughly half of streams. We report two honest negatives that strengthen
-rather than weaken the picture: a *learned cross-site predictor* of the best tier does **not**
-generalize at this fleet size (leave-one-dataset-out below the majority baseline) — per-site
-measurement is required — and a vision-LLM-on-spectrogram proxy fails on environmental audio.
-The contribution is the characterization and the cost-reducing adaptive algorithm, not the
-cascade or the gate (both prior art).
+A production classification site can be served by a hand-written rule, a large language model (LLM) call, or a trained classical model. Common practice treats the rule-to-LLM-to-ML progression as a fixed ladder whose destination is the trained model. We ask a different question. Given a stream's measurable characteristics, which of these tiers should serve it, and when? We score four tiers (keyword rule, zero-shot LLM, few-shot LLM, and a classical-ML training curve) on a common test set across 19 public text datasets, with preliminary image and audio. Two early-observable properties, label cardinality and rule accuracy over chance, predict which tier wins: high-cardinality streams favor the trained classical model, while binary and low-cardinality streams favor the LLM. We operationalize this as Adaptive Graduated Autonomy (AGA), which selects the terminal tier per stream under a multi-objective policy (modality feasibility and a latency budget as hard constraints, accuracy within a significance band, operating cost minimized) and graduates between tiers using a statistical non-inferiority gate. The study measures the accuracy, cost, and latency axes; modality feasibility enters as a hard filter rather than a measured scalar. AGA matches the fixed-ladder baseline's accuracy while using about 44% fewer labeled outcomes, and it keeps the LLM as the terminal tier on roughly half of the streams. We report two negative results. A learned cross-site predictor of the best tier does not generalize at this number of datasets, so per-site measurement is required. And a vision-LLM-on-spectrogram proxy fails on environmental audio. The contribution is the characterization and the cost-reducing adaptive algorithm, not the cascade or the gate, which are prior art.
 
 ## 1. Introduction
 
-Most production software is full of small classification decisions: route this ticket, tag this
-message, flag this content, pick this branch. Each is a function from an input to one of a fixed
-set of labels. Teams build these three ways — a hand-written rule, a call to a large language
-model, or a trained classical model — and the choice is usually made once, per site, by intuition,
-and rarely revisited; there is no shared, evidence-based basis for it. Two progressions are
-well-documented in practice: replacing brittle rules with learned models (the rule-to-ML migration
-long noted as a source of technical debt; Sculley et al. 2015, Breck et al. 2017), and, more
-recently, prototyping with an LLM and distilling to a cheaper model to cut inference cost
-(FrugalGPT; LLM-as-teacher distillation). Both *implicitly* treat a trained model as the eventual
-destination — an assumption also baked into autonomy frameworks whose ceiling is a trained model.
-This paper tests that assumption directly rather than asserting a ladder.
+Most production software contains many small classification decisions: route this ticket, tag this message, flag this content, pick this branch. Each is a function from an input to one of a fixed set of labels. Teams build these three ways, with a hand-written rule, an LLM call, or a trained classical model. The choice is usually made once per site, by intuition, and rarely revisited; there is no shared, evidence-based basis for it. Two progressions are documented in practice. The first replaces brittle rules with learned models, a migration long noted as a source of technical debt (Sculley et al. 2015; Breck et al. 2017). The second prototypes with an LLM and distills to a cheaper model to cut inference cost (FrugalGPT; LLM-as-teacher distillation). Both implicitly treat a trained model as the destination, an assumption also built into autonomy frameworks whose ceiling is a trained model. We test that assumption with data rather than assert a ladder.
 
-For a given classification stream, which tier *should* serve it, and when? We treat it as a
-data-centric measurement problem: score all three
-tiers (rule, LLM, classical ML) on the same test set, on a shared axis of labeled-outcomes
-consumed, across 19 public text datasets spanning sentiment, intent, moderation, emotion, topic,
-and spam, plus preliminary image and audio. The answer is not "always the trained model." It
-depends on measurable, early-observable properties of the stream — chiefly label cardinality and
-how far the day-zero rule sits above chance — and for a large fraction of streams the LLM is the
-correct *terminal* tier, not a way-station.
+For a given classification stream, which tier should serve it, and when? We treat this as a measurement problem. We score all three tiers (rule, LLM, classical ML) on the same test set, on a shared axis of labeled outcomes consumed, across 19 text datasets spanning sentiment, intent, moderation, emotion, topic, and spam, with preliminary image and audio. The answer is not "always the trained model." It depends on measurable properties of the stream, chiefly label cardinality and how far the day-zero rule sits above chance. For a large fraction of streams the LLM is the right terminal tier, not a way-station.
 
-We turn this into an algorithm, Adaptive Graduated Autonomy (AGA), that chooses the terminal tier
-per stream under a multi-objective policy (modality feasibility and a latency SLO as hard
-constraints, accuracy within a statistical significance band, operating cost minimized) and
-graduates between tiers under a non-inferiority gate — graduating to the cheaper tier as soon as
-it *ties*, not only when it wins. Against the fixed "always graduate to ML" baseline, AGA matches
-accuracy while consuming far fewer labeled outcomes.
+We turn this into an algorithm, Adaptive Graduated Autonomy (AGA), that chooses the terminal tier per stream under a multi-objective policy (modality feasibility and a latency budget as hard constraints, accuracy within a significance band, operating cost minimized). It graduates between tiers using a non-inferiority gate, moving to the cheaper tier as soon as that tier ties, not only when it wins. Against the fixed "always graduate to ML" baseline, AGA matches accuracy while using far fewer labeled outcomes.
 
-What is *not* claimed as novel: LLM cost-cascades (FrugalGPT) and learning-to-defer route between
-models already; paired-McNemar classifier comparison is standard. What *is* contributed: (1) a
-characterization of which dataset characteristics predict the cost-optimal tier, (2) an adaptive
-algorithm that exploits it to cut labeled-data cost at parity accuracy, and (3) honest evidence on
-where a learned cross-site policy does and does not work — including two negatives we report
-plainly rather than hide.
+We do not claim the mechanism as novel. LLM cost-cascades (FrugalGPT) and learning-to-defer already route between models, and paired-McNemar comparison of classifiers is standard. The contributions are: (1) a characterization of which dataset properties predict the cost-optimal tier; (2) an algorithm that exploits it to cut labeled-data cost at equal accuracy; and (3) evidence on where a learned cross-site policy does and does not work, including two negative results.
 
 ### 1.1 Contributions
-1. **Aligned multi-tier benchmark** — rule / zero-shot LLM / few-shot LLM / classical-ML-curve, all
-   on one common test set per dataset, on a shared labeled-outcomes-consumed axis, across 19 text
-   datasets (sentiment, intent, moderation, emotion, topic, spam) + preliminary image/audio.
-2. **Predictive characterization** — label cardinality (Spearman ρ≈−0.7 vs outcomes-to-graduate)
-   and rule-over-chance predict which tier wins and how deep ML must train.
-3. **AGA** — chooses the terminal tier and graduates under a non-inferiority gate; matches
-   fixed-ladder accuracy at ~44% fewer labeled outcomes.
-4. **A lifecycle-level safety guarantee** — a composable cumulative-Type-I bound over the whole
-   graduation chain (not just one transition), with the rule as a persistent accuracy floor.
-5. **Two honest negatives** — a learned cross-site tier-predictor does not generalize at 21
-   datasets; spectrogram-vision fails on audio. Plus a tunable non-inferiority ("close-enough")
-   gate for cost-aware graduation.
+
+1. An aligned multi-tier benchmark. Rule, zero-shot LLM, few-shot LLM, and a classical-ML curve, all scored on one common test set per dataset, on a shared labeled-outcomes axis, across 19 text datasets and preliminary image and audio.
+2. A predictive characterization. Label cardinality (Spearman ρ ≈ −0.7 against outcomes-to-graduate) and rule-over-chance predict which tier wins and how deep ML must train.
+3. AGA, which chooses the terminal tier and graduates under a non-inferiority gate, matching fixed-ladder accuracy at about 44% fewer labeled outcomes.
+4. A lifecycle-level safety bound. A cumulative Type-I bound over the whole graduation chain, not just one transition, with the rule as a persistent accuracy floor.
+5. Two negative results. A learned cross-site tier-predictor does not generalize at 21 datasets, and spectrogram-vision fails on audio. We also give a tunable non-inferiority gate for cost-aware graduation.
 
 ## 2. Setup
 
-- **Tiers.** RULE → MODEL (LLM, zero/few-shot) → ML (classical sklearn head). The LLM is the
-  neural-net tier; ML is the trained classical tier.
-- **Datasets.** 19 text + CIFAR-10 (image) + ESC-50 (audio).
-- **Aligned protocol.** Common test subset per dataset (text n=400); rule from a 100-example seed;
-  ML as a budget curve; LLM (Claude Haiku) zero- and few-shot (≤40 exemplars). Each tier placed at
-  its true labeled-outcome cost (rule≈100, zero-shot=0, few-shot=k, ML=budget).
-- **Two costs.** We separate **one-time labeled-outcome cost** (to train ML / seed the rule) from
-  **perpetual per-call inference cost** (the LLM bills every call forever; rule/trained-ML are
-  ~free per call). AGA's savings are reported on the labeled-outcome axis; the steady-state
-  inference-cost argument is what makes graduating *off* the LLM valuable.
+Tiers. RULE, then MODEL (the LLM, zero- and few-shot), then ML (a classical sklearn head). The LLM is the neural-net tier; ML is the trained classical tier.
+
+Datasets. 19 text datasets, plus CIFAR-10 (image) and ESC-50 (audio).
+
+Aligned protocol. A common test subset per dataset (text n=400). The rule is built from a 100-example seed. ML is evaluated as a budget curve. The LLM (Claude Haiku) is run zero- and few-shot, with at most 40 exemplars. Each tier is placed at its true labeled-outcome cost: rule about 100, zero-shot 0, few-shot k, ML the training budget.
+
+Two costs. We separate the one-time labeled-outcome cost (to train ML or seed the rule) from the perpetual per-call inference cost (the LLM bills every call; rule and trained ML are roughly free per call). AGA's savings are reported on the labeled-outcome axis. The steady-state inference cost is what makes graduating off the LLM valuable.
 
 ## 3. The composition varies by stream
 
-Sorted by label cardinality, the gradient is visible: high-cardinality → trained ML; binary/
-low-cardinality → LLM. (esc50 ML "wins" only because the spectrogram-vision proxy fails; cifar10's
-LLM "win" is an artifact of the pixel-logreg baseline — a frozen-ViT baseline reaches 0.95 and
-beats the LLM's 0.78, so image actually favors ML; see §6.)
+Sorted by label cardinality, a gradient appears: high cardinality favors trained ML, while binary and low-cardinality favor the LLM. Two rows are artifacts addressed in Section 6. ESC-50 ML "wins" only because the spectrogram-vision proxy fails, and CIFAR-10's LLM "win" reflects the pixel-logreg baseline; a frozen-ViT baseline reaches 0.95 and beats the LLM's 0.78, so image in fact favors ML.
 
 | dataset | labels | rule | ML | MODEL-zs | MODEL-fs | best |
 |---|--:|--:|--:|--:|--:|---|
@@ -124,49 +64,27 @@ beats the LLM's 0.78, so image actually favors ML; see §6.)
 
 ## 4. Adaptive Graduated Autonomy
 
-- **oracle_terminal** is *multi-objective*, applied in priority order: (i) **modality
-  feasibility** (hard filter — e.g. spectrogram-vision can't read words), (ii) **latency SLO**
-  (hard — a tier breaching the real-time budget is out), (iii) **accuracy** within a Wilson-CI
-  significance band, (iv) **operating cost** minimized within the band (perpetual inference $ +
-  labeled cost). The LLM wins only when *significantly* better on accuracy *and* feasible within
-  the latency/modality constraints; otherwise a rule/trained-ML tie graduates off the LLM. Cost is
-  the axis this study measures; latency and modality are first-class and default to unconstrained.
-- **Tie-to-graduate**: ML graduates once it *ties* the LLM (non-inferiority), not once it beats it.
-- **CostToleranceGate**: the non-inferiority gate; ε is operator-tunable.
-- **The router is permanent**: it holds the rule floor, watches for drift, and re-escalates to the
-  LLM when the data demands — only the LLM *dependency* shrinks.
+The terminal-tier selection is multi-objective, applied in priority order. First, modality feasibility, a hard filter (a spectrogram image cannot convey words, for instance). Second, the latency budget, a hard constraint; a tier that exceeds the real-time budget is removed. Third, accuracy, where tiers within a Wilson-CI significance band of the best feasible tier are retained. Fourth, operating cost, minimized within that band, counting perpetual inference cost and labeled cost. The LLM is chosen only when it is significantly more accurate and feasible under the latency and modality constraints; otherwise a rule or trained-ML tie graduates off the LLM. Cost is the axis this study measures. Latency and modality are first-class in the policy and default to unconstrained.
+
+ML graduates once it ties the LLM under the non-inferiority gate, not once it beats it. The margin ε is operator-tunable. The router is permanent: it holds the rule floor, watches for drift, and re-escalates to the LLM when the data calls for it. What shrinks is the dependence on the LLM, not the router.
 
 ### 4.1 A lifecycle-level safety guarantee
 
-The per-transition gate gives the standard guarantee that advancing to a worse-than-current tier
-has probability ≤ α (the McNemar Type-I error — *not* novel; it is the test's definition applied
-to a promotion decision). The lifecycle-level statement is what distinguishes AGA from a single
-gated comparison.
+The per-transition gate gives the standard guarantee that advancing to a worse-than-current tier has probability at most α, the McNemar Type-I error. That part is not novel; it is the test's definition applied to a promotion decision. The lifecycle-level statement is what separates AGA from a single gated comparison.
 
-**Proposition (cumulative safety).** Consider a graduation trajectory of at most m gated
-transitions, each evaluated by a paired test at level α with non-inferiority margin ε. Then with
-probability at least 1 − mα, every advance is to a tier non-inferior (within ε) to the current
-one; consequently the deployed accuracy stays within ε of the best previously-certified tier, and
-because the rule is a persistent fallback (the floor), operating accuracy is bounded below by
-(rule accuracy − ε) throughout, regardless of m.
+Proposition (cumulative safety). Consider a graduation trajectory of at most m gated transitions, each evaluated by a paired test at level α with non-inferiority margin ε. With probability at least 1 − mα, every advance is to a tier non-inferior (within ε) to the current one. Consequently the deployed accuracy stays within ε of the best previously certified tier, and because the rule is a persistent fallback, operating accuracy is bounded below by (rule accuracy − ε) throughout, for any m.
 
-*Proof sketch.* Each gated advance to an inferior tier is a Type-I event with probability ≤ α; a
-union bound over ≤ m transitions bounds the probability of any such event by mα. Absent any
-Type-I event, each advance is within-ε non-inferior, so by induction deployed accuracy stays
-within ε of the best certified tier; the never-removed rule floor lower-bounds it. ∎
+Proof sketch. Each gated advance to an inferior tier is a Type-I event with probability at most α. A union bound over at most m transitions bounds the probability of any such event by mα. Absent any Type-I event, each advance is within-ε non-inferior, so by induction the deployed accuracy stays within ε of the best certified tier, and the rule floor lower-bounds it. ∎
 
-**Remarks (honesty).** The union bound is loose, and independence across transitions is an
-idealization (tests reuse the accumulating stream); if many transitions are expected, α should be
-spent with a correction (e.g., α/m). The guarantee is on *certified* accuracy under the test's
-assumptions, not a distribution-free promise. What it buys over a single McNemar test is a
-*composable* safety statement for an autonomous multi-tier lifecycle — the property a practitioner
-needs to let the system graduate unattended.
+Remarks. The union bound is loose, and independence across transitions is an idealization, since the tests reuse the accumulating stream. If many transitions are expected, α should be spent with a correction such as α/m. The guarantee is on certified accuracy under the test's assumptions, not a distribution-free promise. What it adds over a single McNemar test is a composable safety statement for a multi-tier lifecycle, which is what a practitioner needs to let the system graduate unattended.
 
-### 4.2 Measured latency + cost (the steady-state axes)
-Per-call latency (p50): rule 0.003 ms, classical-ML 0.1 ms, MiniLM-embed ML 6-23 ms, LLM 530-570 ms — the rule is ~200,000x faster than the LLM, classical ML ~5,000x. LLM per-call cost $0.0001-0.0006 (scales with label-prompt length); rule/ML ~$0. Under a real-time SLO (e.g. 50 ms) the LLM is structurally excluded, so latency *forces* graduation to on-device tiers (latency_profile.json).
+### 4.2 Measured latency and cost
 
-### 4.3 AGA vs the fixed ladder
-AGA matches accuracy at far lower labeled-outcome cost:
+Per-call latency (p50): rule 0.003 ms, classical ML 0.1 ms, MiniLM-embedding ML 6 to 23 ms, LLM 530 to 570 ms. The rule is roughly 200,000 times faster than the LLM, and classical ML about 5,000 times. LLM per-call cost is $0.0001 to $0.0006 and scales with the length of the label prompt; rule and ML are near zero. Under a real-time budget (for example 50 ms) the LLM is excluded by construction, so latency forces graduation to local tiers. See latency_profile.json.
+
+### 4.3 AGA versus the fixed ladder
+
+AGA matches accuracy at much lower labeled-outcome cost.
 
 ```
 dataset             oracle          AGA(LODO)        AGA_acc fixed_acc AGA_cost fix_cost
@@ -195,58 +113,30 @@ yahoo_answers       model_zeroshot  ml                 0.670     0.670    10000 
 ------------------------------------------------------------------------------------------------
 
 LODO oracle-match: 7/21 = 0.33
-Mean accuracy — AGA 0.762 vs fixed-ladder(ML_PRIMARY) 0.764
-Mean labeled outcomes — AGA 2246 vs fixed-ladder 4017
+Mean accuracy: AGA 0.762 vs fixed-ladder (ML_PRIMARY) 0.764
+Mean labeled outcomes: AGA 2246 vs fixed-ladder 4017
 AGA keeps LLM as terminal (skips ML training): 10/21
-AGA picks rule/ML over not-better LLM (avoids perpetual cost): 6/21
+AGA picks rule/ML over a not-better LLM (avoids perpetual cost): 6/21
 ```
 
-### 4.4 Honest negative: cross-site prediction does not yet generalize
-A gradient-boosted predictor of the best tier from early-observable characteristics scores
-**below the majority baseline** leave-one-dataset-out at 21 datasets, and its apparent skill
-swings with test-set noise (0.62→0.41 between n=200 and n=400 before significance-aware labeling).
-**Conclusion: per-site measured routing is what works today; cross-site prediction needs a much
-larger fleet.** This is a finding, not a failure — it tells practitioners to measure, not guess.
+### 4.4 Negative result: cross-site prediction does not yet generalize
 
-## 5. Preliminary: image and audio
-The gate is modality-agnostic (it consumes (decision, outcome) pairs); only the LLM input path is
-modality-specific. Rule+ML transfer to CIFAR-10 and ESC-50. The MODEL tier is preliminary: Claude
-vision on CIFAR images reaches 0.78 zero-shot (but our pixel-logreg ML is a weak baseline), and a
-spectrogram→vision proxy for ESC-50 **fails** (0.017, below chance) — native-audio models are
-needed. We report these as preliminary evidence of modality-generality, not as headline results.
+A gradient-boosted predictor of the best tier, trained on the early-observable characteristics, scores below the majority baseline under leave-one-dataset-out at 21 datasets. Its apparent skill also moves with test-set noise, swinging from 0.62 to 0.41 between n=200 and n=400 before significance-aware labeling. We conclude that per-site measured routing is what works today, and that a learned cross-site predictor needs a much larger collection of streams. The practical reading is to measure rather than guess.
+
+## 5. Preliminary results on image and audio
+
+The gate is modality-agnostic, since it consumes (decision, outcome) pairs; only the LLM input path is modality-specific. The rule and ML tiers transfer to CIFAR-10 and ESC-50. The MODEL tier is preliminary. Claude vision on CIFAR images reaches 0.78 zero-shot, though the pixel-logreg ML used in the aligned table is a weak baseline (see Section 6). A spectrogram-to-vision proxy for ESC-50 fails, scoring 0.017, below chance, so a native-audio model is needed. We treat these as preliminary evidence that the lifecycle generalizes across modalities, not as headline results.
 
 ## 6. Limitations
-- **Classical-ML baselines are the cheap day-N head** (TF-IDF / pixel / MFCC + logistic
-  regression). **Robustness check (Threat-1 ablation):** a much stronger classical tier —
-  frozen sentence-transformer embeddings (all-MiniLM-L6-v2) + logistic regression — was run on a
-  representative text subset. The "LLM wins on short-text sentiment/moderation" result *survives*:
-  sst2 strong-ML 0.80 vs LLM 0.98; rotten_tomatoes 0.74 vs 0.94; tweet_hate 0.53 vs 0.77 — so it
-  is **not** a weak-baseline artifact. We then ran the strongest form — **fine-tuning DistilBERT**
-  (4k examples, 3 epochs): the LLM edge *still* persists on short-text sentiment (sst2 fine-tuned
-  0.89 vs LLM 0.98; imdb 0.87 vs 0.96 — the gap shrinks from the TF-IDF baseline but survives at
-  ~9 points). On high-cardinality intent a tuned **TF-IDF+logreg remained the strongest classical
-  baseline** (banking77 0.87 > fine-tuned DistilBERT 0.80 at this budget), consistent with ML
-  winning there. So the central finding is robust to baseline strength. Caveats: fine-tuning was
-  light (untuned, 4k examples) — heavier tuning could narrow but not erase the sentiment gap;
-  frozen embeddings are not uniformly stronger (imdb MiniLM 0.78 < TF-IDF 0.85, truncation).
-  **Image, resolved:** with a real baseline (frozen ViT embeddings + logreg) classical ML reaches
-  **0.95 on CIFAR-10, decisively beating the zero-shot vision LLM (0.78)** — so CIFAR's apparent
-  "LLM wins" was purely the pixel-logreg strawman; with a proper image model, ML wins, mirroring
-  the high-cardinality-text pattern. (The aligned table still lists the pixel-logreg tier; the ViT
-  result is the robustness check.)
-- Latency/cost are measured on a sample (latency_profile.json); LLM latency is network-bound and will vary.
-- **Single LLM (Claude Haiku), single prompt** — accuracies are prompt/model sensitive.
-- **Multimodal MODEL tier is a proxy** (spectrogram/frames); native audio/video models are future
-  work. Spectrogram-vision is shown to fail on environmental audio.
-- **Cross-site meta-prediction does not generalize** at this fleet size (§4.2).
-- **n=400 test subsets** → accuracy CIs ≈ ±0.04; we use significance-aware tie bands accordingly.
+
+The classical-ML tier is the cheap day-N head (TF-IDF, pixels, or MFCC features with logistic regression). To check whether the "LLM wins" results are an artifact of a weak baseline, we ran two stronger baselines. Frozen sentence-transformer embeddings (all-MiniLM-L6-v2) with logistic regression still lose to the LLM on short-text sentiment and moderation (sst2 0.80 vs 0.98; rotten_tomatoes 0.74 vs 0.94; tweet_hate 0.53 vs 0.77). A fine-tuned DistilBERT (4k examples, 3 epochs) narrows the gap but does not close it (sst2 0.89 vs 0.98; imdb 0.87 vs 0.96, about 9 points). On high-cardinality intent, a tuned TF-IDF and logistic regression remained the strongest classical baseline (banking77 0.87, above fine-tuned DistilBERT's 0.80 at this budget), consistent with ML winning there. The central finding therefore holds across baseline strength. Two caveats apply: the fine-tune was light and untuned, so heavier tuning could narrow but is unlikely to erase the sentiment gap, and frozen embeddings are not uniformly stronger (imdb MiniLM 0.78 is below TF-IDF's 0.85 because of truncation). For image, a real baseline resolves the ambiguity: frozen ViT embeddings with logistic regression reach 0.95 on CIFAR-10, above the zero-shot vision LLM's 0.78, so CIFAR's apparent "LLM win" was the pixel-logreg strawman and image favors ML, as high-cardinality text does. The aligned table still lists the pixel-logreg tier; the ViT number is the robustness check.
+
+Other limitations. Latency and cost are measured on a sample (latency_profile.json), and LLM latency is network-bound and will vary. We use a single LLM (Claude Haiku) and a single prompt, so accuracies are sensitive to prompt and model. The multimodal MODEL tier is a proxy (spectrogram or sampled frames); native audio and video models are future work, and spectrogram-vision is shown to fail on environmental audio. The cross-site predictor does not generalize at this number of datasets (Section 4.4). With n=400 test subsets the accuracy confidence intervals are about ±0.04, and we use significance-aware tie bands accordingly.
 
 ## 7. Related work
-FrugalGPT / LLM cascades (cost routing); learning-to-defer (per-example deferral);
-champion-challenger + shadow deployment (MLOps); McNemar / Dietterich. AGA differs by choosing the
-*terminal* tier per stream from characteristics and graduating off the LLM under a non-inferiority
-gate — not per-example routing or a hand-tuned cascade.
+
+FrugalGPT and related LLM cascades route for cost. Learning-to-defer routes per example. Champion-challenger and shadow deployment are standard MLOps. The paired-McNemar test follows Dietterich. AGA differs by choosing the terminal tier per stream from measurable characteristics and graduating off the LLM under a non-inferiority gate, rather than routing per example or hand-tuning a cascade.
 
 ## 8. Reproducibility
-One command (`scripts/reproduce_dmlr.sh`) regenerates every number; MODEL stages auto-skip without
-an API key. See REPRODUCE.md.
+
+A single command, `scripts/reproduce_dmlr.sh`, regenerates every number. The MODEL stages skip automatically without an API key. See REPRODUCE.md.
