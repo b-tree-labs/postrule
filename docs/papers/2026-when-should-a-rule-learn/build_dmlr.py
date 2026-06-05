@@ -74,10 +74,16 @@ subprocess.run(
     check=True,
 )
 
-# pandoc 3.x emits an `alt={...}` key in \includegraphics for accessibility; the
-# vendored TMLR graphicx does not support it -> strip it so tectonic compiles.
+# Normalize every figure include: drop pandoc's options (incl. the unsupported
+# `alt={...}` accessibility key) and set a fixed width. Keeping width out of the
+# markdown means the .md source previews cleanly (no literal `{width=...}` text)
+# while the PDF figures are still sized.
 _body = (OUT / "body.tex").read_text(encoding="utf-8")
-_body = re.sub(r",\s*alt=\{[^{}]*\}", "", _body)
+_body = re.sub(
+    r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}",
+    r"\\includegraphics[width=0.92\\linewidth,keepaspectratio]{\1}",
+    _body,
+)
 (OUT / "body.tex").write_text(_body, encoding="utf-8")
 
 main = r"""\documentclass[10pt]{article}

@@ -38,7 +38,7 @@ Two costs. We separate the one-time labeled-outcome cost (to train ML or seed th
 
 Sorted by label cardinality, a gradient appears: high cardinality favors trained ML, while binary and low-cardinality favor the LLM. Two rows are artifacts addressed in Section 7. ESC-50 ML "wins" only because the spectrogram-vision proxy fails, and CIFAR-10's LLM "win" reflects the pixel-logreg baseline; a frozen-ViT baseline reaches 0.95 and beats the LLM's 0.78, so image in fact favors ML.
 
-![Figure 1. Per-tier accuracy versus label cardinality. The trained model (blue) rises with cardinality while the LLM (red) is strongest on binary and low-cardinality tasks; the rule (grey) is the floor.](fig1_cardinality.png){width=85%}
+![Figure 1. Per-tier accuracy versus label cardinality. The trained model (blue) rises with cardinality while the LLM (red) is strongest on binary and low-cardinality tasks; the rule (grey) is the floor.](fig1_cardinality.png)
 
 | dataset | labels | rule | ML | LLM-zs | LLM-fs | best |
 |---|--:|--:|--:|--:|--:|---|
@@ -70,6 +70,8 @@ The terminal-tier selection is multi-objective, applied in priority order. First
 
 ML graduates once it ties the LLM under the non-inferiority gate, not once it beats it. The margin ε is operator-tunable. The router is permanent: it holds the rule floor, watches for drift, and re-escalates to the LLM when the data calls for it. What shrinks is the dependence on the LLM, not the router.
 
+![Figure 2. Graduation dynamics on four representative streams: trained-model accuracy against accumulated labeled outcomes (log axis), with the LLM (dashed) and rule (dotted) as references and the first crossing of the LLM circled. High-cardinality intent graduates and overtakes the LLM; binary sentiment does not within budget.](fig2_transition.png)
+
 ### 4.1 A lifecycle-level safety guarantee
 
 The per-transition gate gives the standard guarantee that advancing to a worse-than-current tier has probability at most α, the McNemar Type-I error. That part is not novel; it is the test's definition applied to a promotion decision. The lifecycle-level statement is what separates AGA from a single gated comparison.
@@ -88,9 +90,9 @@ Per-call latency (p50): rule 0.003 ms, task-trained model 0.1 ms, MiniLM-embeddi
 
 We evaluate AGA in two settings that differ only in how the terminal tier is chosen.
 
-Per-site measured (the deployable setting). When the terminal tier is chosen from each site's own measured tier accuracies (the setting our results recommend, since cross-site prediction does not generalize; Section 4.4), AGA beats the fixed "always graduate to ML" ladder. Over the 21 datasets, mean accuracy is 0.839 against 0.764 (paired difference +0.075, 95% CI [0.024, 0.127]), at a 34% reduction in labeled outcomes consumed (mean 3295 against 4964; paired Wilcoxon for lower cost, p=0.002). AGA keeps the LLM as the terminal tier on about half the streams and selects a rule or trained model over a not-significantly-better LLM on the rest. Figure 2 plots each stream on the accuracy and labeled-cost plane.
+Per-site measured (the deployable setting). When the terminal tier is chosen from each site's own measured tier accuracies (the setting our results recommend, since cross-site prediction does not generalize; Section 4.4), AGA beats the fixed "always graduate to ML" ladder. Over the 21 datasets, mean accuracy is 0.839 against 0.764 (paired difference +0.075, 95% CI [0.024, 0.127]), at a 34% reduction in labeled outcomes consumed (mean 3295 against 4964; paired Wilcoxon for lower cost, p=0.002). AGA keeps the LLM as the terminal tier on about half the streams and selects a rule or trained model over a not-significantly-better LLM on the rest. Figure 3 plots each stream on the accuracy and labeled-cost plane.
 
-![Figure 2. AGA versus the fixed ladder on the accuracy and labeled-outcome-cost plane. Each grey line joins one stream's AGA terminal (green) to the fixed-ladder choice (orange); AGA reaches comparable or higher accuracy at lower labeled cost.](fig2_frontier.png){width=85%}
+![Figure 3. AGA versus the fixed ladder on the accuracy and labeled-cost plane. Arrows show the labeled-outcome cost saved when AGA graduates off the LLM or stops at it; green is the AGA terminal (per-site measured), orange the fixed-ladder choice.](fig3_frontier.png)
 
 Cross-site predicted. When the terminal tier is instead predicted by the learned meta-policy under leave-one-dataset-out (Section 4.4), realized mean accuracy falls to 0.762, matching the fixed ladder rather than beating it, because the predictor is unreliable at this scale. The difference between the two settings is exactly the value of measuring per site rather than predicting across sites.
 

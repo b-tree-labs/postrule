@@ -107,7 +107,7 @@ LLM's 0.78, so image in fact favors ML.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.85\linewidth,height=\textheight,keepaspectratio]{fig1_cardinality.png}
+\pandocbounded{\includegraphics[width=0.92\linewidth,keepaspectratio]{fig1_cardinality.png}}
 \caption{Figure 1. Per-tier accuracy versus label cardinality. The
 trained model (blue) rises with cardinality while the LLM (red) is
 strongest on binary and low-cardinality tasks; the rule (grey) is the
@@ -165,6 +165,16 @@ once it beats it. The margin ε is operator-tunable. The router is
 permanent: it holds the rule floor, watches for drift, and re-escalates
 to the LLM when the data calls for it. What shrinks is the dependence on
 the LLM, not the router.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[width=0.92\linewidth,keepaspectratio]{fig2_transition.png}}
+\caption{Figure 2. Graduation dynamics on four representative streams:
+trained-model accuracy against accumulated labeled outcomes (log axis),
+with the LLM (dashed) and rule (dotted) as references and the first
+crossing of the LLM circled. High-cardinality intent graduates and
+overtakes the LLM; binary sentiment does not within budget.}
+\end{figure}
 
 \subsection{A lifecycle-level safety
 guarantee}\label{a-lifecycle-level-safety-guarantee}
@@ -227,16 +237,16 @@ the 21 datasets, mean accuracy is 0.839 against 0.764 (paired difference
 outcomes consumed (mean 3295 against 4964; paired Wilcoxon for lower
 cost, p=0.002). AGA keeps the LLM as the terminal tier on about half the
 streams and selects a rule or trained model over a
-not-significantly-better LLM on the rest. Figure 2 plots each stream on
+not-significantly-better LLM on the rest. Figure 3 plots each stream on
 the accuracy and labeled-cost plane.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.85\linewidth,height=\textheight,keepaspectratio]{fig2_frontier.png}
-\caption{Figure 2. AGA versus the fixed ladder on the accuracy and
-labeled-outcome-cost plane. Each grey line joins one stream's AGA
-terminal (green) to the fixed-ladder choice (orange); AGA reaches
-comparable or higher accuracy at lower labeled cost.}
+\pandocbounded{\includegraphics[width=0.92\linewidth,keepaspectratio]{fig3_frontier.png}}
+\caption{Figure 3. AGA versus the fixed ladder on the accuracy and
+labeled-cost plane. Arrows show the labeled-outcome cost saved when AGA
+graduates off the LLM or stops at it; green is the AGA terminal
+(per-site measured), orange the fixed-ladder choice.}
 \end{figure}
 
 Cross-site predicted. When the terminal tier is instead predicted by the
