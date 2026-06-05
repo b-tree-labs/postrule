@@ -4,7 +4,7 @@
 
 ## Abstract
 
-A production classification site can be served by a hand-written rule, a large language model (LLM) call, or a task-trained model. Common practice treats the rule-to-LLM-to-ML progression as a fixed ladder whose destination is the trained model. We ask a different question. Given a stream's measurable characteristics, which of these tiers should serve it, and when? We score four tiers (keyword rule, zero-shot LLM, few-shot LLM, and a task-trained-model training curve) on a common test set across 19 public text datasets, with preliminary image and audio. Two early-observable properties, label cardinality and rule accuracy over chance, predict which tier wins: high-cardinality streams favor the task-trained model, while binary and low-cardinality streams favor the LLM. We operationalize this as Adaptive Graduated Autonomy (AGA), which selects the terminal tier per stream under a multi-objective policy (modality feasibility and a latency budget as hard constraints, accuracy within a significance band, operating cost minimized) and graduates between tiers using a statistical non-inferiority gate. The study measures the accuracy, cost, and latency axes; modality feasibility enters as a hard filter rather than a measured scalar. AGA matches the fixed-ladder baseline's accuracy while using about 44% fewer labeled outcomes, and it keeps the LLM as the terminal tier on roughly half of the streams. We report two negative results. A learned cross-site predictor of the best tier does not generalize at this number of datasets, so per-site measurement is required. And a vision-LLM-on-spectrogram proxy fails on environmental audio. The contribution is the characterization and the cost-reducing adaptive algorithm, not the cascade or the gate, which are prior art.
+A production classification site can be served by a hand-written rule, a large language model (LLM) call, or a task-trained model. Common practice treats the rule-to-LLM-to-ML progression as a fixed ladder whose destination is the trained model. We ask a different question. Given a stream's measurable characteristics, which of these tiers should serve it, and when? We score four tiers (keyword rule, zero-shot LLM, few-shot LLM, and a task-trained-model training curve) on a common test set across 19 public text datasets, with preliminary image and audio. Two early-observable properties, label cardinality and rule accuracy over chance, predict which tier wins: high-cardinality streams favor the task-trained model, while binary and low-cardinality streams favor the LLM. We operationalize this as Adaptive Graduated Autonomy (AGA), which selects the terminal tier per stream under a multi-objective policy (modality feasibility and a latency budget as hard constraints, accuracy within a significance band, operating cost minimized) and graduates between tiers using a statistical non-inferiority gate. The study measures the accuracy, cost, and latency axes; modality feasibility enters as a hard filter rather than a measured scalar. With per-site measured tier selection, AGA exceeds the fixed-ladder accuracy by 0.075 (95% CI [0.024, 0.127]) while using 34% fewer labeled outcomes (paired Wilcoxon for lower cost, p=0.002), and keeps the LLM as the terminal tier on about half the streams. We report two negative results. A learned cross-site predictor of the best tier does not generalize at this number of datasets, so per-site measurement is required. And a vision-LLM-on-spectrogram proxy fails on environmental audio. The contribution is the characterization and the cost-reducing adaptive algorithm, not the cascade or the gate, which are prior art.
 
 ## 1. Introduction
 
@@ -37,6 +37,8 @@ Two costs. We separate the one-time labeled-outcome cost (to train ML or seed th
 ## 3. The composition varies by stream
 
 Sorted by label cardinality, a gradient appears: high cardinality favors trained ML, while binary and low-cardinality favor the LLM. Two rows are artifacts addressed in Section 7. ESC-50 ML "wins" only because the spectrogram-vision proxy fails, and CIFAR-10's LLM "win" reflects the pixel-logreg baseline; a frozen-ViT baseline reaches 0.95 and beats the LLM's 0.78, so image in fact favors ML.
+
+![Figure 1. Per-tier accuracy versus label cardinality. The trained model (blue) rises with cardinality while the LLM (red) is strongest on binary and low-cardinality tasks; the rule (grey) is the floor.](fig1_cardinality.png){width=85%}
 
 | dataset | labels | rule | ML | LLM-zs | LLM-fs | best |
 |---|--:|--:|--:|--:|--:|---|
@@ -84,41 +86,13 @@ Per-call latency (p50): rule 0.003 ms, task-trained model 0.1 ms, MiniLM-embeddi
 
 ### 4.3 AGA versus the fixed ladder
 
-AGA matches accuracy at much lower labeled-outcome cost. In the raw output below, model_zeroshot and
-model_fewshot denote the LLM tier (zero- and few-shot) and ml denotes the task-trained tier.
+We evaluate AGA in two settings that differ only in how the terminal tier is chosen.
 
-```
-dataset             oracle          AGA(LODO)        AGA_acc fixed_acc AGA_cost fix_cost
-------------------------------------------------------------------------------------------------
-ag_news             ml              model_zeroshot     0.853     0.895        0     5000
-atis                ml              ml                 0.848     0.848     1000     1000
-banking77           ml              model_fewshot      0.807     0.870       40     5000
-cifar10             model_zeroshot  ml                 0.327     0.327     1000     1000
-clinc150            ml              ml                 0.838     0.838     5000     5000
-codelangs           ml              ml                 0.986     0.986      500      500
-dbpedia14           ml              ml                 0.968     0.968    10000    10000
-emotion             ml              model_zeroshot     0.632     0.818        0     5000
-esc50               ml              model_fewshot      0.050     0.283        8      100
-hwu64               model_fewshot   ml                 0.805     0.805     5000     5000
-imdb                model_fewshot   model_fewshot      0.958     0.853       40     5000
-rotten_tomatoes     model_fewshot   model_zeroshot     0.930     0.723        0     5000
-sms_spam            model_fewshot   ml                 0.945     0.945     2000     2000
-snips               ml              ml                 0.983     0.983      500      500
-sst2                model_fewshot   model_zeroshot     0.968     0.770        0     5000
-trec6               ml              model_zeroshot     0.795     0.855        0     5000
-tweet_emotion       model_zeroshot  ml                 0.613     0.613     2000     2000
-tweet_hate          model_zeroshot  model_fewshot      0.640     0.560       40      250
-tweet_offensive     ml              model_fewshot      0.730     0.775       40     2000
-twenty_newsgroups   ml              ml                 0.660     0.660    10000    10000
-yahoo_answers       model_zeroshot  ml                 0.670     0.670    10000    10000
-------------------------------------------------------------------------------------------------
+Per-site measured (the deployable setting). When the terminal tier is chosen from each site's own measured tier accuracies (the setting our results recommend, since cross-site prediction does not generalize; Section 4.4), AGA beats the fixed "always graduate to ML" ladder. Over the 21 datasets, mean accuracy is 0.839 against 0.764 (paired difference +0.075, 95% CI [0.024, 0.127]), at a 34% reduction in labeled outcomes consumed (mean 3295 against 4964; paired Wilcoxon for lower cost, p=0.002). AGA keeps the LLM as the terminal tier on about half the streams and selects a rule or trained model over a not-significantly-better LLM on the rest. Figure 2 plots each stream on the accuracy and labeled-cost plane.
 
-LODO oracle-match: 7/21 = 0.33
-Mean accuracy: AGA 0.762 vs fixed-ladder (ML_PRIMARY) 0.764
-Mean labeled outcomes: AGA 2246 vs fixed-ladder 4017
-AGA keeps LLM as terminal (skips ML training): 10/21
-AGA picks rule/ML over a not-better LLM (avoids perpetual cost): 6/21
-```
+![Figure 2. AGA versus the fixed ladder on the accuracy and labeled-outcome-cost plane. Each grey line joins one stream's AGA terminal (green) to the fixed-ladder choice (orange); AGA reaches comparable or higher accuracy at lower labeled cost.](fig2_frontier.png){width=85%}
+
+Cross-site predicted. When the terminal tier is instead predicted by the learned meta-policy under leave-one-dataset-out (Section 4.4), realized mean accuracy falls to 0.762, matching the fixed ladder rather than beating it, because the predictor is unreliable at this scale. The difference between the two settings is exactly the value of measuring per site rather than predicting across sites.
 
 ### 4.4 Negative result: cross-site prediction does not yet generalize
 

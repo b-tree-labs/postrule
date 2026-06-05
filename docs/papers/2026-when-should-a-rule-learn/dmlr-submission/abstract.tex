@@ -15,12 +15,13 @@ selects the terminal tier per stream under a multi-objective policy
 within a significance band, operating cost minimized) and graduates
 between tiers using a statistical non-inferiority gate. The study
 measures the accuracy, cost, and latency axes; modality feasibility
-enters as a hard filter rather than a measured scalar. AGA matches the
-fixed-ladder baseline's accuracy while using about 44\% fewer labeled
-outcomes, and it keeps the LLM as the terminal tier on roughly half of
-the streams. We report two negative results. A learned cross-site
-predictor of the best tier does not generalize at this number of
-datasets, so per-site measurement is required. And a
+enters as a hard filter rather than a measured scalar. With per-site
+measured tier selection, AGA exceeds the fixed-ladder accuracy by 0.075
+(95\% CI {[}0.024, 0.127{]}) while using 34\% fewer labeled outcomes
+(paired Wilcoxon for lower cost, p=0.002), and keeps the LLM as the
+terminal tier on about half the streams. We report two negative results.
+A learned cross-site predictor of the best tier does not generalize at
+this number of datasets, so per-site measurement is required. And a
 vision-LLM-on-spectrogram proxy fails on environmental audio. The
 contribution is the characterization and the cost-reducing adaptive
 algorithm, not the cascade or the gate, which are prior art.

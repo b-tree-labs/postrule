@@ -74,6 +74,12 @@ subprocess.run(
     check=True,
 )
 
+# pandoc 3.x emits an `alt={...}` key in \includegraphics for accessibility; the
+# vendored TMLR graphicx does not support it -> strip it so tectonic compiles.
+_body = (OUT / "body.tex").read_text(encoding="utf-8")
+_body = re.sub(r",\s*alt=\{[^{}]*\}", "", _body)
+(OUT / "body.tex").write_text(_body, encoding="utf-8")
+
 main = r"""\documentclass[10pt]{article}
 \usepackage{tmlr}
 \input{math_commands.tex}
@@ -81,6 +87,7 @@ main = r"""\documentclass[10pt]{article}
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{amsmath,amssymb}
+\usepackage{graphicx}
 \usepackage{booktabs,longtable,array}
 \usepackage{calc}
 \AtBeginEnvironment{longtable}{\small}
