@@ -191,13 +191,16 @@ accuracy stays within ε of the best certified tier, and the rule floor
 lower-bounds it. ∎
 
 Remarks. The union bound is loose, and independence across transitions
-is an idealization, since the tests reuse the accumulating stream. If
-many transitions are expected, α should be spent with a correction such
-as α/m. The guarantee is on certified accuracy under the test's
-assumptions, not a distribution-free promise. What it adds over a single
-McNemar test is a composable safety statement for a multi-tier
-lifecycle, which is what a practitioner needs to let the system graduate
-unattended.
+is an idealization, since the tests reuse the accumulating stream. It
+can be made uniform in m: testing each transition at level α/m (a
+Bonferroni split) bounds the familywise probability of any
+worse-than-current advance by α for every trajectory length, and when m
+is not known in advance an alpha-investing schedule (Foster and Stine
+2008) gives the same control online. The guarantee is on certified
+accuracy under the test's assumptions, not a distribution-free promise.
+What it adds over a single McNemar test is a composable safety statement
+for a multi-tier lifecycle, which is what a practitioner needs to let
+the system graduate unattended.
 
 \subsection{Measured latency and cost}\label{measured-latency-and-cost}
 
@@ -343,15 +346,100 @@ are about ±0.04, and we use significance-aware tie bands accordingly.
 
 \section{Related work}\label{related-work}
 
-FrugalGPT and related LLM cascades route for cost. Learning-to-defer
-routes per example. Champion-challenger and shadow deployment are
-standard MLOps. The paired-McNemar test follows Dietterich. AGA differs
-by choosing the terminal tier per stream from measurable characteristics
-and graduating off the LLM under a non-inferiority gate, rather than
-routing per example or hand-tuning a cascade.
+Model cascades and LLM routing. Cascades route an input through
+progressively more expensive models and stop early when a cheap model is
+confident, a pattern dating to the Viola and Jones (2001) detector and
+recurring in modern LLM cost cascades such as FrugalGPT (Chen et
+al.~2023) and learned LLM routers (Ong et al.~2024). These methods
+reduce cost by choosing a model per query; they do not characterize, per
+classification site, whether a trained model should permanently replace
+the LLM, nor do they keep a deterministic rule as a safety floor.
+
+Learning to defer. A predictor can abstain and defer to an expert when
+the expert is more likely correct (Madras et al.~2018; Mozannar and
+Sontag 2020). Deferral is a per-example decision against a fixed expert;
+AGA instead selects a per-stream terminal tier and graduates the whole
+site off the expensive tier once a cheaper one is statistically
+non-inferior.
+
+Model selection and AutoML. Selecting an estimator and its
+hyperparameters from data is the subject of AutoML (Thornton et
+al.~2013; Hutter et al.~2019). That work selects within the
+trained-model family; our question is the prior one of which tier (rule,
+LLM, or trained model) should serve the stream at all, from cheap stream
+characteristics.
+
+Production ML and statistical comparison. Brittle rules and silent
+regressions are documented sources of technical debt (Sculley et
+al.~2015; Breck et al.~2017). Champion-challenger and shadow deployment
+compare a candidate against the incumbent before promotion, and the
+paired-McNemar test (McNemar 1947; Dietterich 1998) is the standard
+instrument for comparing two classifiers on the same data. AGA builds
+its gate on this test and adds the lifecycle-level guarantee of Section
+4.1 and a cost-aware, multi-objective terminal selection.
+
+Cost-sensitive and active learning. Cost-sensitive learning weights
+errors by cost (Elkan 2001) and active learning chooses which labels to
+acquire (Settles 2009). Both are complementary: AGA's labeled-outcome
+axis is a cost the site already pays through its outcome stream, and the
+gate decides when enough has accumulated to graduate.
 
 \section{Reproducibility}\label{reproducibility}
 
 A single command, \texttt{scripts/reproduce\_dmlr.sh}, regenerates every
 number. The MODEL stages skip automatically without an API key. See
 REPRODUCE.md.
+
+\section{References}\label{references}
+
+Breck, E., Cai, S., Nielsen, E., Salib, M., and Sculley, D. (2017). The
+ML Test Score: A Rubric for ML Production Readiness and Technical Debt
+Reduction. IEEE International Conference on Big Data.
+
+Chen, L., Zaharia, M., and Zou, J. (2023). FrugalGPT: How to Use Large
+Language Models While Reducing Cost and Improving Performance.
+Transactions on Machine Learning Research.
+
+Dietterich, T. G. (1998). Approximate Statistical Tests for Comparing
+Supervised Classification Learning Algorithms. Neural Computation,
+10(7), 1895-1923.
+
+Elkan, C. (2001). The Foundations of Cost-Sensitive Learning.
+International Joint Conference on Artificial Intelligence.
+
+Foster, D. P. and Stine, R. A. (2008). Alpha-investing: a procedure for
+sequential control of expected false discoveries. Journal of the Royal
+Statistical Society: Series B, 70(2), 429-444.
+
+Hutter, F., Kotthoff, L., and Vanschoren, J., editors (2019). Automated
+Machine Learning: Methods, Systems, Challenges. Springer.
+
+Madras, D., Pitassi, T., and Zemel, R. (2018). Predict Responsibly:
+Improving Fairness and Accuracy by Learning to Defer. Advances in Neural
+Information Processing Systems.
+
+McNemar, Q. (1947). Note on the sampling error of the difference between
+correlated proportions or percentages. Psychometrika, 12(2), 153-157.
+
+Mozannar, H. and Sontag, D. (2020). Consistent Estimators for Learning
+to Defer to an Expert. International Conference on Machine Learning.
+
+Ong, I., Almahairi, A., Wu, V., Chiang, W.-L., Wu, T., Gonzalez, J. E.,
+Kadous, M. W., and Stoica, I. (2024). RouteLLM: Learning to Route LLMs
+with Preference Data. arXiv:2406.18665.
+
+Sculley, D., Holt, G., Golovin, D., Davydov, E., Phillips, T., Ebner,
+D., Chaudhary, V., Young, M., Crespo, J.-F., and Dennison, D. (2015).
+Hidden Technical Debt in Machine Learning Systems. Advances in Neural
+Information Processing Systems.
+
+Settles, B. (2009). Active Learning Literature Survey. University of
+Wisconsin-Madison, Computer Sciences Technical Report 1648.
+
+Thornton, C., Hutter, F., Hoos, H. H., and Leyton-Brown, K. (2013).
+Auto-WEKA: Combined Selection and Hyperparameter Optimization of
+Classification Algorithms. ACM SIGKDD.
+
+Viola, P. and Jones, M. (2001). Rapid Object Detection using a Boosted
+Cascade of Simple Features. IEEE Conference on Computer Vision and
+Pattern Recognition.
