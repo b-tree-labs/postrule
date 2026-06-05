@@ -326,14 +326,20 @@ robustness check.
 
 Other limitations. Latency and cost are measured on a sample
 (latency\_profile.json), and LLM latency is network-bound and will vary.
-We use a single LLM (Claude Haiku) and a single prompt, so accuracies
-are sensitive to prompt and model. The multimodal LLM tier is a proxy
-(spectrogram or sampled frames); native audio and video models are
-future work, and spectrogram-vision is shown to fail on environmental
-audio. The cross-site predictor does not generalize at this number of
-datasets (Section 4.4). With n=400 test subsets the accuracy confidence
-intervals are about ±0.04, and we use significance-aware tie bands
-accordingly.
+We use one LLM (Claude Haiku) and one prompt, so absolute accuracies are
+sensitive to prompt and model; the claim is the tier ordering, not the
+exact numbers. As a robustness check we re-ran a second, weaker, free
+local LLM (qwen2.5:7b via Ollama) zero-shot on seven datasets: the tier
+ordering held on six (the trained model wins high-cardinality intent,
+the LLM wins binary sentiment), and the one flip (tweet\_hate) is
+on-thesis, since the weaker LLM there drops below the trained model and
+cedes the harder task to it, shrinking the LLM's winning region as model
+quality falls. The multimodal LLM tier is a proxy (spectrogram or
+sampled frames); native audio and video models are future work, and
+spectrogram-vision is shown to fail on environmental audio. The
+cross-site predictor does not generalize at this number of datasets
+(Section 4.4). With n=400 test subsets the accuracy confidence intervals
+are about ±0.04, and we use significance-aware tie bands accordingly.
 
 \section{Related work}\label{related-work}
 

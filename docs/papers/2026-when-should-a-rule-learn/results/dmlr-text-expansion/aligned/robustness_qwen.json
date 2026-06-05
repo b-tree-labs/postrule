@@ -1,0 +1,44 @@
+{
+  "clinc150": {
+    "qwen_zeroshot": 0.51,
+    "haiku_zeroshot": 0.7475,
+    "ml": 0.8375,
+    "n_labels": 151
+  },
+  "banking77": {
+    "qwen_zeroshot": 0.65,
+    "haiku_zeroshot": 0.7775,
+    "ml": 0.87,
+    "n_labels": 77
+  },
+  "ag_news": {
+    "qwen_zeroshot": 0.82,
+    "haiku_zeroshot": 0.8525,
+    "ml": 0.895,
+    "n_labels": 4
+  },
+  "sst2": {
+    "qwen_zeroshot": 0.94,
+    "haiku_zeroshot": 0.9675,
+    "ml": 0.77,
+    "n_labels": 2
+  },
+  "imdb": {
+    "qwen_zeroshot": 0.93,
+    "haiku_zeroshot": 0.9375,
+    "ml": 0.8525,
+    "n_labels": 2
+  },
+  "rotten_tomatoes": {
+    "qwen_zeroshot": 0.92,
+    "haiku_zeroshot": 0.93,
+    "ml": 0.7225,
+    "n_labels": 2
+  },
+  "tweet_hate": {
+    "qwen_zeroshot": 0.53,
+    "haiku_zeroshot": 0.77,
+    "ml": 0.56,
+    "n_labels": 2
+  }
+}
