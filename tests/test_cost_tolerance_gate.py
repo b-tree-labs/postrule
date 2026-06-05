@@ -82,3 +82,25 @@ def test_refuses_below_min_paired():
     )
     assert decision.target_better is False
     assert "insufficient paired samples" in decision.rationale
+
+
+def test_rejects_invalid_margin():
+    import pytest
+
+    with pytest.raises(ValueError, match="margin"):
+        CostToleranceGate(margin=1.0)
+    with pytest.raises(ValueError, match="margin"):
+        CostToleranceGate(margin=-0.01)
+
+
+def test_rejects_invalid_min_paired():
+    import pytest
+
+    with pytest.raises(ValueError, match="min_paired"):
+        CostToleranceGate(min_paired=0)
+
+
+def test_exposes_config_via_properties():
+    gate = CostToleranceGate(margin=0.03, min_paired=150)
+    assert gate.margin == 0.03
+    assert gate.min_paired == 150
