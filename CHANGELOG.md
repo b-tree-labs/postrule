@@ -15,6 +15,22 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.19] — 2026-06-08
+
+### Added
+
+- **`PostgresStorage`** — a first-class, schema-aware `Storage` backend so switch
+  state (verdict log + head/breaker/signature/ledger) is **durable across deploys
+  and shared across replicas**, the prerequisite for graduation on a stateless
+  multi-replica host. Atomic per-method writes (append / `ON CONFLICT` upsert).
+  Optional dep: `pip install postrule[postgres]`.
+- **Config-driven storage resolution** — a switch built without `storage=` now
+  consults `POSTRULE_STATE_BACKEND` (`memory`|`file`|`postgres`) +
+  `POSTRULE_STATE_DSN`/`_SCHEMA`/`_PATH`, so the backend is a config/console
+  choice, not a code change. Offline-first: no config, a `postgres` backend with
+  no DSN, or an unreachable Postgres all fall back to the local default (never
+  raises). Explicit `storage=` always wins.
+
 ## [1.1.18] — 2026-06-08
 
 ### Fixed
