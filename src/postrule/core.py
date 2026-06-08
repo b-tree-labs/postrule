@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import contextlib
 import inspect
+import os
 import threading
 import time
 import weakref
@@ -3166,6 +3167,92 @@ class LearnedSwitch:
     def storage(self) -> Storage:
         """Public accessor — useful for tests and advanced wiring."""
         return self._storage
+
+    def readiness(self) -> GraduationReadiness:
+        """Read-only graduation-readiness probe (#148) — offline, no mutation.
+
+        Reports whether the configured gate WOULD advance this switch on its
+        current recent evidence, and how far short it is, so a low-data
+        environment (dev/staging) can validate the machinery is wired without
+        prod-scale data. Never mutates phase and never touches the network —
+        it mirrors :meth:`advance`'s evaluation without the mutate step.
+        """
+        from postrule.gates import next_phase
+
+        with self._lock:
+            current = self.config.starting_phase
+            gate = self.config.gate
+            min_paired = int(getattr(gate, "min_paired", getattr(gate, "_min_paired", 0)) or 0)
+            target = next_phase(current)
+            capped = (
+                target is not None and _PHASE_ORDER[target] > _PHASE_ORDER[self.config.phase_limit]
+            )
+            safety_block = self.config.safety_critical and target is Phase.ML_PRIMARY
+            if target is None or capped or safety_block:
+                if target is None:
+                    reason = f"already at terminal phase {current.name}"
+                elif capped:
+                    reason = (
+                        f"target {target.name} exceeds phase_limit {self.config.phase_limit.name}"
+                    )
+                else:
+                    reason = "safety_critical=True refuses advancement to ML_PRIMARY"
+                return GraduationReadiness(
+                    switch=self.name,
+                    environment=_resolve_environment(),
+                    phase=current,
+                    target_phase=None,
+                    would_advance=False,
+                    paired_sample_size=0,
+                    min_paired=min_paired,
+                    shortfall=0,
+                    p_value=None,
+                    rationale=reason,
+                )
+            records = self._storage.load_records(self.name)
+            decision = gate.evaluate(records, current, target)
+
+        paired = int(getattr(decision, "paired_sample_size", 0) or 0)
+        return GraduationReadiness(
+            switch=self.name,
+            environment=_resolve_environment(),
+            phase=current,
+            target_phase=target,
+            would_advance=bool(decision.target_better),
+            paired_sample_size=paired,
+            min_paired=min_paired,
+            shortfall=max(0, min_paired - paired),
+            p_value=getattr(decision, "p_value", None),
+            rationale=decision.rationale,
+        )
+
+
+def _resolve_environment() -> str:
+    """Deployment environment from ``$POSTRULE_ENV`` (else 'default'). Local —
+    same value the cloud emitter stamps on rows (#148)."""
+    return (os.environ.get("POSTRULE_ENV", "").strip()) or "default"
+
+
+@dataclass(frozen=True)
+class GraduationReadiness:
+    """Read-only snapshot of whether a switch would graduate (#148).
+
+    ``would_advance`` is the gate's verdict on the current recent evidence;
+    ``shortfall`` is how many more paired samples the gate's ``min_paired``
+    threshold needs (0 when met or at a terminal/capped phase). Pure local
+    computation — never mutates, never networks.
+    """
+
+    switch: str
+    environment: str
+    phase: Phase
+    target_phase: Phase | None
+    would_advance: bool
+    paired_sample_size: int
+    min_paired: int
+    shortfall: int
+    p_value: float | None
+    rationale: str
 
 
 @dataclass(frozen=True)

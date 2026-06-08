@@ -123,10 +123,15 @@ class _MLSwitchWrapper:
         :meth:`LearnedSwitch.reconcile_signals`."""
         return self.switch.reconcile_signals(**kwargs)
 
-    def migrate_defaults(self, *, to_version: str) -> bool:
+    def migrate_defaults(self, *, to_version: str, accept_reset: bool = False) -> bool:
         """Opt into a newer default-set version, evidence-gated (#60). See
         :meth:`LearnedSwitch.migrate_defaults`."""
-        return self.switch.migrate_defaults(to_version=to_version)
+        return self.switch.migrate_defaults(to_version=to_version, accept_reset=accept_reset)
+
+    def readiness(self):
+        """Read-only graduation-readiness probe (#148). See
+        :meth:`LearnedSwitch.readiness`."""
+        return self.switch.readiness()
 
     # #55 — consistent accessor. ``name`` is a property but ``phase`` was
     # method-only, so reading the current phase meant remembering to call
