@@ -15,6 +15,18 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.20] — 2026-06-08
+
+### Fixed
+
+- **`PostgresStorage` now attaches to a pre-provisioned schema under a
+  least-privilege role.** `_ensure_schema` issued `CREATE SCHEMA IF NOT EXISTS`
+  unconditionally, which Postgres rejects without **database-level** CREATE even
+  when the schema already exists — so a managed/multi-tenant role scoped to only
+  its own schema got `InsufficientPrivilege`. It now checks for the schema first
+  and only creates it when absent. (Found dogfooding the live control plane with
+  a schema-per-tenant role.)
+
 ## [1.1.19] — 2026-06-08
 
 ### Added

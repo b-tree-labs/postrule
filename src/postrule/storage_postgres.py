@@ -91,7 +91,18 @@ class PostgresStorage(StorageBase):
                 return cur.fetchall() if cur.description is not None else None
 
     def _ensure_schema(self) -> None:
-        self._execute(f'CREATE SCHEMA IF NOT EXISTS "{self._schema}"')
+        # Only CREATE the schema if it's absent. In the managed/multi-tenant
+        # model the schema is pre-provisioned and the tenant role has CREATE on
+        # *its schema* but NOT on the database — and `CREATE SCHEMA IF NOT
+        # EXISTS` still requires database-level CREATE even when the schema
+        # already exists. Checking first lets a scoped role attach to its
+        # pre-made schema, while a privileged role still bootstraps a new one.
+        existing = self._execute(
+            "SELECT 1 FROM information_schema.schemata WHERE schema_name = %s",
+            (self._schema,),
+        )
+        if not existing:
+            self._execute(f'CREATE SCHEMA IF NOT EXISTS "{self._schema}"')
         self._execute(
             f"CREATE TABLE IF NOT EXISTS {self._records} "
             "(id BIGSERIAL PRIMARY KEY, switch_name TEXT NOT NULL, line TEXT NOT NULL)"

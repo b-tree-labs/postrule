@@ -117,3 +117,47 @@ def test_shared_across_instances(schema):
     s2 = PostgresStorage(DSN, schema=schema)
     assert s2.get_state("sw", "head") == b"weights"
     assert [r.label for r in s2.load_records("sw")] == ["z"]
+
+
+def test_scoped_tenant_role_attaches_to_preprovisioned_schema(schema):
+    """Managed multi-tenant regression: a role with CREATE on its *schema* but
+    NOT on the database must attach to a pre-provisioned schema. `CREATE SCHEMA
+    IF NOT EXISTS` needs database-level CREATE even when the schema exists, so
+    _ensure_schema must check-then-create. (Found dogfooding the live control
+    plane: 1.1.19 raised InsufficientPrivilege here.)
+    """
+    import secrets
+    from urllib.parse import urlparse
+
+    import psycopg2
+
+    admin = psycopg2.connect(DSN)
+    admin.autocommit = True
+    role = f"pr_tenant_{os.getpid()}_{int(time.time() * 1000) % 100000}"
+    pw = secrets.token_urlsafe(16)
+    try:
+        with admin.cursor() as cur:
+            try:
+                cur.execute(f'CREATE ROLE "{role}" LOGIN PASSWORD %s', (pw,))
+            except psycopg2.errors.InsufficientPrivilege:
+                pytest.skip("test DSN lacks CREATEROLE")
+            cur.execute(f'CREATE SCHEMA "{schema}"')  # pre-provision (as admin)
+            cur.execute(f'GRANT CONNECT ON DATABASE {admin.get_dsn_parameters()["dbname"]} TO "{role}"')
+            cur.execute(f'GRANT USAGE, CREATE ON SCHEMA "{schema}" TO "{role}"')
+            # deliberately NO database-level CREATE for the tenant role
+
+        p = urlparse(DSN)
+        scoped = f"postgresql://{role}:{pw}@{p.hostname}:{p.port or 5432}/{p.path.lstrip('/')}"
+
+        s = PostgresStorage(scoped, schema=schema)  # must NOT raise
+        s.put_state("sw", "k", b"v")
+        assert s.get_state("sw", "k") == b"v"
+
+        # isolation: the scoped role cannot reach a different schema
+        with pytest.raises(psycopg2.errors.InsufficientPrivilege):
+            PostgresStorage(scoped, schema=f"{schema}_other")
+    finally:
+        with admin.cursor() as cur:
+            cur.execute(f'DROP OWNED BY "{role}" CASCADE')
+            cur.execute(f'DROP ROLE IF EXISTS "{role}"')
+        admin.close()
