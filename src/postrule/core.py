@@ -672,6 +672,14 @@ _SWITCH_REGISTRY: weakref.WeakValueDictionary[tuple[int, str], LearnedSwitch] = 
 )
 _SWITCH_REGISTRY_LOCK = threading.Lock()
 
+# Audit-ledger events surfaced to telemetry (G1 — console lifecycle timeline).
+# Only meaningful state transitions / decisions are emitted; ``adopt`` (fires on
+# every fresh construction → would flood with per-process-start noise) and
+# ``advisory`` (a non-acting rule-drift note) stay local-ledger-only.
+_EMITTED_LIFECYCLE_EVENTS = frozenset(
+    {"migrate", "migrate_reset", "migrate_rejected", "demote", "quarantine", "pin", "swap"}
+)
+
 
 def _derive_name_from_rule(rule: RuleFunc) -> str:
     """Derive a switch name from the rule function's ``__name__``.
@@ -2568,6 +2576,15 @@ class LearnedSwitch:
             self._put_state("ledger", existing + line)
         except BaseException:  # pragma: no cover — ledger is best-effort audit
             pass
+        # Surface meaningful lifecycle transitions to telemetry so the console
+        # can show why a switch moved/reset on an upgrade (G1). Metadata only;
+        # best-effort and independent of the local ledger write above. ``adopt``
+        # / ``advisory`` stay local (see _EMITTED_LIFECYCLE_EVENTS).
+        if event in _EMITTED_LIFECYCLE_EVENTS:
+            try:
+                self._telemetry.emit("lifecycle", rec)
+            except BaseException:  # pragma: no cover — telemetry never breaks audit
+                pass
 
     def reconcile_signals(self, *, _at_init: bool = False):
         """Detect a judge/strategy/gate swap and re-justify the current phase.
