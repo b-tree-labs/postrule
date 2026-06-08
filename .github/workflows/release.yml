@@ -119,13 +119,14 @@ jobs:
     permissions:
       actions: write
     steps:
-      # No checkout needed — this job only dispatches another workflow.
+      # No checkout — pass --repo explicitly so `gh` doesn't try to infer the
+      # target from a (nonexistent) local git checkout.
       - name: Dispatch sync-to-public (real run)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh workflow run sync-to-public.yml --ref main -f dry_run=false
+          gh workflow run sync-to-public.yml --repo "${{ github.repository }}" --ref main -f dry_run=false
           echo "Dispatched sync-to-public.yml for ${{ needs.check-version.outputs.tag }}"
 
   build:
