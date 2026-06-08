@@ -94,6 +94,30 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
 
+  trigger-sync:
+    # Kick the private→public mirror sync explicitly. We cannot rely on the
+    # `on: push: tags` trigger in sync-to-public.yml: the tag above is pushed
+    # with the default GITHUB_TOKEN, and tags pushed by GITHUB_TOKEN do NOT
+    # trigger other workflows (GitHub's recursion guard). A workflow_dispatch
+    # issued via GITHUB_TOKEN *does* run, so dispatch the sync directly here.
+    # Guarded to the monorepo so the synced copy of this file is a no-op in the
+    # public mirror (which has no sync-to-public.yml).
+    name: Trigger public mirror sync
+    needs: [check-version, tag]
+    if: needs.check-version.outputs.should-release == 'true' && github.repository == 'b-tree-labs/postrule-private'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dispatch sync-to-public (real run)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run sync-to-public.yml --ref main -f dry_run=false
+          echo "Dispatched sync-to-public.yml for ${{ needs.check-version.outputs.tag }}"
+
   build:
     name: Build distributions
     needs: [check-version, tag]
