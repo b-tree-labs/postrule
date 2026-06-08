@@ -635,3 +635,75 @@ class TestEnrichedOutcomePayload:
         assert p["model_correct"] is None
         assert p["ml_correct"] is None
         assert p["phase"] == "P0"
+
+
+class TestEnvironmentStamping:
+    """#148 — every verdict + lifecycle row carries the deployment environment
+    so dev/staging/prod stop pooling into one (account, switch) bucket."""
+
+    def _make(self, sender: _RecordingSender, **kw: Any) -> CloudVerdictEmitter:
+        return CloudVerdictEmitter(
+            api_url="http://localhost:8787",
+            bearer_token="prul_live_test",  # pragma: allowlist secret
+            sender=sender,
+            **kw,
+        )
+
+    def _outcome(self) -> dict[str, Any]:
+        return {"switch": "triage", "outcome": "correct", "phase": "P0", "rule_correct": True}
+
+    def test_outcome_includes_explicit_environment(self):
+        sender = _RecordingSender()
+        em = self._make(sender, environment="prod")
+        try:
+            em.emit("outcome", self._outcome())
+            _drain(em)
+            assert sender.calls[0]["environment"] == "prod"
+        finally:
+            em.close(timeout=0.1)
+
+    def test_lifecycle_includes_environment(self):
+        sender = _RecordingSender()
+        em = self._make(sender, environment="prod")
+        try:
+            em.emit(
+                "lifecycle",
+                {"switch": "triage", "event": "migrate_reset", "phase_after": "RULE"},
+            )
+            _drain(em)
+            assert sender.calls[0]["environment"] == "prod"
+        finally:
+            em.close(timeout=0.1)
+
+    def test_environment_defaults_to_default(self, monkeypatch):
+        monkeypatch.delenv("POSTRULE_ENV", raising=False)
+        sender = _RecordingSender()
+        em = self._make(sender)
+        try:
+            em.emit("outcome", self._outcome())
+            _drain(em)
+            assert sender.calls[0]["environment"] == "default"
+        finally:
+            em.close(timeout=0.1)
+
+    def test_environment_from_env_var(self, monkeypatch):
+        monkeypatch.setenv("POSTRULE_ENV", "staging")
+        sender = _RecordingSender()
+        em = self._make(sender)  # no explicit environment → reads POSTRULE_ENV
+        try:
+            em.emit("outcome", self._outcome())
+            _drain(em)
+            assert sender.calls[0]["environment"] == "staging"
+        finally:
+            em.close(timeout=0.1)
+
+    def test_explicit_environment_overrides_env_var(self, monkeypatch):
+        monkeypatch.setenv("POSTRULE_ENV", "staging")
+        sender = _RecordingSender()
+        em = self._make(sender, environment="prod")
+        try:
+            em.emit("outcome", self._outcome())
+            _drain(em)
+            assert sender.calls[0]["environment"] == "prod"
+        finally:
+            em.close(timeout=0.1)
