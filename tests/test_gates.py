@@ -157,8 +157,10 @@ class TestMcNemarGateAdvances:
 
         decision = gate.evaluate(records, Phase.MODEL_SHADOW, Phase.MODEL_PRIMARY)
         assert decision.target_better is True
-        assert decision.p_value is not None
-        assert decision.p_value < 0.01
+        assert decision.method == "mcnemar"
+        assert decision.statistic_name == "p_value"
+        assert decision.statistic_value is not None
+        assert decision.statistic_value < 0.01
         assert decision.paired_sample_size == 300
         assert decision.current_accuracy is not None
         assert decision.target_accuracy is not None
@@ -446,7 +448,10 @@ class TestAdvance:
                 return GateDecision(
                     target_better=True,
                     rationale="test",
-                    p_value=0.001,
+                    method="mcnemar",
+                    statistic_name="p_value",
+                    statistic_value=0.001,
+                    threshold=0.05,
                     paired_sample_size=300,
                 )
 
@@ -463,7 +468,9 @@ class TestAdvance:
         payload = advance_events[0]
         assert payload["from"] == "RULE"
         assert payload["to"] == "MODEL_SHADOW"
-        assert payload["p_value"] == 0.001
+        assert payload["statistic_value"] == 0.001
+        assert payload["gate_method"] == "mcnemar"
+        assert payload["statistic_name"] == "p_value"
 
     def test_auto_advance_fires_at_interval(self):
         """record_verdict calls advance() every auto_advance_interval rows."""
@@ -598,5 +605,7 @@ class TestAdvance:
         decision = s.advance()
         assert decision.target_better is True
         assert s.phase() is Phase.MODEL_PRIMARY
-        assert decision.p_value is not None
-        assert decision.p_value < 0.01
+        assert decision.method == "mcnemar"
+        assert decision.statistic_name == "p_value"
+        assert decision.statistic_value is not None
+        assert decision.statistic_value < 0.01

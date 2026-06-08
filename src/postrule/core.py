@@ -1952,7 +1952,10 @@ class LearnedSwitch:
                         "from": current.value,
                         "to": target.value,
                         "rationale": decision.rationale,
-                        "p_value": decision.p_value,
+                        "gate_method": decision.method,
+                        "statistic_name": decision.statistic_name,
+                        "statistic_value": decision.statistic_value,
+                        "threshold": decision.threshold,
                         "paired_sample_size": decision.paired_sample_size,
                         "current_accuracy": decision.current_accuracy,
                         "target_accuracy": decision.target_accuracy,
@@ -2045,7 +2048,10 @@ class LearnedSwitch:
             decision = GateDecision(
                 target_better=True,
                 rationale=f"{_decision.rationale}; reason: {reason}",
-                p_value=_decision.p_value,
+                method=_decision.method,
+                statistic_name=_decision.statistic_name,
+                statistic_value=_decision.statistic_value,
+                threshold=_decision.threshold,
                 paired_sample_size=_decision.paired_sample_size,
                 current_accuracy=_decision.current_accuracy,
                 target_accuracy=_decision.target_accuracy,
@@ -2065,7 +2071,10 @@ class LearnedSwitch:
                     "to": target.value,
                     "rationale": decision.rationale,
                     "reason": reason,
-                    "p_value": decision.p_value,
+                    "gate_method": decision.method,
+                    "statistic_name": decision.statistic_name,
+                    "statistic_value": decision.statistic_value,
+                    "threshold": decision.threshold,
                     "paired_sample_size": decision.paired_sample_size,
                     "current_accuracy": decision.current_accuracy,
                     "target_accuracy": decision.target_accuracy,
@@ -2744,7 +2753,10 @@ class LearnedSwitch:
                         phase_after=self.phase().name,
                         reason=f"phase {current.name} no longer justified under new signal "
                         f"({', '.join(changed)})",
-                        p_value=getattr(decision, "p_value", None),
+                        gate_method=decision.method,
+                        statistic_name=decision.statistic_name,
+                        statistic_value=decision.statistic_value,
+                        threshold=decision.threshold,
                     )
 
             # Stale-ML quarantine (#60 PR2). A judge or strategy swap
@@ -3218,7 +3230,10 @@ class LearnedSwitch:
                     paired_sample_size=0,
                     min_paired=min_paired,
                     shortfall=0,
-                    p_value=None,
+                    method="none",
+                    statistic_name=None,
+                    statistic_value=None,
+                    threshold=None,
                     rationale=reason,
                 )
             records = self._storage.load_records(self.name)
@@ -3234,7 +3249,10 @@ class LearnedSwitch:
             paired_sample_size=paired,
             min_paired=min_paired,
             shortfall=max(0, min_paired - paired),
-            p_value=getattr(decision, "p_value", None),
+            method=getattr(decision, "method", "none"),
+            statistic_name=getattr(decision, "statistic_name", None),
+            statistic_value=getattr(decision, "statistic_value", None),
+            threshold=getattr(decision, "threshold", None),
             rationale=decision.rationale,
         )
 
@@ -3373,7 +3391,12 @@ class GraduationReadiness:
     paired_sample_size: int
     min_paired: int
     shortfall: int
-    p_value: float | None
+    # Method-agnostic gate evidence (see GateDecision): method names the test,
+    # statistic_name/value + threshold describe its headline number and bar.
+    method: str
+    statistic_name: str | None
+    statistic_value: float | None
+    threshold: float | None
     rationale: str
 
 

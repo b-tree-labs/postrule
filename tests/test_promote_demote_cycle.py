@@ -47,7 +47,10 @@ class _AlwaysAdvanceGate:
         return GateDecision(
             target_better=True,
             rationale="cycle test: always advance",
-            p_value=0.0,
+            method="mcnemar",
+            statistic_name="p_value",
+            statistic_value=0.0,
+            threshold=0.05,
             paired_sample_size=999,
         )
 
