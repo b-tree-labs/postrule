@@ -304,6 +304,52 @@ class TestCloudVerdictEmitterPayload:
         finally:
             em.close(timeout=0.1)
 
+    def test_emit_lifecycle_posts_metadata_only(self):
+        # #145 G1 — lifecycle events ship the transition metadata (so the
+        # console can show resets/migrations) but NOT the reason or signatures.
+        sender = _RecordingSender()
+        em = self._make(sender)
+        try:
+            em.emit(
+                "lifecycle",
+                {
+                    "ts": 1234.5,
+                    "event": "migrate_reset",
+                    "switch": "triage",
+                    "phase_before": "MODEL_PRIMARY",
+                    "phase_after": "RULE",
+                    "reason": "secret internal reason text",
+                    "sig_before": {"gate": "x"},
+                    "sig_after": {"gate": "y"},
+                },
+            )
+            _drain(em)
+            assert len(sender.calls) == 1
+            wire = sender.calls[0]
+            assert wire["kind"] == "lifecycle"
+            assert wire["switch_name"] == "triage"
+            assert wire["event"] == "migrate_reset"
+            assert wire["phase_before"] == "MODEL_PRIMARY"
+            assert wire["phase_after"] == "RULE"
+            assert wire["ts"] == 1234.5
+            assert "request_id" in wire and len(wire["request_id"]) >= 16
+            # No reason / signatures / inputs leak.
+            for forbidden in ("reason", "sig_before", "sig_after", "input", "label"):
+                assert forbidden not in wire
+        finally:
+            em.close(timeout=0.1)
+
+    def test_lifecycle_without_switch_or_event_is_dropped(self):
+        sender = _RecordingSender()
+        em = self._make(sender)
+        try:
+            em.emit("lifecycle", {"event": "migrate", "phase_after": "RULE"})  # no switch
+            em.emit("lifecycle", {"switch": "triage", "phase_after": "RULE"})  # no event
+            _drain(em, timeout=0.2)
+            assert sender.calls == []
+        finally:
+            em.close(timeout=0.1)
+
     def test_emit_failure_absorbs_exception(self):
         # Sender that always raises.
         bad_sender = MagicMock()

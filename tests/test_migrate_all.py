@@ -23,6 +23,7 @@ import pytest
 from postrule import LearnedSwitch, McNemarGate, Phase, migrate_all
 from postrule.core import ClassificationRecord
 from postrule.storage import FileStorage
+from postrule.telemetry import NullEmitter
 
 
 def _rec(rule_right: bool, model_right: bool, ml_right: bool = False):
@@ -57,6 +58,7 @@ def _seed(
         gate=gate,
         storage=FileStorage(str(tmp_path)),
         persist=True,
+        telemetry=NullEmitter(),  # hermetic: never touch the global/real emitter
     )
     for i in range(n):
         if target_wins:  # higher tier beats the rule => phase justified
@@ -150,3 +152,55 @@ def test_migrate_all_noop_for_operator_gate(tmp_path):
     out = {o.switch: o for o in migrate_all(to_version="anything")}
     assert out["mall_op"].result == "noop"
     assert s.phase() is Phase.MODEL_PRIMARY
+
+
+class _RecordingEmitter:
+    """Minimal TelemetryEmitter that records (event, payload) pairs."""
+
+    def __init__(self):
+        self.events: list[tuple[str, dict]] = []
+
+    def emit(self, event: str, payload: dict) -> None:
+        self.events.append((event, dict(payload)))
+
+    def flush(self, timeout: float = 5.0) -> bool:  # pragma: no cover - unused
+        return True
+
+    def stats(self) -> dict:  # pragma: no cover - unused
+        return {}
+
+
+def test_ledger_event_emits_lifecycle_telemetry(tmp_path):
+    """#145 G1 — audit-ledger events surface to telemetry so the console can
+    show resets/migrations. Without the _append_ledger hook the recorder sees
+    no 'lifecycle' events."""
+    import postrule.defaults as D
+
+    D.register_default_set(
+        "mv_tel",
+        {
+            "gate": lambda: McNemarGate(alpha=0.001, min_paired=20),
+            "drift_gate": lambda: McNemarGate(),
+        },
+    )
+    rec = _RecordingEmitter()
+    s = LearnedSwitch(
+        rule=lambda _x: "a",
+        name="tel_switch",
+        starting_phase=Phase.MODEL_PRIMARY,
+        storage=FileStorage(str(tmp_path)),
+        persist=True,
+        telemetry=rec,
+    )
+    for i in range(60):  # rule_wins => phase not justified under the new gate
+        s._storage.append_record("tel_switch", _rec(rule_right=(i < 55), model_right=(i < 15)))
+
+    s.migrate_defaults(to_version="mv_tel", accept_reset=True)
+
+    lifecycle = [p for (e, p) in rec.events if e == "lifecycle"]
+    reset_events = [p for p in lifecycle if p.get("event") == "migrate_reset"]
+    assert reset_events, f"expected a migrate_reset lifecycle emit; got {rec.events!r}"
+    assert reset_events[0]["switch"] == "tel_switch"
+    assert reset_events[0]["phase_after"] == "RULE"
+    # The per-construction 'adopt' event is noise and must NOT be emitted.
+    assert all(p.get("event") != "adopt" for p in lifecycle)
