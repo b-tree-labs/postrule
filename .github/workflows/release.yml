@@ -12,13 +12,20 @@
 # separate ceremony (`git tag v*`). A merge that bumps the version
 # IS the release; a merge that doesn't is a no-op.
 #
+# Publishes from THIS PRIVATE monorepo so the wheel is built from the COMPLETE
+# source (incl. the BSL modules cloud/auth/cli). The public mirror is a
+# BSL-stripped source copy; building the wheel there omits those modules (which
+# is how 1.1.16/1.1.17 shipped broken). The release jobs are guarded to
+# `github.repository == 'b-tree-labs/postrule-private'` so the mirrored copy of
+# this workflow never tags/builds/publishes.
+#
 # Setup (one-time, on PyPI):
-#   1. https://pypi.org/manage/account/publishing/
-#   2. Add a new pending publisher with:
+#   1. https://pypi.org/manage/account/publishing/  (project: postrule)
+#   2. Add a Trusted Publisher with:
 #        Project name:      postrule
 #        Owner:             b-tree-labs
-#        Repository name:   postrule
-#        Workflow filename: release.yml          ← matches THIS file
+#        Repository name:   postrule-private        ← the publisher is PRIVATE
+#        Workflow filename: release.yml             ← matches THIS file
 #        Environment name:  pypi
 #
 # After the binding is active, no PYPI_API_TOKEN secret is required;
@@ -77,7 +84,10 @@ jobs:
   tag:
     name: Tag the release commit
     needs: check-version
-    if: needs.check-version.outputs.should-release == 'true'
+    # Release actions run ONLY in the private monorepo, which is the source of
+    # truth + the PyPI publisher. The public mirror is a (BSL-stripped) source
+    # copy and must NOT tag/build/publish — its wheel would omit cloud/auth/cli.
+    if: needs.check-version.outputs.should-release == 'true' && github.repository == 'b-tree-labs/postrule-private'
     runs-on: ubuntu-latest
     permissions:
       # Push the new vX.Y.Z tag back to the repo.
@@ -109,7 +119,7 @@ jobs:
     permissions:
       actions: write
     steps:
-      - uses: actions/checkout@v4
+      # No checkout needed — this job only dispatches another workflow.
       - name: Dispatch sync-to-public (real run)
         env:
           GH_TOKEN: ${{ github.token }}
@@ -121,7 +131,9 @@ jobs:
   build:
     name: Build distributions
     needs: [check-version, tag]
-    if: needs.check-version.outputs.should-release == 'true'
+    # Private-only: builds the FULL wheel (incl. cloud/auth/cli) from the
+    # complete monorepo source. (The public mirror lacks those BSL modules.)
+    if: needs.check-version.outputs.should-release == 'true' && github.repository == 'b-tree-labs/postrule-private'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -153,6 +165,7 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: build
+    if: github.repository == 'b-tree-labs/postrule-private'
     runs-on: ubuntu-latest
     # `pypi` matches the environment name in the trusted-publisher
     # binding above. The environment also gates on any branch /
@@ -183,6 +196,7 @@ jobs:
   github-release:
     name: Create GitHub Release
     needs: [check-version, publish]
+    if: github.repository == 'b-tree-labs/postrule-private'
     runs-on: ubuntu-latest
     permissions:
       contents: write
