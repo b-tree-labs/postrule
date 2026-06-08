@@ -148,6 +148,11 @@ class _MLSwitchWrapper:
         :meth:`LearnedSwitch.uninstall`."""
         return self.switch.uninstall(to_snapshot=to_snapshot, verify=verify)
 
+    def refit_head(self) -> bool:
+        """Force the ML head to refit from the log (#148). See
+        :meth:`LearnedSwitch.refit_head`."""
+        return self.switch.refit_head()
+
     # #55 — consistent accessor. ``name`` is a property but ``phase`` was
     # method-only, so reading the current phase meant remembering to call
     # it (``fn.phase()``) or reaching through ``fn.switch``. ``current_phase``

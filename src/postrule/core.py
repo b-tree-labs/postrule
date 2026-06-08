@@ -3314,6 +3314,33 @@ class LearnedSwitch:
                         raise RuntimeError(f"uninstall verify failed: state {key!r} not restored")
             return True
 
+    def refit_head(self) -> bool:
+        """Force this switch's ML head to refit from the preserved log (#148 G4).
+
+        ``ml_head_version`` is excluded from swap detection so routine upgrades
+        never churn graduated heads — but a genuinely improved head algorithm
+        then never reaches existing heads. This is the explicit operator
+        trigger: drop the persisted head (and clear the in-memory instance when
+        a strategy can reselect one) so the next ML-phase serve re-fits from the
+        verdict log, exactly as the #60 quarantine does. Returns True if a head
+        was present to refit, False otherwise. The log is untouched.
+        """
+        with self._lock:
+            if not self._head_is_present():
+                return False
+            self._delete_state("head")
+            if self._head_strategy is not None:
+                self._ml_head = None
+            self._append_ledger(
+                "refit",
+                sig_before=None,
+                sig_after=None,
+                phase_before=self.phase().name,
+                phase_after=self.phase().name,
+                reason="operator-triggered head refit (refit_all)",
+            )
+            return True
+
 
 def _resolve_environment() -> str:
     """Deployment environment from ``$POSTRULE_ENV`` (else 'default'). Local —
@@ -3421,3 +3448,18 @@ def migrate_all(*, to_version: str, accept_reset: bool = False) -> list[Migratio
             )
         )
     return outcomes
+
+
+def refit_all() -> list[str]:
+    """Refit every live switch's ML head from its preserved log (#148 G4).
+
+    Iterates the process-wide switch registry and calls
+    :meth:`LearnedSwitch.refit_head` on each — the operator entry point for
+    "adopt the new SDK's improved head algorithm across the board" (which
+    ``ml_head_version`` exclusion otherwise never applies to existing heads).
+    Returns the names of the switches that had a head to refit. In-process
+    only; other replicas refit when their own process calls this.
+    """
+    with _SWITCH_REGISTRY_LOCK:
+        switches = list(_SWITCH_REGISTRY.values())
+    return [s.name for s in switches if s.refit_head()]
