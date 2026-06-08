@@ -83,14 +83,23 @@ class GateDecision:
     future axis-step method) interprets it in domain context.
 
     ``rationale`` is the human-readable explanation surfaced in
-    telemetry and audit logs. Statistical gates include ``p_value``
-    and ``paired_sample_size`` so operators and auditors can replay
-    the decision.
+    telemetry and audit logs.
+
+    Statistical evidence is **method-agnostic** so the gate's test can be
+    swapped (McNemar, bootstrap CI, Bayes factor, SPRT, …) without changing
+    consumers: ``method`` names the test, and ``statistic_name`` /
+    ``statistic_value`` / ``threshold`` describe its headline number and the
+    bar it had to clear. ``paired_sample_size`` is the count of comparable
+    observations. Together they let operators and auditors replay any gate's
+    decision.
     """
 
     target_better: bool
     rationale: str
-    p_value: float | None = None
+    method: str = "none"
+    statistic_name: str | None = None
+    statistic_value: float | None = None
+    threshold: float | None = None
     paired_sample_size: int = 0
     current_accuracy: float | None = None
     target_accuracy: float | None = None
@@ -303,7 +312,10 @@ class McNemarGate:
                     f"{current_phase.name}={current_acc:.1%} "
                     f"→ {target_phase.name}={target_acc:.1%} on {n} paired samples"
                 ),
-                p_value=p,
+                method="mcnemar",
+                statistic_name="p_value",
+                statistic_value=p,
+                threshold=self._alpha,
                 paired_sample_size=n,
                 current_accuracy=current_acc,
                 target_accuracy=target_acc,
@@ -317,7 +329,10 @@ class McNemarGate:
                     f"McNemar p={p:.4g} < alpha={self._alpha} but b={b} <= c={c}; "
                     f"target does not beat current on {n} paired samples"
                 ),
-                p_value=p,
+                method="mcnemar",
+                statistic_name="p_value",
+                statistic_value=p,
+                threshold=self._alpha,
                 paired_sample_size=n,
                 current_accuracy=current_acc,
                 target_accuracy=target_acc,
@@ -328,7 +343,10 @@ class McNemarGate:
                 f"McNemar p={p:.4g} >= alpha={self._alpha}; "
                 f"evidence insufficient on {n} paired samples"
             ),
-            p_value=p,
+            method="mcnemar",
+            statistic_name="p_value",
+            statistic_value=p,
+            threshold=self._alpha,
             paired_sample_size=n,
             current_accuracy=current_acc,
             target_accuracy=target_acc,
@@ -639,13 +657,16 @@ class CompositeGate:
         # Merge the most informative stats — prefer the first sub-decision
         # with statistical content (all gates fire the same comparison).
         stats_from = next(
-            (d for d in sub_decisions if d.p_value is not None or d.paired_sample_size > 0),
+            (d for d in sub_decisions if d.statistic_value is not None or d.paired_sample_size > 0),
             sub_decisions[0],
         )
         return GateDecision(
             target_better=target_better,
             rationale=rationale,
-            p_value=stats_from.p_value,
+            method=stats_from.method,
+            statistic_name=stats_from.statistic_name,
+            statistic_value=stats_from.statistic_value,
+            threshold=stats_from.threshold,
             paired_sample_size=stats_from.paired_sample_size,
             current_accuracy=stats_from.current_accuracy,
             target_accuracy=stats_from.target_accuracy,

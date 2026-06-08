@@ -86,8 +86,8 @@ class TestMcNemarDemotionDirection:
         decision = gate.evaluate(records, Phase.ML_PRIMARY, Phase.RULE)
 
         assert decision.target_better is True
-        assert decision.p_value is not None
-        assert decision.p_value < 0.01
+        assert decision.statistic_value is not None
+        assert decision.statistic_value < 0.01
 
     def test_rule_dominates_model_at_p2_target_better_true(self):
         records = []
