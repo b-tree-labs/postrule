@@ -118,6 +118,7 @@ jobs:
               tests/test_init_safety.py|\
               tests/test_landing_headers.py|\
               tests/test_cli_quickstart.py|\
+              tests/test_cloud_control_plane.py|\
               tests/test_cloud_registry.py|\
               tests/test_cloud_report.py|\
               tests/test_cloud_sync.py|\
