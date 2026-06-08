@@ -66,6 +66,10 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+postgres = [
+    # Durable, replica-shared switch state via postrule.PostgresStorage.
+    "psycopg2-binary>=2.9",
+]
 license = [
     # Ed25519 verification for offline Business-tier license tokens.
     # See src/postrule/license.py.
@@ -179,6 +183,7 @@ omit = [
     "*/benchmarks/loaders_ext.py",  # network-bound HF dataset loaders; integration only
     "*/benchmarks/loaders_audio.py",  # network-bound audio dataset loaders; integration only
     "*/audio_features.py",  # optional-dep (librosa/soundfile) MFCC/spectrogram; benchmark-only
+    "*/storage_postgres.py",  # optional-dep (psycopg2) + live Postgres; integration-only (test skips without $POSTRULE_TEST_PG_DSN). TODO: add a CI Postgres service, then drop this omit.
 ]
 
 [tool.coverage.report]
