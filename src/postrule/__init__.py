@@ -43,6 +43,7 @@ from postrule.core import (
     SwitchStatus,
     Verdict,
     migrate_all,
+    refit_all,
 )
 from postrule.decorator import ml_switch
 from postrule.gates import (
@@ -225,6 +226,7 @@ __all__ = [
     "flock_supported",
     "make_ml_head",
     "migrate_all",
+    "refit_all",
     "ml_switch",
     "next_phase",
     "prev_phase",
