@@ -142,7 +142,9 @@ def test_scoped_tenant_role_attaches_to_preprovisioned_schema(schema):
             except psycopg2.errors.InsufficientPrivilege:
                 pytest.skip("test DSN lacks CREATEROLE")
             cur.execute(f'CREATE SCHEMA "{schema}"')  # pre-provision (as admin)
-            cur.execute(f'GRANT CONNECT ON DATABASE {admin.get_dsn_parameters()["dbname"]} TO "{role}"')
+            cur.execute(
+                f'GRANT CONNECT ON DATABASE {admin.get_dsn_parameters()["dbname"]} TO "{role}"'
+            )
             cur.execute(f'GRANT USAGE, CREATE ON SCHEMA "{schema}" TO "{role}"')
             # deliberately NO database-level CREATE for the tenant role
 
