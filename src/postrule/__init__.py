@@ -100,6 +100,7 @@ from postrule.storage import (
     flock_supported,
     serialize_record,
 )
+from postrule.storage_postgres import PostgresStorage
 from postrule.switch_class import Switch
 from postrule.telemetry import (
     ListEmitter,
@@ -193,6 +194,7 @@ __all__ = [
     "OpenAIAdapter",
     "OpenAIAsyncAdapter",
     "Phase",
+    "PostgresStorage",
     "ResilientStorage",
     "SklearnTextHead",
     "SqliteStorage",
