@@ -2755,7 +2755,7 @@ class LearnedSwitch:
             return True
         return self._get_state("head") is not None
 
-    def migrate_defaults(self, *, to_version: str) -> bool:
+    def migrate_defaults(self, *, to_version: str, accept_reset: bool = False) -> bool:
         """Opt into a newer default-set version — evidence-gated (#60 PR3).
 
         Graduated switches pin the default-set they earned their phase under;
@@ -2765,6 +2765,13 @@ class LearnedSwitch:
         still earned (RULE always migrates). Returns True if migrated. A no-op
         (returns False) for switches with an operator-supplied gate — that gate
         is operator-owned, not default-managed.
+
+        ``accept_reset=True`` flips the behaviour when the new gate does NOT
+        re-justify the current phase: instead of holding the pinned version,
+        the switch *adopts* the new default-set and resets to ``Phase.RULE`` so
+        it re-graduates under the new logic from the preserved verdict log
+        (recorded as a ``migrate_reset`` ledger event). Use it to force a team
+        onto improved gate logic even when the old evidence doesn't carry over.
         """
         from postrule.defaults import resolve_gate
         from postrule.gates import prev_phase
@@ -2794,16 +2801,40 @@ class LearnedSwitch:
                     ok = bool(getattr(decision, "target_better", False))
             before = signal_signature(self)
             if not ok:
+                if not accept_reset:
+                    self._append_ledger(
+                        "migrate_rejected",
+                        sig_before=before,
+                        sig_after=before,
+                        phase_before=current.name,
+                        phase_after=current.name,
+                        reason=f"default-set {to_version} does not re-justify {current.name} "
+                        "on recent evidence; pinned version kept",
+                    )
+                    return False
+                # accept_reset: adopt the new default-set anyway and reset to
+                # RULE so the switch re-graduates under the new gate from the
+                # preserved log (rather than staying on stale, now-unjustified
+                # logic). The verdict log is untouched — graduation re-earns.
+                self.config.gate = new_gate
+                self._default_set_version = to_version
+                while self.phase() is not Phase.RULE:
+                    self.demote(
+                        reason=f"accept_reset migration to default-set {to_version}",
+                        _auto=True,
+                    )
+                after = signal_signature(self)
+                self._save_signature(after)
                 self._append_ledger(
-                    "migrate_rejected",
+                    "migrate_reset",
                     sig_before=before,
-                    sig_after=before,
+                    sig_after=after,
                     phase_before=current.name,
-                    phase_after=current.name,
-                    reason=f"default-set {to_version} does not re-justify {current.name} "
-                    "on recent evidence; pinned version kept",
+                    phase_after=self.phase().name,
+                    reason=f"adopted default-set {to_version}; phase reset to RULE to "
+                    "re-graduate under the new gate (accept_reset)",
                 )
-                return False
+                return True
             self.config.gate = new_gate
             self._default_set_version = to_version
             after = signal_signature(self)
@@ -3118,3 +3149,68 @@ class LearnedSwitch:
     def storage(self) -> Storage:
         """Public accessor — useful for tests and advanced wiring."""
         return self._storage
+
+
+@dataclass(frozen=True)
+class MigrationOutcome:
+    """Result of migrating one switch to a new default-set version.
+
+    ``result`` is one of:
+
+    - ``"migrated"`` — adopted the new gate; phase re-justified and kept.
+    - ``"reset"``    — adopted the new gate via ``accept_reset``; phase reset to
+      RULE to re-graduate under the new logic.
+    - ``"held"``     — new gate did not re-justify; pinned version kept.
+    - ``"noop"``     — already on ``to_version`` or operator-owned gate (not
+      default-managed).
+    """
+
+    switch: str
+    phase_before: Phase
+    phase_after: Phase
+    result: str
+
+
+def migrate_all(*, to_version: str, accept_reset: bool = False) -> list[MigrationOutcome]:
+    """Migrate every live switch in this process to ``to_version``.
+
+    Iterates the process-wide switch registry and calls
+    :meth:`LearnedSwitch.migrate_defaults` on each, returning a per-switch
+    :class:`MigrationOutcome`. This is the operator entry point for "adopt the
+    new SDK's gate logic across the board" after a ``pip install -U`` — default
+    pinning (#60 PR3) means nothing moves until this is called.
+
+    With ``accept_reset=True`` a switch whose phase no longer re-justifies under
+    the new gate is reset to RULE (re-graduating from its preserved log) rather
+    than held on the old version.
+
+    Only the in-process registry is visited; switches in other processes /
+    replicas migrate when their own process calls this. Switches with an
+    operator-supplied gate are skipped (reported as ``"noop"``).
+    """
+    with _SWITCH_REGISTRY_LOCK:
+        switches = list(_SWITCH_REGISTRY.values())
+    outcomes: list[MigrationOutcome] = []
+    for switch in switches:
+        phase_before = switch.phase()
+        default_managed = switch._gate_is_default
+        already_on_target = switch._default_set_version == to_version
+        migrated = switch.migrate_defaults(to_version=to_version, accept_reset=accept_reset)
+        phase_after = switch.phase()
+        if not default_managed or already_on_target:
+            result = "noop"
+        elif not migrated:
+            result = "held"
+        elif phase_after is Phase.RULE and phase_before is not Phase.RULE:
+            result = "reset"
+        else:
+            result = "migrated"
+        outcomes.append(
+            MigrationOutcome(
+                switch=switch.name,
+                phase_before=phase_before,
+                phase_after=phase_after,
+                result=result,
+            )
+        )
+    return outcomes

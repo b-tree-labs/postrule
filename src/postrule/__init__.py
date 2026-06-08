@@ -35,10 +35,12 @@ from postrule.core import (
     ClassificationResult,
     Label,
     LearnedSwitch,
+    MigrationOutcome,
     Phase,
     SwitchConfig,
     SwitchStatus,
     Verdict,
+    migrate_all,
 )
 from postrule.decorator import ml_switch
 from postrule.gates import (
@@ -173,6 +175,7 @@ __all__ = [
     "LlamafileAsyncAdapter",
     "MLHead",
     "MLHeadFactory",
+    "MigrationOutcome",
     "MLHeadStrategy",
     "MLPrediction",
     "ManualGate",
@@ -217,6 +220,7 @@ __all__ = [
     "deserialize_record",
     "flock_supported",
     "make_ml_head",
+    "migrate_all",
     "ml_switch",
     "next_phase",
     "prev_phase",
