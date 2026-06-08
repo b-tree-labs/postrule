@@ -681,6 +681,11 @@ _EMITTED_LIFECYCLE_EVENTS = frozenset(
     {"migrate", "migrate_reset", "migrate_rejected", "demote", "quarantine", "pin", "swap"}
 )
 
+# Per-switch Storage state captured by snapshot()/restored by rollback() (#148
+# G2). The verdict log is excluded — it is append-only evidence, not decision
+# state, and rollback restores the decision state only.
+_SNAPSHOT_STATE_KEYS = ("head", "breaker", "signature", "ledger")
+
 
 def _derive_name_from_rule(rule: RuleFunc) -> str:
     """Derive a switch name from the rule function's ``__name__``.
@@ -3226,6 +3231,43 @@ class LearnedSwitch:
             rationale=decision.rationale,
         )
 
+    def snapshot(self) -> SwitchSnapshot:
+        """Capture this switch's durable decision state for rollback (#148 G2).
+
+        Records the phase, the pinned default-set version, and the per-switch
+        Storage blobs (head, breaker, signature, ledger). The verdict log is
+        append-only evidence and intentionally excluded — :meth:`rollback`
+        restores the *decision* state, not the log. Read-only.
+        """
+        with self._lock:
+            state = {k: self._get_state(k) for k in _SNAPSHOT_STATE_KEYS}
+            return SwitchSnapshot(
+                switch=self.name,
+                phase=self.config.starting_phase,
+                default_set_version=self._default_set_version,
+                state=state,
+            )
+
+    def rollback(self, snapshot: SwitchSnapshot) -> None:
+        """Restore a switch to a previously-captured :meth:`snapshot`.
+
+        Use after an upgrade/migration whose outcome you don't want — restores
+        the phase, pinned version, and Storage blobs (deleting any key that was
+        absent at snapshot time) so the next serve/reconcile resumes from the
+        captured state. The verdict log is untouched.
+        """
+        if snapshot.switch != self.name:
+            raise ValueError(f"snapshot is for switch {snapshot.switch!r}, not {self.name!r}")
+        with self._lock:
+            for key in _SNAPSHOT_STATE_KEYS:
+                blob = snapshot.state.get(key)
+                if blob is None:
+                    self._delete_state(key)
+                else:
+                    self._put_state(key, blob)
+            self.config.starting_phase = snapshot.phase
+            self._default_set_version = snapshot.default_set_version
+
 
 def _resolve_environment() -> str:
     """Deployment environment from ``$POSTRULE_ENV`` (else 'default'). Local —
@@ -3253,6 +3295,21 @@ class GraduationReadiness:
     shortfall: int
     p_value: float | None
     rationale: str
+
+
+@dataclass(frozen=True)
+class SwitchSnapshot:
+    """A captured switch state for rollback (#148 G2).
+
+    ``state`` holds the per-switch Storage blobs (``head`` / ``breaker`` /
+    ``signature`` / ``ledger``), each ``bytes`` or ``None`` if absent at
+    capture time. The verdict log is intentionally not included.
+    """
+
+    switch: str
+    phase: Phase
+    default_set_version: str | None
+    state: dict[str, bytes | None]
 
 
 @dataclass(frozen=True)
