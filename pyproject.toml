@@ -184,6 +184,7 @@ omit = [
     "*/benchmarks/loaders_audio.py",  # network-bound audio dataset loaders; integration only
     "*/audio_features.py",  # optional-dep (librosa/soundfile) MFCC/spectrogram; benchmark-only
     "*/storage_postgres.py",  # optional-dep (psycopg2) + live Postgres; integration-only (test skips without $POSTRULE_TEST_PG_DSN). TODO: add a CI Postgres service, then drop this omit.
+    "*/cloud/control_plane.py",  # tenant provisioning; needs live Postgres + CREATEROLE; integration-only (same TODO).
 ]
 
 [tool.coverage.report]
