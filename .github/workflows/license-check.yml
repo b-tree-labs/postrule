@@ -78,6 +78,7 @@ jobs:
               src/postrule/benchmarks/harness.py|\
               src/postrule/cli.py|\
               src/postrule/cloud/__init__.py|\
+              src/postrule/cloud/control_plane.py|\
               src/postrule/cloud/failure_detector.py|\
               src/postrule/cloud/outbox.py|\
               src/postrule/cloud/registration.py|\
