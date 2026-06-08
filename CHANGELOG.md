@@ -15,6 +15,18 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.18] — 2026-06-08
+
+### Fixed
+
+- **Packaging: the published wheel was missing the `cloud` / `auth` / `cli`
+  modules.** 1.1.16–1.1.17 were built from the BSL-stripped public mirror, so
+  the PyPI wheel omitted those modules (1.1.5 had shipped them), silently
+  disabling cloud telemetry for consumers on upgrade. Releases now build and
+  publish from the private monorepo (complete source); the public mirror is
+  source-only. No API changes vs 1.1.17 — same upgrade-safety feature set, now
+  in a complete wheel. (1.1.16/1.1.17 are yanked.)
+
 ## [1.1.17] — 2026-06-08
 
 ### Added
