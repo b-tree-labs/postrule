@@ -940,6 +940,13 @@ class LearnedSwitch:
         # implement one). When storage is None, persist=True keeps its
         # shortcut: a batched FileStorage wrapped in ResilientStorage.
         if storage is None:
+            # Config-driven backend (POSTRULE_STATE_BACKEND / cloud-console
+            # setting) wins over the persist/memory default; None ⇒ no config,
+            # so the existing behavior below is unchanged. Offline-safe.
+            from postrule.storage_config import resolve_state_storage
+
+            storage = resolve_state_storage()
+        if storage is None:
             if persist:
                 # persist=True wraps a batched FileStorage in
                 # ResilientStorage. Batching decouples classify
