@@ -61,11 +61,12 @@ def test_refit_head_noop_without_head(tmp_path):
 def test_refit_all_returns_refit_switches(tmp_path):
     gc.collect()
     a = _switch_with_head(tmp_path, "refit_a")
-    b = _switch_no_head(tmp_path, "refit_b")
+    b = _switch_no_head(tmp_path, "refit_b")  # kept alive so refit_all sees it
     refit = refit_all()
     assert "refit_a" in refit
-    assert "refit_b" not in refit
+    assert "refit_b" not in refit  # no head -> skipped
     assert a._storage.get_state("refit_a", "head") is None
+    assert b.phase() is Phase.RULE
 
 
 def test_refit_head_proxied_on_decorated_fn():
