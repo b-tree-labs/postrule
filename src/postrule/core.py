@@ -3268,6 +3268,52 @@ class LearnedSwitch:
             self.config.starting_phase = snapshot.phase
             self._default_set_version = snapshot.default_set_version
 
+    def uninstall(self, *, to_snapshot: SwitchSnapshot | None = None, verify: bool = True) -> bool:
+        """Remove Postrule's learned footprint from this switch (#148 G3).
+
+        Without ``to_snapshot``: revert to the pre-install baseline — phase
+        ``RULE`` (the rule decides, exactly as before Postrule) and clear the
+        learned Storage state (head / breaker / signature / ledger). With
+        ``to_snapshot``: restore precisely that captured state instead.
+
+        With ``verify`` (default True) the state is re-read afterward and
+        confirmed to match the target; a mismatch raises ``RuntimeError`` so an
+        uninstall can never silently leave stale learned state behind. The
+        append-only verdict log is left untouched. Returns True on success.
+        """
+        from postrule.defaults import CURRENT_DEFAULT_SET_VERSION
+
+        with self._lock:
+            if to_snapshot is not None:
+                self.rollback(to_snapshot)
+                target_phase = to_snapshot.phase
+                target_state = dict(to_snapshot.state)
+                target_version = to_snapshot.default_set_version
+            else:
+                for key in _SNAPSHOT_STATE_KEYS:
+                    self._delete_state(key)
+                self.config.starting_phase = Phase.RULE
+                target_version = CURRENT_DEFAULT_SET_VERSION if self._gate_is_default else None
+                self._default_set_version = target_version
+                target_phase = Phase.RULE
+                target_state = dict.fromkeys(_SNAPSHOT_STATE_KEYS)
+
+            if verify:
+                if self.config.starting_phase is not target_phase:
+                    raise RuntimeError(
+                        f"uninstall verify failed: phase is "
+                        f"{self.config.starting_phase.name}, expected {target_phase.name}"
+                    )
+                if self._default_set_version != target_version:
+                    raise RuntimeError(
+                        "uninstall verify failed: default-set version is "
+                        f"{self._default_set_version!r}, expected {target_version!r}"
+                    )
+                for key in _SNAPSHOT_STATE_KEYS:
+                    if self._get_state(key) != target_state.get(key):
+                        raise RuntimeError(f"uninstall verify failed: state {key!r} not restored")
+            return True
+
 
 def _resolve_environment() -> str:
     """Deployment environment from ``$POSTRULE_ENV`` (else 'default'). Local —

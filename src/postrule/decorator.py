@@ -133,6 +133,21 @@ class _MLSwitchWrapper:
         :meth:`LearnedSwitch.readiness`."""
         return self.switch.readiness()
 
+    def snapshot(self):
+        """Capture durable state for rollback (#148). See
+        :meth:`LearnedSwitch.snapshot`."""
+        return self.switch.snapshot()
+
+    def rollback(self, snapshot) -> None:
+        """Restore a captured snapshot (#148). See
+        :meth:`LearnedSwitch.rollback`."""
+        return self.switch.rollback(snapshot)
+
+    def uninstall(self, *, to_snapshot=None, verify: bool = True) -> bool:
+        """Remove Postrule's learned footprint, verified (#148). See
+        :meth:`LearnedSwitch.uninstall`."""
+        return self.switch.uninstall(to_snapshot=to_snapshot, verify=verify)
+
     # #55 — consistent accessor. ``name`` is a property but ``phase`` was
     # method-only, so reading the current phase meant remembering to call
     # it (``fn.phase()``) or reaching through ``fn.switch``. ``current_phase``
