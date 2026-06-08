@@ -15,6 +15,37 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.17] — 2026-06-08
+
+### Added
+
+- **Operator-controlled version migration (#145).** `migrate_all(to_version=...)`
+  adopts a new default-set gate across every live switch in one call (default
+  pinning means nothing moves until asked). `migrate_defaults(...,
+  accept_reset=True)` / `migrate_all(..., accept_reset=True)` force-adopt the new
+  gate even when the current phase no longer re-justifies — resetting to `RULE`
+  to re-graduate under the new logic from the **preserved verdict log** (recorded
+  as a `migrate_reset` ledger event). Returns per-switch `MigrationOutcome`
+  (`migrated` / `reset` / `held` / `noop`).
+- **`LearnedSwitch.readiness() -> GraduationReadiness`.** Read-only, offline probe:
+  would the gate advance on current evidence, the paired-sample count vs the
+  gate's `min_paired`, and the shortfall. Validate the graduation machinery in a
+  low-data environment without prod-scale data.
+- **`snapshot()` / `rollback(snapshot)`.** Capture a switch's durable decision
+  state (phase, pinned default-set, head/breaker/signature/ledger) and restore it
+  after an unwanted upgrade/migration. The append-only verdict log is excluded.
+- **`uninstall(*, to_snapshot=None, verify=True)`.** Remove Postrule's learned
+  footprint (revert to the pre-install rule baseline, or restore a snapshot) and
+  *verify* the restore — raises if stale learned state remains.
+- **`refit_head()` / `refit_all()`.** Operator trigger to refit ML heads from the
+  preserved log under the current algorithm (which `ml_head_version` exclusion
+  otherwise never applies to existing heads).
+- **Deployment-environment dimension + lifecycle telemetry.** Verdict and
+  lifecycle events carry the `environment` (`$POSTRULE_ENV`, else `default`) so
+  one codebase across dev/staging/prod stops pooling into one `(account, switch)`
+  bucket; #60 audit-ledger transitions (migrate/reset/quarantine/demote/pin/swap)
+  now surface to the cloud for console visibility. Account-gated; no-ops offline.
+
 ## [1.1.16] — 2026-06-01
 
 ### Added
