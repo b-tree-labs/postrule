@@ -12,9 +12,12 @@ imports so ``pip install postrule`` stays dep-free).
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
+
+from .media import DEFAULT_MAX_IMAGE_BYTES, detect_image
 
 # ---------------------------------------------------------------------------
 # Protocol
@@ -76,6 +79,21 @@ class _BaseAdapter:
             "Classify the following input into exactly one of these labels: "
             f"[{label_list}].\n"
             f"Input: {input!r}\n"
+            "Return only the label, no extra text."
+        )
+
+    @staticmethod
+    def _label_instruction(labels: Iterable[str], subject: str = "input") -> str:
+        """Label-choice instruction WITHOUT the input embedded.
+
+        Used by the multimodal path (#130), where the input rides in a
+        separate content block (e.g. an image) rather than being rendered
+        into the prompt text.
+        """
+        label_list = ", ".join(labels)
+        return (
+            f"Classify the {subject} into exactly one of these labels: "
+            f"[{label_list}].\n"
             "Return only the label, no extra text."
         )
 
@@ -187,6 +205,7 @@ class AnthropicAdapter(_BaseAdapter):
         api_key: str | None = None,
         max_tokens: int = 32,
         timeout: float = 30.0,
+        max_image_bytes: int | None = DEFAULT_MAX_IMAGE_BYTES,
     ) -> None:
         try:
             from anthropic import Anthropic  # type: ignore[import-untyped]
@@ -201,14 +220,37 @@ class AnthropicAdapter(_BaseAdapter):
         self._model = model
         self._max_tokens = max_tokens
         self._timeout = timeout
+        # #130 — ceiling on an image input we'll encode + send. None disables.
+        self._max_image_bytes = max_image_bytes
 
     def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
         labels = list(labels)
-        prompt = self._render_prompt(input, labels)
+        # #130 — modality-aware MODEL tier. If the input is an image, send it
+        # as a Claude vision block + a label instruction; otherwise the
+        # unchanged text path. detect_image returns None for str/text, so
+        # text classification is byte-for-byte identical to before.
+        image = detect_image(
+            input, max_bytes=getattr(self, "_max_image_bytes", DEFAULT_MAX_IMAGE_BYTES)
+        )
+        if image is not None:
+            data, media_type = image
+            content: Any = [
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": media_type,
+                        "data": base64.standard_b64encode(data).decode("ascii"),
+                    },
+                },
+                {"type": "text", "text": self._label_instruction(labels, subject="image")},
+            ]
+        else:
+            content = self._render_prompt(input, labels)
         resp = self._client.messages.create(
             model=self._model,
             max_tokens=self._max_tokens,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{"role": "user", "content": content}],
         )
         text = "".join(getattr(block, "text", "") for block in resp.content).strip()
         # Anthropic doesn't expose token logprobs; approximate confidence as
