@@ -264,6 +264,14 @@ class ClassificationRecord:
     # Phase 3+ ML shadow observations.
     ml_output: Any | None = None
     ml_confidence: float | None = None
+    # Independent per-layer verdicts (Verdict value or None). Set ONLY when
+    # `adjudicate_disagreements` had a verifier score a shadow layer on its
+    # OWN output (used when the shadow disagreed with a wrong decision — the
+    # case the decision's outcome can't speak to). The gate prefers these over
+    # the decision-outcome approximation, so a better-than-incumbent challenger
+    # can actually be credited. None → fall back to the approximation.
+    model_outcome: str | None = None
+    ml_outcome: str | None = None
     # Action-dispatch observations (populated when the chosen label has
     # ``on=`` set and dispatch() fired it).
     action_result: Any | None = None
@@ -439,6 +447,21 @@ class SwitchConfig:
     # required for the gate's statistical power. Sampling is
     # uniform random per-call.
     verifier_sample_rate: float = 1.0
+    # When ``True`` (and a ``verifier`` is set), a shadow layer (model / ML)
+    # whose prediction DISAGREED with a decision that was judged INCORRECT is
+    # independently re-judged by the verifier on its own output. Without this,
+    # the gate can only score a shadow on records where the decision was
+    # correct — so a challenger that's right exactly when the incumbent is
+    # wrong (its whole value) is never credited, and the gate is biased toward
+    # the incumbent (see :func:`postrule.gates._source_correct_for`). A
+    # verifier-equipped switch could otherwise NEVER graduate no matter how
+    # good the challenger.
+    #
+    # DEFAULT ON: it's a no-op without a verifier (so it can't change behavior
+    # for switches that don't have one), and it only makes SPARSE extra calls
+    # (disagreement-on-incumbent-failure records). Set False to opt out when a
+    # verifier is unusually expensive and you accept the incumbent bias.
+    adjudicate_disagreements: bool = True
     # When ``True``, ``dispatch`` / ``adispatch`` re-raise the original
     # exception thrown by an ``on=`` handler AFTER ``action_raised`` and
     # ``action_elapsed_ms`` have been recorded on the result and the
@@ -840,6 +863,7 @@ class LearnedSwitch:
         on_verdict: Callable[[Any], None] | None = None,
         verifier: Any = None,
         verifier_sample_rate: float | None = None,
+        adjudicate_disagreements: bool | None = None,
         reconcile_signals: bool | None = None,
         signal_swap_action: str | None = None,
         rule_version: str | None = None,
@@ -895,6 +919,7 @@ class LearnedSwitch:
             "on_verdict": on_verdict,
             "verifier": verifier,
             "verifier_sample_rate": verifier_sample_rate,
+            "adjudicate_disagreements": adjudicate_disagreements,
             "reconcile_signals": reconcile_signals,
             "signal_swap_action": signal_swap_action,
             "rule_version": rule_version,
@@ -1733,6 +1758,35 @@ class LearnedSwitch:
             action_raised = None
             action_elapsed_ms = None
 
+        # #paper2 — independent adjudication of shadow disagreements. The
+        # decision's outcome can't tell us whether a shadow layer that
+        # DISAGREED with a *wrong* decision was itself right — exactly the case
+        # where a better challenger proves its worth. Re-judge that layer's own
+        # output with the verifier so the gate can credit it (otherwise the
+        # gate is structurally biased toward the incumbent). Sparse: only fires
+        # on disagreement-when-the-decision-was-incorrect.
+        model_outcome = None
+        ml_outcome = None
+        if (
+            self.config.adjudicate_disagreements
+            and self.config.verifier is not None
+            and outcome == Verdict.INCORRECT.value
+        ):
+            for shadow_out, is_model in ((model_output, True), (ml_output, False)):
+                if shadow_out is None or shadow_out == label:
+                    continue
+                try:
+                    v = self.config.verifier.judge(input, shadow_out)
+                    verdict_value = getattr(v, "value", v)
+                    if is_model:
+                        model_outcome = verdict_value
+                    else:
+                        ml_outcome = verdict_value
+                except (KeyboardInterrupt, SystemExit):
+                    raise
+                except BaseException:
+                    pass
+
         record = ClassificationRecord(
             timestamp=time.time(),
             input=input,
@@ -1745,6 +1799,8 @@ class LearnedSwitch:
             model_confidence=model_confidence,
             ml_output=ml_output,
             ml_confidence=ml_confidence,
+            model_outcome=model_outcome,
+            ml_outcome=ml_outcome,
             action_result=action_result,
             action_raised=action_raised,
             action_elapsed_ms=action_elapsed_ms,

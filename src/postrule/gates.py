@@ -149,13 +149,38 @@ def _source_correct_for(record: ClassificationRecord, source_field: str) -> bool
     (same wrong answer), else indeterminate. This matches the
     approximation used in the research / viz layer — only
     correct-outcome records contribute to McNemar pairs.
+
+    EXCEPTION — independent adjudication. When a shadow layer was scored on
+    its OWN output (``adjudicate_disagreements``; stored in ``model_outcome`` /
+    ``ml_outcome``), we use that verdict directly. This is what lets a
+    genuinely-better challenger be credited on records where the *decision*
+    was wrong — the case the approximation above silently discards, biasing
+    the gate toward the incumbent.
     """
-    if record.outcome != Verdict.CORRECT.value:
-        return None
+    independent_field = {
+        "model_output": "model_outcome",
+        "ml_output": "ml_outcome",
+    }.get(source_field)
+    if independent_field is not None:
+        verdict = getattr(record, independent_field, None)
+        if verdict == Verdict.CORRECT.value:
+            return True
+        if verdict == Verdict.INCORRECT.value:
+            return False
     source_value = getattr(record, source_field, None)
     if source_value is None:
         return None
-    return source_value == record.label
+    if record.outcome == Verdict.CORRECT.value:
+        return source_value == record.label
+    if record.outcome == Verdict.INCORRECT.value:
+        # The chosen label was wrong, so any layer that produced the chosen
+        # label is also wrong (False). A layer that produced something else is
+        # indeterminate from the decision outcome alone (None) — the
+        # independent-verdict branch above resolves those when adjudicated.
+        if source_value == record.label:
+            return False
+        return None
+    return None  # UNKNOWN / no judgement
 
 
 def _paired_correctness(

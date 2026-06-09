@@ -15,6 +15,26 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.21] — 2026-06-09
+
+### Fixed
+
+- **Graduation gate no longer biased toward the incumbent.** A
+  verifier-equipped switch could previously NEVER graduate past a shadow tier,
+  no matter how much better the challenger was: the gate scored a shadow layer
+  only on records where the decision was already correct, so a challenger
+  that's right exactly when the incumbent is wrong (its entire value) was
+  never credited. Two fixes: (1) `_source_correct_for` now scores a layer
+  `False` when it produced the chosen-but-wrong label (the case its own
+  docstring described but never implemented); (2) a new
+  `adjudicate_disagreements` switch option (**default on**, a no-op without a
+  `verifier`) independently re-judges a shadow layer's own output when it
+  disagreed with a decision judged incorrect, storing the verdict on the
+  record (`model_outcome` / `ml_outcome`). Fixes every paired gate
+  (`McNemarGate`, `AccuracyMarginGate`, `CostToleranceGate`) at once. The
+  extra verifier calls are sparse (disagreement-on-incumbent-failure only).
+  Set `adjudicate_disagreements=False` to opt out for an expensive verifier.
+
 ## [1.1.20] — 2026-06-08
 
 ### Fixed
