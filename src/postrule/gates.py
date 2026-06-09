@@ -541,6 +541,258 @@ class CostToleranceGate:
 
 
 # ---------------------------------------------------------------------------
+# ShadowUnderperformanceGate — call McNemar the OTHER direction (issue #133)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ShadowAssessment:
+    """Whether a MODEL/ML shadow perennially underperforms the rule.
+
+    The mirror of an upward graduation decision: instead of "is the shadow good
+    enough to promote?", it answers "is the shadow losing badly enough to turn
+    off?" so the operator stops paying per-call inference for a shadow that will
+    never graduate.
+    """
+
+    recommend_disable: bool
+    rationale: str
+    p_value: float | None = None
+    paired_sample_size: int = 0
+    rule_accuracy: float | None = None
+    model_accuracy: float | None = None  # the shadow tier's accuracy
+    rule_wins: int = 0  # discordant pairs where rule right, shadow wrong
+    shadow_wins: int = 0  # discordant pairs where shadow right, rule wrong
+    shadow_cost_per_call_usd: float | None = None
+
+
+@dataclass(frozen=True)
+class ShadowRestartAssessment:
+    """Whether a previously-disabled shadow should be revived.
+
+    A shadow is auto-disabled because the rule reliably beat it. That verdict
+    goes stale when the conditions it rested on change: the rule was edited (the
+    prior comparison no longer applies), or the rule's accuracy has drifted down
+    (it is no longer at the task ceiling, so the shadow may now help). Either is
+    grounds to re-enter the shadow phase and re-measure.
+    """
+
+    recommend_restart: bool
+    rationale: str
+    rule_changed: bool = False
+    drift_detected: bool = False
+    rule_accuracy_recent: float | None = None
+    rule_accuracy_at_disable: float | None = None
+    paired_sample_size: int = 0
+
+
+class ShadowUnderperformanceGate:
+    """Detect a shadow tier that perennially loses to the rule (issue #133).
+
+    The upward McNemar gate is unidirectional: it advances a shadow when it
+    reliably beats the incumbent, but never says "stop trying". Some sites have
+    rules at the task ceiling (``isValidJSON()`` beats any LLM), so an LLM shadow
+    there is pure token burn. McNemar already runs both directions; this acts on
+    the downward one: after a warm-up window, if the rule **significantly** beats
+    the shadow on disagreements at ``alpha``, recommend disabling the shadow.
+
+    Reversible-decision tuning: disable is reversible where graduation is not, so
+    ``alpha`` defaults to 0.05 (quicker trigger than the 0.01 upward bar). Stateless
+    and direction-aware; compares ``rule_output`` against ``shadow_field`` (default
+    ``model_output``; pass ``ml_output`` to assess an ML head) on correct-outcome
+    records. This module is detection only — the SHADOW_AUTO_DISABLED phase, SDK
+    short-circuit, re-enable CLI, and dashboard surface are deferred follow-ups.
+    """
+
+    def __init__(
+        self,
+        *,
+        alpha: float = 0.05,
+        min_paired: int = DEFAULT_MIN_PAIRED,
+        shadow_field: str = "model_output",
+    ) -> None:
+        if not 0.0 < alpha < 1.0:
+            raise ValueError(f"alpha must be in (0, 1); got {alpha}")
+        if min_paired <= 0:
+            raise ValueError(f"min_paired must be positive; got {min_paired}")
+        self._alpha = alpha
+        self._min_paired = min_paired
+        self._shadow_field = shadow_field
+
+    @property
+    def alpha(self) -> float:
+        return self._alpha
+
+    @property
+    def min_paired(self) -> int:
+        return self._min_paired
+
+    @property
+    def shadow_field(self) -> str:
+        return self._shadow_field
+
+    def _rule_correct(self, records: list[ClassificationRecord]) -> list[bool]:
+        """Rule correctness on correct-outcome records (same basis as ``assess``)."""
+        out: list[bool] = []
+        for r in records:
+            if r.outcome != Verdict.CORRECT.value or r.rule_output is None:
+                continue
+            out.append(r.rule_output == r.label)
+        return out
+
+    def should_restart(
+        self,
+        recent_records: list[ClassificationRecord],
+        *,
+        rule_fingerprint_at_disable: str | None = None,
+        rule_fingerprint_now: str | None = None,
+        rule_accuracy_at_disable: float | None = None,
+        drift_drop: float = 0.05,
+    ) -> ShadowRestartAssessment:
+        """Decide whether a disabled shadow should be re-enabled.
+
+        Two changed-condition signals revive a shadow:
+
+        1. **Rule changed** — ``rule_fingerprint_now != rule_fingerprint_at_disable``.
+           The prior rule-vs-shadow comparison is stale, so restart immediately,
+           regardless of recent sample size. Source the fingerprint from
+           ``signals.signal_signature`` (``rule_version`` or ``rule_drift_digest``).
+        2. **Rule accuracy drift** — on at least ``min_paired`` recent correct-outcome
+           records, the rule's accuracy has fallen ``drift_drop`` or more below its
+           accuracy when the shadow was disabled. The rule is no longer near the
+           ceiling, so the shadow deserves another look. Needs
+           ``rule_accuracy_at_disable`` as the baseline; without it, drift is not judged.
+        """
+        rule_changed = (
+            rule_fingerprint_at_disable is not None
+            and rule_fingerprint_now is not None
+            and rule_fingerprint_at_disable != rule_fingerprint_now
+        )
+        if rule_changed:
+            return ShadowRestartAssessment(
+                recommend_restart=True,
+                rationale=(
+                    f"rule fingerprint changed ({rule_fingerprint_at_disable} -> "
+                    f"{rule_fingerprint_now}); prior rule-vs-shadow comparison is stale "
+                    "— restart the shadow to re-measure"
+                ),
+                rule_changed=True,
+                rule_accuracy_at_disable=rule_accuracy_at_disable,
+            )
+
+        rule_correct = self._rule_correct(recent_records)
+        n = len(rule_correct)
+        recent_acc = (sum(rule_correct) / n) if n else None
+        if rule_accuracy_at_disable is None or n < self._min_paired:
+            return ShadowRestartAssessment(
+                recommend_restart=False,
+                rationale=(
+                    "rule unchanged and no drift basis: "
+                    f"{n} recent paired samples (need {self._min_paired}), "
+                    f"baseline={'set' if rule_accuracy_at_disable is not None else 'missing'}"
+                ),
+                rule_accuracy_recent=recent_acc,
+                rule_accuracy_at_disable=rule_accuracy_at_disable,
+                paired_sample_size=n,
+            )
+
+        drift = (rule_accuracy_at_disable - recent_acc) >= drift_drop
+        if drift:
+            rationale = (
+                f"rule accuracy drift: {recent_acc:.1%} recent vs "
+                f"{rule_accuracy_at_disable:.1%} at disable (drop >= {drift_drop:.1%}); "
+                "rule no longer near ceiling — restart the shadow"
+            )
+        else:
+            rationale = (
+                f"rule unchanged and accuracy holds ({recent_acc:.1%} vs "
+                f"{rule_accuracy_at_disable:.1%} at disable) — keep the shadow disabled"
+            )
+        return ShadowRestartAssessment(
+            recommend_restart=drift,
+            rationale=rationale,
+            drift_detected=drift,
+            rule_accuracy_recent=recent_acc,
+            rule_accuracy_at_disable=rule_accuracy_at_disable,
+            paired_sample_size=n,
+        )
+
+    def assess(
+        self,
+        records: list[ClassificationRecord],
+        *,
+        shadow_cost_per_call_usd: float | None = None,
+    ) -> ShadowAssessment:
+        rule_correct: list[bool] = []
+        shadow_correct: list[bool] = []
+        for r in records:
+            if r.outcome != Verdict.CORRECT.value:
+                continue
+            rule_out = r.rule_output
+            shadow_out = getattr(r, self._shadow_field, None)
+            if rule_out is None or shadow_out is None:
+                continue
+            rule_correct.append(rule_out == r.label)
+            shadow_correct.append(shadow_out == r.label)
+
+        n = len(rule_correct)
+        if n < self._min_paired:
+            return ShadowAssessment(
+                recommend_disable=False,
+                rationale=(
+                    f"insufficient paired samples for warm-up: {n} < "
+                    f"{self._min_paired} required before assessing the shadow"
+                ),
+                paired_sample_size=n,
+                shadow_cost_per_call_usd=shadow_cost_per_call_usd,
+            )
+
+        rule_acc = sum(rule_correct) / n
+        shadow_acc = sum(shadow_correct) / n
+        rule_wins = sum(
+            1 for ru, sh in zip(rule_correct, shadow_correct, strict=True) if ru and (not sh)
+        )
+        shadow_wins = sum(
+            1 for ru, sh in zip(rule_correct, shadow_correct, strict=True) if (not ru) and sh
+        )
+
+        from postrule.viz import mcnemar_p
+
+        # mcnemar_p is symmetric in its two arguments (two-sided imbalance).
+        p = mcnemar_p(rule_correct, shadow_correct)
+        disable = p is not None and p < self._alpha and rule_wins > shadow_wins
+        if disable:
+            rationale = (
+                f"McNemar p={p:.4g} < alpha={self._alpha} and rule wins disagreements "
+                f"({rule_wins} > {shadow_wins}); rule={rule_acc:.1%} beats shadow="
+                f"{shadow_acc:.1%} on {n} paired samples — disable the shadow to stop "
+                f"per-call inference cost"
+            )
+        elif p is not None and p < self._alpha:
+            rationale = (
+                f"McNemar p={p:.4g} < alpha={self._alpha} but shadow wins disagreements "
+                f"({shadow_wins} >= {rule_wins}); shadow is competitive — keep it"
+            )
+        else:
+            p_str = f"{p:.4g}" if p is not None else "n/a"
+            rationale = (
+                f"McNemar p={p_str} >= alpha={self._alpha}; no significant rule "
+                f"dominance on {n} samples — keep observing"
+            )
+        return ShadowAssessment(
+            recommend_disable=disable,
+            rationale=rationale,
+            p_value=p,
+            paired_sample_size=n,
+            rule_accuracy=rule_acc,
+            model_accuracy=shadow_acc,
+            rule_wins=rule_wins,
+            shadow_wins=shadow_wins,
+            shadow_cost_per_call_usd=shadow_cost_per_call_usd,
+        )
+
+
+# ---------------------------------------------------------------------------
 # MinVolumeGate — require N records before delegating
 # ---------------------------------------------------------------------------
 
@@ -755,5 +1007,8 @@ __all__ = [
     "ManualGate",
     "McNemarGate",
     "MinVolumeGate",
+    "ShadowAssessment",
+    "ShadowRestartAssessment",
+    "ShadowUnderperformanceGate",
     "next_phase",
 ]
