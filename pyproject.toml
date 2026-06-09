@@ -96,6 +96,19 @@ anthropic = [
 ollama = [
     "httpx>=0.24",
 ]
+vision = [
+    # Encode PIL images for the vision MODEL tier (#130). Raw bytes / file
+    # paths need no extra; this is only for passing PIL.Image objects.
+    "pillow>=10.0",
+]
+audio = [
+    # Render audio clips to spectrogram PNGs for the vision MODEL tier (#130).
+    # soundfile decodes WAV/FLAC/OGG (WAV also works via scipy alone); scipy
+    # does the STFT; pillow writes the PNG.
+    "soundfile>=0.12",
+    "scipy>=1.10",
+    "pillow>=10.0",
+]
 bundled = [
     # llama-cpp-python is the inference engine for the lazy-downloaded
     # GGUF defaults (qwen2.5:7b judge + gemma2:2b classifier). Pure-pip

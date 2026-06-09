@@ -54,9 +54,15 @@ SUPPORTED_IMAGE_MEDIA_TYPES = frozenset(_EXT_MEDIA_TYPE.values())
 # (frame-sampling for video, spectrogram for audio) BEFORE it reaches here.
 DEFAULT_MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
+# Audio is detected, then rendered to a bounded spectrogram image, so the clip
+# itself never reaches the provider. The byte cap bounds the *read*; the
+# spectrogram renderer separately caps DURATION so a long clip can't produce an
+# arbitrarily wide image. 25 MiB ≈ several minutes of 16 kHz mono WAV.
+DEFAULT_MAX_AUDIO_BYTES = 25 * 1024 * 1024
 
-class ImageTooLargeError(ValueError):
-    """Raised when an image input exceeds the MODEL-tier size ceiling.
+
+class MediaTooLargeError(ValueError):
+    """A media input exceeds the MODEL-tier size ceiling.
 
     Fail-loud on purpose: silently falling back to the text path would
     ``repr()`` megabytes of bytes into a prompt, and silently sending would
@@ -64,12 +70,26 @@ class ImageTooLargeError(ValueError):
     """
 
 
-def _check_size(num_bytes: int, max_bytes: int | None) -> None:
+class ImageTooLargeError(MediaTooLargeError):
+    """An image input exceeds the size ceiling."""
+
+
+class AudioTooLargeError(MediaTooLargeError):
+    """An audio input exceeds the size ceiling."""
+
+
+def _check_size(
+    num_bytes: int,
+    max_bytes: int | None,
+    *,
+    exc: type[MediaTooLargeError] = ImageTooLargeError,
+    what: str = "image",
+) -> None:
     if max_bytes is not None and num_bytes > max_bytes:
-        raise ImageTooLargeError(
-            f"image input is {num_bytes} bytes, over the {max_bytes}-byte limit. "
-            "Downsample it (e.g. resize, or sample fewer/smaller frames) before "
-            "passing it to the switch."
+        raise exc(
+            f"{what} input is {num_bytes} bytes, over the {max_bytes}-byte limit. "
+            "Downsample it (resize / sample fewer frames / shorten the clip) "
+            "before passing it to the switch."
         )
 
 
@@ -144,3 +164,66 @@ def detect_image(
     data, media_type = encoded
     _check_size(len(data), max_bytes)
     return data, media_type
+
+
+# ---------------------------------------------------------------------------
+# Audio (#130 slice 2). Detection only here — rendering a clip to a bounded
+# spectrogram image lives in `audio_spectrogram.py` (heavier, lazy deps), so
+# this module stays dependency-free.
+# ---------------------------------------------------------------------------
+
+_AUDIO_EXT = frozenset({".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"})
+
+
+def _looks_like_audio(data: bytes) -> bool:
+    """True if ``data`` begins with a recognized audio container/codec magic."""
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WAVE":
+        return True  # WAV
+    if data[:4] == b"fLaC":
+        return True  # FLAC
+    if data[:4] == b"OggS":
+        return True  # Ogg (Vorbis/Opus)
+    if data[:3] == b"ID3":
+        return True  # MP3 with an ID3 tag
+    if len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0:
+        return True  # MP3 frame sync
+    # MP4/M4A/AAC container ("ftyp" box at offset 4)
+    return len(data) >= 12 and data[4:8] == b"ftyp"
+
+
+def detect_audio(obj: Any, *, max_bytes: int | None = DEFAULT_MAX_AUDIO_BYTES) -> bytes | None:
+    """Detect whether ``obj`` is an audio input and return its raw bytes.
+
+    Same conservative rules as :func:`detect_image`: ``str`` is always text;
+    ``bytes`` only on an audio magic number; ``Path`` only on an audio
+    extension. Raw numpy waveforms are intentionally NOT auto-detected (a 1-D
+    float array is ambiguous vs a feature vector) — the rule/ML tiers consume
+    those directly. Raises :class:`AudioTooLargeError` past ``max_bytes``.
+
+    Returns the raw container bytes; rendering to a spectrogram (and the
+    duration cap) happens in ``audio_spectrogram.spectrogram_png``.
+    """
+    if isinstance(obj, str):
+        return None
+
+    if isinstance(obj, (bytes, bytearray)):
+        data = bytes(obj)
+        if not _looks_like_audio(data):
+            return None
+        _check_size(len(data), max_bytes, exc=AudioTooLargeError, what="audio")
+        return data
+
+    if isinstance(obj, Path):
+        if obj.suffix.lower() not in _AUDIO_EXT:
+            return None
+        try:
+            size = obj.stat().st_size
+        except OSError:
+            return None
+        _check_size(size, max_bytes, exc=AudioTooLargeError, what="audio")
+        try:
+            return obj.read_bytes()
+        except OSError:
+            return None
+
+    return None

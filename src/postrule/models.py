@@ -17,7 +17,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
-from .media import DEFAULT_MAX_IMAGE_BYTES, detect_image
+from .media import (
+    DEFAULT_MAX_AUDIO_BYTES,
+    DEFAULT_MAX_IMAGE_BYTES,
+    detect_audio,
+    detect_image,
+)
 
 # ---------------------------------------------------------------------------
 # Protocol
@@ -206,6 +211,7 @@ class AnthropicAdapter(_BaseAdapter):
         max_tokens: int = 32,
         timeout: float = 30.0,
         max_image_bytes: int | None = DEFAULT_MAX_IMAGE_BYTES,
+        max_audio_bytes: int | None = DEFAULT_MAX_AUDIO_BYTES,
     ) -> None:
         try:
             from anthropic import Anthropic  # type: ignore[import-untyped]
@@ -220,20 +226,47 @@ class AnthropicAdapter(_BaseAdapter):
         self._model = model
         self._max_tokens = max_tokens
         self._timeout = timeout
-        # #130 — ceiling on an image input we'll encode + send. None disables.
+        # #130 — ceilings on media we'll encode + send. None disables.
         self._max_image_bytes = max_image_bytes
+        self._max_audio_bytes = max_audio_bytes
 
-    def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
-        labels = list(labels)
-        # #130 — modality-aware MODEL tier. If the input is an image, send it
-        # as a Claude vision block + a label instruction; otherwise the
-        # unchanged text path. detect_image returns None for str/text, so
-        # text classification is byte-for-byte identical to before.
+    def _as_vision_block(self, input: Any) -> tuple[bytes, str, str] | None:
+        """Return ``(image_bytes, media_type, subject)`` for a vision-routable
+        input, or ``None`` for text.
+
+        Image → itself; audio → a bounded log-magnitude spectrogram PNG. The
+        ``subject`` tells the model what it's looking at.
+        """
         image = detect_image(
             input, max_bytes=getattr(self, "_max_image_bytes", DEFAULT_MAX_IMAGE_BYTES)
         )
         if image is not None:
             data, media_type = image
+            return data, media_type, "image"
+
+        audio = detect_audio(
+            input, max_bytes=getattr(self, "_max_audio_bytes", DEFAULT_MAX_AUDIO_BYTES)
+        )
+        if audio is not None:
+            from .audio_spectrogram import spectrogram_png
+
+            return (
+                spectrogram_png(audio),
+                "image/png",
+                "audio clip, shown as a log-magnitude spectrogram "
+                "(time on the x-axis, frequency on the y-axis)",
+            )
+        return None
+
+    def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
+        labels = list(labels)
+        # #130 — modality-aware MODEL tier. An image is sent as a vision block;
+        # an audio clip is rendered to a bounded spectrogram and sent the same
+        # way; everything else takes the unchanged text path (detect_* return
+        # None for str/text, so text classification is byte-for-byte identical).
+        vision = self._as_vision_block(input)
+        if vision is not None:
+            data, media_type, subject = vision
             content: Any = [
                 {
                     "type": "image",
@@ -243,7 +276,7 @@ class AnthropicAdapter(_BaseAdapter):
                         "data": base64.standard_b64encode(data).decode("ascii"),
                     },
                 },
-                {"type": "text", "text": self._label_instruction(labels, subject="image")},
+                {"type": "text", "text": self._label_instruction(labels, subject=subject)},
             ]
         else:
             content = self._render_prompt(input, labels)
