@@ -591,6 +591,76 @@ class MinVolumeGate:
 
 
 # ---------------------------------------------------------------------------
+# LatencyGate — refuse advancement to a tier that breaches the real-time SLO
+# ---------------------------------------------------------------------------
+
+
+class LatencyGate:
+    """Refuse advancement to a tier whose per-call latency breaches an SLO.
+
+    Latency is the third graduation axis alongside accuracy and labeled-data
+    cost (issue #131). Real-time streams — voice assistants, streaming/mobile
+    video — have a hard per-call budget that a cloud LLM (~0.5 s/call here)
+    violates, so the *fast* local tiers are the only feasible terminals no
+    matter how accurate the LLM is.
+
+    This gate is direction-agnostic like every :class:`Gate`: it answers
+    "is ``target_phase`` acceptable on latency?" Compose it with a statistical
+    gate so a switch graduates only when the target is BOTH reliably better and
+    fast enough::
+
+        gate = CompositeGate.all_of([McNemarGate(), LatencyGate(profile, slo_ms=50)])
+
+    ``tier_latency_ms`` maps a :class:`Phase` to its measured per-call latency
+    (e.g. from ``scripts/measure_latency.py`` / the paper's latency_profile.json).
+    A target phase with no measured latency cannot be proven to breach the budget
+    and is allowed — matching ``aga.oracle_terminal``'s ``per_call_ms=None``
+    "unconstrained" behavior. The gate is stateless and ignores ``records``;
+    latency is a property of the tier, not the outcome stream.
+    """
+
+    def __init__(self, tier_latency_ms: dict[Phase, float], *, slo_ms: float) -> None:
+        if slo_ms <= 0:
+            raise ValueError(f"slo_ms must be positive; got {slo_ms}")
+        self._tier_latency_ms = dict(tier_latency_ms)
+        self._slo_ms = slo_ms
+
+    @property
+    def slo_ms(self) -> float:
+        return self._slo_ms
+
+    @property
+    def tier_latency_ms(self) -> dict[Phase, float]:
+        return dict(self._tier_latency_ms)
+
+    def evaluate(
+        self,
+        records: list[ClassificationRecord],  # noqa: ARG002
+        current_phase: Phase,  # noqa: ARG002
+        target_phase: Phase,
+        /,
+    ) -> GateDecision:
+        latency = self._tier_latency_ms.get(target_phase)
+        if latency is None:
+            return GateDecision(
+                target_better=True,
+                rationale=(
+                    f"LatencyGate: no measured latency for {target_phase.name}; "
+                    f"cannot prove it breaches the {self._slo_ms:g} ms SLO — allowed"
+                ),
+            )
+        within = latency <= self._slo_ms
+        verb = "within" if within else "exceeds"
+        return GateDecision(
+            target_better=within,
+            rationale=(
+                f"LatencyGate: {target_phase.name} per-call latency {latency:g} ms "
+                f"{verb} the {self._slo_ms:g} ms real-time SLO"
+            ),
+        )
+
+
+# ---------------------------------------------------------------------------
 # CompositeGate — combine multiple gates
 # ---------------------------------------------------------------------------
 
@@ -681,6 +751,7 @@ __all__ = [
     "CostToleranceGate",
     "Gate",
     "GateDecision",
+    "LatencyGate",
     "ManualGate",
     "McNemarGate",
     "MinVolumeGate",

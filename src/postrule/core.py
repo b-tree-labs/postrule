@@ -369,6 +369,14 @@ class SwitchConfig:
     starting_phase: Phase = Phase.RULE
     phase_limit: Phase = Phase.ML_PRIMARY
     safety_critical: bool = False
+    # Declared real-time per-call latency budget (ms) for this stream. Latency
+    # is the third graduation axis (alongside accuracy and labeled-data cost):
+    # a tier whose per-call latency exceeds this budget is infeasible for a
+    # real-time stream (voice/video/mobile) however accurate it is. This field
+    # records the budget; enforcement is via ``gates.LatencyGate`` composed into
+    # ``gate`` (e.g. ``CompositeGate.all_of([McNemarGate(), LatencyGate(...)])``).
+    # ``None`` = unconstrained (the default; recovers latency-agnostic behavior).
+    latency_slo_ms: float | None = None
     # Gate used by ``LearnedSwitch.advance()`` to decide whether the
     # switch has earned its next phase. Defaults to None → resolved
     # to the default McNemarGate at switch construction time.
@@ -506,6 +514,10 @@ class SwitchConfig:
             raise ValueError(
                 f"verifier_sample_rate must be in [0, 1]; got {self.verifier_sample_rate}"
             )
+
+        # Validate the declared latency budget.
+        if self.latency_slo_ms is not None and self.latency_slo_ms <= 0:
+            raise ValueError(f"latency_slo_ms must be positive when set; got {self.latency_slo_ms}")
 
         # safety_critical caps the ceiling at ML_WITH_FALLBACK.
         if (
