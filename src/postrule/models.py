@@ -140,6 +140,22 @@ class _BaseAdapter:
         and Ollama vision endpoints accept."""
         return f"data:{media_type};base64,{base64.standard_b64encode(data).decode('ascii')}"
 
+    def _example_vision_parts(self, examples: Any) -> list[tuple[bytes, str, str]]:
+        """Resolve few-shot ``(input, label)`` examples to vision parts
+        ``(image_bytes, media_type, label)``.
+
+        Few-shot exemplars matter a lot for rendered-media classification:
+        zero-shot spectrogram/spectral vision can be at chance, but a handful
+        of labeled examples grounds the model. Non-vision examples are skipped.
+        """
+        out: list[tuple[bytes, str, str]] = []
+        for ex_input, ex_label in examples or []:
+            v = self._vision_image(ex_input)
+            if v is not None:
+                data, media_type, _subject = v
+                out.append((data, media_type, str(ex_label)))
+        return out
+
     @staticmethod
     def _normalize_label(text: str, labels: Iterable[str]) -> tuple[str, bool]:
         """Best-effort match of a model output to one of ``labels``.
@@ -261,6 +277,7 @@ class AnthropicAdapter(_BaseAdapter):
         timeout: float = 30.0,
         max_image_bytes: int | None = DEFAULT_MAX_IMAGE_BYTES,
         max_audio_bytes: int | None = DEFAULT_MAX_AUDIO_BYTES,
+        examples: list[tuple[Any, str]] | None = None,
     ) -> None:
         try:
             from anthropic import Anthropic  # type: ignore[import-untyped]
@@ -278,6 +295,9 @@ class AnthropicAdapter(_BaseAdapter):
         # #130 — ceilings on media we'll encode + send. None disables.
         self._max_image_bytes = max_image_bytes
         self._max_audio_bytes = max_audio_bytes
+        # #130 — few-shot vision exemplars: (input, label) pairs shown before
+        # the query. Strongly recommended for rendered media (spectrograms).
+        self._examples = examples
 
     def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
         labels = list(labels)
@@ -288,17 +308,29 @@ class AnthropicAdapter(_BaseAdapter):
         vision = self._vision_image(input)
         if vision is not None:
             data, media_type, subject = vision
-            content: Any = [
-                {
+
+            def _block(d: bytes, mt: str) -> dict:
+                return {
                     "type": "image",
                     "source": {
                         "type": "base64",
-                        "media_type": media_type,
-                        "data": base64.standard_b64encode(data).decode("ascii"),
+                        "media_type": mt,
+                        "data": base64.standard_b64encode(d).decode("ascii"),
                     },
-                },
-                {"type": "text", "text": self._label_instruction(labels, subject=subject)},
-            ]
+                }
+
+            content: Any = []
+            examples = self._example_vision_parts(getattr(self, "_examples", None))
+            if examples:
+                content.append({"type": "text", "text": "Labeled examples:"})
+                for ex_data, ex_mt, ex_label in examples:
+                    content.append(_block(ex_data, ex_mt))
+                    content.append({"type": "text", "text": f"Label: {ex_label}"})
+                content.append({"type": "text", "text": "Now classify this one:"})
+            content.append(_block(data, media_type))
+            content.append(
+                {"type": "text", "text": self._label_instruction(labels, subject=subject)}
+            )
         else:
             content = self._render_prompt(input, labels)
         resp = self._client.messages.create(
