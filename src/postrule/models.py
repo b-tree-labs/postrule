@@ -102,6 +102,44 @@ class _BaseAdapter:
             "Return only the label, no extra text."
         )
 
+    def _vision_image(self, input: Any) -> tuple[bytes, str, str] | None:
+        """Provider-neutral vision routing (#130). Return
+        ``(image_bytes, media_type, subject)`` for a vision-routable input, or
+        ``None`` for text.
+
+        Image → itself; audio → a bounded log-magnitude spectrogram PNG. The
+        per-provider adapters format this into their own content shape (an
+        Anthropic image block, an OpenAI ``image_url`` data URI, an Ollama
+        ``images`` entry). Detection + the size caps are shared so every
+        provider behaves identically; nothing here is Claude-specific.
+        """
+        image = detect_image(
+            input, max_bytes=getattr(self, "_max_image_bytes", DEFAULT_MAX_IMAGE_BYTES)
+        )
+        if image is not None:
+            data, media_type = image
+            return data, media_type, "image"
+
+        audio = detect_audio(
+            input, max_bytes=getattr(self, "_max_audio_bytes", DEFAULT_MAX_AUDIO_BYTES)
+        )
+        if audio is not None:
+            from .audio_spectrogram import spectrogram_png
+
+            return (
+                spectrogram_png(audio),
+                "image/png",
+                "audio clip, shown as a log-magnitude spectrogram "
+                "(time on the x-axis, frequency on the y-axis)",
+            )
+        return None
+
+    @staticmethod
+    def _data_uri(data: bytes, media_type: str) -> str:
+        """``data:<mime>;base64,<...>`` — the inline image form OpenAI-compatible
+        and Ollama vision endpoints accept."""
+        return f"data:{media_type};base64,{base64.standard_b64encode(data).decode('ascii')}"
+
     @staticmethod
     def _normalize_label(text: str, labels: Iterable[str]) -> tuple[str, bool]:
         """Best-effort match of a model output to one of ``labels``.
@@ -176,10 +214,21 @@ class OpenAIAdapter(_BaseAdapter):
 
     def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
         labels = list(labels)
-        prompt = self._render_prompt(input, labels)
+        # #130 — vision via an image_url data URI when the input is image/audio;
+        # otherwise the unchanged text prompt. Needs a vision-capable model
+        # (e.g. gpt-4o); the caller picks the model.
+        vision = self._vision_image(input)
+        if vision is not None:
+            data, media_type, subject = vision
+            content: Any = [
+                {"type": "text", "text": self._label_instruction(labels, subject=subject)},
+                {"type": "image_url", "image_url": {"url": self._data_uri(data, media_type)}},
+            ]
+        else:
+            content = self._render_prompt(input, labels)
         resp = self._client.chat.completions.create(
             model=self._model,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{"role": "user", "content": content}],
             temperature=self._temperature,
             logprobs=True,
             top_logprobs=1,
@@ -230,41 +279,13 @@ class AnthropicAdapter(_BaseAdapter):
         self._max_image_bytes = max_image_bytes
         self._max_audio_bytes = max_audio_bytes
 
-    def _as_vision_block(self, input: Any) -> tuple[bytes, str, str] | None:
-        """Return ``(image_bytes, media_type, subject)`` for a vision-routable
-        input, or ``None`` for text.
-
-        Image → itself; audio → a bounded log-magnitude spectrogram PNG. The
-        ``subject`` tells the model what it's looking at.
-        """
-        image = detect_image(
-            input, max_bytes=getattr(self, "_max_image_bytes", DEFAULT_MAX_IMAGE_BYTES)
-        )
-        if image is not None:
-            data, media_type = image
-            return data, media_type, "image"
-
-        audio = detect_audio(
-            input, max_bytes=getattr(self, "_max_audio_bytes", DEFAULT_MAX_AUDIO_BYTES)
-        )
-        if audio is not None:
-            from .audio_spectrogram import spectrogram_png
-
-            return (
-                spectrogram_png(audio),
-                "image/png",
-                "audio clip, shown as a log-magnitude spectrogram "
-                "(time on the x-axis, frequency on the y-axis)",
-            )
-        return None
-
     def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
         labels = list(labels)
         # #130 — modality-aware MODEL tier. An image is sent as a vision block;
         # an audio clip is rendered to a bounded spectrogram and sent the same
         # way; everything else takes the unchanged text path (detect_* return
         # None for str/text, so text classification is byte-for-byte identical).
-        vision = self._as_vision_block(input)
+        vision = self._vision_image(input)
         if vision is not None:
             data, media_type, subject = vision
             content: Any = [
@@ -327,10 +348,19 @@ class OllamaAdapter(_BaseAdapter):
 
     def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
         labels = list(labels)
-        prompt = self._render_prompt(input, labels)
+        # #130 — vision via Ollama's `images` field (raw base64, no data: URI)
+        # when the input is image/audio; needs a vision model (e.g. llava).
+        vision = self._vision_image(input)
+        payload: dict[str, Any] = {"model": self._model, "stream": False}
+        if vision is not None:
+            data, _media_type, subject = vision
+            payload["prompt"] = self._label_instruction(labels, subject=subject)
+            payload["images"] = [base64.standard_b64encode(data).decode("ascii")]
+        else:
+            payload["prompt"] = self._render_prompt(input, labels)
         r = self._httpx.post(
             f"{self._host}/api/generate",
-            json={"model": self._model, "prompt": prompt, "stream": False},
+            json=payload,
             timeout=self._timeout,
         )
         r.raise_for_status()
