@@ -15,6 +15,27 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.22] — 2026-06-09
+
+### Added
+
+- **Provider-neutral multimodal MODEL tier (#130).** Vision routing
+  (image → itself, audio → bounded spectrogram, + size caps) moved onto
+  `_BaseAdapter`, so `OpenAIAdapter` (gpt-4o etc.) and `OllamaAdapter` (llava
+  etc.) now do vision alongside `AnthropicAdapter` — "change the vision model"
+  works across providers.
+- **Few-shot vision exemplars.** `AnthropicAdapter(examples=[(input, label),
+  …])` shows labeled examples before the query. The unlock for rendered-media
+  classification: zero-shot spectrogram-vision is at chance (0.20 on ESC-50 vs
+  a 0.55 rule); one exemplar/class lifts it to 0.47.
+- **Analyzer best-default vision guidance.** Auto-instrumentation detects a
+  candidate's modality and recommends a vision adapter + model — provider
+  inferred from the codebase's existing SDK (local Ollama fallback when no
+  cloud provider), defaulting to the cheapest vision model of that provider
+  (the MODEL tier is transitional), with a guidance comment. `ClassificationSite`
+  gains `modality` + `vision_recommendation`; new
+  `postrule.analyzer.recommend_vision_adapter`.
+
 ## [1.1.21] — 2026-06-09
 
 ### Fixed
