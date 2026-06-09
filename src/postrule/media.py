@@ -60,6 +60,11 @@ DEFAULT_MAX_IMAGE_BYTES = 5 * 1024 * 1024
 # arbitrarily wide image. 25 MiB ≈ several minutes of 16 kHz mono WAV.
 DEFAULT_MAX_AUDIO_BYTES = 25 * 1024 * 1024
 
+# Video is sampled to a few frames + its audio track, so the clip never reaches
+# the provider in full. The byte cap bounds the read; the frame sampler caps the
+# frame count and the audio renderer caps duration.
+DEFAULT_MAX_VIDEO_BYTES = 100 * 1024 * 1024
+
 
 class MediaTooLargeError(ValueError):
     """A media input exceeds the MODEL-tier size ceiling.
@@ -76,6 +81,10 @@ class ImageTooLargeError(MediaTooLargeError):
 
 class AudioTooLargeError(MediaTooLargeError):
     """An audio input exceeds the size ceiling."""
+
+
+class VideoTooLargeError(MediaTooLargeError):
+    """A video input exceeds the size ceiling."""
 
 
 def _check_size(
@@ -187,8 +196,12 @@ def _looks_like_audio(data: bytes) -> bool:
         return True  # MP3 with an ID3 tag
     if len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0:
         return True  # MP3 frame sync
-    # MP4/M4A/AAC container ("ftyp" box at offset 4)
-    return len(data) >= 12 and data[4:8] == b"ftyp"
+    # ISO-BMFF "ftyp" is shared by audio (M4A) and video (MP4). Only claim it
+    # for AUDIO brands so raw mp4 video bytes route to detect_video instead.
+    # (M4A *files* are still caught by detect_audio's extension check.)
+    if len(data) >= 12 and data[4:8] == b"ftyp":
+        return data[8:12] in (b"M4A ", b"M4B ", b"M4P ")
+    return False
 
 
 def detect_audio(obj: Any, *, max_bytes: int | None = DEFAULT_MAX_AUDIO_BYTES) -> bytes | None:
@@ -221,6 +234,60 @@ def detect_audio(obj: Any, *, max_bytes: int | None = DEFAULT_MAX_AUDIO_BYTES) -
         except OSError:
             return None
         _check_size(size, max_bytes, exc=AudioTooLargeError, what="audio")
+        try:
+            return obj.read_bytes()
+        except OSError:
+            return None
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Video (#130 slice 3). Detection only; frame-sampling + audio extraction live
+# in `video_frames.py` (heavy, lazy PyAV). A video carries two streams, so the
+# vision path samples frames AND renders its audio to a spectrogram.
+# ---------------------------------------------------------------------------
+
+_VIDEO_EXT = frozenset({".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v"})
+
+
+def _looks_like_video(data: bytes) -> bool:
+    """True if ``data`` begins with a recognized video container magic."""
+    # ISO-BMFF "ftyp": video unless the brand is an audio one (see audio).
+    if len(data) >= 12 and data[4:8] == b"ftyp":
+        return data[8:12] not in (b"M4A ", b"M4B ", b"M4P ")
+    if data[:4] == b"\x1aE\xdf\xa3":
+        return True  # Matroska / WebM (EBML header)
+    # AVI ("RIFF....AVI ")
+    return len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"AVI "
+
+
+def detect_video(obj: Any, *, max_bytes: int | None = DEFAULT_MAX_VIDEO_BYTES) -> bytes | None:
+    """Detect whether ``obj`` is a video input and return its raw bytes.
+
+    Same conservative contract as the other detectors (``str`` is text; bytes
+    on a video container magic; ``Path`` on a video extension). Raises
+    :class:`VideoTooLargeError` past ``max_bytes``. Frame sampling + audio
+    extraction happen in ``video_frames``.
+    """
+    if isinstance(obj, str):
+        return None
+
+    if isinstance(obj, (bytes, bytearray)):
+        data = bytes(obj)
+        if not _looks_like_video(data):
+            return None
+        _check_size(len(data), max_bytes, exc=VideoTooLargeError, what="video")
+        return data
+
+    if isinstance(obj, Path):
+        if obj.suffix.lower() not in _VIDEO_EXT:
+            return None
+        try:
+            size = obj.stat().st_size
+        except OSError:
+            return None
+        _check_size(size, max_bytes, exc=VideoTooLargeError, what="video")
         try:
             return obj.read_bytes()
         except OSError:

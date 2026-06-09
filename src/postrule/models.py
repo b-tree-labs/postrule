@@ -20,8 +20,10 @@ from typing import Any, Protocol, runtime_checkable
 from .media import (
     DEFAULT_MAX_AUDIO_BYTES,
     DEFAULT_MAX_IMAGE_BYTES,
+    DEFAULT_MAX_VIDEO_BYTES,
     detect_audio,
     detect_image,
+    detect_video,
 )
 
 # ---------------------------------------------------------------------------
@@ -134,6 +136,45 @@ class _BaseAdapter:
             )
         return None
 
+    def _vision_query(self, input: Any) -> tuple[list[tuple[bytes, str, str]], str] | None:
+        """Multi-part vision routing (#130). Returns ``(parts, subject)`` where
+        ``parts`` is a list of ``(image_bytes, media_type, caption)``, or
+        ``None`` for text.
+
+        Image / audio → one part (caption ``""``). VIDEO → the audiovisual
+        path: N sampled frames (captioned in order) PLUS, when the container has
+        an audio track, its audio rendered to a spectrogram — so the model sees
+        BOTH streams together. Degrades to frames-only when there's no audio.
+        """
+        single = self._vision_image(input)
+        if single is not None:
+            data, media_type, subject = single
+            return [(data, media_type, "")], subject
+
+        video = detect_video(
+            input, max_bytes=getattr(self, "_max_video_bytes", DEFAULT_MAX_VIDEO_BYTES)
+        )
+        if video is not None:
+            from .video_frames import extract_audio_wav, sample_frame_pngs
+
+            parts: list[tuple[bytes, str, str]] = []
+            n_frames = getattr(self, "_video_frames", 6)
+            for i, frame in enumerate(sample_frame_pngs(video, n_frames=n_frames), 1):
+                parts.append((frame, "image/png", f"frame {i}"))
+            wav = extract_audio_wav(video)
+            if wav:
+                from .audio_spectrogram import spectrogram_png
+
+                parts.append(
+                    (spectrogram_png(wav), "image/png", "audio track (log-magnitude spectrogram)")
+                )
+            if parts:
+                subject = "video clip — the sampled frames in order" + (
+                    ", then its audio track as a spectrogram" if wav else ""
+                )
+                return parts, subject
+        return None
+
     @staticmethod
     def _data_uri(data: bytes, media_type: str) -> str:
         """``data:<mime>;base64,<...>`` — the inline image form OpenAI-compatible
@@ -230,16 +271,21 @@ class OpenAIAdapter(_BaseAdapter):
 
     def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
         labels = list(labels)
-        # #130 — vision via an image_url data URI when the input is image/audio;
-        # otherwise the unchanged text prompt. Needs a vision-capable model
-        # (e.g. gpt-4o); the caller picks the model.
-        vision = self._vision_image(input)
+        # #130 — vision via image_url data URIs (image/audio→1 part; video→
+        # frames + audio); otherwise the unchanged text prompt. Needs a
+        # vision-capable model (e.g. gpt-4o); the caller picks the model.
+        vision = self._vision_query(input)
         if vision is not None:
-            data, media_type, subject = vision
+            parts, subject = vision
             content: Any = [
-                {"type": "text", "text": self._label_instruction(labels, subject=subject)},
-                {"type": "image_url", "image_url": {"url": self._data_uri(data, media_type)}},
+                {"type": "text", "text": self._label_instruction(labels, subject=subject)}
             ]
+            for data, media_type, caption in parts:
+                if caption:
+                    content.append({"type": "text", "text": caption})
+                content.append(
+                    {"type": "image_url", "image_url": {"url": self._data_uri(data, media_type)}}
+                )
         else:
             content = self._render_prompt(input, labels)
         resp = self._client.chat.completions.create(
@@ -278,6 +324,8 @@ class AnthropicAdapter(_BaseAdapter):
         max_image_bytes: int | None = DEFAULT_MAX_IMAGE_BYTES,
         max_audio_bytes: int | None = DEFAULT_MAX_AUDIO_BYTES,
         examples: list[tuple[Any, str]] | None = None,
+        max_video_bytes: int | None = DEFAULT_MAX_VIDEO_BYTES,
+        video_frames: int = 6,
     ) -> None:
         try:
             from anthropic import Anthropic  # type: ignore[import-untyped]
@@ -295,6 +343,10 @@ class AnthropicAdapter(_BaseAdapter):
         # #130 — ceilings on media we'll encode + send. None disables.
         self._max_image_bytes = max_image_bytes
         self._max_audio_bytes = max_audio_bytes
+        # #130 — video: byte cap + how many frames to sample (audio track is
+        # rendered to a spectrogram and sent alongside the frames).
+        self._max_video_bytes = max_video_bytes
+        self._video_frames = video_frames
         # #130 — few-shot vision exemplars: (input, label) pairs shown before
         # the query. Strongly recommended for rendered media (spectrograms).
         self._examples = examples
@@ -305,9 +357,9 @@ class AnthropicAdapter(_BaseAdapter):
         # an audio clip is rendered to a bounded spectrogram and sent the same
         # way; everything else takes the unchanged text path (detect_* return
         # None for str/text, so text classification is byte-for-byte identical).
-        vision = self._vision_image(input)
+        vision = self._vision_query(input)
         if vision is not None:
-            data, media_type, subject = vision
+            parts, subject = vision
 
             def _block(d: bytes, mt: str) -> dict:
                 return {
@@ -327,7 +379,11 @@ class AnthropicAdapter(_BaseAdapter):
                     content.append(_block(ex_data, ex_mt))
                     content.append({"type": "text", "text": f"Label: {ex_label}"})
                 content.append({"type": "text", "text": "Now classify this one:"})
-            content.append(_block(data, media_type))
+            # Query parts: 1 for image/audio, N frames + audio for video.
+            for data, media_type, caption in parts:
+                content.append(_block(data, media_type))
+                if caption:
+                    content.append({"type": "text", "text": caption})
             content.append(
                 {"type": "text", "text": self._label_instruction(labels, subject=subject)}
             )
@@ -380,14 +436,16 @@ class OllamaAdapter(_BaseAdapter):
 
     def classify(self, input: Any, labels: Iterable[str]) -> ModelPrediction:
         labels = list(labels)
-        # #130 — vision via Ollama's `images` field (raw base64, no data: URI)
-        # when the input is image/audio; needs a vision model (e.g. llava).
-        vision = self._vision_image(input)
+        # #130 — vision via Ollama's `images` field (raw base64, no data: URI);
+        # image/audio→1 image, video→frames + audio. Needs a vision model (llava).
+        vision = self._vision_query(input)
         payload: dict[str, Any] = {"model": self._model, "stream": False}
         if vision is not None:
-            data, _media_type, subject = vision
+            parts, subject = vision
             payload["prompt"] = self._label_instruction(labels, subject=subject)
-            payload["images"] = [base64.standard_b64encode(data).decode("ascii")]
+            payload["images"] = [
+                base64.standard_b64encode(data).decode("ascii") for data, _mt, _cap in parts
+            ]
         else:
             payload["prompt"] = self._render_prompt(input, labels)
         r = self._httpx.post(

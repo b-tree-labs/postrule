@@ -137,6 +137,14 @@ def recommend_vision_adapter(
         if modality == "audio"
         else ""
     )
+    video_caveat = (
+        "\n#   Note: video routes as N sampled frames PLUS its audio track as a "
+        "spectrogram\n#   (both together). Needs `pip install postrule[video]` "
+        "(PyAV). Rendered-media\n#   vision is weak zero-shot — pass few-shot "
+        "examples= to ground it."
+        if modality == "video"
+        else ""
+    )
     guidance = (
         f"# Postrule auto-instrumentation detected a {modality} classifier.\n"
         f"#   model={snippet}{local_note}\n"
@@ -147,7 +155,7 @@ def recommend_vision_adapter(
         "#   you pay vision tokens only to bootstrap the gate, then cost decays "
         "to ~0.\n"
         "#   Change it anytime: pass a different model= to the adapter."
-        f"{audio_caveat}"
+        f"{audio_caveat}{video_caveat}"
     )
     return VisionAdapterRecommendation(
         modality=modality,

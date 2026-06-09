@@ -3,7 +3,7 @@
 
 [project]
 name = "postrule"
-version = "1.1.22"
+version = "1.1.23"
 description = "Self-taught classifiers. Graduated-autonomy classification primitive: start as a rule, graduate to ML when evidence justifies it."
 readme = "README.md"
 # Split license (PEP 639 SPDX expression). See LICENSE.md in the
@@ -109,6 +109,14 @@ audio = [
     "scipy>=1.10",
     "pillow>=10.0",
 ]
+video = [
+    # Audiovisual MODEL tier (#130): sample frames from the video track AND
+    # render the audio track to a spectrogram. PyAV (ffmpeg, bundled in its
+    # wheels) decodes both streams from essentially any container/codec.
+    "av>=12.0",
+    "scipy>=1.10",
+    "pillow>=10.0",
+]
 bundled = [
     # llama-cpp-python is the inference engine for the lazy-downloaded
     # GGUF defaults (qwen2.5:7b judge + gemma2:2b classifier). Pure-pip
@@ -196,6 +204,7 @@ omit = [
     "*/benchmarks/loaders_ext.py",  # network-bound HF dataset loaders; integration only
     "*/benchmarks/loaders_audio.py",  # network-bound audio dataset loaders; integration only
     "*/audio_features.py",  # optional-dep (librosa/soundfile) MFCC/spectrogram; benchmark-only
+    "*/video_frames.py",  # optional-dep (PyAV) audiovisual decode; tests importorskip('av'), integration-only
     "*/storage_postgres.py",  # optional-dep (psycopg2) + live Postgres; integration-only (test skips without $POSTRULE_TEST_PG_DSN). TODO: add a CI Postgres service, then drop this omit.
     "*/cloud/control_plane.py",  # tenant provisioning; needs live Postgres + CREATEROLE; integration-only (same TODO).
 ]

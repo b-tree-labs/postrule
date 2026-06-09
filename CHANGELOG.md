@@ -15,6 +15,28 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.23] — 2026-06-09
+
+### Added
+
+- **Audiovisual MODEL tier — video (#130).** A video input is decoded to N
+  sampled frames AND its audio track is rendered to a spectrogram, sent to the
+  vision model **together** (degrading to frames-only when there's no audio).
+  Decoding is via PyAV (`pip install postrule[video]`) for maximum encoding
+  flexibility — mp4/mov/webm/mkv/avi and essentially any codec ffmpeg reads.
+  `detect_video` disambiguates mp4 (video) from m4a (audio) by ISO-BMFF brand.
+  Frame count is configurable (`AnthropicAdapter(..., video_frames=N)`); both
+  streams are bounded (frame count + audio duration + a byte cap). The
+  multi-part vision path is shared across Anthropic/OpenAI/Ollama, and works
+  with few-shot `examples=`. Analyzer guidance recommends the video adapter
+  (frames + audio + the few-shot grounding note).
+
+### Fixed
+
+- `detect_audio` no longer claims every ISO-BMFF `ftyp` container as audio —
+  only the audio brands (M4A/M4B/M4P), so raw mp4 video bytes route to
+  `detect_video`. (M4A *files* are still detected by extension.)
+
 ## [1.1.22] — 2026-06-09
 
 ### Added
