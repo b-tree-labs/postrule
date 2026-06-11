@@ -61,6 +61,30 @@ Can a **cheap local classifier route LLM traffic** — easy queries → weak/che
 - The hard part is the **routing signal** — query text alone is insufficient. The design must use a *better* signal: the weak model's **uncertainty** (a cascade/deferral architecture: run weak, escalate on low confidence — needs true logprobs, which Anthropic doesn't expose but OpenAI/local models do), richer learned features (embeddings), or **outcome feedback learned off-policy**.
 - That last point closes the loop: obtaining "would the other model have done better?" labels in production **is the selective-labels / off-policy problem (Part II)**. The router's core learning challenge *is* the paper's thesis — which is exactly the defensible, non-commodity edge over naive log-fitting routers.
 
+## Router P0 — does a better signal beat the chance-level text router? (no)
+
+Tested richer routing signals on the same banking77 setup (n=200): **sentence
+embeddings (MiniLM) vs TF-IDF**, predicting "needs the strong model."
+
+| Strategy | accuracy | note |
+|---|---|---|
+| always-weak (haiku) | 0.85 | the trivial baseline |
+| always-strong (sonnet) | 0.88 | |
+| ORACLE route | 0.90 | 81% cheaper, the ceiling |
+| TF-IDF router | 0.82 | **dominated by always-weak** |
+| embeddings router | 0.83 | **dominated by always-weak** |
+
+**Finding:** both learned routers land *below* always-weak (0.85) — they can't
+identify the ~15% of queries that need the strong model, so they default to
+~always-weak and their escalations are near-random (which *hurts*). **Richer
+text features do not rescue routing.** Two design consequences:
+1. The signal is **not in the query text** → the router must use **weak-model
+   uncertainty (cascade)** or **off-policy outcome learning** (the moat), not
+   upfront text classification.
+2. **banking77 is a weak testbed** — only a 3-pt weak↔strong gap, so little
+   headroom exists to capture. Routing value requires a **large** gap; the next
+   experiment needs a task where the weak model is genuinely worse.
+
 ## Reproduce
 
 ```
