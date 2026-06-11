@@ -120,6 +120,40 @@ number*.)
   loop is a moat, not a commodity.** Prior art to cite: FrugalGPT (LLM
   cascades), learning-to-defer (Madras et al.; Mozannar & Sontag).
 
+## The local→cloud cascade — a real, new, monetizable capability (modest magnitude on academic MC)
+
+The signal that finally **beats random**: a **free local model's logprob/margin
+confidence**, escalating to the cloud only the low-confidence tail. MMLU, local
+Ollama → cloud sonnet, n=200:
+
+| Local model | local acc | cloud acc | gap | mean LIFT over random |
+|---|---|---|---|---|
+| qwen2.5-1.5b | 0.52 | 0.87 | +0.35 | **+0.030** (signal works) |
+| qwen2.5-7b (margin) | 0.69 | 0.88 | +0.18 | **+0.020** (signal works) |
+
+At qwen-7b τ=0.8, escalating the **10% least-confident** lifts 0.69→0.75 at
+**90% cloud-cost saved** — a tunable accuracy/cost dial.
+
+**Honest read:**
+- **What's real + new:** a **confidence-gated local→cloud cascade** — run a
+  capable model free on-prem, escalate only the uncertain tail; the confidence
+  signal **reliably beats random** (twice). Current Postrule does rule→model→ML
+  graduation, *not* local→cloud confidence escalation. This is a genuinely new,
+  sellable capability.
+- **What's NOT (yet):** a *dramatic* per-query recovery from a **raw threshold**.
+  Capable models are **over-confident** on academic MC (confident even when
+  wrong), so margin-thresholding catches a small slice; lift is incremental
+  (+0.02–0.03), not spectacular. The N=12 "huge frontier" was the 1.5b model's
+  outsized gap — noise-adjacent.
+- **The path to the real moat:** replace the raw threshold with a **learned
+  deferral model** (predict "cheap model will be wrong" from confidence + answer
+  + features), trained on **real-traffic outcome logs** — i.e. fed by
+  **monitor-only mode (#193)**. Academic MMLU is the *worst* case (over-confident,
+  small mid-band); heterogeneous real traffic is where a learned policy wins.
+  The flywheel — monitor → learn → escalate smarter → show the savings delta —
+  is the compounding, defensible asset. Signal caveat: needs logprobs
+  (Ollama/OpenAI expose; Anthropic doesn't).
+
 ## Reproduce
 
 ```
