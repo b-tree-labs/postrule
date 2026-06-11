@@ -30,6 +30,19 @@ identifiability conditions for graduated autonomy.
    correction** (graduation eval must test the *organic gate*, not forced phase
    transitions + tiers scored directly against gold).
 
+## NEW (2026-06-11) — the LLM **router** is the killer application + fresh empirical evidence
+
+This materially strengthens contribution #2. The internal graduation gate was *one* instance; the **LLM router is the general, high-relevance one**, and the router space is hot (RouteLLM, Not Diamond, Martian, OpenRouter, Unify).
+
+- **Routing IS the selective-labels problem in production.** A router observes only the outcome of the route it *chose* — never what the other models would have done. So **learning a routing policy from logged decisions is incumbent-biased by construction** (it entrenches whatever it already routes to). This reframes Part II from "a quirk of our gate" to **"any cost-tiered LLM system that learns from its own decisions inherits this identifiability problem"** — a much broader, more citable claim. Naive log-fitting routers are the wild population exhibiting the pathology.
+- **Fresh empirical evidence (routing slice, banking77; weak=haiku, strong=sonnet, n=300):**
+  - **The value is real and large** — *oracle* routing is **0.88 acc at 77% cheaper** than always-strong, and *higher* quality than either model alone.
+  - **But a naive policy is unlearnable from passive features** — a TF-IDF router predicts "needs the strong model" at **49% (chance)**; realized routing is no better than always-cheap. → Concrete demonstration that the policy is **not identifiable** from query text alone; you need uncertainty signals, exploration, or off-policy correction. The identifiability thesis, shown on a routing task.
+- **Graduation economics (multimodal measurement, refined):** cost decay ~constant (~97%); **accuracy retention varies and is a choice**. Audio: the cheap local head **beats** weak LLM-vision (graduate & win, +15 to +33 pts); hard native image: LLM strong (0.81), cheap head lags (head is the lever).
+- **Methodological-honesty tidbits (a sentence each):** small-n pilots misled us twice — audio LLM 0.60→**0.47** at the full fold, and the routing router 85%→**chance** at n=300. Report the adequately-powered number, not the lucky pilot — same discipline as "test the *organic* gate."
+
+(Evidence: `llm-efficiency-benchmark.md`; router design: `docs/internal/router/postrule-router-design.md`; framing: agent memory `router-research-direction`.)
+
 ## The line that keeps us safe (use verbatim or close)
 
 > "We do not claim a new estimator; we show that a known pathology (selective
