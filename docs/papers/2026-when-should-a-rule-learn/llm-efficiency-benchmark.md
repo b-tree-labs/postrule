@@ -85,6 +85,41 @@ text features do not rescue routing.** Two design consequences:
    headroom exists to capture. Routing value requires a **large** gap; the next
    experiment needs a task where the weak model is genuinely worse.
 
+## Router P0-B — the uncertainty cascade on a high-gap reasoning task
+
+P0 ruled out upfront text routing; P0-B tests the architecture the evidence
+pointed to — a **cascade**: run the cheap model, escalate to the strong model on
+the cheap model's **uncertainty** (proxied by self-consistency across K=5
+samples, since Anthropic hides logprobs). Task = **MMLU** (mixed hard subjects →
+a real weak↔strong gap; the monetizable *reasoning* regime). n=120, weak=haiku,
+strong=sonnet:
+
+| Strategy | accuracy | note |
+|---|---|---|
+| always-weak | 0.57 | |
+| always-strong | 0.69 | +0.12 gap (real headroom, unlike banking77) |
+| ORACLE | 0.75 | 18-pt headroom over always-weak |
+| cascade, escalate 12% (least consistent) | 0.58 | **only +1 pt** |
+| cascade, escalate 100% | 0.69 | = always-strong, no savings |
+
+**Finding (honest negative — and the most useful one):** **self-consistency is a
+weak deferral signal on reasoning.** The cheap model is often *confidently wrong*
+(unanimous across samples yet incorrect), so escalating on self-disagreement
+catches few of its errors — escalating the 12% least-consistent queries lifts
+accuracy ~1 point. (An n=8 pilot showed a flattering "25% → full strong
+accuracy"; n=120 is the truth — small samples mislead, *report the powered
+number*.)
+
+**The synthesized router conclusion (across P0 + P0-B):**
+- The routing **opportunity is large** on reasoning (18-pt oracle headroom).
+- **Neither *cheap* signal captures it** — query text (dominated) nor
+  self-consistency (marginal).
+- → Routing value is **gated on the signal**: it needs *calibrated* uncertainty
+  (true logprobs → a logprob-exposing provider) or a *learned off-policy*
+  deferral model. **Cheap shortcuts fail — which is precisely why the learning
+  loop is a moat, not a commodity.** Prior art to cite: FrugalGPT (LLM
+  cascades), learning-to-defer (Madras et al.; Mozannar & Sontag).
+
 ## Reproduce
 
 ```
