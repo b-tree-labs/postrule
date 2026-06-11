@@ -1,0 +1,70 @@
+# The LLM Use Efficiency Benchmark — graduation economics
+
+> Evidence for Part II + the "LLM Use Efficiency" positioning + the static
+> audit priors. Harness: `scripts/benchmark_efficiency.py`. Honest by design —
+> we measure where graduation wins **and** where it doesn't.
+
+## What it measures (not a model-quality leaderboard — an *efficiency* one)
+
+For each dataset, the three tiers a Postrule switch moves through:
+
+| Tier | What it is | Cost/call |
+|---|---|---|
+| **rule** | day-zero heuristic (nearest cheap-feature centroid) | ~$0 |
+| **ml-head** | the **local graduated** classifier (logreg on cheap features) | ~$3/M |
+| **llm** | few-shot vision (the expensive *bootstrap* tier) | measured |
+
+The question is **not** "is the LLM good at this?" It's: **can the switch graduate to the cheap local head without losing accuracy?** If yes → cost collapses ~97% while accuracy holds or improves.
+
+## Results
+
+| Dataset (task) | Modality | chance | rule | **ml-head** | llm (few-shot) | acc retained | cost decay |
+|---|---|---|---|---|---|---|---|
+| ESC-50 (animals/nature) | audio | 0.20 | 0.57 | **0.80** | 0.47 | **+0.33** | 97.7% |
+| ESC-50 (mechanical/urban) | audio | 0.20 | 0.47 | **0.60** | 0.45 | **+0.15** | 97.7% |
+| CIFAR-10 (animals/vehicles) | image | 0.20 | 0.40 | **0.46** | 0.81 | −0.35 | 93.7% |
+
+(5-class subsets; ESC-50 = full fold-5 test, n=40/task; CIFAR n=100; haiku-4.5 few-shot, 1–2 exemplars/class; "acc retained" = ml-head − llm; measured token cost; total run ≈ \$0.02.)
+
+## The honest finding — the cheap local head is the *right destination* for audio; the LLM is the right tool for native vision
+
+1. **Audio: graduation wins outright on BOTH tasks.** Spectrogram-vision is genuinely **weak** — the LLM scores **0.45–0.47**, barely above the rule. The cheap local head (**0.60–0.80**) **beats it decisively** because spectral features capture acoustic structure. So for audio, graduating is **cheaper *and* more accurate (+15 to +33 points)** — the LLM is a poor bootstrap you should leave fast.
+2. **Native images: the LLM is strong (0.81)** and a *naive* cheap head (16×16 logreg, 0.46) lags **35 points**. Here the **head is the lever** — invest in it (small CNN / frozen-embedding features) or stay on the LLM. The graduation *machinery* is fine; head quality decides.
+
+**The unifying truth:** **cost decay is ~constant (~94–98%)**; **accuracy retention varies and is a *choice*** — you set the floor, and graduation captures the savings down to it. "AI that gets cheaper the more you use it" is true wherever cheap features carry the task (decisively so for audio) — and we're honest that for hard native vision you invest in the head or keep paying the LLM.
+
+3. **An honest correction worth noting:** the n=25 pilot over-stated the audio LLM (0.60–0.64); the **full test fold gives 0.45–0.47** — which only *strengthens* the graduate-and-win result. Small-n LLM estimates are noisy; we report the full-set numbers.
+
+4. **Cost is not the constraint.** ~\$0.0001/call → the whole benchmark runs for **~\$0.02**; \$100 buys ~750k+ calls. (HF audio beyond ESC-50 streams unreliably in this environment; the harness is dataset-agnostic and rows extend trivially where downloads cooperate.)
+
+## Why this matters for the product / paper
+
+- **Positioning:** "AI that gets cheaper the more you use it" is *true* where the cheap head suffices (audio, and any task with informative cheap features) — and we're honest about where it isn't yet (hard native vision). That candor is what makes it citable.
+- **Audit priors:** the per-tier accuracies + cost-decay here are the **static priors** the efficiency audit applies to a customer's code — no per-customer LLM spend needed (see issue #186 / `positioning-llm-use-efficiency`).
+- **Pitfall (Part II):** rendered-media vision (spectrograms) is weak zero-shot — which is *why* the cheap local head, not the LLM, is the destination for audio.
+
+## Routing slice (toward the Postrule router) — an honest negative that shapes the design
+
+Can a **cheap local classifier route LLM traffic** — easy queries → weak/cheap model, hard → strong/expensive — and capture the savings? banking77, weak=haiku-4.5, strong=sonnet-4.6, both models run for full information (n=300):
+
+| Strategy | accuracy | cost | vs always-strong |
+|---|---|---|---|
+| always-weak (haiku) | 0.81 | $0.027 | 95% cheaper |
+| always-strong (sonnet) | 0.84 | $0.553 | — |
+| **ORACLE route** (weak when it's right, else strong) | **0.88** | $0.128 | **77% cheaper, ≥ quality** |
+| **learned TF-IDF router** | 0.81 | — | 59% cheaper |
+
+**The honest finding:** the **oracle frontier is excellent** (0.88 at 77% cheaper — *more* accurate than always-strong, because per-query routing picks the better model). **But a naive cheap text router can't reach it** — TF-IDF+logreg predicts "needs strong" at **49% (chance)**, so its realized routing is *no better than always-weak*. (An n=40 pilot showed a flattering 90%/85% — small-sample noise; the n=300 number is the truth.)
+
+**Why this matters for the router design (the payoff of measuring before building):**
+- The **value is real and large** (the oracle gap), so routing is worth building.
+- The hard part is the **routing signal** — query text alone is insufficient. The design must use a *better* signal: the weak model's **uncertainty** (a cascade/deferral architecture: run weak, escalate on low confidence — needs true logprobs, which Anthropic doesn't expose but OpenAI/local models do), richer learned features (embeddings), or **outcome feedback learned off-policy**.
+- That last point closes the loop: obtaining "would the other model have done better?" labels in production **is the selective-labels / off-policy problem (Part II)**. The router's core learning challenge *is* the paper's thesis — which is exactly the defensible, non-commodity edge over naive log-fitting routers.
+
+## Reproduce
+
+```
+POSTRULE_ALLOW_PAID_LLM=1 PYTHONPATH=src python scripts/benchmark_efficiency.py esc50 40
+POSTRULE_ALLOW_PAID_LLM=1 PYTHONPATH=src python scripts/benchmark_efficiency.py cifar10 100
+POSTRULE_ALLOW_PAID_LLM=1 PYTHONPATH=src python scripts/benchmark_routing.py 300
+```
