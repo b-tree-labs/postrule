@@ -154,6 +154,35 @@ At qwen-7b τ=0.8, escalating the **10% least-confident** lifts 0.69→0.75 at
   is the compounding, defensible asset. Signal caveat: needs logprobs
   (Ollama/OpenAI expose; Anthropic doesn't).
 
+## Learned-deferral PoC — is the flywheel (the moat) real? (not proven on benchmarks)
+
+The cascade's raw confidence threshold is the floor; the hypothesized *moat* is a
+**learned deferral model** (predict "local will be wrong" from question embedding
++ confidence, trained on outcome logs). PoC, MMLU n=300 (local qwen-7b, cloud
+sonnet, 60/40 split):
+
+| escalation | raw-conf threshold | learned model |
+|---|---|---|
+| mean lift over random | **+0.044** | +0.006 |
+
+**The learned model did NOT beat the raw threshold — it did *worse*.** On
+academic MC the bare confidence threshold is already a strong signal, and a
+learned layer on embeddings+confidence just overfit (≈180 training rows) and
+added noise.
+
+**Honest conclusion for the whole router thread:**
+- **PROVEN + monetizable + new to Postrule:** the **confidence-gated local→cloud
+  cascade** (raw threshold beats random by +0.044; ~90% cloud-cost saved at a
+  tunable accuracy point). This is the real result.
+- **NOT proven:** the **learned-deferral moat**. Learning does not beat the
+  threshold on benchmarks. The honest claim shrinks to: *the moat is a hypothesis
+  requiring real heterogeneous production traffic to test* — academic MC is
+  fundamentally the wrong testbed (over-confident, homogeneous). The
+  defensibility we can bank on is the **cascade + local-first GTM wedge + Axiom
+  governance**, not a demonstrated learned-deferral edge.
+- **Where to test the flywheel:** real traffic via monitor-mode (#193), not more
+  benchmarks. Stop here on the benchmark side.
+
 ## Reproduce
 
 ```
