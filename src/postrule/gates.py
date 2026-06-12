@@ -1020,6 +1020,80 @@ class CompositeGate:
         )
 
 
+# ---------------------------------------------------------------------------
+# PhaseAwareGate — a different notion of "good enough" per transition
+# ---------------------------------------------------------------------------
+
+
+class PhaseAwareGate:
+    """Dispatch a sub-gate per ``(current_phase, target_phase)`` transition.
+
+    The whitepaper's graduated autonomy applies a *different* bar at each rung,
+    because what it means for the target to be non-"inferior" is phase-specific:
+
+    - **Promoting toward the LLM** (rule → model) should require **strict
+      superiority** — the LLM bills every call, so only adopt it when it is
+      reliably better, never on a tie.
+    - **Dropping the rule fallback** (``ML_WITH_FALLBACK`` → ``ML_PRIMARY``)
+      removes the safety floor, so it too demands strict superiority.
+    - **Graduating the cheap trained head over the LLM** (``ML_SHADOW`` →
+      ``ML_WITH_FALLBACK``) should advance on a **tie** (non-inferiority): the
+      head is far cheaper and faster, so matching the LLM is enough to shed the
+      perpetual inference cost.
+
+    Each transition looks up its gate in ``transition_gates`` keyed by
+    ``(current, target)``; unmapped transitions use ``default``. Conforms to the
+    :class:`Gate` protocol, so it drops into ``SwitchConfig.gate`` unchanged —
+    ``advance`` keeps calling ``evaluate(records, current, target)``.
+    """
+
+    def __init__(
+        self,
+        transition_gates: dict[tuple[Phase, Phase], Gate],
+        *,
+        default: Gate,
+    ) -> None:
+        if default is None:
+            raise ValueError("PhaseAwareGate requires a default gate")
+        self._transition_gates = dict(transition_gates)
+        self._default = default
+
+    @property
+    def transition_gates(self) -> dict[tuple[Phase, Phase], Gate]:
+        return dict(self._transition_gates)
+
+    @property
+    def default(self) -> Gate:
+        return self._default
+
+    def evaluate(
+        self,
+        records: list[ClassificationRecord],
+        current_phase: Phase,
+        target_phase: Phase,
+        /,
+    ) -> GateDecision:
+        chosen = self._transition_gates.get((current_phase, target_phase), self._default)
+        decision = chosen.evaluate(records, current_phase, target_phase)
+        kind = type(chosen).__name__
+        return GateDecision(
+            target_better=decision.target_better,
+            rationale=(
+                f"PhaseAwareGate[{current_phase.name}->{target_phase.name} via {kind}]: "
+                f"{decision.rationale}"
+            ),
+            # Pass through the method-agnostic statistical evidence (the schema
+            # migrated off a p_value-specific field to method/statistic_*).
+            method=decision.method,
+            statistic_name=decision.statistic_name,
+            statistic_value=decision.statistic_value,
+            threshold=decision.threshold,
+            paired_sample_size=decision.paired_sample_size,
+            current_accuracy=decision.current_accuracy,
+            target_accuracy=decision.target_accuracy,
+        )
+
+
 __all__ = [
     "DEFAULT_ALPHA",
     "DEFAULT_MIN_PAIRED",
@@ -1032,6 +1106,7 @@ __all__ = [
     "ManualGate",
     "McNemarGate",
     "MinVolumeGate",
+    "PhaseAwareGate",
     "ShadowAssessment",
     "ShadowRestartAssessment",
     "ShadowUnderperformanceGate",

@@ -40,10 +40,37 @@ def _gate_v1() -> Any:
     return McNemarGate()  # alpha=0.01, min_paired=200
 
 
+def _gate_v2() -> Any:
+    """Per-phase graduation: strict superiority to promote UP toward the costly
+    LLM (and to drop the rule fallback at ML_PRIMARY), non-inferiority to
+    graduate the cheap trained head OVER the LLM (ML_SHADOW -> ML_WITH_FALLBACK).
+
+    This encodes the whitepaper's "what counts as inferior" per phase: adopting
+    or keeping the LLM demands a reliable win; shedding it for a cheaper tier
+    that ties is the right move. Opt-in via ``migrate_defaults`` until validated.
+    """
+    from postrule.core import Phase
+    from postrule.gates import CostToleranceGate, McNemarGate, PhaseAwareGate
+
+    return PhaseAwareGate(
+        {
+            # Graduate the cheap head over the LLM on a statistical tie.
+            (Phase.ML_SHADOW, Phase.ML_WITH_FALLBACK): CostToleranceGate(margin=0.02),
+        },
+        # Everything else — promotions toward the LLM, and dropping the rule
+        # fallback at ML_PRIMARY — requires strict superiority.
+        default=McNemarGate(),
+    )
+
+
 # version -> {signal: factory}. Old versions stay forever so a switch pinned to
 # an older version can always reconstruct the exact default it graduated under.
 _DEFAULT_SETS: dict[str, dict[str, Callable[[], Any]]] = {
     "v1": {"gate": _gate_v1, "drift_gate": _gate_v1},
+    # v2 is registered (adoptable via migrate_defaults) but NOT yet the current
+    # version — flipping the global default is a behavior change to validate
+    # (e.g. on the SoilMetrix deployment) before new switches pin it.
+    "v2": {"gate": _gate_v2, "drift_gate": _gate_v1},
 }
 
 
