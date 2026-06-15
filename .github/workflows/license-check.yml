@@ -63,6 +63,7 @@ jobs:
             case "$1" in
               # ── Postrule-operated cloud / product surface (BSL by directory) ──
               cloud/api/*|\
+              cloud/admin-mcp/*|\
               cloud/collector/*|\
               cloud/dashboard/*|\
               cloud/aggregator/*|\
