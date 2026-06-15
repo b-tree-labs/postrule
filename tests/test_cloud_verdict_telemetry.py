@@ -33,6 +33,7 @@ Covered behaviors:
 
 from __future__ import annotations
 
+import ssl
 import threading
 import time
 from typing import Any
@@ -42,7 +43,10 @@ import pytest
 
 from postrule import LearnedSwitch, Verdict, ml_switch
 from postrule.cloud.verdict_telemetry import (
+    _SSL_CONTEXT,
     CloudVerdictEmitter,
+    _build_ssl_context,
+    _UrllibSender,
     maybe_install,
     uninstall,
 )
@@ -707,3 +711,48 @@ class TestEnvironmentStamping:
             assert sender.calls[0]["environment"] == "prod"
         finally:
             em.close(timeout=0.1)
+
+
+class TestUrllibSenderTLS:
+    """Regression guard: the verdict POST must verify TLS against a real CA
+    bundle. macOS python.org builds and slim/distroless containers ship without
+    a system trust store, so a default-context urlopen raised
+    CERTIFICATE_VERIFY_FAILED and silently dropped every verdict (the failure was
+    only logged at debug). The sender now passes a certifi-backed verifying
+    context."""
+
+    def test_build_ssl_context_verifies(self):
+        ctx = _build_ssl_context()
+        assert ctx.verify_mode == ssl.CERT_REQUIRED
+        assert ctx.check_hostname is True
+        assert ctx.get_ca_certs(), "no CA certs loaded — TLS verification would fail"
+
+    def test_module_context_is_verifying(self):
+        assert _SSL_CONTEXT.verify_mode == ssl.CERT_REQUIRED
+        assert _SSL_CONTEXT.check_hostname is True
+
+    def test_post_passes_verifying_context_to_urlopen(self, monkeypatch):
+        captured: dict[str, Any] = {}
+
+        class _Resp:
+            status = 200
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        def _fake_urlopen(req, timeout=None, context=None):
+            captured["context"] = context
+            return _Resp()
+
+        monkeypatch.setattr(
+            "postrule.cloud.verdict_telemetry.urllib.request.urlopen", _fake_urlopen
+        )
+        ok = _UrllibSender("https://api.example.test", "tok", 1.0).post({"x": 1})
+        assert ok is True
+        ctx = captured["context"]
+        assert isinstance(ctx, ssl.SSLContext)
+        assert ctx.verify_mode == ssl.CERT_REQUIRED
+        assert ctx.check_hostname is True

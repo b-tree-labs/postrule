@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
 
+from postrule._http_tls import ssl_context
 from postrule.insights._paths import (
     ensure_postrule_home,
     tuned_defaults_cache_path,
@@ -170,7 +171,7 @@ def fetch_tuned_defaults(
             target_url,
             headers={"User-Agent": "postrule-insights/1.0 (+https://postrule.ai)"},
         )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 — HTTPS
+        with urllib.request.urlopen(req, timeout=timeout, context=ssl_context()) as resp:  # noqa: S310 — HTTPS
             payload = json.loads(resp.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as e:
         _log.debug("tuned-defaults fetch failed: %s", e)

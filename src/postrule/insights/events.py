@@ -31,6 +31,7 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from typing import Any, Final
 
+from postrule._http_tls import ssl_context
 from postrule.insights._paths import (
     ensure_postrule_home,
     queue_path,
@@ -254,7 +255,7 @@ def flush_queue(
             },
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 — HTTPS
+        with urllib.request.urlopen(req, timeout=timeout, context=ssl_context()) as resp:  # noqa: S310 — HTTPS
             if not (200 <= resp.status < 300):
                 return 0
     except (urllib.error.URLError, TimeoutError, OSError) as e:

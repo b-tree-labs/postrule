@@ -316,7 +316,7 @@ class TestStatusWhoamiForMcp:
 
         from postrule import mcp_server as _mcp
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             return _FakeUrlopenResponse(200, b'{"email":"x@y","tier":"pro"}')
 
         monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
@@ -329,7 +329,7 @@ class TestStatusWhoamiForMcp:
 
         from postrule import mcp_server as _mcp
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             return _FakeUrlopenResponse(500, b"oops")
 
         monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
@@ -345,7 +345,7 @@ class TestDevicePostCode:
 
         body = b'{"device_code":"d","user_code":"U-1","verification_uri_complete":"x","interval":5,"expires_in":900}'
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             return _FakeUrlopenResponse(200, body)
 
         monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
@@ -374,7 +374,7 @@ class TestDevicePollToken:
 
         from postrule import mcp_server as _mcp
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             return _FakeUrlopenResponse(
                 200, b'{"api_key":"k","email":"e","telemetry_enabled":true}'
             )
@@ -390,7 +390,7 @@ class TestDevicePollToken:
 
         from postrule import mcp_server as _mcp
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             err = urllib.error.HTTPError(
                 "http://x",
                 400,
@@ -411,7 +411,7 @@ class TestDevicePollToken:
 
         from postrule import mcp_server as _mcp
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             err = urllib.error.HTTPError("http://x", 400, "Bad", {}, None)  # type: ignore[arg-type]
             err.read = lambda: b'{"error":"access_denied"}'  # type: ignore[method-assign]
             raise err
@@ -426,7 +426,7 @@ class TestDevicePollToken:
 
         from postrule import mcp_server as _mcp
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             err = urllib.error.HTTPError("http://x", 400, "Bad", {}, None)  # type: ignore[arg-type]
             err.read = lambda: b'{"error":"expired_token"}'  # type: ignore[method-assign]
             raise err
@@ -441,7 +441,7 @@ class TestDevicePollToken:
 
         from postrule import mcp_server as _mcp
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             err = urllib.error.HTTPError("http://x", 500, "Server", {}, None)  # type: ignore[arg-type]
             err.read = lambda: b"{}"  # type: ignore[method-assign]
             raise err

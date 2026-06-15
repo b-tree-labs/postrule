@@ -226,7 +226,7 @@ class TestTunedDefaults:
         monkeypatch.setenv("POSTRULE_INSIGHTS_URL", "https://override.example/x.json")
         captured: dict[str, str] = {}
 
-        def fake_urlopen(req, timeout):
+        def fake_urlopen(req, timeout=None, **kwargs):
             captured["url"] = req.full_url
             mock_resp = MagicMock()
             mock_resp.read.return_value = b'{"version": 1}'

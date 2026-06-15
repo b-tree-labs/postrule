@@ -23,6 +23,7 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from postrule._http_tls import ssl_context
 from postrule.audio_features import SAMPLE_RATE
 from postrule.benchmarks.loaders import CACHE_DIR, BenchmarkDataset
 
@@ -35,7 +36,7 @@ def _ensure_esc50() -> Path:
         return _ESC50_DIR
     dest = CACHE_DIR / "esc50"
     dest.mkdir(parents=True, exist_ok=True)
-    with urllib.request.urlopen(_ESC50_URL) as resp:  # noqa: S310 - pinned GitHub URL
+    with urllib.request.urlopen(_ESC50_URL, context=ssl_context()) as resp:  # noqa: S310 - pinned GitHub URL
         data = resp.read()
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
         zf.extractall(dest)
