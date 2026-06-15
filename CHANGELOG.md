@@ -15,6 +15,24 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.1.24] — 2026-06-15
+
+### Fixed
+
+- **TLS verification on every SDK HTTPS call.** All `urllib.request.urlopen`
+  calls (verdict telemetry, `postrule verify` / `login` / `status`, the MCP
+  device flow, insights, cloud registration, the benchmark loader) used the
+  stdlib *default* SSL context, which depends on a populated system trust store.
+  macOS python.org builds and slim / distroless containers don't have one, so
+  every HTTPS call raised `CERTIFICATE_VERIFY_FAILED`. For the always-on,
+  fail-silent verdict telemetry pipe that meant a customer's **entire metering
+  feed silently dropped** (debug-log only); for `verify` / `login` it was an
+  opaque failure on a fresh machine. All call sites now share one verifying
+  context (`postrule._http_tls.ssl_context`) backed by `certifi` when importable
+  (a soft dependency), falling back to the stdlib default — which still honours
+  `SSL_CERT_FILE` / `SSL_CERT_DIR`. Verification is always on; we fix the trust
+  store, never bypass it.
+
 ## [1.1.23] — 2026-06-09
 
 ### Added
