@@ -225,7 +225,7 @@ target-version = "py310"
 # Lifter fixture files are test inputs that intentionally reference
 # unbound symbols (api, db, FEATURE_FLAGS, etc.) so the lifter has
 # something realistic to parse. They're not meant to import or run.
-extend-exclude = ["tests/lifter_fixtures/**"]
+extend-exclude = ["tests/lifter_fixtures/**", "landing/wasm/postrule_analyzer.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
