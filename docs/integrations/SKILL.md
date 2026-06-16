@@ -39,8 +39,10 @@ Check the function:
 > **Running through an MCP client?** If Postrule's [MCP server](mcp.md) is
 > connected, use the `postrule_init` tool (or `postrule_instrument_codebase`
 > to do a whole repo in one call) instead of the shell commands below — same
-> AST surgery, structured JSON back, `dry_run=True` by default. The rest of
-> this skill applies unchanged.
+> AST surgery, structured JSON back, `dry_run=True` by default. The same
+> server exposes `postrule_connect_start` / `postrule_connect_complete` for
+> linking a cloud account from the chat (see step 5) and `postrule_status`
+> to check connection state. The rest of this skill applies unchanged.
 
 The library ships `postrule init`, which performs the AST surgery
 correctly without any risk of malformed decorator syntax:
@@ -116,7 +118,7 @@ Expose the switch for outcome recording at module scope:
 
 ```python
 # Callers who learn ground truth later record it through this helper.
-record_triage_outcome = triage_ticket.record_outcome
+record_triage_verdict = triage_ticket.record_verdict
 ```
 
 ### 4. Update `pyproject.toml` / `requirements.txt`
@@ -151,19 +153,29 @@ except ImportError:
 See `axiom/src/axiom/infra/postrule_adapter.py` in the companion Axiom
 project for a full optional-adapter shim pattern.
 
-### 5. Record outcomes when ground truth arrives
+### 5. Record verdicts when ground truth arrives
 
-The whole point of Postrule is the outcome log. Ensure the integration
-calls `record_outcome` at the moment ground truth is known:
+The whole point of Postrule is the verdict log. Ensure the integration
+calls `record_verdict` at the moment ground truth is known:
 
 ```python
 # User later resolves the ticket, revealing the true label:
-triage_ticket.record_outcome(
+triage_ticket.record_verdict(
     input=ticket,
-    output=triage_result,
-    outcome="correct",   # or "incorrect" or "unknown"
+    label="bug",          # the ground-truth label
+    outcome="correct",    # or "incorrect" or "unknown"
 )
 ```
+
+**Connect a cloud account to see results.** Recorded verdicts stay
+local until the account is connected; once connected, they flow to the
+Postrule dashboard (the report card — turn volume, savings, and when a
+switch is ready to graduate). Through an MCP client, use the
+`postrule_connect_start` / `postrule_connect_complete` tools to create
+or link an account from the chat; from a terminal, run `postrule login`,
+then `postrule status` to confirm ("am I connected, as whom, syncing
+where?"). This step is optional for purely-local use but required for
+dashboard visibility.
 
 ### 6. Verify the test suite still passes
 
@@ -190,7 +202,7 @@ pytest tests/
 ## Output
 
 A minimal diff (~5-15 added lines: the import, the decorator,
-optionally a `record_*_outcome` module-level alias). Verify the
+optionally a `record_*_verdict` module-level alias). Verify the
 test suite still passes. Report the path and line range of the
 modified function so the user can review.
 
