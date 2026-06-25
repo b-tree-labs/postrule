@@ -15,6 +15,19 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.3.0] — 2026-06-25
+
+### Added
+
+- Analyzer determinism classifier. Sites with an exact mapping (equality /
+  identity, membership in a literal set, literal-dict lookup, `match`/`case`,
+  `isinstance`) are recognized as **already optimal as a plain rule** —
+  down-ranked and tagged `recommendation="keep_as_rule"`, listed separately
+  in `postrule analyze` rather than recommended for wrapping. Fuzzy /
+  free-text sites (substring scans, regex, token scoring) remain the
+  graduation candidates. `ClassificationSite` gains `determinism` +
+  `recommendation` fields.
+
 ## [1.2.0] — 2026-06-25
 
 ### Added
