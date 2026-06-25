@@ -15,6 +15,19 @@ reference the prior name; they are kept as historical record.
 
 _Nothing yet. Post-launch work tracks here._
 
+## [1.2.0] — 2026-06-25
+
+### Added
+
+- `postrule init` now writes a preserved-behavior test
+  (`test_<function>.py`) next to the source by default — the Phase-0 gate
+  that fails if a wrapped switch ever diverges from its current output, so
+  graduating to a model can't silently regress. Use `--no-test` to skip;
+  `--dry-run` previews the test alongside the decorator diff.
+- `postrule analyze` surfaces "Estimated LLM spend retired" (token cost at
+  counterfactual volume) in its default text output, not only behind
+  `--project-savings --format markdown`.
+
 ## [1.1.24] — 2026-06-15
 
 ### Fixed
