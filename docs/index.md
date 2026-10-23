@@ -132,5 +132,5 @@ self-contained, runs without API keys, and walks one concept.
   Date 2030-05-01. Production self-hosted use is permitted by
   the license; competing-hosted-service is prohibited.
 
-See [LICENSE.md](../LICENSE.md) and [LICENSING.md](../LICENSING.md)
+See [LICENSE.md](../LICENSE.md)
 for the split map and Q&A.

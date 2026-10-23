@@ -115,4 +115,4 @@ both the canonical `_initial-analysis.md` and a dated copy in
 `archive/_initial-analysis-2026-04-29.md` so historical scans are
 preserved.*
 
-*Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*
+*Methodology: Test-Driven Product Development.*
