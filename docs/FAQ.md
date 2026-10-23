@@ -489,9 +489,11 @@ Postrule is split-licensed:
   the only prohibited use is offering a hosted
   Postrule-derivative service to third parties.
 
-See `LICENSE.md` and `LICENSING.md` for the developer-facing
-breakdown. Commercial licensing that removes the BSL
-restrictions is available — contact
+See [`LICENSE.md`](../LICENSE.md) for the split map.
+`LICENSING.md` is not in this repository, and `LICENSE-BSL` is
+not in this repository. The only license text shipped here is
+[`LICENSE-APACHE`](../LICENSE-APACHE). Commercial licensing that
+removes the BSL restrictions is available — contact
 `licensing@b-treeventures.com`.
 
 ## Why not Apache 2.0 throughout, like most libraries?
@@ -519,13 +521,13 @@ to worry about.
 
 ## What counts as a "competing hosted service"? Can I run the analyzer internally?
 
-Yes, internal use is explicitly permitted by the Additional Use
-Grant in `LICENSE-BSL`. The grant language:
+The project describes internal use as permitted. The Additional
+Use Grant is not in this repository (`LICENSE-BSL` is absent),
+and this FAQ does not restate it. The only license text here is
+[`LICENSE-APACHE`](../LICENSE-APACHE). The split, and that
+missing file, are flagged in [`LICENSE.md`](../LICENSE.md).
 
-> Internal use within Your organization, including use by Your
-> affiliates under common control, is not a competing offering.
-
-The prohibited pattern is: taking Postrule's analyzer (or ROI
+The prohibited pattern the project names is: taking Postrule's analyzer (or ROI
 reporter, or future hosted surfaces), wrapping them in a UI,
 and selling access to third parties as a service that competes
 with what we plan to ship. If you're not sure whether your use
@@ -536,15 +538,12 @@ we'll tell you plainly.
 
 Short answer: **yes**, almost certainly without preconditions.
 The SDK is Apache 2.0 — ship it freely, including in proprietary
-commercial libraries. The four BSL 1.1 files
-([`analyzer.py`](../src/postrule/analyzer.py),
-[`cli.py`](../src/postrule/cli.py),
-[`research.py`](../src/postrule/research.py),
-[`roi.py`](../src/postrule/roi.py))
-carry an explicit "production self-hosted use is permitted" carve-
-out via the Additional Use Grant in `LICENSE-BSL`. The only
-prohibited use case is operating a hosted Postrule-clone service to
-third parties.
+commercial libraries. The four modules described as BSL 1.1 (`analyzer.py`, `cli.py`,
+`research.py`, `roi.py`) are not included in this public tree.
+The Additional Use Grant is not published here (`LICENSE-BSL` is
+absent; see [`LICENSE.md`](../LICENSE.md)). The only prohibited
+use case the project names is operating a hosted Postrule-clone
+service to third parties.
 
 Keep three concerns separate (they have separate remedies and
 shouldn't blur together):
@@ -575,8 +574,8 @@ shouldn't blur together):
 
 - Preserve the Apache 2.0 `NOTICE` (one-paragraph mention in
   your docs).
-- Include `LICENSE-APACHE` (and `LICENSE-BSL` if you redistribute
-  any BSL source verbatim).
+- Include `LICENSE-APACHE`. `LICENSE-BSL` is not in this
+  repository, so it cannot be copied from this tree.
 - Preserve SPDX headers and copyright lines; don't remove or
   modify the per-file SPDX identifiers.
 

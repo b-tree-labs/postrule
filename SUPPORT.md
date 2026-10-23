@@ -35,9 +35,10 @@ specifically, if you want to offer a hosted Postrule-derivative
 service — you need a commercial license. Email
 `licensing@b-treeventures.com` with your use case.
 
-See [`LICENSING.md`](./LICENSING.md) for the plain-English guide
-to what the split license covers without needing a commercial
-agreement.
+See [`LICENSE.md`](./LICENSE.md) for the split map. `LICENSING.md`
+is not in this repository. `LICENSE-BSL` is not in this repository
+either; the only license text shipped here is
+[`LICENSE-APACHE`](./LICENSE-APACHE).
 
 ## Trademark questions
 
