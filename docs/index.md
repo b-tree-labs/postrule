@@ -134,5 +134,5 @@ self-contained, runs without API keys, and walks one concept.
 
 See [LICENSE.md](../LICENSE.md) for the split map.
 `LICENSING.md` is not in this repository. The only license text
-shipped here is [LICENSE-APACHE](../LICENSE-APACHE); `LICENSE-BSL`
-is absent and is not restated on this page.
+shipped here is [LICENSE-APACHE](../LICENSE-APACHE). `LICENSE-BSL`
+is absent. The summary above is not the grant text.

@@ -523,7 +523,7 @@ to worry about.
 
 The project describes internal use as permitted. The Additional
 Use Grant is not in this repository (`LICENSE-BSL` is absent),
-and this FAQ does not restate it. The only license text here is
+and this FAQ does not quote a grant file. The only license text here is
 [`LICENSE-APACHE`](../LICENSE-APACHE). The split, and that
 missing file, are flagged in [`LICENSE.md`](../LICENSE.md).
 

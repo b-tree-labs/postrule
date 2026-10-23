@@ -543,9 +543,10 @@ Postrule is split-licensed:
 - **Postrule-operated components** (analyzer, ROI reporter,
   research/graduation tooling, CLI, hosted surfaces): **Business
   Source License 1.1** with Change Date **2030-05-01** (auto-
-  conversion to Apache 2.0). Additional Use Grant: **production
-  self-hosted use is permitted** — the BSL only prohibits
-  offering a competing hosted Postrule service.
+  conversion to Apache 2.0). The project describes an Additional
+  Use Grant that permits production self-hosted use and prohibits
+  offering a competing hosted Postrule service. That grant is not
+  published in this repository.
 
 **The split lives at the per-file level inside `src/postrule/`**, not
 at the directory level. Most files in `src/postrule/` are Apache 2.0.
@@ -560,9 +561,8 @@ for the split map and the missing-file flag. `LICENSING.md` and
 `LICENSE-BSL` are not in this repository. The only license text
 shipped here is
 [`LICENSE-APACHE`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-APACHE).
-This page does not restate the BSL grant. Commercial licensing that
-removes the BSL restrictions is available — contact
-`licensing@b-treeventures.com`.
+Commercial licensing that removes the BSL restrictions is available —
+contact `licensing@b-treeventures.com`.
 
 The underlying classification primitive is covered by a filed
 US provisional patent (application pending, filed 2026-04-21).
