@@ -68,7 +68,7 @@ A repo with no committed binding (fine; the auto-derive chain catches it):
 
 ## Privacy posture
 
-`postrule.toml` lives in your repo. Postrule sends only the resolved slug on each verdict's wire payload, never the file contents. The cohort registry strips `project`, `project_slug`, `project_id`, and `project_name` from anything shared cross-account, so even on cohort contributions the slug never leaks. See [`docs/reference/privacy.md`](privacy.md) for the full posture.
+`postrule.toml` lives in your repo. Postrule sends only the resolved slug on each verdict's wire payload, never the file contents. The cohort registry strips `project`, `project_slug`, `project_id`, and `project_name` from anything shared cross-account, so even on cohort contributions the slug never leaks. See [`docs/legal/telemetry-shape.md`](../legal/telemetry-shape.md) for the published wire posture. `privacy.md` is not in this repository.
 
 ## Compatibility
 
@@ -81,6 +81,6 @@ So you can add `postrule.toml` to a shared repo without breaking older deploymen
 
 ## Related
 
-- [`@ml_switch(project="…")`](decorator.md) — explicit override (highest priority)
+- [`@ml_switch(project="…")`](../../src/postrule/decorator.py) — explicit override (highest priority). `decorator.md` is not in this repository.
 - Issue [#36](https://github.com/b-tree-labs/postrule/issues/36) — original motivation: separating identity from project binding
 - Issue [#107](https://github.com/b-tree-labs/postrule/issues/107) — the project grouping MVP that this file extends

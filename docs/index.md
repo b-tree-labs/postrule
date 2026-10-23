@@ -132,5 +132,7 @@ self-contained, runs without API keys, and walks one concept.
   Date 2030-05-01. Production self-hosted use is permitted by
   the license; competing-hosted-service is prohibited.
 
-See [LICENSE.md](../LICENSE.md) and [LICENSING.md](../LICENSING.md)
-for the split map and Q&A.
+See [LICENSE.md](../LICENSE.md) for the split map.
+`LICENSING.md` is not in this repository. The only license text
+shipped here is [LICENSE-APACHE](../LICENSE-APACHE). `LICENSE-BSL`
+is absent. The summary above is not the grant text.

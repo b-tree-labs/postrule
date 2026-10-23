@@ -2,7 +2,7 @@
 
 > **Last updated 2026-05-11.** Companion to
 > [`dpa-template.md`](dpa-template.md) §6–§10 and the rendered
-> [Privacy Policy](../../cloud/dashboard/app/privacy/page.tsx).
+> [Privacy Policy](https://postrule.ai/privacy).
 
 This page describes who at B-Tree Ventures, LLC (dba B-Tree Labs)
 sees customer data, on what terms, under what oversight, and what

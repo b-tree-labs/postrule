@@ -6,9 +6,11 @@ name = "postrule"
 version = "1.3.0"
 description = "Self-taught classifiers. Graduated-autonomy classification primitive: start as a rule, graduate to ML when evidence justifies it."
 readme = "README.md"
-# Split license (PEP 639 SPDX expression). See LICENSE.md in the
-# repo root for the full explanation; LICENSING.md is the
-# developer-friendly version.
+# Split license (PEP 639 SPDX expression). See LICENSE.md.
+# LICENSE-BSL and LICENSING.md are not in this repository.
+# Do not list them below: hatchling refuses to build when a
+# named license file is missing. The BSL grant text is absent;
+# LICENSE-APACHE is the only license text shipped.
 #
 # - Client SDK (decorator, config, storage, adapters, telemetry,
 #   viz, benchmarks) ships under Apache-2.0.
@@ -19,9 +21,7 @@ readme = "README.md"
 license = "Apache-2.0 AND LicenseRef-BSL-1.1"
 license-files = [
     "LICENSE-APACHE",
-    "LICENSE-BSL",
     "LICENSE.md",
-    "LICENSING.md",
     "NOTICE",
 ]
 authors = [

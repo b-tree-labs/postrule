@@ -6,16 +6,23 @@ ship under different licenses, picked to match how the code is used.
 | Component | Subtree | License | File |
 |---|---|---|---|
 | **Client SDK** — decorator, config, storage, logger, LLM / ML adapters, telemetry, viz, and benchmarks that customers import into their own processes | `src/postrule/` (most files) | **Apache License, Version 2.0** | [`LICENSE-APACHE`](./LICENSE-APACHE) |
-| **Postrule-operated Python surface** — analyzer, ROI reporter, research / graduation tooling, CLI, agent orchestration, cloud-side helpers | `src/postrule/{agent,analyzer,auth,cli,cloud/*,lifters/*,mcp_server,research,roi}.py` (per-file allowlist in `.github/workflows/license-check.yml`) | **Business Source License 1.1** with Change Date **2030-05-01** and Change License **Apache 2.0** | [`LICENSE-BSL`](./LICENSE-BSL) |
-| **Cloudflare Worker code** — api, collector, dashboard, aggregator, security-ops | `cloud/{api,collector,dashboard,aggregator,security-ops}/**` | **BSL 1.1** (Change Date 2030-05-01) | [`LICENSE-BSL`](./LICENSE-BSL) |
-| **VS Code extension** — IDE integration for `postrule init` / suggestions | `cloud/vscode-postrule/**` | **BSL 1.1** (Change Date 2030-05-01) — provisional; may relicense to Apache if positioned as "core client integration" | [`LICENSE-BSL`](./LICENSE-BSL) |
-| **Marketing site** — landing page, copy, styles, scripts | `landing/**` (except `landing/assets/*` and `landing/wasm/postrule_analyzer.py`) | **BSL 1.1** (Change Date 2030-05-01) | [`LICENSE-BSL`](./LICENSE-BSL) |
-| **Landing-shipped WASM analyzer** — Python source built to WASM for in-browser analysis | `landing/wasm/postrule_analyzer.py` | **BSL 1.1** | [`LICENSE-BSL`](./LICENSE-BSL) |
-| **Brand assets** — logos, marks, social previews | `landing/assets/*.svg`, `brand/**` | **BSL 1.1** for source format + **Trademark** governance | [`LICENSE-BSL`](./LICENSE-BSL) + [`TRADEMARKS.md`](./TRADEMARKS.md) |
-| **JSON config + data** — pricing tiers, LLM prices, analyzer outputs, cohort priors, package metadata | `landing/data/*.json`, `landing/insights/*.json`, `cloud/*/package.json` etc. | **BSL 1.1** (declared via per-directory `LICENSE` files since JSON has no comment syntax for SPDX) | [`LICENSE-BSL`](./LICENSE-BSL) + each dir's `LICENSE` |
+| **Postrule-operated Python surface** — analyzer, ROI reporter, research / graduation tooling, CLI, agent orchestration, cloud-side helpers | `src/postrule/{agent,analyzer,auth,cli,cloud/*,lifters/*,mcp_server,research,roi}.py` (per-file allowlist in `.github/workflows/license-check.yml`) | **Business Source License 1.1** with Change Date **2030-05-01** and Change License **Apache 2.0** | **`LICENSE-BSL` absent** — [`LICENSE-APACHE`](./LICENSE-APACHE) is not this grant; see the flag below |
+| **Cloudflare Worker code** — api, collector, dashboard, aggregator, security-ops | `cloud/{api,collector,dashboard,aggregator,security-ops}/**` | **BSL 1.1** (Change Date 2030-05-01) | **`LICENSE-BSL` absent** — [`LICENSE-APACHE`](./LICENSE-APACHE) is not this grant; see the flag below |
+| **VS Code extension** — IDE integration for `postrule init` / suggestions | `cloud/vscode-postrule/**` | **BSL 1.1** (Change Date 2030-05-01) — provisional; may relicense to Apache if positioned as "core client integration" | **`LICENSE-BSL` absent** — [`LICENSE-APACHE`](./LICENSE-APACHE) is not this grant; see the flag below |
+| **Marketing site** — landing page, copy, styles, scripts | `landing/**` (except `landing/assets/*` and `landing/wasm/postrule_analyzer.py`) | **BSL 1.1** (Change Date 2030-05-01) | **`LICENSE-BSL` absent** — [`LICENSE-APACHE`](./LICENSE-APACHE) is not this grant; see the flag below |
+| **Landing-shipped WASM analyzer** — Python source built to WASM for in-browser analysis | `landing/wasm/postrule_analyzer.py` | **BSL 1.1** | **`LICENSE-BSL` absent** — [`LICENSE-APACHE`](./LICENSE-APACHE) is not this grant; see the flag below |
+| **Brand assets** — logos, marks, social previews | `landing/assets/*.svg`, `brand/**` | **BSL 1.1** for source format + **Trademark** governance | **`LICENSE-BSL` absent** — [`LICENSE-APACHE`](./LICENSE-APACHE) is not this grant; see the flag below + [`TRADEMARKS.md`](./TRADEMARKS.md) |
+| **JSON config + data** — pricing tiers, LLM prices, analyzer outputs, cohort priors, package metadata | `landing/data/*.json`, `landing/insights/*.json`, `cloud/*/package.json` etc. | **BSL 1.1** (declared via per-directory `LICENSE` files since JSON has no comment syntax for SPDX) | **`LICENSE-BSL` absent** — [`LICENSE-APACHE`](./LICENSE-APACHE) is not this grant; see the flag below + each dir's `LICENSE` |
 
-The split is explained in developer-friendly terms in
-[`LICENSING.md`](./LICENSING.md). Each source file in the in-scope
+**Flag: `LICENSE-BSL` and `LICENSING.md` are not in this repository.**
+This page describes the intended split. It is not the license grant,
+and it does not restate Business Source License 1.1. The only license
+text published here is [`LICENSE-APACHE`](./LICENSE-APACHE). Headers
+on `LicenseRef-BSL-1.1` files cite the BSL 1.1 form at
+<https://mariadb.com/bsl11/>; the project-specific Additional Use
+Grant is not available as a file in this checkout.
+
+Each source file in the in-scope
 extensions (`.py`, `.ts`, `.tsx`, `.js`, `.mjs`, `.cjs`, `.css`, `.html`)
 carries the license that governs it in its own header. JSON / TOML / lock
 files cannot carry inline SPDX headers; for those, see the directory-level
@@ -34,13 +41,14 @@ production code, embed Postrule in any product, redistribute it,
 modify it, and ship it commercially — that's the Apache 2.0 part,
 and it covers everything you'd normally expect from a library. A
 narrower set of Postrule-operated components (the analyzer, the
-CLI, future hosted services) ship under the Business Source
+CLI, future hosted services) is described above as Business Source
 License so that another company can't take them, wrap them in a
 hosted Postrule-like service, and sell it back to the market. The
-Additional Use Grant in `LICENSE-BSL` explicitly allows You to
-run the analyzer on Your own code, in Your own environment, in
-production. On **2030-05-01**, the BSL-licensed parts
-automatically convert to Apache 2.0.
+Additional Use Grant those components are described as carrying is
+not in this repository (`LICENSE-BSL` is absent). On **2030-05-01**,
+those parts are described as converting to Apache 2.0. Until the
+BSL text is published here, [`LICENSE-APACHE`](./LICENSE-APACHE) is
+the only license you can read in this tree.
 
 ## Trademarks
 
