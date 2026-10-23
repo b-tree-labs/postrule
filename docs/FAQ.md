@@ -537,10 +537,10 @@ we'll tell you plainly.
 Short answer: **yes**, almost certainly without preconditions.
 The SDK is Apache 2.0 — ship it freely, including in proprietary
 commercial libraries. The four BSL 1.1 files
-([`analyzer.py`](../src/postrule/analyzer.py),
-[`cli.py`](../src/postrule/cli.py),
-[`research.py`](../src/postrule/research.py),
-[`roi.py`](../src/postrule/roi.py))
+(`analyzer.py`,
+`cli.py`,
+`research.py`,
+`roi.py`)
 carry an explicit "production self-hosted use is permitted" carve-
 out via the Additional Use Grant in `LICENSE-BSL`. The only
 prohibited use case is operating a hosted Postrule-clone service to
