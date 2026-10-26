@@ -7,9 +7,9 @@
 # changes-requested reviews are called out in the report and left for a person.
 # auto_approver stays off.
 #
-# Pinned to axiom-os-lm 0.70.5. 0.70.6 (built-in npm/Docker dependency
-# protection) is not on PyPI; non-Python dependency files are regexes in
-# .axiom/release-lander.toml.
+# Pinned to axiom-os-lm 0.70.6, which includes npm and Docker dependency
+# protection. Non-Python dependency files are also regexes in
+# .axiom/release-lander.toml. Warn-only: the land command is report-only.
 
 name: RIVET lander
 
@@ -63,7 +63,7 @@ jobs:
       - name: Install axiom-os-lm
         run: |
           set -euo pipefail
-          python3 -m pip install --disable-pip-version-check -q 'axiom-os-lm==0.70.5'
+          python3 -m pip install --disable-pip-version-check -q 'axiom-os-lm==0.70.6'
 
       - name: Lander report
         env:
