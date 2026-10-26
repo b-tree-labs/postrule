@@ -2,9 +2,10 @@
 # The land command is report-only, so nothing is merged, enqueued, or pushed.
 # auto_approver stays off.
 #
-# axiom-os-lm 0.70.6 is not on PyPI (0.70.5 is the latest). 0.70.5's
-# built-in dependency patterns are Python-only, so non-Python dependency
-# files are listed explicitly under selector_options.dependencies.
+# The workflow pins axiom-os-lm 0.70.6, which includes npm and Docker
+# dependency patterns. selector_options.dependencies still lists those
+# files plus the other non-Python manifests, so a Dependabot change and
+# the manifests 0.70.6 does not name stay protected.
 # Built-in human routes still cover behavior, pricing, security, data,
 # and test setup. human_paths below adds the files in this repo that
 # those defaults do not name. Workflow and CI paths are protected by
@@ -37,8 +38,7 @@ scopes = ["repo"]
 [selector_options]
 database = ".testmondata"
 full_contexts = ["merge-queue", "main", "nightly"]
-# Replaces the 0.70.5 Python-only default. Keep the Python manifests,
-# then npm, Docker, and the other non-Python dependency files.
+# Python manifests, then npm, Docker, and the other non-Python dependency files.
 dependencies = [
   '(^|/)pyproject\.toml$',
   '(^|/)requirements[^/]*\.txt$',
