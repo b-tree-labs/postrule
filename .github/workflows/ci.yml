@@ -1,8 +1,19 @@
 # Copyright (c) 2026 B-Tree Labs
 # SPDX-License-Identifier: Apache-2.0
 #
-# Replaces .github/workflows/test.yml once b-tree-labs/.github is pushed
-# and tagged at v1.
+# postrule-private is the source of truth. Its sync-to-public workflow
+# (not in this tree) allowlists this file and force-pushes a filtered
+# history to b-tree-labs/postrule. The same file therefore has to stay
+# full in the private monorepo and inert on the public mirror.
+#
+# The export strips BSL modules (analyzer, auth, cli, cloud, lifters,
+# mcp_server, research, roi) but keeps tests/ except a few exact
+# filenames, and it does not export .pre-commit-config.yaml. Lint,
+# pre-commit, and the test matrix fail on that tree. They run only when
+# this workflow is executing in postrule-private. The public mirror
+# keeps the provenance scan. DCO and license-check are separate
+# workflows.
+
 name: CI
 
 on:
@@ -13,6 +24,7 @@ on:
 
 jobs:
   ci:
+    if: github.repository == 'b-tree-labs/postrule-private'
     uses: b-tree-labs/.github/.github/workflows/python-ci.yml@v1
     with:
       package-name: postrule
@@ -22,3 +34,20 @@ jobs:
       provenance-forbidden-patterns: 'utexas|UT Austin|bbooth@'
       provenance-paths: 'src/ tests/ docs/ examples/ landing/ README.md CHANGELOG.md SECURITY.md CONTRIBUTING.md CODEOWNERS LICENSE.md LICENSING.md LICENSE-APACHE LICENSE-BSL NOTICE TRADEMARKS.md SUPPORT.md pyproject.toml'
     secrets: inherit
+
+  provenance:
+    name: Provenance scan
+    if: github.repository != 'b-tree-labs/postrule-private'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail on forbidden patterns
+        run: |
+          if grep -rEn 'utexas|UT Austin|bbooth@' \
+              src/ tests/ docs/ examples/ landing/ README.md CHANGELOG.md SECURITY.md CONTRIBUTING.md CODEOWNERS LICENSE.md LICENSING.md LICENSE-APACHE LICENSE-BSL NOTICE TRADEMARKS.md SUPPORT.md pyproject.toml 2>/dev/null; then
+            echo "::error::forbidden pattern(s) found in tracked sources"
+            exit 1
+          fi
+          echo "provenance clean: no forbidden patterns in the scanned paths"
