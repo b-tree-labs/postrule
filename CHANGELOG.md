@@ -13,7 +13,10 @@ reference the prior name; they are kept as historical record.
 
 ## [Unreleased]
 
-_Nothing yet. Post-launch work tracks here._
+### Added
+
+- Grouped Dependabot for pip and GitHub Actions (weekly, at most five open pull requests per ecosystem).
+- Warn-only RIVET lander. It reports what it would do and does not pass `--act`. Pinned to `axiom-os-lm` 0.70.5, with explicit non-Python dependency patterns because 0.70.6 is not on PyPI.
 
 ## [1.3.0] — 2026-06-25
 
