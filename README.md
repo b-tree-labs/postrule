@@ -555,20 +555,19 @@ Postrule is split-licensed:
 **The split lives at the per-file level inside `src/postrule/`**, not
 at the directory level. Most files in `src/postrule/` are Apache 2.0;
 the four BSL-licensed exceptions are
-[`src/postrule/analyzer.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/analyzer.py),
-[`src/postrule/cli.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/cli.py),
-[`src/postrule/research.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/research.py), and
-[`src/postrule/roi.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/roi.py). Tests for those four files
+`src/postrule/analyzer.py`,
+`src/postrule/cli.py`,
+`src/postrule/research.py`, and
+`src/postrule/roi.py`. Tests for those four files
 mirror the BSL identifier; everything else is Apache. Each source
 file's `SPDX-License-Identifier:` header is authoritative when in
 doubt — the `.github/workflows/license-check.yml` workflow enforces
 the split on every PR.
 
 See [`LICENSE.md`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE.md) for the split map,
-[`LICENSING.md`](https://github.com/b-tree-labs/postrule/blob/main/LICENSING.md) for developer-facing Q&A,
-[`LICENSE-APACHE`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-APACHE) for the canonical Apache 2.0
-text, and [`LICENSE-BSL`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-BSL) for the canonical BSL 1.1
-text + the Additional Use Grant. Commercial licensing that removes
+developer-facing Q&A, and the canonical BSL 1.1 text + the Additional Use Grant,
+and [`LICENSE-APACHE`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-APACHE) for the canonical Apache 2.0
+text. Commercial licensing that removes
 the BSL restrictions is available — contact
 `licensing@b-treeventures.com`.
 
