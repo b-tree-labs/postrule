@@ -1,0 +1,102 @@
+# Copyright (c) 2026 B-Tree Labs
+# SPDX-License-Identifier: Apache-2.0
+#
+# Warn-only RIVET lander. The report comments what would happen.
+# The land command is report-only: a green pull request is not merged,
+# enqueued, or pushed. Protected paths, pending human review, and
+# changes-requested reviews are called out in the report and left for a person.
+# auto_approver stays off.
+#
+# Pinned to axiom-os-lm 0.70.5. 0.70.6 (built-in npm/Docker dependency
+# protection) is not on PyPI; non-Python dependency files are regexes in
+# .axiom/release-lander.toml.
+
+name: RIVET lander
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  checks: read
+  statuses: read
+  actions: read
+
+concurrency:
+  group: rivet-lander-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  land:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create the rivet:claimed label
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Idempotent. Create the label only when this repository does not have it.
+          if ! gh label list --repo "${GITHUB_REPOSITORY}" --search "rivet:claimed" --limit 100 --json name \
+            --jq '.[] | select(.name == "rivet:claimed") | .name' | grep -qx 'rivet:claimed'; then
+            gh label create "rivet:claimed" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --description "RIVET is looking at this pull request" \
+              --color "5319e7"
+          fi
+
+      - name: Install axiom-os-lm
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check -q 'axiom-os-lm==0.70.5'
+
+      - name: Lander report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_FIX_WEBHOOK_URL: ${{ secrets.RELEASE_FIX_WEBHOOK_URL }}
+          RELEASE_FIX_WEBHOOK_KEY: ${{ secrets.RELEASE_FIX_WEBHOOK_KEY }}
+        run: |
+          set -euo pipefail
+          set +e
+          python3 -m axiom.extensions.builtins.release land \
+            --repo "${GITHUB_REPOSITORY}" \
+            --config .axiom/release-lander.toml \
+            --format text \
+            > "${RUNNER_TEMP}/rivet-report.txt" \
+            2> "${RUNNER_TEMP}/rivet-report.err"
+          code=$?
+          set -e
+          cat "${RUNNER_TEMP}/rivet-report.txt"
+          cat "${RUNNER_TEMP}/rivet-report.err" >&2
+          if [ "$code" -ne 0 ]; then
+            # The check annotation is the forge error, not only the exit code.
+            line=$(tr '\n' ' ' < "${RUNNER_TEMP}/rivet-report.err" | sed 's/[[:space:]]\+/ /g')
+            if [ -z "$line" ]; then
+              line="lander report failed"
+            fi
+            echo "::error::${line}"
+            exit "$code"
+          fi
+
+      - name: Comment what the lander would do
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RIVET_REPORT_PATH: ${{ runner.temp }}/rivet-report.txt
+        run: python3 .github/scripts/rivet_warn_comment.py
