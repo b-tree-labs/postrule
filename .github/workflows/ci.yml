@@ -42,7 +42,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fail on forbidden patterns
         run: |
           if grep -rEn 'utexas|UT Austin|bbooth@' \
