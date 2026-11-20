@@ -38,4 +38,6 @@ jobs:
           owner: benjaminbooth
           kill-switch: ${{ vars.AXIOM_LANDER_KILL }}
           release-lock: ${{ vars.AXIOM_RELEASE_LOCK }}
+          app-id: ${{ vars.RIVET_APP_ID }}
+          app-private-key: ${{ secrets.RIVET_APP_PRIVATE_KEY }}
           openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
