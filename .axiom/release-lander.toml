@@ -28,6 +28,8 @@ signals = ["batch_label", "session", "ticket", "branch_prefix", "exact_files", "
 
 self_landers = ["benjaminbooth"]
 
+fix_provider = "llm"
+
 [watch]
 env = "AXIOM_LANDER_REPOS"
 
@@ -65,15 +67,6 @@ dependencies = [
   '(^|/)\.github/dependabot\.ya?ml$',
 ]
 
-[fix_provider]
-name = "handoff"
-
-[fix_provider.webhook]
-url_env = "RELEASE_FIX_WEBHOOK_URL"
-key_env = "RELEASE_FIX_WEBHOOK_KEY"
-key_header = "X-Fix-Key"
-separate_reviewer = true
-
 [human_paths]
 behavior = [
   '(^|/)src/postrule/(core|gates|switch_class|ml|ml_strategy|models|escalation|signals|defaults|decorator|wrap)\.py$',
@@ -100,7 +93,7 @@ test-setup = [
 
 [raci]
 approvers = ["@benjaminbooth:github"]
-auto_allowed = []
+auto_allowed = ["merge", "rerun", "update_branch", "repair"]
 needs_approval = ["repair", "batch", "update_branch", "merge", "enqueue", "close", "rerun"]
 max_rounds = 3
 kill_switch_env = "AXIOM_LANDER_KILL"
@@ -111,3 +104,14 @@ approval_ttl_hours = 72
 label = "rivet:claimed"
 claim_ttl_s = 3600
 foreign_labels = ["janna:working"]
+
+# Tier-1 fixer (axiom-os-private #2147): a routed model repairs lint, config and
+# failing-test blockers through a fixed tool set, then RIVET lands the fix on green.
+[fixer]
+enabled = true
+max_attempts = 2
+max_turns = 16
+routing_tier = "public"
+
+[fixer.commands]
+test = "python -m pytest -q {tests}"
