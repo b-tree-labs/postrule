@@ -13,8 +13,8 @@ protocol so you can add your own.
 | Source | Use when | Bias risk | Latency |
 |---|---|---|---|
 | [`CallableVerdictSource`](#callableverdictsource) | Truth is computable locally — downstream signal, DB lookup, business rule. | None (deterministic code). | Callable-bound. |
-| [`JudgeSource`](#llmjudgesource) | A distinct language model can critique the classifier's output. | **Medium** — mitigated by the self-judgment guardrail. | One model call per verdict. |
-| [`JudgeCommittee`](#llmcommitteesource) | Multiple distinct language models; willing to pay N× cost for tighter bias control. | Low under majority / unanimous aggregation. | N model calls per verdict. |
+| [`JudgeSource`](#judgesource) | A distinct language model can critique the classifier's output. | **Medium** — mitigated by the self-judgment guardrail. | One model call per verdict. |
+| [`JudgeCommittee`](#judgecommittee) | Multiple distinct language models; willing to pay N× cost for tighter bias control. | Low under majority / unanimous aggregation. | N model calls per verdict. |
 | [`WebhookVerdictSource`](#webhookverdictsource) | External system (CRM, fraud, payments) can report outcomes on demand. | External-system-dependent. | HTTP round-trip per verdict. |
 | [`HumanReviewerSource`](#humanreviewersource) | A human in the loop produces the ground-truth signal. | None (if reviewers are disciplined). | Queue-bound; timeout → UNKNOWN. |
 

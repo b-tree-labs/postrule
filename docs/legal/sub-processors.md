@@ -2,7 +2,7 @@
 
 > **Last updated 2026-05-11.** For procurement use. Companion to
 > [`dpa-template.md`](dpa-template.md) §9 and the rendered
-> [Privacy Policy](../../cloud/dashboard/app/privacy/page.tsx).
+> Privacy Policy.
 
 This page lists the third parties B-Tree Ventures, LLC (dba B-Tree
 Labs, the "Processor") engages to process customer Personal Data on

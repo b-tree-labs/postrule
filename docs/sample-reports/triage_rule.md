@@ -17,7 +17,7 @@ Site: `src/triage.py:triage_rule`. Fingerprint: `a1b2c3d4ef567890`.
 The crossover (where ML first overtakes the rule) was at outcome 287.
 The gate fires at 312 — **the gate measures evidence sufficiency, not
 crossover**; the 25-outcome lag is the cost of paired-McNemar at
-α = 0.01. See [methodology](../methodology/test-driven-product-development.md).
+α = 0.01. See methodology.
 
 ## p-value trajectory
 
@@ -95,4 +95,4 @@ graduation at outcome 250–500, effect size ≥ 5 pp.
 preserves historical snapshots so a graduation event you can show
 your auditor stays committed even after re-renders).*
 
-*Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*
+*Methodology: Test-Driven Product Development.*

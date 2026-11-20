@@ -112,4 +112,4 @@ drift detector is for.**
 2026-04-28 14:23 UTC. Rollback executed 2026-04-29 03:11 UTC. Dated
 archive at `postrule/results/archive/output_safety_rule-2026-04-29.md`.*
 
-*Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*
+*Methodology: Test-Driven Product Development.*

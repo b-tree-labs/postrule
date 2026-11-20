@@ -25,7 +25,7 @@ Cross-references in this document:
   compelled-disclosure handling, breach SLA.
 - [`telemetry-shape.md`](telemetry-shape.md) — wire-format
   specification for the telemetry stream covered by §3 and §5.
-- [`/privacy`](../../cloud/dashboard/app/privacy/page.tsx) — the
+- `/privacy` — the
   rendered privacy contract presented to data subjects at sign-in.
 
 ---

@@ -1,9 +1,9 @@
 # Telemetry wire-format specification
 
 > **Last updated 2026-05-11.** Source of truth:
-> [`src/postrule/cloud/verdict_telemetry.py`](../../src/postrule/cloud/verdict_telemetry.py).
+> `src/postrule/cloud/verdict_telemetry.py`.
 > Companion to the rendered
-> [Privacy Policy](../../cloud/dashboard/app/privacy/page.tsx) and
+> Privacy Policy and
 > [`dpa-template.md`](dpa-template.md) §5.
 
 This page is the engineer-buyer's audit artifact. It states what the
@@ -60,7 +60,7 @@ ignore" path.
 ## 2. Wire format
 
 Exact JSON shape of a Telemetry Event, as constructed by
-[`CloudVerdictEmitter._build_payload`](../../src/postrule/cloud/verdict_telemetry.py)
+`CloudVerdictEmitter._build_payload`
 and serialised by `json.dumps(payload, default=str,
 separators=(",", ":"))`:
 
@@ -127,8 +127,7 @@ User-Agent: postrule-sdk-verdicts/1.0
   configured via `$POSTRULE_API_URL=http://localhost:8787`.
 - **Authorisation.** Bearer token. The token is a 190-bit random
   string issued at `postrule login`; the server stores only an
-  HMAC-SHA-256 hash of it under a server-side pepper (see
-  [`src/postrule/../cloud/api/src/keys.ts`](../../cloud/api/src/keys.ts)).
+  HMAC-SHA-256 hash of it under a server-side pepper.
 - **Content-Type.** `application/json`. Body is the compact JSON
   serialisation in §2.
 - **Timeout.** `5.0` seconds per request (`REQUEST_TIMEOUT_SECONDS`).
@@ -379,5 +378,5 @@ Event leave their machine.
 ---
 
 *Last updated 2026-05-11. Source of truth is the code at
-[`src/postrule/cloud/verdict_telemetry.py`](../../src/postrule/cloud/verdict_telemetry.py).
+`src/postrule/cloud/verdict_telemetry.py`.
 If this page and the code disagree, the code is right.*
