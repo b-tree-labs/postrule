@@ -30,6 +30,8 @@ self_landers = ["benjaminbooth"]
 
 fix_provider = "llm"
 
+human_paths_mode = "replace"
+
 [watch]
 env = "AXIOM_LANDER_REPOS"
 
@@ -67,30 +69,6 @@ dependencies = [
   '(^|/)\.github/dependabot\.ya?ml$',
 ]
 
-[human_paths]
-behavior = [
-  '(^|/)src/postrule/(core|gates|switch_class|ml|ml_strategy|models|escalation|signals|defaults|decorator|wrap)\.py$',
-]
-pricing = [
-  '(^|/)[^/]*pric(e|ing)[^/]*$',
-  '(^|/)shared/pricing/',
-  '(^|/)roi\.py$',
-]
-security = [
-  '(^|/)SECURITY\.md$',
-  '(^|/)[^/]*security[^/]*$',
-  '(^|/)license\.py$',
-  '(^|/)_http_tls\.py$',
-  '(^|/)redteam/',
-  '(^|/)\.axiom/release-lander\.toml$',
-]
-data = [
-  '(^|/)storage(_[a-z0-9]+)?\.py$',
-]
-test-setup = [
-  '(^|/)\.pre-commit-config\.yaml$',
-]
-
 [raci]
 approvers = ["@benjaminbooth:github"]
 auto_allowed = ["merge", "rerun", "update_branch", "repair"]
@@ -115,3 +93,30 @@ routing_tier = "public"
 
 [fixer.commands]
 test = "python -m pytest -q {tests}"
+
+[human_paths]
+# Narrowed to the standard set (Ben, 2026-11-20; first narrowed in soilmetrix
+# 2026-10-27). replace mode: this list IS the protected set; the built-in list
+# no longer applies. A human approves only where a green CI run cannot judge
+# the cost of a mistake: money, credentials, production data, production
+# deploys. Docs about these topics, CI workflows, test setup, dependency
+# bumps (dependency-audit ratchet + Boot Smoke + production smoke gate them)
+# and "behavior" paths land on green like any other change.
+pricing = [
+  '^(?!docs/)(.*/)?(pricing|billing|stripe)(/|$)',
+  '^(?!docs/)(.*/)?[^/]*(pricing|billing|stripe)[^/]*\.(py|jsx?|tsx?)$',
+  '(^|/)tier_service\.py$',
+]
+security = [
+  '^(?!docs/)(.*/)?(security|auth|secrets?)(/|$)',
+  '^(?!docs/)(.*/)?(auth|secrets?|credentials?)(\.[^/]+)?$',
+]
+data = [
+  '(^|/)migrations?(/|$)',
+  '(^|/)schema(/|$)',
+  '\.sql$',
+]
+deploy = [
+  '(^|/)\.github/workflows/[^/]*(deploy|release|publish|promote|terraform)[^/]*$',
+  '^infrastructure/terraform/environments/(prod|stg)/',
+]
