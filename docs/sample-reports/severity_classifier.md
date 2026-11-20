@@ -95,4 +95,4 @@ which would be a signal to re-examine the rule + ML head choice).
 2026-04-29 22:14 UTC, no drift detected. Dated archive at
 `postrule/results/archive/severity_classifier-2026-04-29.md`.*
 
-*Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*
+*Methodology: [How the graduation gate decides](../FAQ.md#how-does-postrule-know-when-a-switch-is-ready-to-graduate).*

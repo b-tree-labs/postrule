@@ -73,10 +73,11 @@ not.
 
 ## Logo and visual identity
 
-The Postrule wordmark and any associated logos under `brand/logo/`
-are governed by the same rules as the word mark: fair use in
-descriptive references is fine; use implying endorsement or
-partnership requires a license.
+The Postrule wordmark and any associated logos are governed by
+the same rules as the word mark: fair use in descriptive
+references is fine; use implying endorsement or partnership
+requires a license. Logo files are not published in this
+repository (`brand/logo/` is absent).
 
 ## Reporting misuse
 

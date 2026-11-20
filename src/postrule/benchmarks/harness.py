@@ -3,8 +3,10 @@
 #
 # Licensed under the Business Source License 1.1 (the "License").
 # You may not use this file except in compliance with the License.
-# You may obtain a copy of the License at LICENSE-BSL in the
-# repository root, or at https://mariadb.com/bsl11/.
+# You may obtain the BSL 1.1 form at https://mariadb.com/bsl11/.
+# LICENSE-BSL is not in this repository. The only license text
+# here is LICENSE-APACHE. See LICENSE.md. This header does not
+# restate the Additional Use Grant.
 #
 # Change Date:    2030-05-01
 # Change License: Apache License, Version 2.0

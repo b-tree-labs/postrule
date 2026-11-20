@@ -25,8 +25,9 @@ Cross-references in this document:
   compelled-disclosure handling, breach SLA.
 - [`telemetry-shape.md`](telemetry-shape.md) — wire-format
   specification for the telemetry stream covered by §3 and §5.
-- [`/privacy`](../../cloud/dashboard/app/privacy/page.tsx) — the
+- [`/privacy`](https://postrule.ai/privacy) — the
   rendered privacy contract presented to data subjects at sign-in.
+  The dashboard source is not in this repository.
 
 ---
 
@@ -252,11 +253,10 @@ timing-side-channel disclosure.
 
 7.5 **Wire-shape minimisation.** The SDK is designed so that
 classifier inputs, classifier outputs, and labels never enter the
-network send path. The wire shape is enforced in code at
-`src/postrule/cloud/verdict_telemetry.py::_build_payload`, which
-constructs the payload from a fixed allow-list of fields. The
-verifiable mechanism is documented in
-[`telemetry-shape.md`](telemetry-shape.md).
+network send path. The published description is
+[`telemetry-shape.md`](telemetry-shape.md). The implementation
+(`src/postrule/cloud/verdict_telemetry.py`) is not in this
+repository.
 
 7.6 **Tier-bounded retention.** Telemetry Events are retained for the
 window stated in §8.

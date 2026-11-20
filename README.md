@@ -1,8 +1,3 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/b-tree-labs/postrule/main/brand/logo/postrule-wordmark-horizontal-dark-pypi.png">
-  <img src="https://raw.githubusercontent.com/b-tree-labs/postrule/main/brand/logo/postrule-wordmark-horizontal-pypi.png" alt="Postrule" width="420">
-</picture>
-
 # Self-taught classifiers.
 
 **Drop a rule. Bring your truth. Watch your classifier get smarter — automatically, and only when a statistical gate proves it beats the rule.**
@@ -548,29 +543,26 @@ Postrule is split-licensed:
 - **Postrule-operated components** (analyzer, ROI reporter,
   research/graduation tooling, CLI, hosted surfaces): **Business
   Source License 1.1** with Change Date **2030-05-01** (auto-
-  conversion to Apache 2.0). Additional Use Grant: **production
-  self-hosted use is permitted** — the BSL only prohibits
-  offering a competing hosted Postrule service.
+  conversion to Apache 2.0). The project describes an Additional
+  Use Grant that permits production self-hosted use and prohibits
+  offering a competing hosted Postrule service. That grant is not
+  published in this repository.
 
 **The split lives at the per-file level inside `src/postrule/`**, not
-at the directory level. Most files in `src/postrule/` are Apache 2.0;
-the four BSL-licensed exceptions are
-[`src/postrule/analyzer.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/analyzer.py),
-[`src/postrule/cli.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/cli.py),
-[`src/postrule/research.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/research.py), and
-[`src/postrule/roi.py`](https://github.com/b-tree-labs/postrule/blob/main/src/postrule/roi.py). Tests for those four files
-mirror the BSL identifier; everything else is Apache. Each source
-file's `SPDX-License-Identifier:` header is authoritative when in
-doubt — the `.github/workflows/license-check.yml` workflow enforces
-the split on every PR.
+at the directory level. Most files in `src/postrule/` are Apache 2.0.
+The modules described as the BSL exceptions (`analyzer.py`, `cli.py`,
+`research.py`, and `roi.py`) are not included in this public tree.
+Each source file's `SPDX-License-Identifier:` header is authoritative
+when in doubt — the `.github/workflows/license-check.yml` workflow
+enforces the split on every PR.
 
-See [`LICENSE.md`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE.md) for the split map,
-[`LICENSING.md`](https://github.com/b-tree-labs/postrule/blob/main/LICENSING.md) for developer-facing Q&A,
-[`LICENSE-APACHE`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-APACHE) for the canonical Apache 2.0
-text, and [`LICENSE-BSL`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-BSL) for the canonical BSL 1.1
-text + the Additional Use Grant. Commercial licensing that removes
-the BSL restrictions is available — contact
-`licensing@b-treeventures.com`.
+See [`LICENSE.md`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE.md)
+for the split map and the missing-file flag. `LICENSING.md` and
+`LICENSE-BSL` are not in this repository. The only license text
+shipped here is
+[`LICENSE-APACHE`](https://github.com/b-tree-labs/postrule/blob/main/LICENSE-APACHE).
+Commercial licensing that removes the BSL restrictions is available —
+contact `licensing@b-treeventures.com`.
 
 The underlying classification primitive is covered by a filed
 US provisional patent (application pending, filed 2026-04-21).
