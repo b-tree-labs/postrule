@@ -103,4 +103,4 @@ regeneration writes both the canonical `_summary.md` and a dated copy
 under `postrule/results/archive/` so historical snapshots are preserved
 for compliance.*
 
-*Methodology: [Test-Driven Product Development](../methodology/test-driven-product-development.md).*
+*Methodology: [How the graduation gate decides](../FAQ.md#how-does-postrule-know-when-a-switch-is-ready-to-graduate).*

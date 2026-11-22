@@ -1,18 +1,20 @@
 # Telemetry wire-format specification
 
-> **Last updated 2026-05-11.** Source of truth:
-> [`src/postrule/cloud/verdict_telemetry.py`](../../src/postrule/cloud/verdict_telemetry.py).
-> Companion to the rendered
-> [Privacy Policy](../../cloud/dashboard/app/privacy/page.tsx) and
-> [`dpa-template.md`](dpa-template.md) §5.
+> **Last updated 2026-05-11.** The implementation
+> (`src/postrule/cloud/verdict_telemetry.py`) is not published in this
+> repository. This page is the public wire spec. Companion to the
+> rendered [Privacy Policy](https://postrule.ai/privacy) and
+> [`dpa-template.md`](dpa-template.md) §5. The dashboard source is not
+> in this repository.
 
 This page is the engineer-buyer's audit artifact. It states what the
 SDK sends, what it does not send, how often, under what auth, and how
 to verify both claims locally.
 
-The implementation in `verdict_telemetry.py` is authoritative; this
-page tracks it. If they disagree, the code wins and the page is a
-bug.
+`verdict_telemetry.py` is not in this repository. This page is the
+public description of the wire format. If a later published
+implementation disagrees with this page, the implementation wins
+and the page is a bug.
 
 ---
 
@@ -60,7 +62,7 @@ ignore" path.
 ## 2. Wire format
 
 Exact JSON shape of a Telemetry Event, as constructed by
-[`CloudVerdictEmitter._build_payload`](../../src/postrule/cloud/verdict_telemetry.py)
+`CloudVerdictEmitter._build_payload` (not published in this repository)
 and serialised by `json.dumps(payload, default=str,
 separators=(",", ":"))`:
 
@@ -127,8 +129,9 @@ User-Agent: postrule-sdk-verdicts/1.0
   configured via `$POSTRULE_API_URL=http://localhost:8787`.
 - **Authorisation.** Bearer token. The token is a 190-bit random
   string issued at `postrule login`; the server stores only an
-  HMAC-SHA-256 hash of it under a server-side pepper (see
-  [`src/postrule/../cloud/api/src/keys.ts`](../../cloud/api/src/keys.ts)).
+  HMAC-SHA-256 hash of it under a server-side pepper. The server
+  module (`cloud/api/src/keys.ts`) is not published in this
+  repository.
 - **Content-Type.** `application/json`. Body is the compact JSON
   serialisation in §2.
 - **Timeout.** `5.0` seconds per request (`REQUEST_TIMEOUT_SECONDS`).
@@ -378,6 +381,7 @@ Event leave their machine.
 
 ---
 
-*Last updated 2026-05-11. Source of truth is the code at
-[`src/postrule/cloud/verdict_telemetry.py`](../../src/postrule/cloud/verdict_telemetry.py).
-If this page and the code disagree, the code is right.*
+*Last updated 2026-05-11. `src/postrule/cloud/verdict_telemetry.py`
+is not published in this repository. This page is the public wire
+spec. If a later published implementation disagrees with this page,
+the implementation is right.*

@@ -3,13 +3,15 @@
 #
 # Licensed under the Business Source License 1.1 (the "License").
 # You may not use this file except in compliance with the License.
-# You may obtain a copy of the License at LICENSE-BSL in the
-# repository root, or at https://mariadb.com/bsl11/.
+# You may obtain the BSL 1.1 form at https://mariadb.com/bsl11/.
+# LICENSE-BSL is not in this repository. The only license text
+# here is LICENSE-APACHE. See LICENSE.md.
 #
 # Change Date:    2030-05-01
 # Change License: Apache License, Version 2.0
 #
-# Additional Use Grant: see LICENSE-BSL. Production use is
+# Additional Use Grant: not published in this repository
+# (LICENSE-BSL is absent). See LICENSE.md. Production use is
 # permitted; offering a competing hosted service is not.
 
 """Tests for ``postrule.cloud.registry`` — anonymize + contribute to the public registry.
