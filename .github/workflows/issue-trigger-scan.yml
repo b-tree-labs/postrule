@@ -42,7 +42,7 @@ jobs:
     if: github.event.sender.login != 'github-actions[bot]'
     steps:
       - name: Scan + flag
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             // Source text: issue body OR comment body, depending on event
